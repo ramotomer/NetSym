@@ -55,9 +55,9 @@ NO_MODIFIER = 0
 # you can `&` them together to get the different combinations.
 
 
-FILES = "C:\\Users\\User\\PycharmProjects\\NetSym\\res\\files\\{}"
+FILES = "..\\res\\files\\{}"
 
-IMAGES = "C:\\Users\\User\\PycharmProjects\\NetSym\\res\\sprites\\{}"
+IMAGES = "..\\res\\sprites\\{}"
 ETHERNET_IMAGE = "ethernet_packet.png"
 ARP_REQUEST_IMAGE = "arp_request.png"
 ARP_REPLY_IMAGE = "arp_reply.png"
