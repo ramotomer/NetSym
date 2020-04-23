@@ -9,7 +9,7 @@ from gui.text_graphics import Text
 from collections import namedtuple
 from computing.router import Router
 from address.ip_address import IPAddress
-from usefuls import get_the_one
+from usefuls import get_the_one, distance
 from exceptions import *
 from operator import concat
 from functools import reduce
@@ -516,12 +516,13 @@ class UserInterface:
         Connects all of the unconnected computers to the latest generated switch or hub
         :return: None
         """
-        last_created_switch = get_the_one(reversed(self.computers), lambda c: isinstance(c, Switch), NoSuchComputerError)
+        switches = list(filter(lambda c: isinstance(c, Switch), self.computers))
         for computer in self.computers:
-            if computer is last_created_switch:
+            if isinstance(computer, Switch):
                 continue
+            nearest_switch = min(switches, key=lambda s: distance(s.graphics.location, computer.graphics.location))
             if not computer.interfaces[0].is_connected():
-                self.connect_computers(computer, last_created_switch)
+                self.connect_computers(computer, nearest_switch)
 
     def ping_switch_with_ip(self):
         """
