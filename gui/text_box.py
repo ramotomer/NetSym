@@ -29,13 +29,13 @@ class TextBox(GraphicsObject):
 
         title_text = Text(text, self.x, self.y + (TEXTBOX_HEIGHT / 2), None)
 
-        written_text = Text('', title_text.x, title_text.y - 20, max_width=TEXTBOX_WIDTH)
+        written_text = Text('', title_text.x, title_text.y - 20, max_width=TEXTBOX_WIDTH, padding=(0, 0))
 
         submit_button = Button(self.x - (SUBMIT_BUTTON_WIDTH / 2),
-                                    (self.y - (TEXTBOX_HEIGHT / 2)) + 10,
-                                    text="SUBMIT",
-                                    width=SUBMIT_BUTTON_WIDTH,
-                                    action=self.submit)
+                               (self.y - (TEXTBOX_HEIGHT / 2)) + 10,
+                               text="SUBMIT",
+                               width=SUBMIT_BUTTON_WIDTH,
+                               action=self.submit)
 
         self.child_graphics_objects = ChildGraphicsObjects(
             title_text,

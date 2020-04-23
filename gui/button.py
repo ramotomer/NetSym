@@ -36,7 +36,7 @@ class Button(GraphicsObject):
         self.width, self.height = width, height
         self.action = action
         self.child_graphics_objects = ChildGraphicsObjects(
-            Text(text, x, y, self, (self.width / 2, self.height / 2), is_button=True, start_hidden=start_hidden)
+            Text(text, x, y, self, (self.width / 2, self.height / 2 + BUTTON_TEXT_PADDING), is_button=True, start_hidden=start_hidden, max_width=SIDE_WINDOW_WIDTH)
         )
 
     def is_mouse_in(self):

@@ -10,7 +10,11 @@ class Protocol(metaclass=ABCMeta):
     It has a `type` property which is the type of the layer WITHIN IT (not itself)
     """
     def __init__(self, data):
-        """"""  # TODO: doc here
+        """
+        Initiates the protocol instance.
+        The only requirement is a `data` attribute.
+        :param data: The data of the protocol (usually, another `Protocol` instance)
+        """
         self.data = data
 
     @property
@@ -20,4 +24,8 @@ class Protocol(metaclass=ABCMeta):
 
     @abstractmethod
     def multiline_repr(self):
-        """The multiline representation of the layer."""
+        """
+        The multiline representation of the layer, used for the VIEW_MODE in the `UserInterface` class.
+        :return: a string.
+        """
+        pass

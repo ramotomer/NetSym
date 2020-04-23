@@ -11,7 +11,11 @@ class Packet:
     the packet and to draw the packet on the screen as one complete object.
     """
     def __init__(self, data=None):
-        """"""  # TODO: doc here
+        """
+        Initiates the packet object, data is the out-most layer of the packet (usually Ethernet).
+        `self.graphics` is a `PacketGraphics` object.
+        :param data:
+        """
         self.data = data
         self.graphics = None
 

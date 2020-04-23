@@ -549,7 +549,7 @@ class UserInterface:
         """
         print(f"is paused? {self.is_paused}")
         print(f"graphicsObject-s: {MainLoop.instance.graphics_objects}")
-        print(f"mouse: {MainLoop.instance.get_mouse_location()}")
+        print(f"mouse: {MainWindow.main_window.get_mouse_location()}")
         print(f"""computers, {len(self.computers)}, connections, {len(self.connection_data)}, packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}""")
         print(f"running processes: {[waiting_process.process for waiting_process in reduce(concat, [computer.waiting_processes for computer in self.computers])]}\n")
 
