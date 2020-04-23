@@ -21,7 +21,7 @@ class Interface:
     An interface can be either connected or disconnected to a `ConnectionSide` object, which enables it to move its packets
     down the connection further.
     """
-    def __init__(self, os, mac, ip=None, name=None):
+    def __init__(self, mac, ip=None, name=None):
         """
         Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
         :param os: The operating system of the computer above.
@@ -30,7 +30,6 @@ class Interface:
         :param ip: a string ip address ('10.3.252.5/24' for example)
         """
         self.connection = None
-        self.os = os
         self.name = name if name is not None else Interface.random_name()
 
         self.mac = MACAddress(mac)
@@ -45,9 +44,9 @@ class Interface:
         return random.choice(INTERFACE_NAMES) + str(random.randint(0, 10))
 
     @classmethod
-    def with_ip(cls, os, ip_address):
+    def with_ip(cls, ip_address):
         """Constructor for an interface with a given (string) IP address, a random name and a random MAC address"""
-        return cls(os, MACAddress.randomac(), ip_address, cls.random_name())
+        return cls(MACAddress.randomac(), ip_address, cls.random_name())
 
     def is_directly_for_me(self, packet):
         """
@@ -100,8 +99,6 @@ class Interface:
             raise DeviceAlreadyConnectedError()
         connection = Connection()
         self.connection, other.connection = connection.get_sides()
-        self.arp_grat()
-        other.arp_grat()
         return connection
 
     def disconnect(self):
@@ -143,38 +140,6 @@ class Interface:
             # raise InterfaceNotConnectedError()
             pass
 
-    def arp_to(self, ip_address):
-        """
-        Constructs and sends an ARP request to a given IP address.
-        :param ip_address: a data of the IP address you want to find the MAC for.
-        :return: None
-        """
-        arp = ARP(ARP_REQUEST, self.ip, ip_address, self.mac)
-        if self.ip is None:
-            arp = ARP.create_probe(ip_address, self.mac)
-        self.send(Packet(Ethernet(self.mac, MACAddress.broadcast(), arp)))
-
-    def arp_reply(self, request, src_ip=None):
-        """
-        Receives a `Packet` object that is the ARP request you answer for.
-        Sends back an appropriate ARP reply.
-        If the packet does not contain an ARP layer, raise NoARPLayerError.
-        :param request: a Packet object that contains an ARP layer.
-        :return: None
-        """
-        if src_ip is None:
-            src_ip = self.ip
-        try:
-            arp = ARP(ARP_REPLY, src_ip, request["ARP"].src_ip, self.mac, request["ARP"].src_mac)
-            self.send(Packet(Ethernet(self.mac, request["ARP"].src_mac, arp)))
-        except KeyError:
-            raise NoARPLayerError()
-
-    def arp_grat(self):
-        """Send a gratuitous ARP"""
-        if self.has_ip() and SENDING_GRAT_ARPS:
-            self.send(Packet(Ethernet(self.mac, MACAddress.broadcast(), ARP(ARP_GRAT, self.ip, None, self.mac))))
-
     def send_to(self, dst_mac, dst_ip, packet):
         """
         Receives destination addresses and a packet, wraps the packet with IP
@@ -187,16 +152,6 @@ class Interface:
         wrapped = Packet(Ethernet(self.mac, dst_mac, IP(self.ip, dst_ip, TTLS[self.os], packet)))
         self.send(wrapped)
 
-    def ping_to(self, mac_address, ip_address, opcode=ICMP_REQUEST):
-        """
-        Send an ICMP packet to the a given ip address.
-        :param ip_address: The destination `IPAddress` object of the ICMP packet
-        :param mac_address: The destination `MACAddress` object of the ICMP packet
-        :param opcode: the ICMP opcode (reply / request / time exceeded)
-        :return: None
-        """
-        self.send_to(mac_address, ip_address, ICMP(opcode))
-
     def ethernet_wrap(self, dst_mac, data):
         """
         Takes in data (string, a `Protocol` object...) and wraps it as an `Ethernet` packet ready to be sent.
@@ -207,36 +162,13 @@ class Interface:
         """
         return Packet(Ethernet(self.mac, dst_mac, data))
 
-    def send_dhcp_discover(self):
-        """Sends out a `DHCP_DISCOVER` packet (This is sent by a DHCP client)"""
-        self.send(Packet(Ethernet(self.mac, MACAddress.broadcast(), DHCP(DHCP_DISCOVER, DHCPData(None, None, None)))))
-
-    def send_dhcp_offer(self, client_mac, offer_ip):
+    def send_with_ethernet(self, dst_mac, protocol):
         """
-        Sends a `DHCP_OFFER` request with an `offer_ip` offered to the `dst_mac`. (This is sent by the DHCP server)
-        :param client_mac: the `MACAddress` of the client computer.
-        :param offer_ip: The `IPAddress` that is offered in the DHCP offer.
+        Receives a `Procotol` object, wraps it with ethernet and sends it.
+        :param protocol: a `Protocol` instance.
         :return: None
         """
-        self.send(Packet(Ethernet(self.mac, client_mac, DHCP(DHCP_OFFER, DHCPData(offer_ip, None, None)))))
-
-    def send_dhcp_request(self, server_mac):
-        """
-        Sends a `DHCP_REQUEST` that confirms the address that the server had offered.
-        This is sent by the DHCP client.
-        :param server_mac: The `MACAddress` of the DHCP server.
-        :return: None
-        """
-        self.send(Packet(Ethernet(self.mac, server_mac, DHCP(DHCP_REQUEST, DHCPData(None, None, None)))))
-
-    def send_dhcp_pack(self, client_mac, dhcp_data):
-        """
-        Sends a `DHCP_PACK` that tells the DHCP client all of the new data it needs to update (IP, gateway, DNS)
-        :param client_mac: The `MACAddress` of the client.
-        :param dhcp_data:  a `DHCPData` namedtuple (from 'dhcp_process.py') that is sent in the DHCP pack.
-        :return: None
-        """
-        self.send(Packet(Ethernet(self.mac, client_mac, DHCP(DHCP_PACK, dhcp_data))))
+        self.send(self.ethernet_wrap(dst_mac, protocol))
 
     def __eq__(self, other):
         """Determines which interfaces are equal"""

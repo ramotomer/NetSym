@@ -307,9 +307,9 @@ class UserInterface:
         """
         x, y = MainWindow.main_window.get_mouse_location()
 
-        interfaces = (Interface.with_ip(OS_SOLARIS, '192.168.1.1'),
-                      Interface.with_ip(OS_SOLARIS, '10.10.10.1'),
-                      Interface.with_ip(OS_SOLARIS, '172.10.3.1'))
+        interfaces = (Interface.with_ip('192.168.1.1'),
+                      Interface.with_ip('10.10.10.1'),
+                      Interface.with_ip('172.10.3.1'))
         object = Router("Router and DHCP Server", interfaces)
         object.show(x, y)
         self.computers.append(object)

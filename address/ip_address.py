@@ -60,6 +60,13 @@ class IPAddress:
         splitted[3] = '1'
         return self.__class__(IP_ADDRESS_SEPARATOR.join(splitted) + '/' + str(self.subnet_mask))
 
+    def subnet(self):
+        """
+        returns the subnet of this ip address (for example 192.168.1.20/16 -> 192.168.0.0/16)
+        :return: an `IPAddress` object.
+        """
+
+
     @staticmethod
     def as_bytes(address):
         """
@@ -113,8 +120,17 @@ class IPAddress:
         :param address: a string address to turn into bits.
         :return: a string starting with 0b and the rest of the bits of the IP address
         """
-        return '0b' + ''.join(
-            [bin(byte)[2:].zfill(8) for byte in cls.as_bytes(address)])
+        return '0b' + ''.join([bin(byte)[2:].zfill(8) for byte in cls.as_bytes(address)])
+
+    @classmethod
+    def from_bits(cls, bits, subnet_mask):
+        """
+        Creates an IP from a bit representation of one and a subnet mask.
+        :param bits: a string binary number.
+        :param subnet_mask: an integer subnet mask.
+        :return: an IPAddress object.
+        """
+        cls.mask_from_number()
 
     @classmethod
     def copy(cls, other):
