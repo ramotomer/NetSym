@@ -8,13 +8,16 @@ class Protocol(metaclass=ABCMeta):
     (Ethernet, IP, TCP, ICMP, ARP and so on)
 
     It has a `type` property which is the type of the layer WITHIN IT (not itself)
+
+    The `layer_index` is the number of the layer the protocol belongs to (Ethernet - 2, IP - 3 etc...)
     """
-    def __init__(self, data):
+    def __init__(self, layer_index, data):
         """
         Initiates the protocol instance.
         The only requirement is a `data` attribute.
         :param data: The data of the protocol (usually, another `Protocol` instance)
         """
+        self.layer_index = layer_index
         self.data = data
 
     @property

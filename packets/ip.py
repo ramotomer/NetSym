@@ -12,7 +12,7 @@ class IP(Protocol):
         :param src_ip:
         :param dst_ip:
         """
-        super(IP, self).__init__(data)
+        super(IP, self).__init__(3, data)  # third layer
         self.src_ip = src_ip
         self.dst_ip = dst_ip
         self.ttl = ttl

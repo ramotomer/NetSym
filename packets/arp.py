@@ -21,7 +21,7 @@ class ARP(Protocol):
         ### i didn't have the strength to fix it. i trust future Tomer.
 
         """
-        super(ARP, self).__init__('')
+        super(ARP, self).__init__(3, '')  # 3rd layer.
         self.opcode = opcode
         self.src_ip = src_ip
         self.dst_ip = dst_ip

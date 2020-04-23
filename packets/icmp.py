@@ -10,7 +10,7 @@ class ICMP(Protocol):
         Create an ICMP packet.
         :param opcode: ICMP_REPLY or ICMP_REQUEST.
         """
-        super(ICMP, self).__init__('')
+        super(ICMP, self).__init__(4, '')  # I put in 4th layer because it goes over IP which is 3rd.
         self.opcode = opcode
 
     @staticmethod

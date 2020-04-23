@@ -10,7 +10,7 @@ class DHCP(Protocol):
     This represents a DHCP packet.
     """
     def __init__(self, opcode, data=DHCPData(None, None, None)):
-        super(DHCP, self).__init__(data)
+        super(DHCP, self).__init__(3, data)  # TODO: move DHCP to be the fifth layer over UDP like it should be.
         self.opcode = opcode
 
     def dhcp_data_string(self):

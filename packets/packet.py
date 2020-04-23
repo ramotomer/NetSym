@@ -40,17 +40,36 @@ class Packet:
             layer = layer.data
         return layer
 
+    def get_layers(self):
+        """
+        This is a generator that runs over all of the layers in the packet not including the last one (if it is a string
+        in ICMP for example)
+        :yield: a `Protocol` object usually but any object that is put in the `data` field of a protocol.
+        """
+        layer = self.data
+        while isinstance(layer, Protocol):
+            yield layer
+            layer = layer.data
+
+    def is_valid(self):
+        """
+        Receives a `Packet` object and returns whether or not it is valid.
+        The check is simply if the layer indexes are increasing. (for example layer 2, layer 3 then layer 4 as expected).
+        :param packet: a `Packet` object.
+        :return: None
+        """
+        layer_indexes = [layer.layer_index for layer in self.get_layers()]
+        return layer_indexes == sorted(layer_indexes)
+
     def __contains__(self, item):
         """
         Returns whether or not a certain layer is in the packet somewhere.
         :param item: A type-name of the layer you want.
         :return:
         """
-        layer = self.data
-        while isinstance(layer, Protocol):
+        for layer in self.get_layers():
             if layer.__class__.__name__ == item:
                 return True
-            layer = layer.data
         return False
 
     def __getitem__(self, item):
@@ -60,11 +79,9 @@ class Packet:
         :param item: The layer type one wishes to receive.
         :return: The layer object if it exists, if not, raises KeyError.
         """
-        layer = self.data
-        while layer is not None:
+        for layer in self.get_layers():
             if layer.__class__.__name__ == item:
                 return layer
-            layer = layer.data
         raise NoSuchLayerError('The packet does not contain that layer!')
 
     def __str__(self):

@@ -7,7 +7,7 @@ class Ethernet(Protocol):
     """
     def __init__(self, src_mac, dst_mac, data=None):
         """"""
-        super(Ethernet, self).__init__(data)
+        super(Ethernet, self).__init__(2, data)
         self.src_mac = src_mac
         self.dst_mac = dst_mac
 
