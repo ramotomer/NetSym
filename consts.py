@@ -28,7 +28,7 @@ DEFAULT_FONT_SIZE = 10
 
 FRAME_RATE = 1 / 60.0
 
-DEFAULT_CONNECTION_SPEED = 400  # pixels / second
+DEFAULT_CONNECTION_SPEED = 200  # pixels / second
 DEFAULT_CONNECTION_LENGTH = 100  # pixels
 
 SENDING_GRAT_ARPS = False
@@ -55,9 +55,9 @@ NO_MODIFIER = 0
 # you can `&` them together to get the different combinations.
 
 
-FILES = "..\\res\\files\\{}"
+FILES = "../res/files/{}"
 
-IMAGES = "..\\res\\sprites\\{}"
+IMAGES = "../res/sprites/{}"
 ETHERNET_IMAGE = "ethernet_packet.png"
 ARP_REQUEST_IMAGE = "arp_request.png"
 ARP_REPLY_IMAGE = "arp_reply.png"

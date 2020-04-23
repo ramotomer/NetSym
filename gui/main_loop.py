@@ -6,7 +6,7 @@ class MainLoop:
     """
     This class handles everything related to the main loop of the program.
     It holds a list of all of the graphics objects that have registered their methods to the loop. (read more about these in 'gui.graphics_object.py')
-    It contains the main loop of the program, and contains methods that allow us to inser new function calls into the main loop.
+    It contains the main loop of the program, and contains methods that allow us to insert new function calls into the main loop.
 
     There is only one instance of this class. That instance is saved in the class attribute `MainLoop.instance`
     """
@@ -26,7 +26,6 @@ class MainLoop:
         self.graphics_objects = []
         # ^ a list of all registered `GraphicsObject`-s that are being drawn and moved.
 
-        debugp(f"me: {self.instance}")
         self.main_window.user_interface.initiate_buttons()
         # ^ creates the buttons of the user interface.
 
