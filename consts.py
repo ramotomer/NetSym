@@ -57,6 +57,9 @@ IMAGES = "res/sprites/{}"
 if os.name == 'nt':
     FILES = "..\\res\\files\\{}"
     IMAGES = "..\\res\\sprites\\{}"
+    if os.environ['COMPUTERNAME'].lower() == "bottomtext":          # so it will work in my ipython
+        FILES = "C:/users/user/pycharmprojects/netsym/res/files/{}"
+        IMAGES = "C:/users/user/pycharmprojects/netsym/res/sprites/{}"
 
 ETHERNET_IMAGE = "ethernet_packet.png"
 ARP_REQUEST_IMAGE = "arp_request.png"
@@ -89,6 +92,8 @@ DHCP_PACK = "DHCP Pack"
 
 BROADCAST_MAC = 'ff:ff:ff:ff:ff:ff'
 DEFAULT_COMPUTER_IP = "192.168.1.2/24"
+DHCP_CLIENT_PORT = 68
+DHCP_SERVER_PORT = 67
 
 INTERFACE_NAMES = [line.strip() for line in open(FILES.format("interface_names.txt")).readlines()]
 COMPUTER_NAMES = [line.strip() for line in open(FILES.format("computer_names.txt")).readlines()]

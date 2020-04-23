@@ -3,13 +3,9 @@ from address.ip_address import IPAddress
 from computing.connection import Connection
 from packets.ethernet import Ethernet
 from consts import *
-from packets.arp import ARP
 from packets.packet import Packet
-from packets.ip import IP
-from packets.icmp import ICMP
 from exceptions import *
 import random
-from packets.dhcp import DHCP, DHCPData
 
 
 class Interface:
@@ -139,18 +135,6 @@ class Interface:
         except AttributeError:
             # raise InterfaceNotConnectedError()
             pass
-
-    def send_to(self, dst_mac, dst_ip, packet):
-        """
-        Receives destination addresses and a packet, wraps the packet with IP
-        and Ethernet as required and sends it out.
-        :param dst_mac: destination `MACAddress` of the packet
-        :param dst_ip: destination `IPAddress` of the packet
-        :param packet: packet to wrap. Could be anything, should be something the destination comuter expects.
-        :return: None
-        """
-        wrapped = Packet(Ethernet(self.mac, dst_mac, IP(self.ip, dst_ip, TTLS[self.os], packet)))
-        self.send(wrapped)
 
     def ethernet_wrap(self, dst_mac, data):
         """

@@ -27,6 +27,16 @@ class IPAddress:
         self.string_ip = ip
         self.subnet_mask = int(subnet_mask)
 
+    @classmethod
+    def broadcast(cls):
+        """A constructor to create a broadcast address"""
+        return cls("255.255.255.255/0")
+
+    @classmethod
+    def no_address(cls):
+        """A constructor to the address that is used where there is no IP address (0.0.0.0)"""
+        return cls("0.0.0.0/32")
+
     def is_same_subnet(self, other):
         """
         Receives another ip address and returns if they are in the same subnet.
@@ -65,7 +75,10 @@ class IPAddress:
         returns the subnet of this ip address (for example 192.168.1.20/16 -> 192.168.0.0/16)
         :return: an `IPAddress` object.
         """
-
+        mask = int(self.as_bits(self.mask_from_number(self.subnet_mask)), 2)
+        masked_address = int(self.as_bits(self.string_ip), 2) & mask
+        masked_address_bin = '0b' + bin(masked_address)[2:].zfill(IP_ADDRESS_BIT_LENGTH)
+        return self.from_bits(masked_address_bin, mask)
 
     @staticmethod
     def as_bytes(address):
@@ -123,14 +136,19 @@ class IPAddress:
         return '0b' + ''.join([bin(byte)[2:].zfill(8) for byte in cls.as_bytes(address)])
 
     @classmethod
-    def from_bits(cls, bits, subnet_mask):
+    def from_bits(cls, bits, subnet_mask=24):
         """
         Creates an IP from a bit representation of one and a subnet mask.
         :param bits: a string binary number.
         :param subnet_mask: an integer subnet mask.
         :return: an IPAddress object.
         """
-        cls.mask_from_number()
+        new_bits = bits
+        if bits.startswith('0b'):
+            new_bits = bits[2:]
+
+        grouped_as_bytes = [new_bits[i:i + 8] for i in range(0, len(new_bits), 8)]
+        return cls('.'.join([str(int(byte, 2)) for byte in grouped_as_bytes]) + '/' + str(subnet_mask))
 
     @classmethod
     def copy(cls, other):

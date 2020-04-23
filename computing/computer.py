@@ -16,7 +16,8 @@ from gui.main_loop import MainLoop
 from packets.arp import ARP
 from packets.ip import IP
 from packets.icmp import ICMP
-from packets.dhcp import DHCP
+from packets.dhcp import DHCP, DHCPData
+from packets.udp import UDP
 from os import linesep
 
 
@@ -57,7 +58,7 @@ class Computer:
         self.packets_sniffed = 0
 
         self.arp_cache = {}  # a dictionary of {<ip address> : ARPCacheItem(<mac address>, <initiation time of this item>)
-        self.routing_table = RoutingTable()  # a dictionary of {<ip address destination> : RoutingTableItem(<gateway IP>, <interface IP>)}
+        self.routing_table = RoutingTable.create_default(self)  # a dictionary of {<ip address destination> : RoutingTableItem(<gateway IP>, <interface IP>)}
         self.received = []  # a list of the `ReceivedPacket` namedtuple-s that were received at this computer.
 
         self.waiting_processes = []  # a list of `WaitingProcess` namedtuple-s. If the process is new, its `WaitingProcess.waiting_for` should be None.
@@ -209,17 +210,7 @@ class Computer:
             return get_the_one(self.interfaces, lambda i: i.has_ip(), NoSuchInterfaceError)
         return get_the_one(self.interfaces, lambda i: i.has_this_ip(ip_address))
 
-    def decide_sending_interface(self, dst_ip):
-        """
-        Receives a packet and returns the Interface object it needs to be sent from. (according to IP and MAC addresses).
-        :param packet: The `Packet` object to send.
-        :return: A list of interfaces to send on.
-        """
-        if dst_ip.is_broadcast():
-            return self.same_subnet_interfaces(dst_ip)
-        return self.same_subnet_interfaces(dst_ip)[:1]
-
-    def _handle_arp(self, packet, source_interface):
+    def _handle_arp(self, packet):
         """
         Receives a `Packet` object and if it contains an ARP request layer, sends back
         an ARP reply. If the packet contains no ARP layer raises `NoArpLayerError`.
@@ -228,14 +219,14 @@ class Computer:
         :param source_interface: The `Interface` the packet was received on.
         :return: None
         """
-        if not isinstance(source_interface, Interface):
-            raise NotAnInterfaceError(f"This is not an interface! {source_interface!r}")
+        try:
+            arp = packet["ARP"]
+        except KeyError:
+            raise NoARPLayerError("This function should only be called with an ARP packet!!!")
 
-        arp = packet["ARP"]
         self.arp_cache[arp.src_ip] = ARPCacheItem(arp.src_mac, time.time())  # learn from the ARP
-
         if arp.opcode == ARP_REQUEST and self.has_this_ip(arp.dst_ip):
-            source_interface.arp_reply(packet, arp.dst_ip)                     # Answer if request
+            self.send_arp_reply(packet)                     # Answer if request
 
     def _handle_ping(self, packet):
         """
@@ -247,7 +238,7 @@ class Computer:
         if packet["ICMP"].opcode == ICMP_REQUEST and self.is_for_me(packet):
             dst_ip = packet["IP"].src_ip
             if self.has_this_ip(packet["IP"].dst_ip):  # only if the packet is for me also on the third layer!
-                self.ping_to(dst_ip, opcode=ICMP_REPLY)
+                self.start_process(SendPing, dst_ip, ICMP_REPLY)
 
     def is_for_me(self, packet):
         """
@@ -270,15 +261,6 @@ class Computer:
         """Returns whether or not a given ip_address is in a subnet with me (and therefore is reachable)"""
         return any([interface.has_ip() and interface.ip.is_same_subnet(ip_address) for interface in self.interfaces])
 
-    def request_address(self, ip_address):
-        """
-        Search the network using ARPs for a given IP address's MAC address.
-        :param ip_address: an `IPAddress` object of the address you want to acquire
-        :return: None
-        """
-        for interface in self.same_subnet_interfaces(ip_address):
-            interface.arp_to(ip_address)
-
     def forget_arp_cache(self):
         """
         Check through the ARP cache if any addresses should be forgotten and if so forget them. (removes from the arp cache)
@@ -287,18 +269,6 @@ class Computer:
         for ip, arp_cache_item in list(self.arp_cache.items()):
             if time.time() - arp_cache_item.time > ARP_CACHE_FORGET_TIME:
                 del self.arp_cache[ip]
-
-    def ping_to(self, ip_address, opcode=ICMP_REQUEST):
-        """
-        Send a ping to a given IP address.
-        Starts a `SendPing` process.
-        read the 'process.py' for documentation about that process.
-        :param ip_address: a string IP address to send a ping to.
-        :param opcode: the Ping opcode (request / reply)
-        :return: None
-        """
-        # self.print(f"{self.get_ip()} is sending {opcode} to {ip_address}")
-        self.start_process(SendPing, IPAddress(ip_address), opcode)
 
     def ask_dhcp(self):
         """
@@ -333,37 +303,61 @@ class Computer:
 
 # -------------------------v packet sending and wrapping related methods v ---------------------------------------------
 
-    def arp_to(self, ip_address):
+    def send_to(self, dst_mac, dst_ip, packet):
+        """
+        Receives destination addresses and a packet, wraps the packet with IP
+        and Ethernet as required and sends it out.
+        :param dst_mac: destination `MACAddress` of the packet
+        :param dst_ip: destination `IPAddress` of the packet
+        :param packet: packet to wrap. Could be anything, should be something the destination comuter expects.
+        :return: None
+        """
+        interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
+        interface.send_with_ethernet(dst_mac, IP(interface.ip, dst_ip, TTLS[self.os], packet))
+
+    def send_arp_to(self, ip_address):
         """
         Constructs and sends an ARP request to a given IP address.
         :param ip_address: a data of the IP address you want to find the MAC for.
         :return: None
         """
-        arp = ARP(ARP_REQUEST, self.ip, ip_address, self.mac)
-        if self.ip is None:
-            arp = ARP.create_probe(ip_address, self.mac)
-        self.send(Packet(Ethernet(self.mac, MACAddress.broadcast(), arp)))
+        interface = self.get_interface_with_ip(self.routing_table[ip_address].interface_ip)
+        arp = ARP(ARP_REQUEST, interface.ip, ip_address, interface.mac)
+        if interface.ip is None:
+            arp = ARP.create_probe(ip_address, interface.mac)
+        interface.send_with_ethernet(MACAddress.broadcast(), arp)
 
-    def arp_reply(self, request, src_ip=None):
+    def send_arp_reply(self, request):
         """
         Receives a `Packet` object that is the ARP request you answer for.
         Sends back an appropriate ARP reply.
+        This should only called if the ARP is for this computer (If not raises an exception!)
         If the packet does not contain an ARP layer, raise NoARPLayerError.
         :param request: a Packet object that contains an ARP layer.
         :return: None
         """
-        if src_ip is None:
-            src_ip = self.ip
         try:
-            arp = ARP(ARP_REPLY, src_ip, request["ARP"].src_ip, self.mac, request["ARP"].src_mac)
-            self.send(Packet(Ethernet(self.mac, request["ARP"].src_mac, arp)))
+            sender_ip, requested_ip = request["ARP"].src_ip, request["ARP"].dst_ip
         except KeyError:
-            raise NoARPLayerError()
+            raise NoARPLayerError("The packet has no ARP layer!!!")
 
-    def arp_grat(self):
-        """Send a gratuitous ARP"""
+        if not self.has_this_ip(requested_ip):
+            raise SomethingWentTerriblyWrongError("Do not call this method if the ARP is not for me!!!")
+
+        interface = self.get_interface_with_ip(requested_ip)
+        arp = ARP(ARP_REPLY, request["ARP"].dst_ip, sender_ip, interface.mac, request["ARP"].src_mac)
+        interface.send_with_ethernet(request["ARP"].src_mac, arp)
+
+    def arp_grat(self, interface):
+        """
+        Send a gratuitous ARP from a given interface.
+        If the interface has no IP address, do nothing.
+        :param interface: an `Interface` object.
+        :return: None
+        """
         if self.has_ip() and SENDING_GRAT_ARPS:
-            self.send(Packet(Ethernet(self.mac, MACAddress.broadcast(), ARP(ARP_GRAT, self.ip, None, self.mac))))
+            if interface.has_ip():
+                interface.send_with_ethernet(MACAddress.broadcast(), ARP(ARP_GRAT, interface.ip, interface.ip, interface.mac))
 
     def send_ping_to(self, mac_address, ip_address, opcode=ICMP_REQUEST):
         """
@@ -377,34 +371,55 @@ class Computer:
 
     def send_dhcp_discover(self):
         """Sends out a `DHCP_DISCOVER` packet (This is sent by a DHCP client)"""
-        self.send(Packet(Ethernet(self.mac, MACAddress.broadcast(), DHCP(DHCP_DISCOVER, DHCPData(None, None, None)))))
+        dst_ip = IPAddress.broadcast()
+        src_ip = IPAddress.no_address()
+        for interface in self.interfaces:
+            interface.send_with_ethernet(MACAddress.broadcast(),
+                                         IP(src_ip, dst_ip, TTLS[self.os],
+                                            UDP(DHCP_CLIENT_PORT, DHCP_SERVER_PORT,
+                                                DHCP(DHCP_DISCOVER, DHCPData(None, None, None)))))
 
-    def send_dhcp_offer(self, client_mac, offer_ip):
+    def send_dhcp_offer(self, client_mac, offer_ip, session_interface):
         """
         Sends a `DHCP_OFFER` request with an `offer_ip` offered to the `dst_mac`. (This is sent by the DHCP server)
         :param client_mac: the `MACAddress` of the client computer.
         :param offer_ip: The `IPAddress` that is offered in the DHCP offer.
+        :param session_interface: the `Interface` that runs the session with the Client
         :return: None
         """
-        self.send(Packet(Ethernet(self.mac, client_mac, DHCP(DHCP_OFFER, DHCPData(offer_ip, None, None)))))
+        dst_ip = offer_ip
+        session_interface.send_with_ethernet(client_mac,
+                                             IP(session_interface.ip, dst_ip,
+                                                UDP(DHCP_SERVER_PORT, DHCP_CLIENT_PORT,
+                                                    DHCP(DHCP_OFFER, DHCPData(offer_ip, None, None)))))
 
-    def send_dhcp_request(self, server_mac):
+    def send_dhcp_request(self, server_mac, session_interface):
         """
         Sends a `DHCP_REQUEST` that confirms the address that the server had offered.
         This is sent by the DHCP client.
         :param server_mac: The `MACAddress` of the DHCP server.
+        :param session_interface: The `Interface` that is running the session with the server.
         :return: None
         """
-        self.send(Packet(Ethernet(self.mac, server_mac, DHCP(DHCP_REQUEST, DHCPData(None, None, None)))))
+        dst_ip = IPAddress.broadcast()
+        session_interface.send_with_ethernet(server_mac,
+                                             IP(session_interface.ip, dst_ip,
+                                                UDP(DHCP_CLIENT_PORT, DHCP_SERVER_PORT,
+                                                    DHCP(DHCP_REQUEST, DHCPData(None, None, None)))))
 
-    def send_dhcp_pack(self, client_mac, dhcp_data):
+    def send_dhcp_pack(self, client_mac, dhcp_data, session_interface):
         """
         Sends a `DHCP_PACK` that tells the DHCP client all of the new data it needs to update (IP, gateway, DNS)
         :param client_mac: The `MACAddress` of the client.
         :param dhcp_data:  a `DHCPData` namedtuple (from 'dhcp_process.py') that is sent in the DHCP pack.
+        :param session_interface: The `Interface` that is running the seesion with the client.
         :return: None
         """
-        self.send(Packet(Ethernet(self.mac, client_mac, DHCP(DHCP_PACK, dhcp_data))))
+        dst_ip = dhcp_data.given_ip
+        session_interface.send_with_ethernet(client_mac,
+                                             IP(session_interface.ip, dst_ip,
+                                                UDP(DHCP_SERVER_PORT, DHCP_CLIENT_PORT,
+                                                    DHCP(DHCP_PACK, dhcp_data))))
 
     # ------------------------- v process related methods v ----------------------------------------------------
 
@@ -551,7 +566,7 @@ class Computer:
         return f"{self.name}"
 
 
-RoutingTableItem = namedtuple("RoutingTableItem", "ip_address interface")
+RoutingTableItem = namedtuple("RoutingTableItem", "ip_address interface_ip")
 """
 a routing table item.
 ip_address is the IP address to send the packet to (on the second layer) - the gateway
@@ -569,7 +584,7 @@ class RoutingTable:
     def __init__(self, initial_dictionary, default_gateway=None):
         """
         Initiates the RoutingTable from a dictionary of {IPAddress: RoutingTableItem}
-        :param initial_dictionary: `dict`
+        :param initial_dictionary: `dict` or list of tuples.
         :param default_gateway: a default `RoutingTableItem` that
         """
         self.dictionary = OrderedDict(initial_dictionary)
@@ -583,15 +598,22 @@ class RoutingTable:
         :param computer: a `Computer` object.
         :return: a `RoutingTable` object.
         """
-        main_interface = computer.get_interface_with_ip()
+        try:
+            main_interface = computer.get_interface_with_ip()
+        except NoSuchInterfaceError:
+            return cls({})    # if there is no interface with an IP address
         gateway = main_interface.ip.expected_gateway()  # the expected IP address of a gateway in that subnet.
         dictionary = [
             (IPAddress("0.0.0.0/0"), RoutingTableItem(gateway, main_interface.ip)),
             *[
-                interface.ip for interface
+                (interface.ip.subnet(),RoutingTableItem(
+                    interface.ip.subnet().expected_gateway(),
+                    IPAddress.copy(interface.ip)
+                 )) for interface in computer.interfaces if interface.has_ip()
             ],
             (IPAddress("255.255.255.255/32"), RoutingTableItem(gateway, main_interface.ip)),
         ]
+        return cls(OrderedDict(dictionary), RoutingTableItem(gateway, main_interface.ip))
 
     def __getitem__(self, item):
         """allows the dictionary notation of dict[key] """
@@ -623,7 +645,7 @@ class RoutingTable:
 ====================================================================
 Active Routes:
 Network Destination        Gateway        Interface  
-{linesep.join(''.join([repr(key).rjust(16, ' '), str(self.dictionary[key].ip_address).rjust(16, ' '), str(self.dictionary[key].interface).rjust(16, ' ')]) for key in self.dictionary)}	
+{linesep.join(''.join([repr(key).rjust(16, ' '), str(self.dictionary[key].ip_address).rjust(16, ' '), str(self.dictionary[key].interface_ip).rjust(16, ' ')]) for key in self.dictionary)}	
 Default Gateway:        {self.default_gateway.ip_address}
 ===================================================================
 """
