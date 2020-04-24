@@ -566,7 +566,7 @@ class UserInterface:
         try:
             given_ip = self._get_largest_ip_in_nearest_subnet(x, y)
         except (NoSuchComputerError, NoIPAddressError):      # if there are no computers with IP on the screen.
-            given_ip = DEFAULT_COMPUTER_IP
+            given_ip = IPAddress(DEFAULT_COMPUTER_IP)
 
         new_computer = Computer.with_ip(given_ip)
         self.computers.append(new_computer)
@@ -578,7 +578,7 @@ class UserInterface:
         and returns a copy of it.
         :param x:
         :param y: the coordinates.
-        :return:  an string of the IP.
+        :return: an `IPAddress` object.
         """
         nearest_computers = sorted(self.computers, key=lambda c: sqrt(((x - c.graphics.x) ** 2) + ((y - c.graphics.y) ** 2)))
         nearest_computers_with_ip = list(filter(lambda c: c.has_ip(), nearest_computers))
@@ -595,4 +595,4 @@ class UserInterface:
         except ValueError:
             raise NoIPAddressError("There are no IP addresses that fit the description!")
 
-        return IPAddress.increased(greatest_ip_in_subnet).string_ip
+        return IPAddress.increased(greatest_ip_in_subnet)

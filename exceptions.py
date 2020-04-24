@@ -22,6 +22,11 @@ class NoIPAddressError(AddressError):
     Occurs when an IP is requested and one does not exist!
     """
 
+class AddressTooLargeError(AddressError):
+    """
+    Occurs when one tries to increase an IPAddress that is at its subnet maximum size.
+    """
+
 
 class SomethingWentTerriblyWrongError(NetworkSimulationError):
     """

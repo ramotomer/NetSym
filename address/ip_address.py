@@ -1,5 +1,5 @@
 from consts import *
-from exceptions import InvalidAddressError
+from exceptions import InvalidAddressError, AddressTooLargeError
 
 
 class IPAddress:
@@ -58,11 +58,26 @@ class IPAddress:
         _, _, _, last_byte = self.string_ip.split(IP_ADDRESS_SEPARATOR)
         return int(last_byte) == 255  # I had some thinking if to put in constant, decided not to...
 
+    @classmethod
+    def increased(cls, address):
+        """
+        Receives an IP address and returns a copy of it which is increased by one.
+        (192.168.1.1 /24  -->  192.168.1.2 /24)
+        If the address is at the maximum of the subnet, raises `AddressTooLargeError`
+
+        :param other: an IPAddres object.
+        :return: a different object which the increased IP address.
+        """
+        bit_address = int(cls.as_bits(address.string_ip), base=2)
+        increased = cls.from_bits('0b' + bin(bit_address + 1)[2:].zfill(IP_ADDRESS_BIT_LENGTH), int(address.subnet_mask))
+        if not address.is_same_subnet(increased):
+            raise AddressTooLargeError(f"Cannont increase {address!r} since it is the maximum address for its subnet.")
+        return increased
+
     def increase(self):
-        """Increases the IP address by one. If the IP is at max, raise AddressError"""
-        as_bytes = IPAddress.as_bytes(self.string_ip)
-        as_bytes[3] = int(as_bytes[3]) + 1
-        self.string_ip = IP_ADDRESS_SEPARATOR.join([str(byte) for byte in as_bytes])
+        """Increases the IP address by one. If the IP is at max, raise `AddressTooLargeError`"""
+        increased = self.__class__.increased(self)
+        self.string_ip = increased.string_ip
 
     def expected_gateway(self):
         """Returns the expected IP address of this subnet (for example if this IP is 192.168.1.5/24 it will return 192.168.1.1)"""
@@ -158,19 +173,6 @@ class IPAddress:
         :return: another differrent but identical IPAddress object.
         """
         return cls(other.string_ip + IP_SUBNET_SEPARATOR + str(other.subnet_mask))
-
-    @classmethod
-    def increased(cls, other):
-        """
-        Receives an IP address and returns a copy of it which is increased by one.
-        (192.168.1.1 /24  -->  192.168.1.2 /24)
-
-        :param other: an IPAddres object.
-        :return: a different object which the increased IP address.
-        """
-        returned = cls.copy(other)
-        returned.increase()
-        return returned
 
     def __eq__(self, other):
         """Test whether two ip addresses are equal or not (does no include subnet mask)"""
