@@ -78,7 +78,7 @@ class IPAddress:
         mask = int(self.as_bits(self.mask_from_number(self.subnet_mask)), 2)
         masked_address = int(self.as_bits(self.string_ip), 2) & mask
         masked_address_bin = '0b' + bin(masked_address)[2:].zfill(IP_ADDRESS_BIT_LENGTH)
-        return self.from_bits(masked_address_bin, mask)
+        return self.from_bits(masked_address_bin, int(self.subnet_mask))
 
     @staticmethod
     def as_bytes(address):
@@ -112,7 +112,7 @@ class IPAddress:
         :param subnet_mask: A data that should be a numerical form of a mask
         :return: whether it is valid
         """
-        return isinstance(subnet_mask, str) and subnet_mask.isdigit() and 0 <= int(subnet_mask) < IP_ADDRESS_BIT_LENGTH
+        return isinstance(subnet_mask, str) and subnet_mask.isdigit() and 0 <= int(subnet_mask) <= IP_ADDRESS_BIT_LENGTH
 
     @staticmethod
     def mask_from_number(number):

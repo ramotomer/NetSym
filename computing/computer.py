@@ -18,7 +18,7 @@ from packets.ip import IP
 from packets.icmp import ICMP
 from packets.dhcp import DHCP, DHCPData
 from packets.udp import UDP
-from os import linesep
+from computing.routing_table import RoutingTable
 
 
 ARPCacheItem = namedtuple("ARPCacheItem", "mac time")
@@ -94,8 +94,7 @@ class Computer:
         :param ip_address: an IP string that one wishes the new `Computer` to have.
         :return: a `Computer` object
         """
-        computer = cls(name=name)
-        computer.interfaces[0].ip = IPAddress(ip_address)
+        computer = cls(name, OS_WINDOWS, None, Interface(MACAddress.randomac(), IPAddress(ip_address), "IHaveIP"))
         return computer
 
     @staticmethod
@@ -238,7 +237,15 @@ class Computer:
         if packet["ICMP"].opcode == ICMP_REQUEST and self.is_for_me(packet):
             dst_ip = packet["IP"].src_ip
             if self.has_this_ip(packet["IP"].dst_ip):  # only if the packet is for me also on the third layer!
-                self.start_process(SendPing, dst_ip, ICMP_REPLY)
+                self.start_ping_process(dst_ip, ICMP_REPLY)
+
+    def start_ping_process(self, ip_address, opcode=ICMP_REQUEST):
+        """
+        Starts sending a ping to another computer.
+        :param ip_address: an `IPAddress` object to ping.
+        :return: None
+        """
+        self.start_process(SendPing, ip_address, opcode)
 
     def is_for_me(self, packet):
         """
@@ -389,7 +396,7 @@ class Computer:
         """
         dst_ip = offer_ip
         session_interface.send_with_ethernet(client_mac,
-                                             IP(session_interface.ip, dst_ip,
+                                             IP(session_interface.ip, dst_ip, TTLS[self.os],
                                                 UDP(DHCP_SERVER_PORT, DHCP_CLIENT_PORT,
                                                     DHCP(DHCP_OFFER, DHCPData(offer_ip, None, None)))))
 
@@ -402,8 +409,9 @@ class Computer:
         :return: None
         """
         dst_ip = IPAddress.broadcast()
+        src_ip = IPAddress.no_address()
         session_interface.send_with_ethernet(server_mac,
-                                             IP(session_interface.ip, dst_ip,
+                                             IP(src_ip, dst_ip, TTLS[self.os],
                                                 UDP(DHCP_CLIENT_PORT, DHCP_SERVER_PORT,
                                                     DHCP(DHCP_REQUEST, DHCPData(None, None, None)))))
 
@@ -417,9 +425,18 @@ class Computer:
         """
         dst_ip = dhcp_data.given_ip
         session_interface.send_with_ethernet(client_mac,
-                                             IP(session_interface.ip, dst_ip,
+                                             IP(session_interface.ip, dst_ip, TTLS[self.os],
                                                 UDP(DHCP_SERVER_PORT, DHCP_CLIENT_PORT,
                                                     DHCP(DHCP_PACK, dhcp_data))))
+
+    def validate_dhcp_given_ip(self, ip_address):
+        """
+        This is for future implementation if you want, for now it is not doing anything, just making sure that no two
+        interfaces get the same IP address.
+        :param ip_address: an IPAddress object.
+        :return: theoretically, whether or not the interface approves of the address given to it by DHCP server.
+        """
+        return not any(interface.has_this_ip(ip_address) for interface in self.interfaces)
 
     # ------------------------- v process related methods v ----------------------------------------------------
 
@@ -549,7 +566,7 @@ class Computer:
                     self.packets_sniffed += 1
 
                 if "ARP" in packet:
-                    self._handle_arp(packet, interface)
+                    self._handle_arp(packet)
 
                 if "ICMP" in packet:
                     self._handle_ping(packet)
@@ -564,88 +581,3 @@ class Computer:
     def __str__(self):
         """a simple string representation of the computer"""
         return f"{self.name}"
-
-
-RoutingTableItem = namedtuple("RoutingTableItem", "ip_address interface_ip")
-"""
-a routing table item.
-ip_address is the IP address to send the packet to (on the second layer) - the gateway
-interface is the IPAddress of the interface the packet should be sent on.
-"""
-
-
-class RoutingTable:
-    """
-    This is a routing table, it acts like a dictionary except that the keys are not checking equlity, but rather they are
-    checking if the IPAddresses are in the same subnet. (so if the IPAddress that is given fits the network destination and netmask in the key)
-
-    The class is based on an `OrderedDict` because the order matters in a routing table!
-    """
-    def __init__(self, initial_dictionary, default_gateway=None):
-        """
-        Initiates the RoutingTable from a dictionary of {IPAddress: RoutingTableItem}
-        :param initial_dictionary: `dict` or list of tuples.
-        :param default_gateway: a default `RoutingTableItem` that
-        """
-        self.dictionary = OrderedDict(initial_dictionary)
-        self.default_gateway = default_gateway
-
-    @classmethod
-    def create_default(cls, computer):
-        """
-        This is a constructor class method.
-        Creates a default routing table for a given `Computer`.
-        :param computer: a `Computer` object.
-        :return: a `RoutingTable` object.
-        """
-        try:
-            main_interface = computer.get_interface_with_ip()
-        except NoSuchInterfaceError:
-            return cls({})    # if there is no interface with an IP address
-        gateway = main_interface.ip.expected_gateway()  # the expected IP address of a gateway in that subnet.
-        dictionary = [
-            (IPAddress("0.0.0.0/0"), RoutingTableItem(gateway, main_interface.ip)),
-            *[
-                (interface.ip.subnet(),RoutingTableItem(
-                    interface.ip.subnet().expected_gateway(),
-                    IPAddress.copy(interface.ip)
-                 )) for interface in computer.interfaces if interface.has_ip()
-            ],
-            (IPAddress("255.255.255.255/32"), RoutingTableItem(gateway, main_interface.ip)),
-        ]
-        return cls(OrderedDict(dictionary), RoutingTableItem(gateway, main_interface.ip))
-
-    def __getitem__(self, item):
-        """allows the dictionary notation of dict[key] """
-        if not isinstance(item, IPAddress):
-            raise InvalidAddressError("Key of a routing table must be an IPAddress object!!!")
-
-        for destination_address in reversed(self.dictionary):  # the begging is the default and we use the first one (from the bottom) that fits for us.
-            if destination_address.is_same_subnet(item):  # if the item (which is a dst ip) fits this subnet and subnet mask
-                return self.dictionary[item]
-        return self.default_gateway
-
-    def __setitem__(self, key, value):
-        """allows the dictionary notation of dict[key] = value """
-        if not isinstance(key, IPAddress):
-            raise InvalidAddressError("Key of a routing table must be an IPAddress object!!!")
-
-        if key == IPAddress("0.0.0.0/0"):
-            self.default_gateway = value
-
-        self.dictionary[key] = value
-
-    def __str__(self):
-        """string representation of the routing table"""
-        return f"RoutingTable({self.dictionary}, default={self.default_gateway})"
-
-    def __repr__(self):
-        """allows a route print"""
-        return f"""
-====================================================================
-Active Routes:
-Network Destination        Gateway        Interface  
-{linesep.join(''.join([repr(key).rjust(16, ' '), str(self.dictionary[key].ip_address).rjust(16, ' '), str(self.dictionary[key].interface_ip).rjust(16, ' ')]) for key in self.dictionary)}	
-Default Gateway:        {self.default_gateway.ip_address}
-===================================================================
-"""

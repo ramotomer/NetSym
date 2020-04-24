@@ -91,10 +91,8 @@ class SendPing(Process):
         if not self.computer.has_ip():
             raise NoIPAddressError("The sending computer has no IP address!!!")
 
-        sending_interfaces = self.computer.decide_sending_interface(ip_for_the_mac)
         dst_mac = self.computer.arp_cache[ip_for_the_mac].mac
-        for interface in sending_interfaces:
-            interface.ping_to(dst_mac, self.dst_ip, self.ping_opcode)
+        self.computer.send_ping_to(dst_mac, self.dst_ip, self.ping_opcode)
 
     def code(self):
         """
@@ -107,11 +105,11 @@ class SendPing(Process):
             if self.computer.gateway is None: # network is totally unreachable
                 return
 
-        ip_for_the_mac = self.dst_ip if not self.is_sending_to_gateway else self.computer.gateway
+        ip_for_the_mac = self.computer.routing_table[self.dst_ip].ip_address
         # ^ the IP we use to get our destination MAC address
 
         while ip_for_the_mac not in self.computer.arp_cache:
-            self.computer.request_address(ip_for_the_mac)
+            self.computer.send_arp_to(ip_for_the_mac)
             yield WaitingFor(arp_reply_from(ip_for_the_mac), NoNeedForPacket())
 
         self._send_the_ping(ip_for_the_mac)
@@ -150,6 +148,14 @@ class ReturnedPacket:
         except StopIteration:
             raise NoSuchPacketError("All of the packets were requested from this object already!!")
 
+    @property
+    def packet_and_interface(self):
+        """
+        just like `self.packet` but returns a tuple of (packet, interface) [actually (packet, self.packets[packet])
+        :return:
+        """
+        packet = self.packet
+        return packet, self.packets[packet]
 
 class NoNeedForPacket(ReturnedPacket):
     """

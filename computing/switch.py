@@ -29,7 +29,7 @@ class Switch(Computer):
         :param name: a string that will be the name of the switch. If `None`, it is randomized.
         """
         super(Switch, self).__init__(name, OS_LINUX, None,
-                                     Interface(OS_LINUX, MACAddress.randomac(), name="eth0"))
+                                     Interface(MACAddress.randomac(), name="eth0"))
 
         self.is_hub = False
 

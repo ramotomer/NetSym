@@ -4,6 +4,7 @@ from exceptions import *
 from consts import *
 from packets.dhcp import DHCPData
 from address.ip_address import IPAddress
+from computing.routing_table import RoutingTable
 
 
 def dhcp_for(mac_addresses):
@@ -29,52 +30,48 @@ class DHCPClient(Process):
 
     # __init__ is inherited from the parent class
 
-    def update_interface_from_dhcp_pack(self, interface, dhcp_pack_returned_packet):
+    def update_routing_table(self, session_interface, dhcp_pack):
         """
-        Receives a `ReturnedPacket` object with a DHCP_PACK packet and receives an interface. updates the details of the
-        interface by the information of the DHCP_PACK (ip, gateway and dns server)
-        :param interface: The interface of the computer that operated the communication to the server
-        :param dhcp_pack_returned_packet: a `ReturnedPacket` obejct with the DHCP_PACK packet inside
+        Receive the interface that runs the session with the server and the DHCP pack packet that it sent,
+        update the routing table accordingly.
+        :param session_interface: an `Interface` object.
+        :param dhcp_pack: a `Packet` object that contains DHCP.
         :return: None
         """
-        dhcp_pack = dhcp_pack_returned_packet.packet
-        interface.ip, self.computer.default_gateway, _ = dhcp_pack["DHCP"].data
+        session_interface.ip = dhcp_pack["DHCP"].data.given_ip
+        self.computer.routing_table = RoutingTable.create_default(self.computer)
+        self.computer.default_gateway = dhcp_pack["DHCP"].data.given_gateway
         self.computer.graphics.update_text()
-        # TODO: when implementing dns servers, change the _ to something like `sending_interface.dns_server`
 
-    def validate_offer(self, dhcp_offer_packet):
+    def validate_offer(self, dhcp_offer):
         """
-        Receives a `ReturnedPacket` namedtuple (from the 'process.py' file), parses it, validates it and returns the details about it.
-        :return: a tuple with the following details: (<the mac of the server>, <the interface the packet was received from>)
+        Receives a `Packet` parses it, validates it and returns the server MAC address.
+        :return: a `MACAddress` object.
         """
-        dhcp_offer = dhcp_offer_packet.packet
         server_mac = dhcp_offer["Ethernet"].src_mac
         offered_ip = dhcp_offer["DHCP"].data.given_ip
-        sending_interface = get_the_one(self.computer.interfaces, lambda i: i.mac == dhcp_offer["Ethernet"].dst_mac,
-                                        NoSuchInterfaceError)
-        if not sending_interface.validate_DHCP_given_ip(offered_ip):
-            # if in the future you add actually `validate_DHCP_given_ip`, maybe change this raising (so you wont crash)
-            raise AddressError("did not validate IP from DHCP server!")
-        return server_mac, sending_interface
+        if not self.computer.validate_dhcp_given_ip(offered_ip):
+            raise AddressError("did not validate IP from DHCP server!!! (probably two interfaces have the same address)")
+        return server_mac
 
     def code(self):
         """
         This is main code of the DHCP client.
         :return: None
         """
-        for interface in self.computer.interfaces:
-            interface.send_dhcp_discover()
-        dhcp_offer_packet = ReturnedPacket()
-        yield WaitingFor(dhcp_for(self.computer.macs), dhcp_offer_packet)
+        self.computer.send_dhcp_discover()
+        dhcp_offer = ReturnedPacket()
+        yield WaitingFor(dhcp_for(self.computer.macs), dhcp_offer)
 
-        server_mac, sending_interface = self.validate_offer(dhcp_offer_packet)
+        packet, session_interface = dhcp_offer.packet_and_interface
+        server_mac = self.validate_offer(packet)
 
-        sending_interface.send_dhcp_request(server_mac)
-        dhcp_pack_packet = ReturnedPacket()
-        yield WaitingFor(dhcp_for([sending_interface.mac]), dhcp_pack_packet)
+        self.computer.send_dhcp_request(server_mac, session_interface)
+        dhcp_pack = ReturnedPacket()
+        yield WaitingFor(dhcp_for([session_interface.mac]), dhcp_pack)
 
-        self.update_interface_from_dhcp_pack(sending_interface, dhcp_pack_packet)
-        sending_interface.arp_grat()
+        self.update_routing_table(session_interface, dhcp_pack.packet)
+        self.computer.arp_grat(session_interface)
 
     def __repr__(self):
         """The string representation of the the process"""
@@ -115,13 +112,12 @@ class DHCPServer(Process):
         :param request_packet: a `ReturnedPacket` with the packet.
         """
         client_mac = request_packet["Ethernet"].src_mac
-        sending_interface = interface
 
         ip = self.in_session_with[client_mac]
-        gateway = self.default_gateway.same_subnet_interfaces(sending_interface.ip)[0].ip
-        dns_server = None   # TODO: change this for serving DNS in the future!
+        gateway = self.interface_to_dhcp_data[interface].given_gateway
+        dns_server = None
 
-        sending_interface.send_dhcp_pack(client_mac, DHCPData(ip, gateway, dns_server))
+        self.computer.send_dhcp_pack(client_mac, DHCPData(ip, gateway, dns_server), interface)
         del self.in_session_with[client_mac]
 
     def send_offer(self, discover_packet, interface):
@@ -131,11 +127,11 @@ class DHCPServer(Process):
         :param discover_packet: a `Packet` object which is a `DHCP_DISCOVER`
         :param interface: the `Interface` that is currently serving the DHCP.
         """
-        client_mac, dst_mac = discover_packet["Ethernet"].src_mac, discover_packet["Ethernet"].dst_mac
+        client_mac = discover_packet["Ethernet"].src_mac
         offered = self.offer_ip(interface)
 
         self.in_session_with[client_mac] = IPAddress.copy(offered)
-        interface.send_dhcp_offer(client_mac, offered)
+        self.computer.send_dhcp_offer(client_mac, offered, interface)
 
     def offer_ip(self, interface):
         """
@@ -146,7 +142,7 @@ class DHCPServer(Process):
         try:
             offered = self.interface_to_dhcp_data[interface].given_ip
             offered.increase()
-            return offered
+            return IPAddress.copy(offered)
         except KeyError:  # if the interface was created after the start of this process.
             if not interface.has_ip():
                 raise AddressError("The interface cannot serve DHCP because it has no IP address!")
@@ -162,10 +158,8 @@ class DHCPServer(Process):
         while True:
             received_packets = ReturnedPacket()
             yield WaitingFor(lambda p: "DHCP" in p, received_packets)
-            counter = 0
             for packet, interface in received_packets.packets.items():
                 self.actions.get(packet["DHCP"].opcode, self.unknown_packet)(packet, interface)
-                counter += 1
 
     def __repr__(self):
         """The string representation of the the process"""

@@ -72,6 +72,7 @@ class PacketGraphics(ImageGraphics):
                 ARP_REPLY: ARP_REPLY_IMAGE,
                 ARP_GRAT: ARP_GRAT_IMAGE,
             },
+            "UDP": UDP_IMAGE,
             "DHCP": {
                 DHCP_DISCOVER: DHCP_DISCOVER_IMAGE,
                 DHCP_OFFER: DHCP_OFFER_IMAGE,

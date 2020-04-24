@@ -28,7 +28,7 @@ DEFAULT_FONT_SIZE = 10
 
 FRAME_RATE = 1 / 60.0
 
-DEFAULT_CONNECTION_SPEED = 400  # pixels / second
+DEFAULT_CONNECTION_SPEED = 300  # pixels / second
 DEFAULT_CONNECTION_LENGTH = 100  # pixels
 
 SENDING_GRAT_ARPS = False
@@ -73,6 +73,7 @@ DHCP_DISCOVER_IMAGE = "dhcp_discover.png"
 DHCP_OFFER_IMAGE = "dhcp_offer.png"
 DHCP_REQUEST_IMAGE = "dhcp_request.png"
 DHCP_PACK_IMAGE = "dhcp_pack.png"
+UDP_IMAGE = "udp_packet.png"
 
 COMPUTER_IMAGE = "endpoint.png"
 SWITCH_IMAGE = "switch.png"
@@ -94,6 +95,7 @@ BROADCAST_MAC = 'ff:ff:ff:ff:ff:ff'
 DEFAULT_COMPUTER_IP = "192.168.1.2/24"
 DHCP_CLIENT_PORT = 68
 DHCP_SERVER_PORT = 67
+ON_LINK = "On-link"
 
 INTERFACE_NAMES = [line.strip() for line in open(FILES.format("interface_names.txt")).readlines()]
 COMPUTER_NAMES = [line.strip() for line in open(FILES.format("computer_names.txt")).readlines()]

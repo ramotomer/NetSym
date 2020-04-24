@@ -355,7 +355,7 @@ class UserInterface:
         :return: None
         """
         if computer1.has_ip() and computer2.has_ip():
-            computer1.ping_to(computer2.get_ip())
+            computer1.start_ping_process(computer2.get_ip())
 
     def send_random_ping(self):
         """
@@ -365,7 +365,7 @@ class UserInterface:
         try:
             sending_computer = random.choice([computer for computer in self.computers if computer.has_ip()])
             receiving_computer = random.choice([computer for computer in self.computers if computer is not sending_computer and computer.has_ip()])
-            sending_computer.ping_to(receiving_computer.get_ip())
+            sending_computer.start_ping_process(receiving_computer.get_ip())
         except IndexError:
             pass
 
@@ -531,7 +531,7 @@ class UserInterface:
         """
         switch = get_the_one(self.computers, lambda c: isinstance(c, Switch) and c.has_ip(), NetworkSimulationError)
         pinger = random.choice([computer for computer in self.computers if computer is not switch])
-        pinger.ping_to(switch.get_ip())
+        pinger.start_ping_process(switch.get_ip())
 
     def ask_for_dhcp(self):
         """

@@ -29,24 +29,24 @@ class RoutePacket(Process):
         super(RoutePacket, self).__init__(computer)
         self.packet = packet
 
-    def _packet_details(self):
+    def _is_packet_routable(self):
         """
-        Returns details about the packet;
-        - is it routable? (does it have an IP layer, do we have where to route it to etc...)
-        - what is the packet's dst IP address
-        - what interfaces should it be sent on?
-
-        :return: a tuple (is_routable, packet_dst_ip, interfaces_to_route_it_to) types: (bool, IPAddress, list of Interface objecs)
+        Checks the given packet and make sure that it is valid and can be routed.
+        :return:
         """
-        if "IP" not in self.packet:
-            return False, None, None
+        if not self.packet.is_valid() or "IP" not in self.packet:
+            return False
 
-        dst_ip = self.packet["IP"].dst_ip
-        if self.computer.has_this_ip(dst_ip):
-            return False, dst_ip, None  # packets that are for this router are not routable!
+        if self.packet["IP"].dst_ip is None or self.packet["IP"].src_ip is None:
+            return False
 
-        sending_interfaces = self.computer.decide_routing_interface(self.packet["IP"].src_ip, dst_ip)
-        return bool(sending_interfaces), dst_ip, sending_interfaces
+        if "0.0.0.0" in [self.packet["IP"].dst_ip.string_ip, self.packet["IP"].src_ip.string_ip]:
+            return False
+
+        if self.packet["IP"].src_ip.is_broadcast():
+            return False
+
+        return True
 
     def _decrease_ttl(self):
         """
@@ -55,8 +55,7 @@ class RoutePacket(Process):
         """
         sender_ip = self.packet["IP"].src_ip
         if self.packet["IP"].ttl == 0:
-            for interface in self.computer.decide_sending_interface(sender_ip):
-                interface.ping_to(self.computer.arp_cache[sender_ip].mac, sender_ip, ICMP_TIME_EXCEEDED)
+            self.computer.send_ping_to(self.computer.arp_cache[sender_ip].mac, sender_ip, ICMP_TIME_EXCEEDED)
             return True
 
         self.packet["IP"].ttl -= 1
@@ -69,20 +68,20 @@ class RoutePacket(Process):
 
         :return: a generator that yields `WaitingFor` namedtuple-s.
         """
-        is_routable, dst_ip, sending_interfaces = self._packet_details()
-        if not is_routable:
+        if not self._is_packet_routable():
             return
 
+        dst_ip = self.packet["IP"].dst_ip
         time_exceeded = self._decrease_ttl()
 
         if not time_exceeded:
             while dst_ip not in self.computer.arp_cache:
-                self.computer.request_address(dst_ip)  # ARP
+                self.computer.send_arp_to(dst_ip)
                 yield WaitingFor(arp_reply_from(dst_ip), NoNeedForPacket())
 
             dst_mac = self.computer.arp_cache[dst_ip].mac
-            for interface in sending_interfaces:
-                interface.send(interface.ethernet_wrap(dst_mac, self.packet["IP"]))
+            interface = self.computer.get_interface_with_ip(self.computer.routing_table[dst_ip].interface_ip)
+            interface.send_with_ethernet(dst_mac, self.packet["IP"])
 
     def __repr__(self):
         """The string representation of the process"""
@@ -102,7 +101,6 @@ class Router(Computer):
         """
         super(Router, self).__init__(name, OS_SOLARIS, None, *interfaces)
 
-        # self.routing_table = {IPAddress("0.0.0.0/0"): self.gateway}
         self.last_route_check = time.time()
 
         self.start_dhcp_server = is_dhcp_server
@@ -126,12 +124,8 @@ class Router(Computer):
         self.last_route_check = time.time()
 
         for packet, _, _ in new_packets:
-            self.start_process(RoutePacket, packet)
-
-    def decide_routing_interface(self, src_ip, dst_ip):
-        """"""
-        interfaces = self.decide_sending_interface(dst_ip)
-        return [interface for interface in interfaces if not (interface.has_ip() and interface.ip.is_same_subnet(src_ip))]
+            if "IP" in packet and not self.has_this_ip(packet["IP"].dst_ip) and "DHCP" not in packet:
+                self.start_process(RoutePacket, packet)
 
     def logic(self):
         """Adds to the original logic of the Computer the ability to route packets."""
@@ -139,9 +133,10 @@ class Router(Computer):
 
         self.route_new_packets()
 
-        if self.start_dhcp_server:  # start the process of serving DHCP
+        if self.start_dhcp_server:  # start the process of serving DHCP, do it once
             self.start_process(DHCPServer, self)
             self.start_dhcp_server = False
+            debugp(f"my routing table: {self.routing_table!r}")
 
     def __repr__(self):
         """The string representation of the Router"""

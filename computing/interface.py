@@ -70,15 +70,7 @@ class Interface:
         :param ip_address: IPAddress
         :return: boolean
         """
-        return self.ip == ip_address
-
-    def validate_DHCP_given_ip(self, ip_address):
-        """
-        This is for future implementation if you want, for now it is not doing anything.
-        :param ip_address: an IPAddress object.
-        :return: theoretically, whether or not the interface approves of the address given to it by DHCP server.
-        """
-        return isinstance(ip_address, IPAddress) and self is self
+        return self.has_ip() and self.ip == ip_address
 
     def is_connected(self):
         """Returns whether the interface is connected or not"""
@@ -168,4 +160,4 @@ class Interface:
 
     def __repr__(self):
         """The string representation of the Interface"""
-        return f"Interface(name={self.name}, mac={self.mac}, ip={self.ip}, os={self.os})"
+        return f"Interface(name={self.name}, mac={self.mac}, ip={self.ip})"

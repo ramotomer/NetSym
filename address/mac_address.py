@@ -17,7 +17,7 @@ class MACAddress:
         :param string_mac: The string mac ('aa:bb:cc:11:22:76' for example)
         """
         if not MACAddress.is_valid(string_mac):
-            raise InvalidAddressError(INVALID_MAC_ADDRESS)
+            raise InvalidAddressError(f"This address is not a valid MAC address: {string_mac}")
         self.string_mac = string_mac
         self.__class__.generated_addresses.append(string_mac)
         self.vendor = MAC_ADDRESS_SEPARATOR.join(string_mac.split(MAC_ADDRESS_SEPARATOR)[0:3])
