@@ -83,6 +83,7 @@ class PacketGraphics(ImageGraphics):
                 ICMP_REQUEST: ICMP_REQUEST_IMAGE,
                 ICMP_REPLY: ICMP_REPLY_IMAGE,
                 ICMP_TIME_EXCEEDED: ICMP_TIME_EXCEEDED_IMAGE,
+                ICMP_UNREACHABLE: ICMP_UNREACHABLE_IMAGE,
             },
         }
 

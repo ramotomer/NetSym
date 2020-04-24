@@ -550,9 +550,9 @@ class UserInterface:
         print(f"selected object: {self.selected_object}, dragged: {self.dragged_object}")
         print(f"mouse: {MainWindow.main_window.get_mouse_location()}")
         print(f"""computers, {len(self.computers)}, connections, {len(self.connection_data)}, packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}""")
-        # print(f"running processes: {[waiting_process.process for waiting_process in reduce(concat, [computer.waiting_processes for computer in self.computers])]}\n")
+        print(f"running processes: {[waiting_process.process for waiting_process in reduce(concat, [computer.waiting_processes for computer in self.computers])]}\n")
         if self.selected_object is not None and self.selected_object.is_computer:
-            print((self.selected_object.computer.routing_table))
+            print(repr(self.selected_object.computer.routing_table))
 
     def create_computer_with_ip(self):
         """

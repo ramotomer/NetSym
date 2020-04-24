@@ -173,7 +173,9 @@ class IPAddress:
         return returned
 
     def __eq__(self, other):
-        """Test whether two ip addresses are equal or not"""
+        """Test whether two ip addresses are equal or not (does no include subnet mask)"""
+        if other is None:
+            return False
         return self.string_ip == other.string_ip
 
     def __hash__(self):

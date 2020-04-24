@@ -61,6 +61,23 @@ class RoutePacket(Process):
         self.packet["IP"].ttl -= 1
         return False
 
+    def _destination_unreachable(self):
+        """
+        Tests if the destination of the packet is unreachable. If it is, send an `ICMP_UNREACHABLE` and return True.
+        If not, return False
+        :return: `bool`
+        """
+
+        dst_ip = self.packet["IP"].dst_ip
+        sender_ip = self.packet["IP"].src_ip
+        debugp(f"is dest unreachable? {self.computer.routing_table[dst_ip]} is {self.computer.routing_table.default_gateway.ip_address}")
+
+        if self.computer.routing_table[dst_ip].ip_address == self.computer.routing_table.default_gateway.ip_address and \
+                self.computer.routing_table.default_gateway.ip_address is None:
+            self.computer.send_ping_to(self.computer.arp_cache[sender_ip].mac, self.packet["IP"].src_ip, ICMP_UNREACHABLE)
+            return True
+        return False
+
     def code(self):
         """
         Receives the packet in the constructor, routes it to the correct subnet (the correct interface of the router).
@@ -69,6 +86,9 @@ class RoutePacket(Process):
         :return: a generator that yields `WaitingFor` namedtuple-s.
         """
         if not self._is_packet_routable():
+            return
+
+        if self._destination_unreachable():
             return
 
         dst_ip = self.packet["IP"].dst_ip
@@ -100,10 +120,11 @@ class Router(Computer):
         Initiates a router with no IP addresses.
         """
         super(Router, self).__init__(name, OS_SOLARIS, None, *interfaces)
+        self.set_default_gateway(None, None)
 
         self.last_route_check = time.time()
 
-        self.start_dhcp_server = is_dhcp_server
+        self.is_dhcp_server = is_dhcp_server
 
     def show(self, x, y):
         """
@@ -133,10 +154,8 @@ class Router(Computer):
 
         self.route_new_packets()
 
-        if self.start_dhcp_server:  # start the process of serving DHCP, do it once
+        if self.is_dhcp_server and not self._is_process_running(DHCPServer):
             self.start_process(DHCPServer, self)
-            self.start_dhcp_server = False
-            debugp(f"my routing table: {self.routing_table!r}")
 
     def __repr__(self):
         """The string representation of the Router"""
