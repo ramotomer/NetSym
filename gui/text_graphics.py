@@ -11,7 +11,15 @@ class Text(GraphicsObject):
     time the screen is updated (like it was before) the program crashes and says it is out of memory.
     Apparently pyglet is having a lot of trouble drawing text.
     """
-    def __init__(self, text, x, y, parent_graphics=None, padding=(0, DEFAULT_TEXT_Y_PADDING), is_button=False, start_hidden=False, max_width=WINDOW_WIDTH, font_size=DEFAULT_FONT_SIZE):
+    def __init__(self, text, x, y,
+                 parent_graphics=None,
+                 padding=(0, DEFAULT_TEXT_Y_PADDING),
+                 is_button=False,
+                 start_hidden=False,
+                 max_width=WINDOW_WIDTH,
+                 font_size=DEFAULT_FONT_SIZE,
+                 align='center',
+                 color=WHITE):
         """
         Initiates a new `Text` object.
         A `Text` object can have a parent `GraphicsObject` which it will set its coordinates according to it. (if it
@@ -28,6 +36,8 @@ class Text(GraphicsObject):
         :param is_button:  whether or not this text is on a button (for `hide` and `show` of buttons)
         :param start_hidden:  whether or not to start off hidden.
         :param max_width:  The maximum length that this text is allowed to reach in one line.
+        :param font_size: THE FONT SIZE!!!!!!!!!!!!!!!
+        :param color: the text color- defaults to white.
         """
         super(Text, self).__init__(x, y, centered=True)
         self._text = text
@@ -37,6 +47,8 @@ class Text(GraphicsObject):
         self.is_hidden = start_hidden
         self.max_width = max_width
         self.font_size = font_size
+        self.align = align
+        self.color = color
 
         self.label = None
         self.set_text(text)
@@ -57,8 +69,9 @@ class Text(GraphicsObject):
                                        font_name=DEFAULT_FONT,
                                        font_size=self.font_size,
                                        x=self.x + self.x_padding, y=(self.y + self.y_padding),
+                                       color=self.color + (255,),
                                        anchor_x='center', anchor_y='top',
-                                       align='center')
+                                       align=self.align)
 
         self.label.width = self.max_width
         self.label.multiline = True
@@ -71,6 +84,20 @@ class Text(GraphicsObject):
         """
         if not self.is_hidden:
             self.label.draw()
+
+    def show(self):
+        """
+        Shows the text if it is hidden
+        :return: None
+        """
+        self.is_hidden = False
+
+    def hide(self):
+        """
+        Hides the text if it is showing.
+        :return: None
+        """
+        self.is_hidden = True
 
     def move(self):
         """

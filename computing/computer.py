@@ -120,12 +120,10 @@ class Computer:
     def print(self, string):
         """
         Prints out a string to the computer output.
-        Should be to a CLI that will be on the side of the screen when a computer is viewed. (currently not implemented)
         :param string: The stirng to print.
         :return: None
         """
-        print(f"{self.name}: {string}")
-        # probably will be changed in the future
+        self.graphics.child_graphics_objects.console.write(string)
 
     def available_interface(self, ip_address=None):
         """

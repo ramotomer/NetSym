@@ -1,10 +1,8 @@
 from computing.process import Process, WaitingFor, ReturnedPacket
-from usefuls import get_the_one
 from exceptions import *
 from consts import *
 from packets.dhcp import DHCPData
 from address.ip_address import IPAddress
-from computing.routing_table import RoutingTable
 
 
 def dhcp_for(mac_addresses):
@@ -60,6 +58,7 @@ class DHCPClient(Process):
         This is main code of the DHCP client.
         :return: None
         """
+        self.computer.print("Asking For DHCP...")
         self.computer.send_dhcp_discover()
         dhcp_offer = ReturnedPacket()
         yield WaitingFor(dhcp_for(self.computer.macs), dhcp_offer)
@@ -73,6 +72,7 @@ class DHCPClient(Process):
 
         self.update_routing_table(session_interface, dhcp_pack.packet)
         self.computer.arp_grat(session_interface)
+        self.computer.print("Got Address from DHCP!")
 
     def __repr__(self):
         """The string representation of the the process"""
@@ -99,7 +99,7 @@ class DHCPServer(Process):
         # ^ a mapping for each interface of the server to a data that it packs for its clients.
         self.update_server_data()
 
-        self.in_session_with = {}  # mac : offered_ip
+        self.in_session_with = {}  # {mac : offered_ip}
 
         self.actions = {DHCP_DISCOVER: self.send_offer, DHCP_REQUEST: self.send_pack}
         # ^ a dictionary of what to do with any packet that is received to this process.

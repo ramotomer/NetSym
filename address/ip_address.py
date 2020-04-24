@@ -80,7 +80,10 @@ class IPAddress:
         self.string_ip = increased.string_ip
 
     def expected_gateway(self):
-        """Returns the expected IP address of this subnet (for example if this IP is 192.168.1.5/24 it will return 192.168.1.1)"""
+        """
+        Returns the expected IP address of this subnet (for example if this IP is 192.168.1.5/24 it will return 192.168.1.1)
+        :return: an `IPAddress` object.
+        """
         splitted = self.string_ip.split(IP_ADDRESS_SEPARATOR)
         splitted[3] = '1'
         return self.__class__(IP_ADDRESS_SEPARATOR.join(splitted) + '/' + str(self.subnet_mask))

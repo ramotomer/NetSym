@@ -1,7 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from exceptions import *
 from gui.main_loop import MainLoop
-from consts import *
 
 
 class GraphicsObject(metaclass=ABCMeta):

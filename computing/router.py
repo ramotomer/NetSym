@@ -155,6 +155,7 @@ class Router(Computer):
         self.route_new_packets()
 
         if self.is_dhcp_server and not self._is_process_running(DHCPServer):
+            self.print("Started serving DHCP...")
             self.start_process(DHCPServer, self)
 
     def __repr__(self):

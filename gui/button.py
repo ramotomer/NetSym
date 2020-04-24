@@ -58,14 +58,14 @@ class Button(GraphicsObject):
         Hides the button so it cannot be pressed or seen
         """
         self.is_hidden = True
-        self.child_graphics_objects.text.is_hidden = True
+        self.child_graphics_objects.text.hide()
 
     def show(self):
         """
         Shows the button again if it was hidden, allows it to be pressed regularly.
         """
         self.is_hidden = False
-        self.child_graphics_objects.text.is_hidden = False
+        self.child_graphics_objects.text.show()
 
     def draw(self):
         """

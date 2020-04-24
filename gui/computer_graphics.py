@@ -3,9 +3,10 @@ from consts import *
 from gui.text_graphics import Text
 from os import linesep
 from collections import namedtuple
+from gui.console import Console
 
 
-ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "text")
+ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "text console")
 
 
 class ComputerGraphics(ImageGraphics):
@@ -25,7 +26,10 @@ class ComputerGraphics(ImageGraphics):
         super(ComputerGraphics, self).__init__(IMAGES.format(image), x, y, centered=True, is_in_background=True)
         self.is_computer = True
         self.computer = computer
-        self.child_graphics_objects = ChildGraphicsObjects(Text(self.generate_text(), self.x, self.y, self))
+        self.child_graphics_objects = ChildGraphicsObjects(
+            Text(self.generate_text(), self.x, self.y, self),
+            Console(CONSOLE_X, CONSOLE_Y),
+        )
 
     def generate_text(self):
         """

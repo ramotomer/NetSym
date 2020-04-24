@@ -21,8 +21,18 @@ from gui.main_window import MainWindow
 from gui.shape_drawing import draw_pause_rectangles, draw_rect
 
 
-ObjectView = namedtuple("ObjectView", "sprite text")
+ObjectView = namedtuple("ObjectView", "sprite text viewed_object")
+"""
+A data structure to represent the current viewing of a GraphicsObject on the side window in VIEW_MODE
+- sprite is the little image that is shown
+- text is a `Text` object of the information about the object
+- viewed_object is a reference to the GraphicsObject thats viewed. 
+"""
+
 ConnectionData = namedtuple("ConnectionData", "connection computer1 computer2")
+"""
+A way to save the connection on the screen together with the computers they are connected to.
+"""
 
 
 class UserInterface:
@@ -163,10 +173,11 @@ class UserInterface:
 
         if graphics_object.is_computer:
             info = graphics_object.generate_view_text()
+            graphics_object.child_graphics_objects.console.show()
 
         if graphics_object.is_packet:
             info = self.packet_from_graphics_object(graphics_object).multiline_repr()
-        self.object_view = ObjectView(copied_sprite, Text(info, *VIEWING_TEXT_COORDINATES, max_width=SIDE_WINDOW_WIDTH))
+        self.object_view = ObjectView(copied_sprite, Text(info, *VIEWING_TEXT_COORDINATES, max_width=SIDE_WINDOW_WIDTH), graphics_object)
 
     def view_selected_object(self):
         """
@@ -182,6 +193,10 @@ class UserInterface:
         """
         if self.object_view is not None:
             MainLoop.instance.unregister_graphics_object(self.object_view.text)
+
+            if self.object_view.viewed_object.is_computer:
+                self.object_view.viewed_object.child_graphics_objects.console.hide()
+
             self.object_view = None
 
     def initiate_buttons(self):
@@ -550,9 +565,14 @@ class UserInterface:
         print(f"selected object: {self.selected_object}, dragged: {self.dragged_object}")
         print(f"mouse: {MainWindow.main_window.get_mouse_location()}")
         print(f"""computers, {len(self.computers)}, connections, {len(self.connection_data)}, packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}""")
-        print(f"running processes: {[waiting_process.process for waiting_process in reduce(concat, [computer.waiting_processes for computer in self.computers])]}\n")
+        print(f"running processes: ", end='')
+        for computer in self.computers:
+            procs = [f"{wp.process} of {computer}" for wp in computer.waiting_processes]
+            print(procs if procs else '', end=' ')
+        print()
         if self.selected_object is not None and self.selected_object.is_computer:
             print(repr(self.selected_object.computer.routing_table))
+            self.selected_object.computer.print("------------DEBUG------------------")
 
     def create_computer_with_ip(self):
         """

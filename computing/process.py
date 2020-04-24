@@ -25,7 +25,7 @@ def arp_reply_from(ip_address):
 
 def ping_reply_from(ip_address):
     """Returns a function that tests if the packet given to it is a ping reply for the `ip_address`"""
-    return lambda p: (ICMP in p) and (p["ICMP"].opcode == ICMP_REPLY) and (p["IP"].src_ip == ip_address)
+    return lambda p: ("ICMP" in p) and (p["ICMP"].opcode == ICMP_REPLY) and (p["IP"].src_ip == ip_address)
 
 
 class Process(metaclass=ABCMeta):
@@ -115,9 +115,11 @@ class SendPing(Process):
         self._send_the_ping(ip_for_the_mac)
 
         if self.ping_opcode == ICMP_REQUEST:
+            self.computer.print(f"pinging {self.dst_ip} with some bytes")
+
             ping_reply_returned_packet = ReturnedPacket()
             yield WaitingFor(ping_reply_from(self.dst_ip), ping_reply_returned_packet)
-            # self.computer.print(f"ping reply! {ping_reply_returned_packet.packet.multiline_repr()}")
+            self.computer.print("ping reply!")
 
     def __repr__(self):
         """The string representation of the SendPing process"""
