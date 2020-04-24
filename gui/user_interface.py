@@ -479,13 +479,12 @@ class UserInterface:
             else:
                 interface_name, new_ip = user_input.split(', ')
 
-            interface = get_the_one(computer.interfaces, lambda i: i.name == interface_name, NoSuchInterfaceError)
             try:
-                interface.ip = IPAddress(new_ip)
+                computer.set_ip(interface_name, new_ip)
             except InvalidAddressError:
                 print("You have entered an invalid address!!!")
-
-            self.selected_object.update_text()
+            except NoSuchInterfaceError:
+                print("The name you have entered fits no interface!")
 
     def ask_user_for_ip(self):
         """
@@ -547,11 +546,13 @@ class UserInterface:
         Prints out lots of useful information for debugging.
         :return: None
         """
-        print(f"is paused? {self.is_paused}")
-        print(f"graphicsObject-s: {MainLoop.instance.graphics_objects}")
+        print(f"graphicsObject-s (no buttons or texts): {[go for go in MainLoop.instance.graphics_objects if not isinstance(go, Button) and not isinstance(go, Text)]}")
+        print(f"selected object: {self.selected_object}, dragged: {self.dragged_object}")
         print(f"mouse: {MainWindow.main_window.get_mouse_location()}")
         print(f"""computers, {len(self.computers)}, connections, {len(self.connection_data)}, packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}""")
-        print(f"running processes: {[waiting_process.process for waiting_process in reduce(concat, [computer.waiting_processes for computer in self.computers])]}\n")
+        # print(f"running processes: {[waiting_process.process for waiting_process in reduce(concat, [computer.waiting_processes for computer in self.computers])]}\n")
+        if self.selected_object is not None and self.selected_object.is_computer:
+            print((self.selected_object.computer.routing_table))
 
     def create_computer_with_ip(self):
         """

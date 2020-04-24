@@ -105,3 +105,14 @@ class NotAskingForStringError(GraphicsError):
     """
     When you try to end a string request in the UserInterface when one is not currently running.
     """
+
+
+class ProcessError(NetworkSimulationError):
+    """
+    Indicates some problem with the processes of a computer.
+    """
+
+class NoSuchProcessError(ProcessError):
+    """
+    Occurs when a process that does not exist is required.
+    """

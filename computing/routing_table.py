@@ -40,7 +40,7 @@ class RoutingTable:
         try:
             main_interface = computer.get_interface_with_ip()
         except NoSuchInterfaceError:
-            return cls({})    # if there is no interface with an IP address
+            return cls({}, RoutingTableItem(None, None))    # if there is no interface with an IP address
         gateway = main_interface.ip.expected_gateway()  # the expected IP address of a gateway in that subnet.
         dictionary = [
             (IPAddress("0.0.0.0/0"), RoutingTableItem(gateway, main_interface.ip)),

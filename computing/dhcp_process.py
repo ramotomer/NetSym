@@ -38,9 +38,10 @@ class DHCPClient(Process):
         :param dhcp_pack: a `Packet` object that contains DHCP.
         :return: None
         """
-        session_interface.ip = dhcp_pack["DHCP"].data.given_ip
-        self.computer.routing_table = RoutingTable.create_default(self.computer)
-        self.computer.default_gateway = dhcp_pack["DHCP"].data.given_gateway
+        given_ip = dhcp_pack["DHCP"].data.given_ip
+        session_interface.ip = given_ip
+        self.computer.update_routing_table()
+        self.computer.set_default_gateway(dhcp_pack["DHCP"].data.given_gateway, given_ip)
         self.computer.graphics.update_text()
 
     def validate_offer(self, dhcp_offer):
@@ -92,15 +93,28 @@ class DHCPServer(Process):
         """
         super(DHCPServer, self).__init__(computer)
 
-        self.interface_to_dhcp_data = {interface: DHCPData(IPAddress.copy(interface.ip), default_gateway.same_subnet_interfaces(interface.ip)[0].ip, None) \
-                                       for interface in self.computer.interfaces if interface.has_ip()}  # interface : DHCPData
-        # ^ a mapping for each interface of the server to a data that it packs for its clients.
-
         self.default_gateway = default_gateway  # a `Computer` that is the default gateway of the subnets this server serves.
+
+        self.interface_to_dhcp_data = {} # interface : DHCPData
+        # ^ a mapping for each interface of the server to a data that it packs for its clients.
+        self.update_server_data()
+
         self.in_session_with = {}  # mac : offered_ip
 
         self.actions = {DHCP_DISCOVER: self.send_offer, DHCP_REQUEST: self.send_pack}
         # ^ a dictionary of what to do with any packet that is received to this process.
+
+    def update_server_data(self):
+        """
+        It updates the `self.interface_to_dhcp_data` dictionary according to this comptuer's interfaces.
+        This is called if for example one of the computer's interfaces is updated in the middle of the process.
+        :return: None
+        """
+        self.interface_to_dhcp_data = {
+            interface: DHCPData(IPAddress.copy(interface.ip),
+                                self.default_gateway.same_subnet_interfaces(interface.ip)[0].ip, None) \
+            for interface in self.computer.interfaces if interface.has_ip()
+        }
 
     def unknown_packet(self, packet, interface):
         """When a DHCP packet with an unknown opcode is received"""

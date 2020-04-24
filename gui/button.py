@@ -77,3 +77,6 @@ class Button(GraphicsObject):
 
     def __str__(self):
         return f"Button '{self.child_graphics_objects.text.text}'"
+
+    def __repr__(self):
+        return f"Button('{self.child_graphics_objects.text}')"

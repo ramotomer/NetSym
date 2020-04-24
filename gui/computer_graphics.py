@@ -43,8 +43,11 @@ class ComputerGraphics(ImageGraphics):
         Generates the text that will be shown in the side window when this computer is pressed.
         :return: a long string.
         """
-        return f" \nName:\n {self.computer.name}\n OS: {self.computer.os}\n gateway: {self.computer.gateway}\n\n " \
+        return f" \nName:\n {self.computer.name}\n OS: {self.computer.os}\n gateway: {self.computer.routing_table.default_gateway.ip_address}\n\n " \
             f"Interfaces:\n {linesep.join(str(interface) for interface in self.computer.interfaces)}\n "
 
-    def __repr__(self):
+    def __str__(self):
         return "ComputerGraphics"
+
+    def __repr__(self):
+        return f"ComputerGraphics of computer {self.computer!r}"

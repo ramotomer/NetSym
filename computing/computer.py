@@ -5,7 +5,7 @@ from exceptions import *
 from computing.interface import Interface
 from consts import *
 import time
-from collections import namedtuple, OrderedDict
+from collections import namedtuple
 from computing.process import SendPing
 from address.ip_address import IPAddress
 import random
@@ -18,7 +18,8 @@ from packets.ip import IP
 from packets.icmp import ICMP
 from packets.dhcp import DHCP, DHCPData
 from packets.udp import UDP
-from computing.routing_table import RoutingTable
+from computing.routing_table import RoutingTable, RoutingTableItem
+from computing.dhcp_process import DHCPServer
 
 
 ARPCacheItem = namedtuple("ARPCacheItem", "mac time")
@@ -65,7 +66,7 @@ class Computer:
         self.process_last_check = time.time()  # the last time that the waiting_processes were checked for 'can they run?'
 
         self.graphics = NoGraphics()
-        # ^ The `GraphicsObject` of the computer.
+        # ^ The `GraphicsObject` of the computer, not initiated for now.
 
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ the fact that it is 'pausable' means that when the space bar is pressed and the program pauses, this method does not run.
@@ -286,9 +287,36 @@ class Computer:
         self.kill_process(DHCPClient)  # if currently asking for dhcp, stop it
         self.start_process(DHCPClient)
 
-    def update_from_DHCP(self):
-        """updates the routing table"""
-        raise NotImplementedError("implement me please!!!!!")
+    def update_routing_table(self):
+        """updates the routing table according to the interfaces at the moment"""
+        self.routing_table = RoutingTable.create_default(self)
+
+    def set_default_gateway(self, gateway_ip, interface_ip):
+        """
+        Sets the default gateway of the computer in the routing table with the interface IP that the packets to that gateway
+        will be sent from.
+        :param gateway_ip: The `IPAaddress` of the default gateway.
+        :param interface_ip: The `IPAddress` of the interface that will send the packets to the gateway.
+        :return: None
+        """
+        self.routing_table[IPAddress("0.0.0.0/0")] = RoutingTableItem(gateway_ip, interface_ip)
+
+    def set_ip(self, interface_name, string_ip):
+        """
+        Sets the IP address of a given interface.
+        Updates all relevant attributes of the computer (routing table, DHCP serving, etc...)
+        If there is no interface with that name, `NoSuchInterfaceError` will be raised.
+        :param interface_name: The name of the interface one wishes to change the IP of
+        :param ip_address: a string IP which will be the new IP of the interface.
+        :return: None
+        """
+        interface = get_the_one(self.interfaces, lambda i: i.name == interface_name, NoSuchInterfaceError)
+        interface.ip = IPAddress(string_ip)
+        if self._is_process_running(DHCPServer):
+            dhcp_server_process = self._get_running_process(DHCPServer)
+            dhcp_server_process.update_server_data()
+        self.update_routing_table()
+        self.graphics.update_text()
 
     def toggle_sniff(self, interface_name=ANY_INTERFACE, is_promisc=False):
         """
@@ -475,6 +503,29 @@ class Computer:
         for waiting_process in self.waiting_processes:
             if isinstance(waiting_process.process, process_type):
                 self.waiting_processes.remove(waiting_process)
+
+    def _is_process_running(self, process_type):
+        """
+        Receives a type of a `Process` subclass and returns whether or not there is a process of that type that is running.
+        :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
+        :return: `bool`
+        """
+        for process, _ in self.waiting_processes:
+            if isinstance(process, process_type):
+                return True
+        return False
+
+    def _get_running_process(self, process_type):
+        """
+        Receives a type of a `Process` subclass and returns the process object of the `Process` that is currently running in the computer.
+        If no such process is running in the computer, raise NoSuchProcessError
+        :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
+        :return: `bool`
+        """
+        for process, _ in self.waiting_processes:
+            if isinstance(process, process_type):
+                return process
+        raise NoSuchProcessError(f"'{process_type}' is not currently running!")
 
     def _handle_processes(self):
         """
