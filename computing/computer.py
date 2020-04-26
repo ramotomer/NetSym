@@ -267,7 +267,7 @@ class Computer:
         """Returns whether or not a given ip_address is in a subnet with me (and therefore is reachable)"""
         return any([interface.has_ip() and interface.ip.is_same_subnet(ip_address) for interface in self.interfaces])
 
-    def forget_arp_cache(self):
+    def _forget_arp_cache(self):
         """
         Check through the ARP cache if any addresses should be forgotten and if so forget them. (removes from the arp cache)
         :return: None
@@ -333,6 +333,13 @@ class Computer:
         interface = get_the_one(self.interfaces, lambda i: i.name == interface_name, NoSuchInterfaceError)
         interface.is_promisc = is_promisc
         interface.is_sniffing = not interface.is_sniffing
+
+    def _sniff_packet(self, packet):
+        """Receives a `Packet` and prints it out to the computer's console. should be called only if the packet was sniffed"""
+        deepest = packet.deepest_layer()
+        packet_str = deepest.opcode if hasattr(deepest, "opcode") else type(deepest).__name__
+        self.print(f"({self.packets_sniffed}) sniff: {packet_str}")
+        self.packets_sniffed += 1
 
 # -------------------------v packet sending and wrapping related methods v ---------------------------------------------
 
@@ -525,6 +532,21 @@ class Computer:
                 return process
         raise NoSuchProcessError(f"'{process_type}' is not currently running!")
 
+    def _start_new_processes(self):
+        """
+        Goes over the waiting processes list and returns a list of new processes that are ready to run.
+        Also removes them from the waiting processes list.
+        New processes - that means that they were started by `start_process` but did not run at all yet.
+        :return: a list of ready `Process`-s.
+        """
+        new_processes = []
+        for process, waiting_for in self.waiting_processes[:]:
+            if waiting_for is None:
+                # ^ if waiting for is None the process was not yet run.
+                new_processes.append(process)
+                self.waiting_processes.remove((process, None))
+        return new_processes
+
     def _handle_processes(self):
         """
         Handles all of running the processes, runs the ones that should be run and puts them back to the `waiting_processes`
@@ -549,24 +571,10 @@ class Computer:
         ready_processes = self._start_new_processes()
 
         for waiting_process in self.waiting_processes[:]:
-            for received_packet in new_packets:
-                self._decide_if_process_ready_by_packet(waiting_process, received_packet, ready_processes)
+            for received_packet in new_packets[:]:
+                if self._decide_if_process_ready_by_packet(waiting_process, received_packet, ready_processes):
+                    new_packets.remove(received_packet)  # a packet can only start ONE process (while one process can receive more then one packets)
         return ready_processes
-
-    def _start_new_processes(self):
-        """
-        Goes over the waiting processes list and returns a list of new processes that are ready to run.
-        Also removes them from the waiting processes list.
-        New processes - that means that they were started by `start_process` but did not run at all yet.
-        :return: a list of ready `Process`-s.
-        """
-        new_processes = []
-        for process, waiting_for in self.waiting_processes[:]:
-            if waiting_for is None:
-                # ^ if waiting for is None the process was not yet run.
-                new_processes.append(process)
-                self.waiting_processes.remove((process, None))
-        return new_processes
 
     def _decide_if_process_ready_by_packet(self, waiting_process, received_packet, ready_processes):
         """
@@ -579,7 +587,7 @@ class Computer:
         :param waiting_process: a `WaitingProcess` namedtuple.
         :param received_packet: a `ReceivedPacket` namedtuple.
         :param ready_processes: a list of already ready processes that will run in the next call to `self._handle_processes`.
-        :return: None
+        :return: whether or not the process is ready and was added to `ready_processes`
         """
         process, waiting_for = waiting_process
         packet, _, receiving_interface = received_packet
@@ -592,6 +600,10 @@ class Computer:
 
             else:  # if the same process receives a couple of different packets
                 waiting_for.value.packets[packet] = receiving_interface
+            return True
+        return False
+
+# ------------------------------- v The main `logic` method of the computer's main loop v ---------------------------
 
     def logic(self):
         """
@@ -611,8 +623,7 @@ class Computer:
                 self.received.append(ReceivedPacket(packet, time.time(), interface))
 
                 if interface.is_sniffing:
-                    self.print(f"({self.packets_sniffed}) {interface.name} got: {packet}")
-                    self.packets_sniffed += 1
+                    self._sniff_packet(packet)
 
                 if "ARP" in packet:
                     self._handle_arp(packet)
@@ -621,7 +632,7 @@ class Computer:
                     self._handle_ping(packet)
 
         self._handle_processes()
-        self.forget_arp_cache()  # deletes just the required items in the arp cache naturally....
+        self._forget_arp_cache()  # deletes just the required items in the arp cache....
 
     def __repr__(self):
         """The string representation of the computer"""
