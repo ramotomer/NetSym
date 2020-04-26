@@ -51,6 +51,11 @@ class NoSuchPacketError(PacketError):
     Occurs when a packet that does not exist is required and used.
     """
 
+class STPError(PacketError):
+    """
+    Indicates an STP related error.
+    """
+
 class NoSuchLayerError(PacketError):
     """
     Occurs when a packet does not contain a required Layer.

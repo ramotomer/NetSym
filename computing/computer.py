@@ -20,6 +20,8 @@ from packets.dhcp import DHCP, DHCPData
 from packets.udp import UDP
 from computing.routing_table import RoutingTable, RoutingTableItem
 from processes.dhcp_process import DHCPServer
+from packets.stp import STP
+from processes.process import WaitingForWithTimeout
 
 
 ARPCacheItem = namedtuple("ARPCacheItem", "mac time")
@@ -184,6 +186,12 @@ class Computer:
             raise NoIPAddressError("This computer has no IP address!")
         return get_the_one(self.interfaces, lambda i: i.has_ip(), NoSuchInterfaceError).ip
 
+    def get_mac(self):
+        """Returns one of the computer's `MACAddresses`"""
+        if not self.macs:
+            raise NoSuchInterfaceError("The computer has no MAC address since it has no network interfaces!!!")
+        return self.macs[0]
+
     def has_this_ip(self, ip_address):
         """Returns whether or not this computer has a given IP address. (so whether or not if it is its address)"""
         if ip_address is None:
@@ -313,7 +321,7 @@ class Computer:
         interface = get_the_one(self.interfaces, lambda i: i.name == interface_name, NoSuchInterfaceError)
         interface.ip = IPAddress(string_ip)
         if self._is_process_running(DHCPServer):
-            dhcp_server_process = self._get_running_process(DHCPServer)
+            dhcp_server_process = self.get_running_process(DHCPServer)
             dhcp_server_process.update_server_data()
         self.update_routing_table()
         self.graphics.update_text()
@@ -473,6 +481,19 @@ class Computer:
         """
         return not any(interface.has_this_ip(ip_address) for interface in self.interfaces)
 
+    def send_stp(self, sender_bid, root_bid, distance_to_root):
+        """
+        Sends an STP packet with the given information on all interfaces. (should only be used on a switch)
+        :param sender_bid: a `BID` object of the sending switch.
+        :param root_bid: a `BID` object of the root switch.
+        :param distance_to_root: The switch's distance to the root switch.
+        :return: None
+        """
+        for interface in self.interfaces:
+            interface.send_with_ethernet(MACAddress.stp_multicast(),
+                                         IP(IPAddress.no_address(), IPAddress.broadcast(), TTLS[self.os],  # the dst_ip should probably be different
+                                            STP(sender_bid, root_bid, distance_to_root)))
+
     # ------------------------- v process related methods v ----------------------------------------------------
 
     def start_process(self, process_type, *args):
@@ -522,7 +543,7 @@ class Computer:
                 return True
         return False
 
-    def _get_running_process(self, process_type):
+    def get_running_process(self, process_type):
         """
         Receives a type of a `Process` subclass and returns the process object of the `Process` that is currently running in the computer.
         If no such process is running in the computer, raise NoSuchProcessError
@@ -576,6 +597,7 @@ class Computer:
             for received_packet in new_packets[:]:
                 if self._decide_if_process_ready_by_packet(waiting_process, received_packet, ready_processes):
                     new_packets.remove(received_packet)  # a packet can only start ONE process (while one process can receive more then one packets)
+            self._timeout_process(waiting_process, ready_processes)
         return ready_processes
 
     def _decide_if_process_ready_by_packet(self, waiting_process, received_packet, ready_processes):
@@ -604,6 +626,19 @@ class Computer:
                 waiting_for.value.packets[packet] = receiving_interface
             return True
         return False
+
+    def _timeout_process(self, waiting_process, ready_processes):
+        """
+        Tests if the waiting process has a timeout and if so, continues it, without any packets. (inserts to the
+        `ready_processes` list)
+        :param waiting_process: a `WaitingProcess`
+        :param ready_processes: a list of the ready processes to run.
+        :return: None
+        """
+        if isinstance(waiting_process.waiting_for, WaitingForWithTimeout) and waiting_process in self.waiting_processes:
+            if waiting_process.waiting_for.timeout:
+                ready_processes.append(waiting_process.process)
+                self.waiting_processes.remove(waiting_process)
 
 # ------------------------------- v The main `logic` method of the computer's main loop v ---------------------------
 

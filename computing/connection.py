@@ -38,7 +38,7 @@ class Connection:
         self.sent_packets = []
         # ^ a list of `SentPacket`-s which represent packets that are currently being sent through the connection
 
-        self.right_side, self.left_side = ConnectionSide(), ConnectionSide()
+        self.right_side, self.left_side = ConnectionSide(self), ConnectionSide(self)
 
         self.last_packet_motion = time.time()
 
@@ -168,9 +168,10 @@ class ConnectionSide:
     It also has a list of packets that reached this side but were not yet picked up by the appropriate connected
         `Interface` object.
     """
-    def __init__(self):
+    def __init__(self, main_connection):
         self.packets_to_send = []
         self.packets_to_receive = []
+        self.connection = main_connection
 
     def send(self, packet):
         """

@@ -2,17 +2,18 @@ import pyglet
 from consts import *
 
 
-def draw_line(point_1, point_2):
+def draw_line(point_1, point_2, color=WHITE):
     """
     Draws a line between two points on the screen.
     :param point_1: a tuple of (x, y) of the first point.
     :param point_2: the same for the other point.
+    :param color: the color of the line.
     :return: None
     """
     vertex_view = 'v2i'
     if any([isinstance(coord, float) for coord in point_1 + point_2]):
         vertex_view = 'v2f'
-    pyglet.graphics.draw(2, pyglet.gl.GL_LINES, (vertex_view, point_1 + point_2))
+    pyglet.graphics.draw(2, pyglet.gl.GL_LINES, (vertex_view, point_1 + point_2), ('c3B', color * 2))
 
 
 def draw_rect_no_fill(x, y, width, height):

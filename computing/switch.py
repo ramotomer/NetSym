@@ -7,6 +7,7 @@ import time
 from collections import namedtuple
 from exceptions import *
 import copy
+from processes.stp_process import STPProcess
 
 
 SwitchTableItem = namedtuple("SwitchTableItem", "leg time")
@@ -21,7 +22,7 @@ class Switch(Computer):
     The switch has a table that helps it learn which MAC address sits behind which leg and so it knows where to send
     the packet (frame) it receives, this table is called the `switching_table`.
     """
-    def __init__(self, name=None):
+    def __init__(self, name=None, priority=DEFAULT_SWITCH_PRIORITY):
         """
         Initiates the Switch with a given name.
         A switch has a variable `self.is_hub` that allows any switch to become a hub.
@@ -37,6 +38,9 @@ class Switch(Computer):
         self.last_switch_table_update_time = time.time()
         self.last_packet_sending_time = time.time()
 
+        self.stp_enabled = True
+        self.priority = priority
+
     def show(self, x, y):
         """
         overrides `Computer.show` and shows the same `ComptuerGraphics` object only with a switch's photo.
@@ -45,6 +49,16 @@ class Switch(Computer):
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, SWITCH_IMAGE)
+
+    def is_for_me(self, packet):
+        """
+        overrides the original `is_for_me` method of `Computer` and adds STP multicasts.
+        :param packet: a `Packet` to test
+        :return: whether it is for me or not.
+        """
+        if self.stp_enabled:
+            return (super(Switch, self).is_for_me(packet)) or (packet["Ethernet"].dst_mac == MACAddress.stp_multicast())
+        return super(Switch, self).is_for_me(packet)
 
     def update_switch_table_from_packets(self):
         """
@@ -82,7 +96,9 @@ class Switch(Computer):
 
         for packet, _, source_leg in new_packets:
             if self.is_directly_for_me(packet) or self.is_arp_for_me(packet):
-                return  # do not switch packets that are for you!
+                continue  # do not switch packets that are for you!
+            if self.stp_enabled and "STP" in packet:
+                continue   # do not switch STP packets (unless you do not know what STP is (== Hub))
             destination_legs = self.where_to_send(packet, source_leg)
             for leg in destination_legs:
                 packet.graphics = None
@@ -99,11 +115,19 @@ class Switch(Computer):
         dst_mac = packet["Ethernet"].dst_mac
 
         if self.is_hub or dst_mac.is_broadcast() or (dst_mac not in self.switching_table):
-            # flood!!!
-            return [leg for leg in self.interfaces if leg is not source_leg and leg.is_connected()]
+            return [leg for leg in self.interfaces if leg is not source_leg and leg.is_connected()]   # flood!!!
         destination_leg = self.switching_table[dst_mac].leg
         return [destination_leg] if destination_leg is not source_leg else []
         # ^ making sure the packet does not return on the destination leg
+
+    def start_stp(self):
+        """
+        Starts the process of STP sending and receiving.
+        :return: None
+        """
+        if self._is_process_running(STPProcess):
+            self.kill_process(STPProcess)
+        self.start_process(STPProcess)
 
     def logic(self):
         """
@@ -126,6 +150,7 @@ class Hub(Switch):
     def __init__(self, name=None):
         super(Hub, self).__init__(name)
         self.is_hub = True
+        self.stp_enabled = False
 
     def show(self, x, y):
         """

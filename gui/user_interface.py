@@ -11,14 +11,13 @@ from computing.router import Router
 from address.ip_address import IPAddress
 from usefuls import get_the_one, distance
 from exceptions import *
-from operator import concat
-from functools import reduce
 from computing.interface import Interface
 from math import sqrt
 from gui.text_box import TextBox
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_pause_rectangles, draw_rect
+from processes.stp_process import STPProcess
 
 
 ObjectView = namedtuple("ObjectView", "sprite text viewed_object")
@@ -71,9 +70,12 @@ class UserInterface:
             (key.N, NO_MODIFIER): with_args(self.create, Computer, True),
             (key.N, CTRL_MODIFIER): self.create_computer_with_ip,
             (key.C, NO_MODIFIER): with_args(self.toggle_mode, CONNECTING_MODE),
+            (key.C, CTRL_MODIFIER): self.connect_all_available,
+            (key.C, SHIFT_MODIFIER): self.connect_all_to_all,
             (key.P, CTRL_MODIFIER): self.send_random_ping,
             (key.P, NO_MODIFIER): with_args(self.toggle_mode, PINGING_MODE),
             (key.S, NO_MODIFIER): with_args(self.create, Switch, True),
+            (key.S, CTRL_MODIFIER): self.start_all_stp,
             (key.H, NO_MODIFIER): with_args(self.create, Hub, True),
             (key.R, NO_MODIFIER): self.create_router,
             (key.D, SHIFT_MODIFIER): self.delete_all_packets,
@@ -81,7 +83,6 @@ class UserInterface:
             (key.D, NO_MODIFIER): with_args(self.toggle_mode, DELETING_MODE),
             (key.F, NO_MODIFIER): with_args(self.toggle_mode, SNIFFING_MODE),
             (key.M, NO_MODIFIER): self.debugging_printer,
-            (key.C, CTRL_MODIFIER): self.connect_all_available,
             (key.A, NO_MODIFIER): self.ask_for_dhcp,
             (key.SPACE, NO_MODIFIER): self.toggle_pause,
             (key.I, NO_MODIFIER): self.ask_user_for_ip,
@@ -95,7 +96,7 @@ class UserInterface:
             PINGING_MODE: with_args(self.two_pressed_computers, self.send_direct_ping),
             DELETING_MODE: self.deleting_mode_at_press,
         }
-        # ^ maps what to do when the board is pressed in each `mode`.
+        # ^ maps what to do when the screen is pressed in each `mode`.
 
         self.computers = []
         self.connection_data = []
@@ -107,6 +108,8 @@ class UserInterface:
 
         self.dragged_object = None
         # ^ the object that is currently being dragged (by the courser)
+        self.dragging_point = 0, 0
+        # ^ the coordinates the mouse is at relative to the object it drags (to avoid weird sudden jumps like it used to do)
 
         self.selected_object = None
         # ^ the object that is currently dragged
@@ -128,13 +131,14 @@ class UserInterface:
             ((*DEFAULT_BUTTON_LOCATION(1), with_args(self.create, Switch), "create a switch (s)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(2), with_args(self.create, Hub), "create a hub (h)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(3), with_args(self.create, Router), "create a router (r)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(4), with_args(self.toggle_mode, CONNECTING_MODE), "connect computers (c / ^c)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(4), with_args(self.toggle_mode, CONNECTING_MODE), "connect (c / ^c / Shift+c)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(5), with_args(self.toggle_mode, PINGING_MODE), "ping (p / ^p)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(6), with_args(self.toggle_mode, SNIFFING_MODE), "toggle sniffing (f)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(7), self.ask_for_dhcp, "ask for DHCP (a)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(8), self.delete_all_packets, "delete all packets (Shift+d)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(9), self.delete_all, "delete all (^d)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(10), with_args(self.toggle_mode, DELETING_MODE), "delete (d)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(8), self.start_all_stp, "start STP (^s)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(9), self.delete_all_packets, "delete all packets (Shift+d)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(10), self.delete_all, "delete all (^d)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(11), with_args(self.toggle_mode, DELETING_MODE), "delete (d)", MAIN_MENU_BUTTONS), {}),
 
             ((*DEFAULT_BUTTON_LOCATION(1), self.ask_user_for_ip, "config IP (i)", VIEW_MODE_BUTTONS, True), {}),
         ]
@@ -159,6 +163,17 @@ class UserInterface:
 
         if self.mode == VIEW_MODE:
             self.view_selected_object()
+
+    def drag_object(self):
+        """
+        Drags the object that should be dragged around the screen.
+        Essentially sets the objects coordinates to be the ones of the mouse.
+        :return: None
+        """
+        if self.dragged_object is not None and not self.dragged_object.is_button:
+            drag_x, drag_y = self.dragging_point
+            mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
+            self.dragged_object.x, self.dragged_object.y = mouse_x + drag_x, mouse_y + drag_y
 
     def start_object_view(self, graphics_object):
         """
@@ -294,7 +309,7 @@ class UserInterface:
             self.delete(self.selected_object)
         self.set_mode(SIMULATION_MODE)
 
-    def is_mouse_in(self):
+    def is_mouse_in_side_window(self):
         """Return whether or not the mouse is currently in the side window."""
         mouse_x, _ = MainWindow.main_window.get_mouse_location()
         return mouse_x > (WINDOW_WIDTH - self.WIDTH)
@@ -346,7 +361,7 @@ class UserInterface:
                 self.other_selected_object = None
                 self.set_mode(SIMULATION_MODE)
 
-        elif not self.is_mouse_in() and self.selected_object is None:  # if we press on nothing and not on the side window
+        elif not self.is_mouse_in_side_window() and self.selected_object is None:  # if we press on nothing and not on the side window
             self.other_selected_object = None
             self.set_mode(SIMULATION_MODE)
 
@@ -573,6 +588,8 @@ class UserInterface:
         if self.selected_object is not None and self.selected_object.is_computer:
             print(repr(self.selected_object.computer.routing_table))
             self.selected_object.computer.print("------------DEBUG------------------")
+            if isinstance(self.selected_object.computer, Switch) and self.selected_object.computer.stp_enabled:
+                print(self.selected_object.computer.get_running_process(STPProcess).get_info())
 
     def create_computer_with_ip(self):
         """
@@ -616,3 +633,30 @@ class UserInterface:
             raise NoIPAddressError("There are no IP addresses that fit the description!")
 
         return IPAddress.increased(greatest_ip_in_subnet)
+
+    def start_all_stp(self):
+        """
+        Starts the STP process on all of the switches that enable it.
+        :return: None
+        """
+        for switch in filter(lambda computer: isinstance(computer, Switch), self.computers):
+            if switch.stp_enabled:
+                switch.start_stp()
+
+    def are_connected(self, computer1, computer2):
+        """Receives two computers and returns if they are connected"""
+        for _, computer_1, computer_2 in self.connection_data:
+            if (computer1 is computer_1 and computer2 is computer_2) or (computer2 is computer_1 and computer1 is computer_2):
+                return True
+        return False
+
+    def connect_all_to_all(self):
+        """
+        Connects all of the computers to all other computers!!!
+        very fun!
+        :return: None
+        """
+        for computer in self.computers:
+            for other_computer in self.computers:
+                if computer is not other_computer and not self.are_connected(computer, other_computer):
+                    self.connect_computers(computer, other_computer)

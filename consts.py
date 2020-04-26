@@ -75,6 +75,7 @@ DHCP_OFFER_IMAGE = "dhcp_offer.png"
 DHCP_REQUEST_IMAGE = "dhcp_request.png"
 DHCP_PACK_IMAGE = "dhcp_pack.png"
 UDP_IMAGE = "udp_packet.png"
+STP_IMAGE = "stp_packet.png"
 
 COMPUTER_IMAGE = "endpoint.png"
 SWITCH_IMAGE = "switch.png"
@@ -94,6 +95,7 @@ DHCP_REQUEST = "DHCP Request"
 DHCP_PACK = "DHCP Pack"
 
 BROADCAST_MAC = 'ff:ff:ff:ff:ff:ff'
+STP_MULTICAST_MAC = "01:80:C2:00:00:00"
 DEFAULT_COMPUTER_IP = "192.168.1.2/24"
 DHCP_CLIENT_PORT = 68
 DHCP_SERVER_PORT = 67
@@ -102,6 +104,11 @@ ON_LINK = "On-link"
 INTERFACE_NAMES = [line.strip() for line in open(FILES.format("interface_names.txt")).readlines()]
 COMPUTER_NAMES = [line.strip() for line in open(FILES.format("computer_names.txt")).readlines()]
 ANY_INTERFACE = None
+
+ROOT_PORT = "RP"
+DESIGNATED_PORT = "DP"
+BLOCKED_PORT = "BP"
+NO_STATE = "no state!"
 
 OS_WINDOWS = 'Windows'
 OS_LINUX = 'Linux'
@@ -116,6 +123,9 @@ ARP_CACHE_FORGET_TIME = 300  # seconds
 SWITCH_TABLE_ITEM_LIFETIME = 300  # seconds
 PACKETS_ARE_NOT_MOVING_MAX_TIME = 0.5  # second
 # ^ this is the time that if the packets did not move for that much time (in a pause for example) we take them back a bit in the connection and adjust their `sending_time`
+STP_SENDING_INTERVAL = 3 # seconds
+TREE_STABLIZING_MAX_TIME = 30 # seconds
+DEFAULT_SWITCH_PRIORITY = 32768
 
 PACKET_GOING_RIGHT = 'R'
 PACKET_GOING_LEFT = 'L'
@@ -161,6 +171,9 @@ MODES_TO_COLORS = {
     PINGING_MODE: PURPLE,
     DELETING_MODE: BROWN,
 }
+
+CONNECTION_COLOR = WHITE
+BLOCKED_CONNECTION_COLOR = RED
 
 IMAGES_SIZE = 16
 VIEWING_IMAGE_COORDINATES = ((WINDOW_WIDTH - (SIDE_WINDOW_WIDTH / 2)) - (

@@ -1,8 +1,8 @@
 from collections import namedtuple
-from packets.icmp import ICMP
-from consts import *
 from exceptions import *
 from abc import ABCMeta, abstractmethod
+import time
+from consts import *
 
 
 WaitingFor = namedtuple("WaitingFor", "condition value")
@@ -14,6 +14,8 @@ the process when it continues running.
 
 The condition should be specific so you dont accidentally catch the wrong packet!
 """
+
+WaitingForWithTimeout = namedtuple("WaitingForWithTimeout", "condition value timeout")
 
 
 class Process(metaclass=ABCMeta):
@@ -51,11 +53,30 @@ class Process(metaclass=ABCMeta):
         usually it will be to wait for some packet.
         :return:
         """
-        yield WaitingFor(lambda p: False, ReturnedPacket())
+        yield WaitingFor(lambda p: False, NoNeedForPacket())
 
     def __repr__(self):
         """The string representation of the Process"""
         return "Unnamed Process"
+
+
+class Timeout:
+    """
+    tests if a certain time has passed since the creation of this object.
+    """
+    def __init__(self, seconds):
+        """
+        Initiates the `Timeout` object.
+        :param seconds: the amount of seconds of the timeout
+        """
+        self.seconds = seconds
+        self.init_time = time.time()
+
+    def __bool__(self):
+        """
+        Returns whether or not the timeout has passed yet or not
+        """
+        return (time.time() - self.init_time) > self.seconds
 
 
 class ReturnedPacket:
@@ -90,6 +111,7 @@ class ReturnedPacket:
         """
         packet = self.packet
         return packet, self.packets[packet]
+
 
 class NoNeedForPacket(ReturnedPacket):
     """

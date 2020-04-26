@@ -1,6 +1,7 @@
 from consts import *
 import pyglet
 from gui.main_loop import MainLoop
+from usefuls import distance
 
 
 class MainWindow(pyglet.window.Window):
@@ -86,9 +87,7 @@ class MainWindow(pyglet.window.Window):
         try: # this try and except is done becauese for some reason it is done automatically in pyglet and it is very annoying!!!!!!
 
             self.mouse_pressed = True
-            if not self.user_interface.is_mouse_in():
-                self.user_interface.dragged_object = MainLoop.instance.get_object_the_mouse_is_on()
-                self.user_interface.selected_object = MainLoop.instance.get_object_the_mouse_is_on()
+            self._set_mouse_pressed_objects()
 
             if self.user_interface.selected_object is None and self.user_interface.is_asking_for_string:  # if pressed outside a text-box.
                 self.user_interface.end_string_request()
@@ -98,6 +97,22 @@ class MainWindow(pyglet.window.Window):
         except (TypeError, AttributeError) as err:
             print(f"error in `on_mouse_press` {err}")
             raise err
+
+    def _set_mouse_pressed_objects(self):
+        """
+        Sets the `selected_object` and `dragged_object` according to the mouse's press.
+        :return: None
+        """
+        if not self.user_interface.is_mouse_in_side_window():
+            object_the_mouse_is_on = MainLoop.instance.get_object_the_mouse_is_on()
+
+            self.user_interface.dragged_object = object_the_mouse_is_on
+            self.user_interface.selected_object = object_the_mouse_is_on
+
+            if object_the_mouse_is_on is not None:
+                mouse_x, mouse_y = self.get_mouse_location()
+                object_x, object_y = object_the_mouse_is_on.location
+                self.user_interface.dragging_point = object_x - mouse_x, object_y - mouse_y
 
     def on_mouse_release(self, x, y, button, modifiers):
         """

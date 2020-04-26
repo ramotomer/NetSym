@@ -33,6 +33,16 @@ class Interface:
 
         self.is_promisc = True
         self.is_sniffing = False
+        self.is_blocked = False
+        self.accepting = None  # This is the only type of packet that is accepted when the interface is blocked.
+
+    @property
+    def connection_length(self):
+        """
+        The length of the connection this `Interface` is connected to. (The time a packet takes to go through it in seconds)
+        :return: a number of seconds.
+        """
+        return self.connection.connection.deliver_time
 
     @staticmethod
     def random_name():
@@ -102,6 +112,24 @@ class Interface:
             raise InterfaceNotConnectedError("Cannot disconnect an interface that is not connected!")
         self.connection = None
 
+    def block(self, accept=None):
+        """
+        Blocks the connection and does not receive packets anymore.
+        :return: None
+        """
+        self.is_blocked = True
+        self.accepting = accept
+        self.connection.connection.graphics.mark_as_blocked()
+
+    def unblock(self):
+        """
+        Releases the blocking of the connection and allows it to receive packets again.
+        :return: None
+        """
+        self.is_blocked = False
+        self.accepting = None
+        self.connection.connection.graphics.mark_as_unblocked()
+
     def send(self, packet):
         """
         Receives a packet to send and just sends it!
@@ -110,7 +138,7 @@ class Interface:
         :param packet: The full packet `Packet` object.
         :return: None
         """
-        if self.is_connected():
+        if self.is_connected() and (not self.is_blocked or (self.is_blocked and self.accepting in packet)):
             self.connection.send(packet)
 
     def receive(self):
@@ -121,12 +149,15 @@ class Interface:
         """
         try:
             packets = self.connection.receive()
-            if self.is_promisc:
-                return packets
-            return list(filter(lambda packet: self.is_for_me(packet), packets))
         except AttributeError:
-            # raise InterfaceNotConnectedError()
-            pass
+            return
+        # raise InterfaceNotConnectedError("The interface is not connected so it cannot receive packets!!!")
+
+        if self.is_blocked:
+            return list(filter((lambda packet: self.accepting in packet), packets))
+        if self.is_promisc:
+            return packets
+        return list(filter(lambda packet: self.is_for_me(packet), packets))
 
     def ethernet_wrap(self, dst_mac, data):
         """

@@ -110,17 +110,6 @@ class MainLoop:
         for function_and_args in to_remove:
             self.call_functions.remove(function_and_args)
 
-    def drag_object(self):
-        """
-        Drags the object that should be dragged around the screen.
-        Essentially sets the objects coordinates to be the ones of the mouse.
-        :return: None
-        """
-        if self.main_window.user_interface.dragged_object is not None \
-                and not self.main_window.user_interface.dragged_object.is_button \
-                and self.main_window.user_interface.mode != CONNECTING_MODE:
-            self.main_window.user_interface.dragged_object.x, self.main_window.user_interface.dragged_object.y = self.main_window.mouse_x, self.main_window.mouse_y
-
     def select_selected_object(self):
         """
         Draws a rectangle around the selected object.
@@ -156,7 +145,7 @@ class MainLoop:
         :return: None
         """
         self.main_window.clear()
-        self.drag_object()
+        self.main_window.user_interface.drag_object()
         self.select_selected_object()
         self.main_window.user_interface.show()
         for function, args, kwargs, can_be_paused in self.call_functions:

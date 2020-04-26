@@ -67,12 +67,13 @@ class PacketGraphics(ImageGraphics):
         PACKET_TYPE_TO_IMAGE = {
             "Ethernet": ETHERNET_IMAGE,
             "IP": IP_IMAGE,
+            "UDP": UDP_IMAGE,
+            "STP": STP_IMAGE,
             "ARP": {
                 ARP_REQUEST: ARP_REQUEST_IMAGE,
                 ARP_REPLY: ARP_REPLY_IMAGE,
                 ARP_GRAT: ARP_GRAT_IMAGE,
             },
-            "UDP": UDP_IMAGE,
             "DHCP": {
                 DHCP_DISCOVER: DHCP_DISCOVER_IMAGE,
                 DHCP_OFFER: DHCP_OFFER_IMAGE,
