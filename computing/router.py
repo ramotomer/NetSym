@@ -1,9 +1,9 @@
 from computing.computer import Computer
 from consts import *
-from computing.process import Process, WaitingFor, NoNeedForPacket
+from processes.process import Process, WaitingFor, NoNeedForPacket
 import time
 from gui.computer_graphics import ComputerGraphics
-from computing.dhcp_process import DHCPServer
+from processes.dhcp_process import DHCPServer
 
 
 def arp_reply_from(source_ip):
@@ -70,11 +70,13 @@ class RoutePacket(Process):
 
         dst_ip = self.packet["IP"].dst_ip
         sender_ip = self.packet["IP"].src_ip
-        debugp(f"is dest unreachable? {self.computer.routing_table[dst_ip]} is {self.computer.routing_table.default_gateway.ip_address}")
 
         if self.computer.routing_table[dst_ip].ip_address == self.computer.routing_table.default_gateway.ip_address and \
                 self.computer.routing_table.default_gateway.ip_address is None:
-            self.computer.send_ping_to(self.computer.arp_cache[sender_ip].mac, self.packet["IP"].src_ip, ICMP_UNREACHABLE)
+            self.computer.send_ping_to(self.computer.arp_cache[sender_ip].mac,
+                                       self.packet["IP"].src_ip,
+                                       ICMP_UNREACHABLE,
+                                       f"Unreachable: {dst_ip}")
             return True
         return False
 

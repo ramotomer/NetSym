@@ -6,11 +6,11 @@ from computing.interface import Interface
 from consts import *
 import time
 from collections import namedtuple
-from computing.process import SendPing
+from processes.ping_process import SendPing
 from address.ip_address import IPAddress
 import random
 from usefuls import get_the_one
-from computing.dhcp_process import DHCPClient
+from processes.dhcp_process import DHCPClient
 from gui.main_loop import MainLoop
 
 from packets.arp import ARP
@@ -19,7 +19,7 @@ from packets.icmp import ICMP
 from packets.dhcp import DHCP, DHCPData
 from packets.udp import UDP
 from computing.routing_table import RoutingTable, RoutingTableItem
-from computing.dhcp_process import DHCPServer
+from processes.dhcp_process import DHCPServer
 
 
 ARPCacheItem = namedtuple("ARPCacheItem", "mac time")
@@ -208,13 +208,13 @@ class Computer:
             return get_the_one(self.interfaces, lambda i: i.has_ip(), NoSuchInterfaceError)
         return get_the_one(self.interfaces, lambda i: i.has_this_ip(ip_address))
 
-    def _handle_arp(self, packet):
+    def _handle_arp(self, packet, interface):
         """
         Receives a `Packet` object and if it contains an ARP request layer, sends back
         an ARP reply. If the packet contains no ARP layer raises `NoArpLayerError`.
         Anyway learns the IP and MAC from the ARP (even if it is a reply or a grat-arp).
         :param packet: the `Packet` that contains the ARP we handle
-        :param source_interface: The `Interface` the packet was received on.
+        :param interface: The `Interface` the packet was received on.
         :return: None
         """
         try:
@@ -223,19 +223,21 @@ class Computer:
             raise NoARPLayerError("This function should only be called with an ARP packet!!!")
 
         self.arp_cache[arp.src_ip] = ARPCacheItem(arp.src_mac, time.time())  # learn from the ARP
-        if arp.opcode == ARP_REQUEST and self.has_this_ip(arp.dst_ip):
+
+        if arp.opcode == ARP_REQUEST and interface.has_this_ip(arp.dst_ip):
             self.send_arp_reply(packet)                     # Answer if request
 
-    def _handle_ping(self, packet):
+    def _handle_ping(self, packet, interface):
         """
         Receives a `Packet` object which contains an ICMP layer with ICMP request
         handles everything related to the ping and sends a ping reply.
         :param packet: a `Packet` object to reply on.
+        :param interface: The `Interface` the packet was received on.
         :return: None
         """
         if packet["ICMP"].opcode == ICMP_REQUEST and self.is_for_me(packet):
             dst_ip = packet["IP"].src_ip
-            if self.has_this_ip(packet["IP"].dst_ip):  # only if the packet is for me also on the third layer!
+            if interface.has_this_ip(packet["IP"].dst_ip):  # only if the packet is for me also on the third layer!
                 self.start_ping_process(dst_ip, ICMP_REPLY)
 
     def start_ping_process(self, ip_address, opcode=ICMP_REQUEST):
@@ -399,7 +401,7 @@ class Computer:
             if interface.has_ip():
                 interface.send_with_ethernet(MACAddress.broadcast(), ARP(ARP_GRAT, interface.ip, interface.ip, interface.mac))
 
-    def send_ping_to(self, mac_address, ip_address, opcode=ICMP_REQUEST):
+    def send_ping_to(self, mac_address, ip_address, opcode=ICMP_REQUEST, data=''):
         """
         Send an ICMP packet to the a given ip address.
         :param ip_address: The destination `IPAddress` object of the ICMP packet
@@ -407,7 +409,7 @@ class Computer:
         :param opcode: the ICMP opcode (reply / request / time exceeded)
         :return: None
         """
-        self.send_to(mac_address, ip_address, ICMP(opcode))
+        self.send_to(mac_address, ip_address, ICMP(opcode, data))
 
     def send_dhcp_discover(self):
         """Sends out a `DHCP_DISCOVER` packet (This is sent by a DHCP client)"""
@@ -626,10 +628,10 @@ class Computer:
                     self._sniff_packet(packet)
 
                 if "ARP" in packet:
-                    self._handle_arp(packet)
+                    self._handle_arp(packet, interface)
 
                 if "ICMP" in packet:
-                    self._handle_ping(packet)
+                    self._handle_ping(packet, interface)
 
         self._handle_processes()
         self._forget_arp_cache()  # deletes just the required items in the arp cache....

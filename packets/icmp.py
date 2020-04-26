@@ -5,12 +5,12 @@ class ICMP(Protocol):
     """
     This class represents a Ping packet between computers.
     """
-    def __init__(self, opcode):
+    def __init__(self, opcode, data=''):
         """
         Create an ICMP packet.
         :param opcode: ICMP_REPLY or ICMP_REQUEST.
         """
-        super(ICMP, self).__init__(4, '')  # I put in 4th layer because it goes over IP which is 3rd.
+        super(ICMP, self).__init__(4, data)  # I put in 4th layer because it goes over IP which is 3rd.
         self.opcode = opcode
 
     @staticmethod

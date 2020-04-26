@@ -187,7 +187,7 @@ class ConnectionSide:
         :return: A `Packet` object that was received from the connection. or None.
         """
         returned = self.packets_to_receive[:]
-        self.packets_to_receive = []
+        self.packets_to_receive.clear()
         return returned
 
     def is_sending(self):

@@ -1,4 +1,4 @@
-from computing.process import Process, WaitingFor, ReturnedPacket
+from processes.process import Process, WaitingFor, ReturnedPacket
 from exceptions import *
 from consts import *
 from packets.dhcp import DHCPData
