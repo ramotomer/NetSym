@@ -125,9 +125,8 @@ class Switch(Computer):
         Starts the process of STP sending and receiving.
         :return: None
         """
-        if self._is_process_running(STPProcess):
-            self.kill_process(STPProcess)
-        self.start_process(STPProcess)
+        if not self._is_process_running(STPProcess):
+            self.start_process(STPProcess)
 
     def logic(self):
         """
@@ -150,7 +149,7 @@ class Hub(Switch):
     def __init__(self, name=None):
         super(Hub, self).__init__(name)
         self.is_hub = True
-        self.stp_enabled = False
+        self.stp_enabled = True
 
     def show(self, x, y):
         """

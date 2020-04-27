@@ -10,7 +10,7 @@ class PacketGraphics(ImageGraphics):
     The packets know the connection's length, speed start and end, and so they can calculate where they should be at
     any given moment.
     """
-    def __init__(self, deepest_layer, connection_graphics, direction):
+    def __init__(self, deepest_layer, connection_graphics, direction, is_opaque=False):
         """
         This method initiates a `PacketGraphics` instance.
         :param deepest_layer: The deepest packet layer in the packet.
@@ -25,7 +25,8 @@ class PacketGraphics(ImageGraphics):
                             connection_graphics.get_coordinates(direction)[0],
                             connection_graphics.get_coordinates(direction)[1],
                             centered=True,
-                            scale_factor=PACKET_SCALE_FACTOR)
+                            scale_factor=PACKET_SCALE_FACTOR,
+                            is_opaque=is_opaque)
         self.is_packet = True
 
         self.connection_graphics = connection_graphics

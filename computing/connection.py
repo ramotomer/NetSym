@@ -2,7 +2,7 @@ from consts import *
 from collections import namedtuple
 from gui.graphics_object import NoGraphics
 import time
-from exceptions import SomethingWentTerriblyWrongError
+from exceptions import SomethingWentTerriblyWrongError, NoSuchConnectionSideError
 from gui.connection_graphics import ConnectionGraphics
 from gui.main_loop import MainLoop
 
@@ -44,6 +44,8 @@ class Connection:
 
         self.graphics = NoGraphics()
 
+        self.is_blocked = False
+
         MainLoop.instance.insert_to_loop_pausable(self.move_packets)
 
     @property
@@ -72,6 +74,26 @@ class Connection:
         """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""
         return self.left_side, self.right_side
 
+    def mark_as_blocked(self):
+        """
+        Marks the connection as blocked!
+        Makes sure that one of the connection sides is really blocked.
+        :return: None
+        """
+        if any(side.is_blocked for side in self.get_sides()):
+            self.graphics.color = BLOCKED_CONNECTION_COLOR
+            self.is_blocked = True
+
+    def mark_as_unblocked(self):
+        """
+        Marks the connection as an unblocked connection.
+        Makes sure first that both sides are actually unblocked. (That causes bugs!!)
+        :return: None
+        """
+        if all(not side.is_blocked for side in self.get_sides()):
+            self.graphics.color = CONNECTION_COLOR
+            self.is_blocked = False
+
     def add_packet(self, packet, direction):
         """
         Add a packet that was sent on one of the `ConnectionSide`-s to the `self.sent_packets` list.
@@ -81,7 +103,7 @@ class Connection:
         :return: None
         """
         self.sent_packets.append(SentPacket(packet, time.time(), direction))
-        packet.show(self.graphics, direction)  # initiate the `GraphicsObject` of the packet.
+        packet.show(self.graphics, direction, is_opaque=self.is_blocked)  # initiate the `GraphicsObject` of the packet.
 
     def reach_destination(self, sent_packet):
         """
@@ -99,6 +121,37 @@ class Connection:
             self.left_side.packets_to_receive.append(packet)
         else:
             raise SomethingWentTerriblyWrongError('The packet can only go left or right!')
+
+        self.sent_packets.remove(sent_packet)
+
+    def _send_packets_from_side(self, side):
+        """
+        Takes all of the packets that are waiting to be sent on one ConnectionSide and sends them down the main connection.
+        :param side: a `ConnectionSide` object.
+        :return: None
+        """
+        if side not in self.get_sides():
+            raise NoSuchConnectionSideError()
+
+        direction = PACKET_GOING_LEFT if side is self.right_side else PACKET_GOING_RIGHT
+        if side.is_sending():
+            for packet in side.packets_to_send:
+                self.add_packet(packet, direction)
+            side.packets_to_send.clear()
+
+    def _update_packet(self, sent_packet):
+        """
+        Receives a SentPacket object and updates its progress on the connection.
+        If the packet has reached the end of the connection, make it be received at the appropriate ConnectionSide
+        :param sent_packet: a `SentPacket` namedtuple
+        :return: None
+        """
+        packet_travel_percent = (time.time() - sent_packet.sending_time) / self.deliver_time
+
+        if packet_travel_percent >= 1:
+            self.reach_destination(sent_packet)
+        else:
+            sent_packet.packet.graphics.progress = packet_travel_percent
 
     def _adjust_to_pauses(self):
         """
@@ -124,24 +177,11 @@ class Connection:
         """
         self._adjust_to_pauses()
 
-        if self.left_side.is_sending():
-            for packet in self.left_side.packets_to_send:
-                self.add_packet(packet, PACKET_GOING_RIGHT)
-            self.left_side.packets_to_send.clear()
+        for side in self.get_sides():
+            self._send_packets_from_side(side)
 
-        if self.right_side.is_sending():
-            for packet in self.right_side.packets_to_send:
-                self.add_packet(packet, PACKET_GOING_LEFT)
-            self.right_side.packets_to_send.clear()
-
-        for sent_packet in self.sent_packets[:]:
-            packet_travel_percent = (time.time() - sent_packet.sending_time) / self.deliver_time
-            if packet_travel_percent >= 1:
-                self.reach_destination(sent_packet)
-                self.sent_packets.remove(sent_packet)
-                # ^ removes from the list the packets that arrived.
-            else:
-                sent_packet.packet.graphics.progress = packet_travel_percent
+        for sent_packet in self.sent_packets[:]:  # we copy the list because we alter it during the run
+            self._update_packet(sent_packet)
 
     def stop_packets(self):
         """
@@ -172,6 +212,7 @@ class ConnectionSide:
         self.packets_to_send = []
         self.packets_to_receive = []
         self.connection = main_connection
+        self.is_blocked = False
 
     def send(self, packet):
         """
@@ -194,3 +235,20 @@ class ConnectionSide:
     def is_sending(self):
         """Returns whether or not this side has packets that needs to be sent"""
         return bool(self.packets_to_send)
+
+    def mark_as_blocked(self):
+        """
+        Marks the connection as being a blocked connection (paints it a different color)
+        :return: None
+        """
+        self.is_blocked = True
+        self.connection.mark_as_blocked()
+
+    def mark_as_unblocked(self):
+        """
+        Marks the connection as a regular (unblocked) connection.
+        :return: None
+        """
+        self.is_blocked = False
+        self.connection.mark_as_unblocked()
+

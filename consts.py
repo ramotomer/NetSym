@@ -94,6 +94,9 @@ DHCP_OFFER = "DHCP Offer"
 DHCP_REQUEST = "DHCP Request"
 DHCP_PACK = "DHCP Pack"
 
+OPAQUE = 35
+NOT_OPAQUE = 255
+
 BROADCAST_MAC = 'ff:ff:ff:ff:ff:ff'
 STP_MULTICAST_MAC = "01:80:C2:00:00:00"
 DEFAULT_COMPUTER_IP = "192.168.1.2/24"
@@ -105,9 +108,9 @@ INTERFACE_NAMES = [line.strip() for line in open(FILES.format("interface_names.t
 COMPUTER_NAMES = [line.strip() for line in open(FILES.format("computer_names.txt")).readlines()]
 ANY_INTERFACE = None
 
-ROOT_PORT = "RP"
-DESIGNATED_PORT = "DP"
-BLOCKED_PORT = "BP"
+ROOT_PORT = "ROOT"
+DESIGNATED_PORT = "DESIGNATED"
+BLOCKED_PORT = "BLOCKED"
 NO_STATE = "no state!"
 
 OS_WINDOWS = 'Windows'
@@ -123,8 +126,9 @@ ARP_CACHE_FORGET_TIME = 300  # seconds
 SWITCH_TABLE_ITEM_LIFETIME = 300  # seconds
 PACKETS_ARE_NOT_MOVING_MAX_TIME = 0.5  # second
 # ^ this is the time that if the packets did not move for that much time (in a pause for example) we take them back a bit in the connection and adjust their `sending_time`
-STP_SENDING_INTERVAL = 3 # seconds
-TREE_STABLIZING_MAX_TIME = 30 # seconds
+STP_NORMAL_SENDING_INTERVAL = 2 # seconds
+STP_STABLE_SENDING_INTERVAL = 7 # seconds
+TREE_STABLIZING_MAX_TIME = 10 # seconds
 DEFAULT_SWITCH_PRIORITY = 32768
 
 PACKET_GOING_RIGHT = 'R'

@@ -126,3 +126,14 @@ class NoSuchProcessError(ProcessError):
     """
     Occurs when a process that does not exist is required.
     """
+
+
+class ConnectionError(NetworkSimulationError):
+    """
+    Indicates an error in a connection or in connection related functions.
+    """
+
+class NoSuchConnectionSideError(ConnectionError):
+    """
+    Occurs when a certain connection-side is requested when it does not exist.
+    """

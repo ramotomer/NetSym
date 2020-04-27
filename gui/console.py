@@ -72,6 +72,5 @@ class Console(GraphicsObject):
         """
         if self.is_full():
             self._text = '\n'.join(self._text.split('\n')[1:])    # remove the up most line if we are out of space.
-            debugp(f"going down")
         self._text += text + '\n'
         self.child_graphics_objects.text.set_text(self._text)

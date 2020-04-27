@@ -21,7 +21,6 @@ from packets.udp import UDP
 from computing.routing_table import RoutingTable, RoutingTableItem
 from processes.dhcp_process import DHCPServer
 from packets.stp import STP
-from processes.process import WaitingForWithTimeout
 
 
 ARPCacheItem = namedtuple("ARPCacheItem", "mac time")
@@ -593,11 +592,12 @@ class Computer:
 
         ready_processes = self._start_new_processes()
 
-        for waiting_process in self.waiting_processes[:]:
-            for received_packet in new_packets[:]:
-                if self._decide_if_process_ready_by_packet(waiting_process, received_packet, ready_processes):
-                    new_packets.remove(received_packet)  # a packet can only start ONE process (while one process can receive more then one packets)
-            self._timeout_process(waiting_process, ready_processes)
+        waiting_processes_copy = self.waiting_processes[:]
+        for received_packet in new_packets[:]:
+            for waiting_process in waiting_processes_copy:
+                self._decide_if_process_ready_by_packet(waiting_process, received_packet, ready_processes)
+
+        self._check_process_timeouts(ready_processes)
         return ready_processes
 
     def _decide_if_process_ready_by_packet(self, waiting_process, received_packet, ready_processes):
@@ -627,18 +627,19 @@ class Computer:
             return True
         return False
 
-    def _timeout_process(self, waiting_process, ready_processes):
+    def _check_process_timeouts(self, ready_processes):
         """
-        Tests if the waiting process has a timeout and if so, continues it, without any packets. (inserts to the
+        Tests if the waiting processes have a timeout and if so, continues them, without any packets. (inserts to the
         `ready_processes` list)
         :param waiting_process: a `WaitingProcess`
         :param ready_processes: a list of the ready processes to run.
         :return: None
         """
-        if isinstance(waiting_process.waiting_for, WaitingForWithTimeout) and waiting_process in self.waiting_processes:
-            if waiting_process.waiting_for.timeout:
-                ready_processes.append(waiting_process.process)
-                self.waiting_processes.remove(waiting_process)
+        for waiting_process in self.waiting_processes:
+            if hasattr(waiting_process.waiting_for, "timeout"):
+                if waiting_process.waiting_for.timeout:
+                    ready_processes.append(waiting_process.process)
+                    self.waiting_processes.remove(waiting_process)
 
 # ------------------------------- v The main `logic` method of the computer's main loop v ---------------------------
 

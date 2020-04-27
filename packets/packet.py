@@ -19,14 +19,14 @@ class Packet:
         self.data = data
         self.graphics = None
 
-    def show(self, connection_graphics, direction):
+    def show(self, connection_graphics, direction, is_opaque=False):
         """
         This signals the packet that it starts to be sent and that where it
         is sent from and to (Graphically).
         :param connection_graphics: a ConnectionGraphic object.
         :return: None
         """
-        self.graphics = PacketGraphics(self.deepest_layer(), connection_graphics, direction)
+        self.graphics = PacketGraphics(self.deepest_layer(), connection_graphics, direction, is_opaque)
 
     def deepest_layer(self):
         """

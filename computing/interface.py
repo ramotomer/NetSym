@@ -94,7 +94,7 @@ class Interface:
         :return: The `Connection` object.
         """
         if self.is_connected() or other.is_connected():
-            raise DeviceAlreadyConnectedError()
+            raise DeviceAlreadyConnectedError("The interface is connected already!!!")
         connection = Connection()
         self.connection, other.connection = connection.get_sides()
         return connection
@@ -119,7 +119,7 @@ class Interface:
         """
         self.is_blocked = True
         self.accepting = accept
-        self.connection.connection.graphics.mark_as_blocked()
+        self.connection.mark_as_blocked()
 
     def unblock(self):
         """
@@ -128,7 +128,7 @@ class Interface:
         """
         self.is_blocked = False
         self.accepting = None
-        self.connection.connection.graphics.mark_as_unblocked()
+        self.connection.mark_as_unblocked()
 
     def send(self, packet):
         """

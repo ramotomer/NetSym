@@ -27,6 +27,7 @@ class ConnectionGraphics(GraphicsObject):
         super(ConnectionGraphics, self).__init__(is_in_background=True)
         self.computers = Computers(computer_graphics_start, computer_graphics_end)
         self.color = CONNECTION_COLOR
+        self.marked_as_blocked = False
 
     @property
     def length(self):  # the length of the connection.
@@ -52,20 +53,6 @@ class ConnectionGraphics(GraphicsObject):
         :return: None
         """
         draw_line((self.computers.start.x, self.computers.start.y), (self.computers.end.x, self.computers.end.y), self.color)
-
-    def mark_as_blocked(self):
-        """
-        Marks the connection as being a blocked connection (paints it a different color)
-        :return: None
-        """
-        self.color = BLOCKED_CONNECTION_COLOR
-
-    def mark_as_unblocked(self):
-        """
-        Marks the connection as a regular (unblocked) connection.
-        :return: None
-        """
-        self.color = CONNECTION_COLOR
 
     def __repr__(self):
         return "Connection Graphics"

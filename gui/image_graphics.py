@@ -11,16 +11,17 @@ class ImageGraphics(GraphicsObject):
     This class is a superclass of any `GraphicsObject` subclass which uses an image in its `draw` method.
     Put simply, it is a graphics object with a picture.
     """
-    def __init__(self, image_name, x, y, centered=False, is_in_background=False, scale_factor=SPRITE_SCALE_FACTOR):
+    def __init__(self, image_name, x, y, centered=False, is_in_background=False, scale_factor=SPRITE_SCALE_FACTOR, is_opaque=False):
         super(ImageGraphics, self).__init__(x, y, False, centered, is_in_background)
         self.image_name = image_name
         self.scale_factor = scale_factor
+        self.is_opaque = is_opaque
         self.sprite = None
 
         MainLoop.instance.register_graphics_object(self, is_in_background)
 
     @staticmethod
-    def get_image_sprite(image_name, x, y):
+    def get_image_sprite(image_name, x, y, is_opaque=False):
         """
         Receives an image_name and x and y coordinates and returns a `pyglet.sprite.Sprite`
         object that can be displyed on the screen.
@@ -30,7 +31,9 @@ class ImageGraphics(GraphicsObject):
         :param y:
         :return: `pyglet.sprite.Sprite` object
         """
-        return pyglet.sprite.Sprite(pyglet.image.load(image_name), x=x, y=y)
+        returned = pyglet.sprite.Sprite(pyglet.image.load(image_name), x=x, y=y)
+        returned.opacity = OPAQUE if is_opaque else NOT_OPAQUE
+        return returned
 
     @staticmethod
     def copy_sprite(sprite, scale):
@@ -42,6 +45,7 @@ class ImageGraphics(GraphicsObject):
         """
         returned = pyglet.sprite.Sprite(sprite.image, x=sprite.x, y=sprite.y)
         returned.update(scale=scale)
+        returned.opacity = sprite.opacity
         return returned
 
     def is_mouse_in(self):
@@ -88,7 +92,7 @@ class ImageGraphics(GraphicsObject):
         It loads the picture of the object.
         :return: None
         """
-        self.sprite = self.get_image_sprite(self.image_name, self.x, self.y)
+        self.sprite = self.get_image_sprite(self.image_name, self.x, self.y, self.is_opaque)
         self.sprite.update(scale_x=self.scale_factor, scale_y=self.scale_factor)
 
         if self.centered:

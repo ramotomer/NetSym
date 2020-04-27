@@ -26,6 +26,9 @@ class STPProcess(Process):
         self.stp_interfaces = {}
         self.last_root_changing_time = time.time()
         self.last_sending_time = time.time()
+        self.last_port_blocking_time = time.time()
+        self.sending_interval = STP_NORMAL_SENDING_INTERVAL
+        self.tree_stable = False
 
     @property
     def root_port(self):
@@ -75,6 +78,10 @@ class STPProcess(Process):
         """
         self.root_bid = new_root_bid
         self.last_root_changing_time = time.time()
+
+        if self.tree_stable:
+            self._tree_unstable_again()  # if the root is updated, the tree is not really stable!
+
         if receiving_interface not in self.stp_interfaces:
             self._add_interface(receiving_interface)
         self._update_distance(distance_to_new_root, receiving_interface)
@@ -101,7 +108,7 @@ class STPProcess(Process):
         :param interface: an `Interface` object of the switch.
         :return: None
         """
-        self.stp_interfaces[interface] = STPInterface( interface, NO_STATE, 0)
+        self.stp_interfaces[interface] = STPInterface(interface, NO_STATE, 0)
 
     def _set_state(self, interface, state):
         """
@@ -113,39 +120,14 @@ class STPProcess(Process):
         if interface not in self.stp_interfaces:
             raise NoSuchInterfaceError("The interface is not an STP interface!!!!")
 
+        if state == ROOT_PORT:
+            for port in self.stp_interfaces:
+                if self.stp_interfaces[port].state == ROOT_PORT:
+                    self._set_state(port, NO_STATE)                    # there can only be one ROOT_PORT at a time!
+
         _, interface_state, distance_to_root = self.stp_interfaces[interface]
-        if interface_state == BLOCKED_PORT and state != BLOCKED_PORT:
-            interface.unblock()
+
         self.stp_interfaces[interface] = STPInterface(interface, state, distance_to_root)
-
-    def _set_root_port(self, interface):
-        """
-        This sets an STP port to be a root port.
-        :param interface: an `Interface` object.
-        :return: None
-        """
-        for port in self.stp_interfaces:
-            if self.stp_interfaces[port].state == ROOT_PORT:
-                self._set_state(port, NO_STATE)                    # there can only be one ROOT_PORT at a time!
-
-        self._set_state(interface, ROOT_PORT)
-
-    def _set_designated_port(self, interface):
-        """
-        Sets a port to be a designated port.
-        :param interface: an STP `Interface` object.
-        :return: None
-        """
-        self._set_state(interface, DESIGNATED_PORT)
-
-    def _set_blocked_port(self, interface):
-        """
-        Sets an STP port's state to be blocked and also physically blocks it.
-        :param interface: the STP `Interface` object.
-        :return: None
-        """
-        interface.block(accept="STP")
-        self._set_state(interface, BLOCKED_PORT)
 
     def _is_root_port(self, port):
         """Receives an STP interface of the switch and decides if it is a root port"""
@@ -167,6 +149,18 @@ class STPProcess(Process):
         other_interface_distance_to_root = self.stp_interfaces[interface].distance_to_root - interface.connection_length
         return other_interface_distance_to_root > self.distance_to_root
 
+    def _set_interface_states(self):
+        """Sets the states of the ports of the switch (ROOT, DESIGNATED or BLOCKED)"""
+        for interface in self.stp_interfaces:
+            if self._is_root_port(interface):
+                self._set_state(interface, ROOT_PORT)
+
+            elif self._is_designated(interface):
+                self._set_state(interface, DESIGNATED_PORT)
+
+            else:  # the port will be blocked, since it has no state!
+                self._set_state(interface, BLOCKED_PORT)
+
     def get_info(self):
         """For debugging, returns some information about the state of the STP process on the switch."""
         return f"""
@@ -181,6 +175,39 @@ interface states:
 ----------------------------------------
 """
 
+    def _root_not_updated_for(self, seconds):
+        """Returns whether or not the root was updated in the last `seconds` seconds."""
+        return (time.time() - self.last_root_changing_time) > seconds
+
+    def _block_blocked_ports(self):
+        """Blocks the `BLOCKED_PORT`-s and unblocks the other ones."""
+        if (time.time() - self.last_port_blocking_time) < TREE_STABLIZING_MAX_TIME:
+            return
+
+        self.last_port_blocking_time = time.time()
+        for interface in self.stp_interfaces:
+            if self.stp_interfaces[interface].state == BLOCKED_PORT and not interface.is_blocked:
+                interface.block(accept="STP")
+            if self.stp_interfaces[interface].state != BLOCKED_PORT and interface.is_blocked:
+                interface.unblock()
+
+    def _tree_is_probably_stable(self):
+        """
+        This is called when the switch tree is probably stable.
+        It decreases the sending rate, and moves to hello packets
+        """
+        self.sending_interval = STP_STABLE_SENDING_INTERVAL
+        self.tree_stable = True
+
+    def _tree_unstable_again(self):
+        """
+        This is called if the tree was thought to be stable but then the root was updated, Takes the STP process
+        back to the ustable state
+        :return: None
+        """
+        self.tree_stable = False
+        self.sending_interval = STP_NORMAL_SENDING_INTERVAL
+
     def code(self):
         """
         The actual code of the STP process.
@@ -189,7 +216,7 @@ interface states:
         :return: yields `WaitingFor` namedtuple-s.
         """
         while True:
-            if (time.time() - self.last_sending_time) > STP_SENDING_INTERVAL:
+            if (time.time() - self.last_sending_time) > self.sending_interval:
                 self._send_packet()
 
             stp_packets = ReturnedPacket()
@@ -205,13 +232,11 @@ interface states:
                 elif packet["STP"].root_bid == self.root_bid:
                     self._update_distance(packet["STP"].distance_to_root, interface)
 
-            for interface in self.stp_interfaces:
-                if self._is_root_port(interface):
-                    self._set_root_port(interface)
-                elif self._is_designated(interface):
-                    self._set_designated_port(interface)
-                else:  # the port will be blocked, since it has no state!
-                    self._set_blocked_port(interface)
+            self._set_interface_states()
+
+            if self._root_not_updated_for(seconds=TREE_STABLIZING_MAX_TIME):
+                self._block_blocked_ports()
+                self._tree_is_probably_stable()
 
     def __repr__(self):
         """The string representation of the STP process"""
