@@ -1,8 +1,8 @@
-from collections import namedtuple, OrderedDict
+from collections import namedtuple
 from exceptions import *
 from address.ip_address import IPAddress
 from os import linesep
-from consts import ON_LINK
+from consts import *
 
 
 RoutingTableItem = namedtuple("RoutingTableItem", "ip_address interface_ip")
@@ -20,17 +20,32 @@ class RoutingTable:
 
     The class is based on an `OrderedDict` because the order matters in a routing table!
     """
-    def __init__(self, initial_dictionary, default_gateway=None):
+    def __init__(self):
         """
-        Initiates the RoutingTable from a dictionary of {IPAddress: RoutingTableItem}
-        :param initial_dictionary: `dict` or list of tuples.
-        :param default_gateway: a default `RoutingTableItem` that
+        Initiates the RoutingTable with some default entries.
         """
-        self.dictionary = OrderedDict(initial_dictionary)
-        self.default_gateway = default_gateway
+        dictionary = {
+            IPAddress("0.0.0.0/0"): RoutingTableItem(None, None),
+            IPAddress("255.255.255.255/32"): RoutingTableItem(None, None),
+        }
+
+        self.dictionary = dictionary
+
+    @property
+    def default_gateway(self):
+        """The default gateway in the routing table"""
+        return self[IPAddress("0.0.0.0/0")]
+
+    def set_default_gateway(self, gateway, interface_ip):
+        """
+        Sets the default gateway in the routing table, using a gateway and an IP of an interface to go out from the computer to it.
+        :return: None
+        """
+        self.dictionary[IPAddress("0.0.0.0/0")] = RoutingTableItem(gateway, interface_ip)
+        self.dictionary[IPAddress("255.255.255.255/32")] = RoutingTableItem(gateway, interface_ip)
 
     @classmethod
-    def create_default(cls, computer):
+    def create_default(cls, computer, expect_normal_gateway=True):
         """
         This is a constructor class method.
         Creates a default routing table for a given `Computer`.
@@ -40,40 +55,66 @@ class RoutingTable:
         try:
             main_interface = computer.get_interface_with_ip()
         except NoSuchInterfaceError:
-            return cls({}, RoutingTableItem(None, None))    # if there is no interface with an IP address
-        gateway = main_interface.ip.expected_gateway()  # the expected IP address of a gateway in that subnet.
-        dictionary = [
-            (IPAddress("0.0.0.0/0"), RoutingTableItem(gateway, main_interface.ip)),
-            *[
-                (interface.ip.subnet(),RoutingTableItem(
-                    ON_LINK,
-                    IPAddress.copy(interface.ip)
-                 )) for interface in computer.interfaces if interface.has_ip()
-            ],
-            (IPAddress("255.255.255.255/32"), RoutingTableItem(gateway, main_interface.ip)),
-        ]
-        return cls(OrderedDict(dictionary), RoutingTableItem(gateway, main_interface.ip))
+            return cls()    # if there is no interface with an IP address
+
+        returned = cls()
+
+        if expect_normal_gateway:
+            gateway = main_interface.ip.expected_gateway()  # the expected IP address of a gateway in that subnet.
+            returned.set_default_gateway(gateway, main_interface.ip)
+
+        for interface in computer.interfaces:
+            if interface.has_ip():
+                returned.dictionary[interface.ip.subnet()] = RoutingTableItem(ON_LINK, IPAddress.copy(interface.ip))
+
+        return returned
+
+    def route_add(self, destination_ip, gateway_ip, interface_ip):
+        """
+        Adds a route from all of the required data to do that
+        :param destination_ip: an `IPAddress` of the destination.
+        :param gateway_ip: an `IPAddress` of the gateway to send things to.
+        :param interface_ip: an `IPAddress` of the interface to send through it things to the gateway.
+        :return: None
+        """
+        arguments = (destination_ip, gateway_ip, interface_ip)
+        if any(not isinstance(address, IPAddress) for address in arguments) and gateway_ip is not ON_LINK:
+            raise NoIPAddressError(f"One of the arguments to this function is not an IPAddress object!!!!! ({arguments})")
+
+        if destination_ip in self.dictionary:
+            raise RoutingTableError("Cannot add a route to a destination that already exists!!!")
+
+        self.dictionary[destination_ip] = RoutingTableItem(gateway_ip, interface_ip)
+
+    def add_interface(self, interface_ip):
+        """
+        Adds a new interface to the routing table in the default way.
+        :param interface_ip: an `IPAddress` object of the IP address of the interface that one wishes to add to the routing table.
+        :return: None
+        """
+        send_to = self.default_gateway
+        if self.default_gateway.ip_address is None or self.default_gateway.ip_address.is_same_subnet(interface_ip):
+            send_to = ON_LINK
+
+        self.route_add(interface_ip.subnet(), send_to, interface_ip)
 
     def __getitem__(self, item):
         """allows the dictionary notation of dict[key] """
         if not isinstance(item, IPAddress):
             raise InvalidAddressError("Key of a routing table must be an IPAddress object!!!")
 
-        for destination_address in reversed(self.dictionary):  # the begging is the default and we use the first one (from the bottom) that fits for us.
-            if destination_address.is_same_subnet(item):  # if the item (which is a dst ip) fits this subnet and subnet mask
-                result = self.dictionary[destination_address]
-                if result.ip_address is ON_LINK:
-                    return RoutingTableItem(item, result.interface_ip)
-                return result
-        return self.default_gateway
+        possible_addresses = list(filter(lambda destination: destination.is_same_subnet(item), self.dictionary))  # can never be empty!!! (always has 0.0.0.0/0)
+        most_fitting_destination = max(possible_addresses, key=lambda address: address.subnet_mask)  # if this raises, you do not have a default!!!
+
+        result = self.dictionary[most_fitting_destination]
+        if result.ip_address is ON_LINK:
+            return RoutingTableItem(item, result.interface_ip)
+        return result
 
     def __setitem__(self, key, value):
         """allows the dictionary notation of dict[key] = value """
         if not isinstance(key, IPAddress):
             raise InvalidAddressError("Key of a routing table must be an IPAddress object!!!")
-
-        if key == IPAddress("0.0.0.0/0"):
-            self.default_gateway = value
 
         self.dictionary[key] = value
 
@@ -82,7 +123,7 @@ class RoutingTable:
         return f"RoutingTable({self.dictionary}, default={self.default_gateway})"
 
     def __repr__(self):
-        """allows a route print"""
+        """allows a 'route print' """
         return f"""
 ====================================================================
 Active Routes:

@@ -80,7 +80,7 @@ class Interface:
         :param ip_address: IPAddress
         :return: boolean
         """
-        return self.has_ip() and self.ip == ip_address
+        return self.has_ip() and self.ip.string_ip == ip_address.string_ip
 
     def is_connected(self):
         """Returns whether the interface is connected or not"""

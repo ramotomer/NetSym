@@ -66,14 +66,14 @@ class Switch(Computer):
         the last time this function was called.
         :return: None
         """
-        new_packets = list(filter(lambda rp: rp.time > self.last_switch_table_update_time, self.received))
+        new_packets = self._new_packets_since(self.last_switch_table_update_time)
         self.last_switch_table_update_time = time.time()
         for packet, _, leg in new_packets:
             try:
                 src_mac = packet["Ethernet"].src_mac
-                self.switching_table[src_mac] = SwitchTableItem(leg, time.time())
             except KeyError:
-                raise UnknownPacketTypeError()
+                raise UnknownPacketTypeError("The packet contains no Ethernet layer!!!")
+            self.switching_table[src_mac] = SwitchTableItem(leg, time.time())
 
     def delete_old_switch_table_items(self):
         """
@@ -91,7 +91,7 @@ class Switch(Computer):
         function was called and sends them down the correct leg.
         :return: None
         """
-        new_packets = list(filter(lambda rp: rp.time > self.last_packet_sending_time, self.received))
+        new_packets = self._new_packets_since(self.last_packet_sending_time)
         self.last_packet_sending_time = time.time()
 
         for packet, _, source_leg in new_packets:

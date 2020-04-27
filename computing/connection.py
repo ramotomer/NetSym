@@ -1,6 +1,5 @@
 from consts import *
 from collections import namedtuple
-from gui.graphics_object import NoGraphics
 import time
 from exceptions import SomethingWentTerriblyWrongError, NoSuchConnectionSideError
 from gui.connection_graphics import ConnectionGraphics
@@ -42,7 +41,7 @@ class Connection:
 
         self.last_packet_motion = time.time()
 
-        self.graphics = NoGraphics()
+        self.graphics = None
 
         self.is_blocked = False
 
@@ -51,8 +50,8 @@ class Connection:
     @property
     def length(self):
         """The length of the connection in pixels"""
-        if isinstance(self.graphics, NoGraphics):
-            return self.initial_length
+        if self.graphics is None:
+            raise SomethingWentTerriblyWrongError("Graphics was not yet initiated!!!")
         return self.graphics.length
 
     @property

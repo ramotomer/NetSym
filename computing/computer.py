@@ -1,4 +1,3 @@
-from gui.graphics_object import NoGraphics
 from gui.computer_graphics import ComputerGraphics
 from address.mac_address import MACAddress
 from exceptions import *
@@ -66,7 +65,7 @@ class Computer:
         self.waiting_processes = []  # a list of `WaitingProcess` namedtuple-s. If the process is new, its `WaitingProcess.waiting_for` should be None.
         self.process_last_check = time.time()  # the last time that the waiting_processes were checked for 'can they run?'
 
-        self.graphics = NoGraphics()
+        self.graphics = None
         # ^ The `GraphicsObject` of the computer, not initiated for now.
 
         MainLoop.instance.insert_to_loop_pausable(self.logic)
@@ -196,7 +195,7 @@ class Computer:
         if ip_address is None:
             # raise NoIPAddressError("The address that is given is None!!!")
             return
-        return any(interface.has_ip() and interface.ip == ip_address for interface in self.interfaces)
+        return any(interface.has_ip() and interface.ip.string_ip == ip_address.string_ip for interface in self.interfaces)
 
     def is_arp_for_me(self, packet):
         """Returns whether or not the packet is an ARP request for one of your IP addresses"""
@@ -322,7 +321,7 @@ class Computer:
         if self._is_process_running(DHCPServer):
             dhcp_server_process = self.get_running_process(DHCPServer)
             dhcp_server_process.update_server_data()
-        self.update_routing_table()
+        self.routing_table.add_interface(interface.ip)
         self.graphics.update_text()
 
     def toggle_sniff(self, interface_name=ANY_INTERFACE, is_promisc=False):
@@ -349,6 +348,14 @@ class Computer:
         packet_str = deepest.opcode if hasattr(deepest, "opcode") else type(deepest).__name__
         self.print(f"({self.packets_sniffed}) sniff: {packet_str}")
         self.packets_sniffed += 1
+
+    def _new_packets_since(self, time_):
+        """
+        Returns a list of all the new `ReceivedPacket`s that were received in the last `seconds` seconds.
+        :param seconds: a number of seconds.
+        :return: a list of `ReceievedPacket`s
+        """
+        return list(filter(lambda rp: rp.time > time_, self.received))
 
 # -------------------------v packet sending and wrapping related methods v ---------------------------------------------
 
@@ -587,7 +594,7 @@ class Computer:
         Returns a list of the waiting processes that finished waiting and are ready to run.
         :return: a list of `Process` objects that are ready to run. (they will run in the next call to `self._handle_processes`
         """
-        new_packets = list(filter(lambda rp: rp.time > self.process_last_check, self.received))
+        new_packets = self._new_packets_since(self.process_last_check)
         self.process_last_check = time.time()
 
         ready_processes = self._start_new_processes()

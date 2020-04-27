@@ -74,3 +74,6 @@ class Console(GraphicsObject):
             self._text = '\n'.join(self._text.split('\n')[1:])    # remove the up most line if we are out of space.
         self._text += text + '\n'
         self.child_graphics_objects.text.set_text(self._text)
+
+    def __repr__(self):
+        return "Console"

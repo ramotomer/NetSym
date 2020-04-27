@@ -4,6 +4,7 @@ from processes.process import Process, WaitingFor, NoNeedForPacket
 import time
 from gui.computer_graphics import ComputerGraphics
 from processes.dhcp_process import DHCPServer
+from computing.routing_table import RoutingTable
 
 
 def arp_reply_from(source_ip):
@@ -122,7 +123,7 @@ class Router(Computer):
         Initiates a router with no IP addresses.
         """
         super(Router, self).__init__(name, OS_SOLARIS, None, *interfaces)
-        self.set_default_gateway(None, None)
+        self.routing_table = RoutingTable.create_default(self, False)
 
         self.last_route_check = time.time()
 
@@ -143,7 +144,7 @@ class Router(Computer):
         checks what are the new packets that arrived to this router, if they are not for it, routes them on.
         :return: None
         """
-        new_packets = list(filter(lambda rp: rp.time > self.last_route_check, self.received))
+        new_packets = self._new_packets_since(self.last_route_check)
         self.last_route_check = time.time()
 
         for packet, _, _ in new_packets:

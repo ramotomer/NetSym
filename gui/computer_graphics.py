@@ -54,4 +54,4 @@ class ComputerGraphics(ImageGraphics):
         return "ComputerGraphics"
 
     def __repr__(self):
-        return f"ComputerGraphics of computer {self.computer!r}"
+        return f"ComputerGraphics of computer '{self.computer}'"

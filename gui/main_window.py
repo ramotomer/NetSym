@@ -157,6 +157,7 @@ class MainWindow(pyglet.window.Window):
 
         except (TypeError, AttributeError) as err:
             print(f"exception in on_draw: {err}")
+            raise err
 
     def update(self, time_interval):
         """

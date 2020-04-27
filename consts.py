@@ -49,7 +49,7 @@ ALT_MODIFIER = 4
 CTRL_MODIFIER = 2
 SHIFT_MODIFIER = 1
 NO_MODIFIER = 0
-# you can `&` them together to get the different combinations.
+# you can `|` them together to get the different combinations.
 
 
 FILES = "res/files/{}"

@@ -105,6 +105,11 @@ class NoSuchComputerError(ComputerError):
     Occurs when a computer that does not exist is accessed
     """
 
+class RoutingTableError(ComputerError):
+    """
+    Indicates an error in the routing table of a computer.
+    """
+
 
 class GraphicsError(NetworkSimulationError):
     """

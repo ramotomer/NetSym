@@ -636,7 +636,7 @@ class UserInterface:
 
     def start_all_stp(self):
         """
-        Starts the STP process on all of the switches that enable it.
+        Starts the STP process on all of the switches that enable it. (Only if not already started)
         :return: None
         """
         for switch in filter(lambda computer: isinstance(computer, Switch), self.computers):

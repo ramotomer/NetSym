@@ -181,11 +181,11 @@ class IPAddress:
         """Test whether two ip addresses are equal or not (does no include subnet mask)"""
         if other is None:
             return False
-        return self.string_ip == other.string_ip
+        return self.string_ip == other.string_ip and self.subnet_mask == other.subnet_mask
 
     def __hash__(self):
         """Allows the IPAddress object to be a key in a dictionary or a set"""
-        return hash(self.string_ip)
+        return hash(repr(self))
 
     def __repr__(self):
         """The string representation of the IP address"""
