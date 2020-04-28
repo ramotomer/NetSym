@@ -10,12 +10,6 @@ def arp_reply_from(ip_address):
     return tester
 
 
-def ping_reply_from(ip_address):
-    """Returns a function that tests if the packet given to it is a ping reply for the `ip_address`"""
-    return lambda p: ("ICMP" in p) and (p["ICMP"].opcode == ICMP_REPLY) and (p["IP"].src_ip == ip_address)
-
-
-
 class SendPing(Process):
     """
     This is a process for sending a ping request to another computer and receiving the reply.
@@ -40,6 +34,14 @@ class SendPing(Process):
         dst_mac = self.computer.arp_cache[ip_for_the_mac].mac
         self.computer.send_ping_to(dst_mac, self.dst_ip, self.ping_opcode)
 
+    def ping_reply_from(self, ip_address):
+        """Returns a function that tests if the packet given to it is a ping reply for the `ip_address`"""
+        def tester(packet):
+            return ("ICMP" in packet) and (packet["ICMP"].opcode == ICMP_REPLY) and \
+                   ((self.computer.has_this_ip(self.dst_ip) and packet["IP"].src_ip == self.computer.loopback.ip) or (
+                               packet["IP"].src_ip == ip_address))
+        return tester
+
     def code(self):
         """
         This code sends a ping (request or reply).
@@ -48,7 +50,7 @@ class SendPing(Process):
         """
         if not self.computer.is_reachable(self.dst_ip):
             self.is_sending_to_gateway = True
-            if self.computer.gateway is None: # network is totally unreachable
+            if self.computer.routing_table.default_gateway.ip_address is None: # network is totally unreachable
                 return
 
         ip_for_the_mac = self.computer.routing_table[self.dst_ip].ip_address
@@ -64,7 +66,7 @@ class SendPing(Process):
             self.computer.print(f"pinging {self.dst_ip} with some bytes")
 
             ping_reply_returned_packet = ReturnedPacket()
-            yield WaitingFor(ping_reply_from(self.dst_ip), ping_reply_returned_packet)
+            yield WaitingFor(self.ping_reply_from(self.dst_ip), ping_reply_returned_packet)
             self.computer.print("ping reply!")
 
     def __repr__(self):

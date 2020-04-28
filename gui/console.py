@@ -52,7 +52,7 @@ class Console(GraphicsObject):
 
     def hide(self):
         """
-        Hides the console if it is showing.
+        Hides the console if it is is_showing.
         :return: None
         """
         self.is_hidden = True

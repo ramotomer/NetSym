@@ -48,7 +48,7 @@ class UserInterface:
     The `self.mode` variable determines in what mode the user interface is currently in.
     if the mode is `SIMULATION_MODE`, the regular menu is presented.
     if the mode is `CONNECTING_MODE` than the two next computers the user will press will become connected.
-    the `VIEW_MODE` is when a computer's details are currently showing in the side window nicely.
+    the `VIEW_MODE` is when a computer's details are currently is_showing in the side window nicely.
     the `SNIFFING_MODE` is when we choose a computer to start sniffing.  (Blue side window)
     the `PINGING_MODE` is when we choose two computer to send a ping between.  (purple side window)
     the `DELETING_MODE` is when we delete a graphics object. (Brown side window)
@@ -74,6 +74,7 @@ class UserInterface:
             (key.C, SHIFT_MODIFIER): self.connect_all_to_all,
             (key.P, CTRL_MODIFIER): self.send_random_ping,
             (key.P, NO_MODIFIER): with_args(self.toggle_mode, PINGING_MODE),
+            (key.P, SHIFT_MODIFIER): self.send_ping_to_self,
             (key.S, NO_MODIFIER): with_args(self.create, Switch, True),
             (key.S, CTRL_MODIFIER): self.start_all_stp,
             (key.H, NO_MODIFIER): with_args(self.create, Hub, True),
@@ -115,7 +116,7 @@ class UserInterface:
         # ^ the object that is currently dragged
 
         self.object_view = None
-        # ^ the `ObjectView` object that is currently showing in the side window.
+        # ^ the `ObjectView` object that is currently is_showing in the side window.
 
         self.is_paused = False
         # ^ whether or not the program is paused
@@ -132,7 +133,7 @@ class UserInterface:
             ((*DEFAULT_BUTTON_LOCATION(2), with_args(self.create, Hub), "create a hub (h)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(3), with_args(self.create, Router), "create a router (r)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(4), with_args(self.toggle_mode, CONNECTING_MODE), "connect (c / ^c / Shift+c)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(5), with_args(self.toggle_mode, PINGING_MODE), "ping (p / ^p)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(5), with_args(self.toggle_mode, PINGING_MODE), "ping (p / ^p / Shift+p)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(6), with_args(self.toggle_mode, SNIFFING_MODE), "toggle sniffing (f)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(7), self.ask_for_dhcp, "ask for DHCP (a)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(8), self.start_all_stp, "start STP (^s)", MAIN_MENU_BUTTONS), {}),
@@ -394,7 +395,7 @@ class UserInterface:
         """
         try:
             sending_computer = random.choice([computer for computer in self.computers if computer.has_ip()])
-            receiving_computer = random.choice([computer for computer in self.computers if computer is not sending_computer and computer.has_ip()])
+            receiving_computer = random.choice([computer for computer in self.computers if computer.has_ip()])
             sending_computer.start_ping_process(receiving_computer.get_ip())
         except IndexError:
             pass
@@ -472,7 +473,7 @@ class UserInterface:
 
     def show_button_group(self, group):
         """
-        make the buttons of a certain button group showing, all other groups hidden.
+        make the buttons of a certain button group is_showing, all other groups hidden.
         :param group: a group name (`MAIN_MENU_BUTTONS` for example)
         :return: None
         """
@@ -490,6 +491,10 @@ class UserInterface:
         """
         for connection, _, _ in self.connection_data:
             for packet, _, _ in connection.sent_packets:
+                if packet.graphics is graphics_object:
+                    return packet
+        for computer in self.computers:
+            for packet, _, _ in computer.loopback.connection.connection.sent_packets:
                 if packet.graphics is graphics_object:
                     return packet
         raise NoSuchPacketError("That packet cannot be found!")
@@ -660,3 +665,14 @@ class UserInterface:
             for other_computer in self.computers:
                 if computer is not other_computer and not self.are_connected(computer, other_computer):
                     self.connect_computers(computer, other_computer)
+
+    def send_ping_to_self(self):
+        """
+        The selected computer sends a ping to himself on the loopback.
+        :return: None
+        """
+        if self.selected_object is None or not self.selected_object.is_computer:
+            return
+
+        computer = self.selected_object.computer
+        self.send_direct_ping(computer, computer)

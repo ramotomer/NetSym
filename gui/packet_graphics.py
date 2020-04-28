@@ -41,20 +41,8 @@ class PacketGraphics(ImageGraphics):
         Calculates its coordinates according to the `self.progress` attribute.
         :return: None
         """
-        self.x, self.y = self.calculate_coordinates()
+        self.x, self.y = self.connection_graphics.packet_location(self.direction, self.progress)
         super(PacketGraphics, self).move()
-
-    def calculate_coordinates(self):
-        """
-        This method knows the start and end coordinates of the travel of the packet
-        in the connection and it also knows the progress percent.
-        It calculates (with a vector based calculation) the current coordinates of the packet
-        on the screen.
-        :return: None
-        """
-        start_x, start_y, end_x, end_y = self.connection_graphics.get_coordinates(self.direction)
-        return ((((end_x - start_x) * self.progress) + start_x),
-                (((end_y - start_y) * self.progress) + start_y))
 
     @staticmethod
     def image_from_packet(layer):

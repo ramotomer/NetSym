@@ -56,6 +56,15 @@ class MACAddress:
         """
         return cls(STP_MULTICAST_MAC)
 
+    @classmethod
+    def no_mac(cls):
+        """a constructor that Returns the MAC of 0s"""
+        return cls("00:00:00:00:00:00")
+
+    def is_no_mac(self):
+        """Returns whether or not this mac is the 0s mac"""
+        return self.string_mac == "00:00:00:00:00:00"
+
     @staticmethod
     def is_valid(address):
         """

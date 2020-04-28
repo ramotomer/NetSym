@@ -47,6 +47,22 @@ class ConnectionGraphics(GraphicsObject):
             return self.computers.end.x, self.computers.end.y, self.computers.start.x, self.computers.start.y
         raise SomethingWentTerriblyWrongError("a packet can only go left or right!")
 
+    def packet_location(self, direction, progress):
+        """
+        Returns the location of the packet in the connection based of its direction and its progress in it
+        This method knows the start and end coordinates of the travel of the packet
+        in the connection and it also knows the progress percent.
+        It calculates (with a vector based calculation) the current coordinates of the packet
+        on the screen.
+
+        :param direction: the direction the packet is going in the connection.
+        :param progress: the progress of the packet through the connection.
+        :return: returns coordinates of the packet according to that
+        """
+        start_x, start_y, end_x, end_y = self.get_coordinates(direction)
+        return ((((end_x - start_x) * progress) + start_x),
+                (((end_y - start_y) * progress) + start_y))
+
     def draw(self):
         """
         Draws the connection (The line) between its end point and its start point.

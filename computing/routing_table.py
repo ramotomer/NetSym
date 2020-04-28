@@ -27,6 +27,7 @@ class RoutingTable:
         dictionary = {
             IPAddress("0.0.0.0/0"): RoutingTableItem(None, None),
             IPAddress("255.255.255.255/32"): RoutingTableItem(None, None),
+            IPAddress("127.0.0.0/8"): RoutingTableItem(ON_LINK, IPAddress.loopback()),
         }
 
         self.dictionary = dictionary
@@ -65,7 +66,8 @@ class RoutingTable:
 
         for interface in computer.interfaces:
             if interface.has_ip():
-                returned.dictionary[interface.ip.subnet()] = RoutingTableItem(ON_LINK, IPAddress.copy(interface.ip))
+                returned.route_add(interface.ip.subnet(), ON_LINK, IPAddress.copy(interface.ip))
+                returned.route_add(IPAddress(interface.ip.string_ip + "/32"), IPAddress.copy(computer.loopback.ip), IPAddress.copy(computer.loopback.ip))
 
         return returned
 

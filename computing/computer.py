@@ -55,8 +55,9 @@ class Computer:
 
         self.interfaces = list(interfaces)
         if not interfaces:
-            self.interfaces = [Interface(MACAddress.randomac())]  # interfaces need to know the os for TTL-s
+            self.interfaces = [Interface(MACAddress.randomac())]  # a list of all of the interfaces without the loopback
         self.packets_sniffed = 0
+        self.loopback = Interface.loopback()
 
         self.arp_cache = {}  # a dictionary of {<ip address> : ARPCacheItem(<mac address>, <initiation time of this item>)
         self.routing_table = RoutingTable.create_default(self)  # a dictionary of {<ip address destination> : RoutingTableItem(<gateway IP>, <interface IP>)}
@@ -82,11 +83,9 @@ class Computer:
         return [interface.ip for interface in self.interfaces if interface.ip is not None]
 
     @property
-    def gateway(self):
-        """The IP address of the gateway of this computer. If there is none, returns the expected one"""
-        if not self.has_ip():
-            return None
-        return self.default_gateway if self.default_gateway is not None else self.get_ip().expected_gateway()
+    def all_interfaces(self):
+        """Returns the list of interfaces with the loopback"""
+        return self.interfaces + [self.loopback]
 
     @classmethod
     def with_ip(cls, ip_address, name=None):
@@ -116,6 +115,7 @@ class Computer:
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self)
+        self.loopback.connection.connection.show(self.graphics)
 
     def print(self, string):
         """
@@ -167,7 +167,7 @@ class Computer:
         :param ip_address: The `IPAddress` object whose subnet we are talking about.
         :return: an `Interface` list of the Interface objects in the same subnet.
         """
-        return[interface for interface in self.interfaces \
+        return[interface for interface in self.all_interfaces \
                 if interface.has_ip() and interface.ip.is_same_subnet(ip_address)]
 
     def has_ip(self):
@@ -195,7 +195,7 @@ class Computer:
         if ip_address is None:
             # raise NoIPAddressError("The address that is given is None!!!")
             return
-        return any(interface.has_ip() and interface.ip.string_ip == ip_address.string_ip for interface in self.interfaces)
+        return any(interface.has_ip() and interface.ip.string_ip == ip_address.string_ip for interface in self.all_interfaces)
 
     def is_arp_for_me(self, packet):
         """Returns whether or not the packet is an ARP request for one of your IP addresses"""
@@ -212,7 +212,7 @@ class Computer:
         """
         if ip_address is None:
             return get_the_one(self.interfaces, lambda i: i.has_ip(), NoSuchInterfaceError)
-        return get_the_one(self.interfaces, lambda i: i.has_this_ip(ip_address))
+        return get_the_one(self.all_interfaces, lambda i: i.has_this_ip(ip_address))
 
     def _handle_arp(self, packet, interface):
         """
@@ -241,9 +241,9 @@ class Computer:
         :param interface: The `Interface` the packet was received on.
         :return: None
         """
-        if packet["ICMP"].opcode == ICMP_REQUEST and self.is_for_me(packet):
-            dst_ip = packet["IP"].src_ip
-            if interface.has_this_ip(packet["IP"].dst_ip):  # only if the packet is for me also on the third layer!
+        if (packet["ICMP"].opcode == ICMP_REQUEST) and (self.is_for_me(packet)):
+            if interface.has_this_ip(packet["IP"].dst_ip) or (interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):  # only if the packet is for me also on the third layer!
+                dst_ip = packet["IP"].src_ip
                 self.start_ping_process(dst_ip, ICMP_REPLY)
 
     def start_ping_process(self, ip_address, opcode=ICMP_REQUEST):
@@ -256,7 +256,7 @@ class Computer:
 
     def is_for_me(self, packet):
         """
-        Takes in a packet and returns whether or not that packet is meant for this computer.
+        Takes in a packet and returns whether or not that packet is meant for this computer. (On the second layer)
         If broadcast, return True.
         :param packet: a `Packet` object.
         :return: boolean
@@ -659,12 +659,10 @@ class Computer:
         handles processes and in the end handles the ARP cache. In that order.
         :return: None
         """
-        for interface in self.interfaces:
+        for interface in self.all_interfaces:
             if not interface.is_connected():
                 continue
             for packet in interface.receive():
-                if packet is None:
-                    continue
                 self.received.append(ReceivedPacket(packet, time.time(), interface))
 
                 if interface.is_sniffing:
@@ -681,7 +679,7 @@ class Computer:
 
     def __repr__(self):
         """The string representation of the computer"""
-        return f"Computer(name={self.name}, Interfaces={self.interfaces}" + (f", gateway={self.gateway})" if self.gateway is not None else ')')
+        return f"Computer(name={self.name}, Interfaces={self.interfaces}"
 
     def __str__(self):
         """a simple string representation of the computer"""

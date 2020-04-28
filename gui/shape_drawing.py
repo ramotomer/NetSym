@@ -1,5 +1,7 @@
 import pyglet
 from consts import *
+from math import pi, sin, cos
+from itertools import chain
 
 
 def draw_line(point_1, point_2, color=WHITE):
@@ -65,3 +67,16 @@ def draw_pause_rectangles():
     draw_rect(x, y, PAUSE_RECT_WIDTH, PAUSE_RECT_HEIGHT, RED)
     draw_rect(x + 2 * PAUSE_RECT_WIDTH, y, PAUSE_RECT_WIDTH, PAUSE_RECT_HEIGHT, RED)
 
+
+def draw_circle(x, y, radius, color=WHITE):
+    """
+    Draws a circle with a given center location and a radius and a color.
+    :return:
+    """
+    d_theta = (2 * pi) / CIRCLE_SEGMENT_COUNT
+    vertices = list(chain(*[(x + radius * cos(i * d_theta), y + radius * sin(i * d_theta)) for i in range(0, CIRCLE_SEGMENT_COUNT)]))
+
+    pyglet.graphics.draw(CIRCLE_SEGMENT_COUNT, pyglet.gl.GL_LINE_LOOP,
+                         ('v2f', tuple(vertices)),
+                         ('c3B', color * CIRCLE_SEGMENT_COUNT),
+                         )

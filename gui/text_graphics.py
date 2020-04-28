@@ -94,7 +94,7 @@ class Text(GraphicsObject):
 
     def hide(self):
         """
-        Hides the text if it is showing.
+        Hides the text if it is is_showing.
         :return: None
         """
         self.is_hidden = True

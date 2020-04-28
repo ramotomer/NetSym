@@ -37,6 +37,11 @@ class IPAddress:
         """A constructor to the address that is used where there is no IP address (0.0.0.0)"""
         return cls("0.0.0.0/32")
 
+    @classmethod
+    def loopback(cls):
+        """A constructor for the loopback address"""
+        return cls("127.0.0.1/8")
+
     def is_same_subnet(self, other):
         """
         Receives another ip address and returns if they are in the same subnet.

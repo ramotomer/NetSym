@@ -144,6 +144,7 @@ class MainWindow(pyglet.window.Window):
 
         except (TypeError, AttributeError) as err:
             print(f"error in `on_key_press`: {err}")
+            raise err
 
     def on_draw(self):
         """

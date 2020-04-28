@@ -6,6 +6,7 @@ from consts import *
 from packets.packet import Packet
 from exceptions import *
 import random
+from computing.loopback_connection import LoopbackConnection
 
 
 class Interface:
@@ -17,7 +18,7 @@ class Interface:
     An interface can be either connected or disconnected to a `ConnectionSide` object, which enables it to move its packets
     down the connection further.
     """
-    def __init__(self, mac, ip=None, name=None):
+    def __init__(self, mac, ip=None, name=None, connection=None):
         """
         Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
         :param os: The operating system of the computer above.
@@ -25,10 +26,10 @@ class Interface:
         :param connection: a `Connection` object
         :param ip: a string ip address ('10.3.252.5/24' for example)
         """
-        self.connection = None
+        self.connection = connection
         self.name = name if name is not None else Interface.random_name()
 
-        self.mac = MACAddress(mac)
+        self.mac = MACAddress(mac) if isinstance(mac, str) else mac
         self.ip = IPAddress(ip) if ip is not None else None
 
         self.is_promisc = True
@@ -54,17 +55,25 @@ class Interface:
         """Constructor for an interface with a given (string) IP address, a random name and a random MAC address"""
         return cls(MACAddress.randomac(), ip_address, cls.random_name())
 
+    @classmethod
+    def loopback(cls):
+        """Constructor for a loopback interface"""
+        connection = LoopbackConnection()
+        return cls(MACAddress.no_mac(), IPAddress.loopback(), "loopback", connection.get_side())
+
     def is_directly_for_me(self, packet):
         """
         Receives a packet and determines whether it is destined directly for this Interface (broadcast is not)
+        On the second layer
         :param packet: a `Packet` object.
         :return: whether the destination MAC address is of this Interface
         """
-        return self.mac == packet["Ethernet"].dst_mac
+        return self.mac == packet["Ethernet"].dst_mac or packet["Ethernet"].dst_mac.is_no_mac()
 
     def is_for_me(self, packet):
         """
         Receives a packet and determines whether it is destined for this Interface (or is broadcast)
+        On the second layer
         :param packet: a `Packet` object.
         :return: whether the detination MAC address is of this Interface
         """
@@ -147,12 +156,10 @@ class Interface:
         If the interface is not in promiscuous, only retruns packets that are directed for it (and broadcast).
         :return: A `Packet` object that was sent from the other side of the connection.
         """
-        try:
-            packets = self.connection.receive()
-        except AttributeError:
-            return
-        # raise InterfaceNotConnectedError("The interface is not connected so it cannot receive packets!!!")
+        if not self.is_connected():
+            raise InterfaceNotConnectedError("The interface is not connected so it cannot receive packets!!!")
 
+        packets = self.connection.receive()
         if self.is_blocked:
             return list(filter((lambda packet: self.accepting in packet), packets))
         if self.is_promisc:
@@ -187,7 +194,8 @@ class Interface:
 
     def __str__(self):
         """A shorter string representation of the Interface"""
-        return f"{self.name}: \n{self.mac}" + ('\n' + repr(self.ip) if self.has_ip() else '')
+        mac = f"\n{self.mac}" if not self.mac.is_no_mac() else ""
+        return f"{self.name}: {mac}" + ('\n' + repr(self.ip) if self.has_ip() else '')
 
     def __repr__(self):
         """The string representation of the Interface"""
