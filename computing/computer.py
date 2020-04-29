@@ -1,26 +1,25 @@
-from gui.computer_graphics import ComputerGraphics
-from address.mac_address import MACAddress
-from exceptions import *
-from computing.interface import Interface
-from consts import *
+import random
 import time
 from collections import namedtuple
-from processes.ping_process import SendPing
+
 from address.ip_address import IPAddress
-import random
-from usefuls import get_the_one
-from processes.dhcp_process import DHCPClient
-from gui.main_loop import MainLoop
-
-from packets.arp import ARP
-from packets.ip import IP
-from packets.icmp import ICMP
-from packets.dhcp import DHCP, DHCPData
-from packets.udp import UDP
+from address.mac_address import MACAddress
+from computing.interface import Interface
 from computing.routing_table import RoutingTable, RoutingTableItem
-from processes.dhcp_process import DHCPServer
+from consts import *
+from exceptions import *
+from gui.computer_graphics import ComputerGraphics
+from gui.main_loop import MainLoop
+from packets.arp import ARP
+from packets.dhcp import DHCP, DHCPData
+from packets.icmp import ICMP
+from packets.ip import IP
 from packets.stp import STP
-
+from packets.udp import UDP
+from processes.dhcp_process import DHCPClient
+from processes.dhcp_process import DHCPServer
+from processes.ping_process import SendPing
+from usefuls import get_the_one
 
 ARPCacheItem = namedtuple("ARPCacheItem", "mac time")
 # ^ the values of the ARP cache of the computer (MAC address and creation time)
@@ -68,6 +67,8 @@ class Computer:
 
         self.graphics = None
         # ^ The `GraphicsObject` of the computer, not initiated for now.
+
+        self.is_powered_on = True
 
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ the fact that it is 'pausable' means that when the space bar is pressed and the program pauses, this method does not run.
@@ -124,6 +125,11 @@ class Computer:
         :return: None
         """
         self.graphics.child_graphics_objects.console.write(string)
+
+    def power(self):
+        """Powers the computer on or off."""
+        self.graphics.toggle_opacity()
+        self.is_powered_on = not self.is_powered_on
 
     def available_interface(self, ip_address=None):
         """
@@ -487,7 +493,7 @@ class Computer:
         """
         return not any(interface.has_this_ip(ip_address) for interface in self.interfaces)
 
-    def send_stp(self, sender_bid, root_bid, distance_to_root):
+    def send_stp(self, sender_bid, root_bid, distance_to_root, root_declaration_time):
         """
         Sends an STP packet with the given information on all interfaces. (should only be used on a switch)
         :param sender_bid: a `BID` object of the sending switch.
@@ -498,7 +504,7 @@ class Computer:
         for interface in self.interfaces:
             interface.send_with_ethernet(MACAddress.stp_multicast(),
                                          IP(IPAddress.no_address(), IPAddress.broadcast(), TTLS[self.os],  # the dst_ip should probably be different
-                                            STP(sender_bid, root_bid, distance_to_root)))
+                                            STP(sender_bid, root_bid, distance_to_root, root_declaration_time)))
 
     # ------------------------- v process related methods v ----------------------------------------------------
 
@@ -659,6 +665,9 @@ class Computer:
         handles processes and in the end handles the ARP cache. In that order.
         :return: None
         """
+        if not self.is_powered_on:
+            return
+
         for interface in self.all_interfaces:
             if not interface.is_connected():
                 continue

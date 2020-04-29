@@ -1,24 +1,26 @@
-from pyglet.window import key
-from computing.computer import Computer
-from usefuls import with_args
-from computing.switch import Switch, Hub
 import random
-from gui.button import Button
-from consts import *
-from gui.text_graphics import Text
 from collections import namedtuple
-from computing.router import Router
-from address.ip_address import IPAddress
-from usefuls import get_the_one, distance
-from exceptions import *
-from computing.interface import Interface
 from math import sqrt
-from gui.text_box import TextBox
+
+from pyglet.window import key
+
+from address.ip_address import IPAddress
+from computing.computer import Computer
+from computing.interface import Interface
+from computing.router import Router
+from computing.switch import Switch, Hub
+from consts import *
+from exceptions import *
+from gui.button import Button
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
+from gui.shape_drawing import draw_circle
 from gui.shape_drawing import draw_pause_rectangles, draw_rect
+from gui.text_box import TextBox
+from gui.text_graphics import Text
 from processes.stp_process import STPProcess
-
+from usefuls import get_the_one, distance
+from usefuls import with_args
 
 ObjectView = namedtuple("ObjectView", "sprite text viewed_object")
 """
@@ -87,6 +89,7 @@ class UserInterface:
             (key.A, NO_MODIFIER): self.ask_for_dhcp,
             (key.SPACE, NO_MODIFIER): self.toggle_pause,
             (key.I, NO_MODIFIER): self.ask_user_for_ip,
+            (key.O, NO_MODIFIER): self.power_selected_computer,
         }
 
         self.action_at_press_by_mode = {
@@ -663,7 +666,7 @@ class UserInterface:
         """
         for computer in self.computers:
             for other_computer in self.computers:
-                if computer is not other_computer and not self.are_connected(computer, other_computer):
+                if computer is not other_computer and not self.are_connected(computer, other_computer) and random.randint(0, 5) == 1:
                     self.connect_computers(computer, other_computer)
 
     def send_ping_to_self(self):
@@ -676,3 +679,20 @@ class UserInterface:
 
         computer = self.selected_object.computer
         self.send_direct_ping(computer, computer)
+
+    def showcase_running_stp(self):
+        """
+        Displays the roots of all STP processes that are running. (circles the roots with a yellow circle)
+        :return: None
+        """
+        stp_runners = [computer for computer in self.computers if computer._is_process_running(STPProcess)]
+        roots = [computer.get_running_process(STPProcess).root_bid for computer in stp_runners]
+        for computer in stp_runners:
+            if computer.get_running_process(STPProcess).my_bid in roots:
+                draw_circle(*computer.graphics.location, 60, YELLOW)
+
+    def power_selected_computer(self):
+        """Powers off or on the selected object if it is a computer"""
+        if self.selected_object is not None:
+            if self.selected_object.is_computer:
+                self.selected_object.computer.power()

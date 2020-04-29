@@ -1,5 +1,5 @@
-from packets.protocol import Protocol
 from exceptions import STPError
+from packets.protocol import Protocol
 
 
 class STP(Protocol):
@@ -7,7 +7,7 @@ class STP(Protocol):
     An STP packet. (actually in real life called BPDU packet).
     It contains information about the sending switch and allows the receiving switch to update accordingly.
     """
-    def __init__(self, my_bid, root_bid, distance_to_root):
+    def __init__(self, my_bid, root_bid, distance_to_root, root_declaration_time):
         """
         Initiates the STP packet with all of the fields it requires.
         :param my_bid: The `BID` of the sending switch.
@@ -18,6 +18,8 @@ class STP(Protocol):
         self.my_bid = my_bid
         self.root_bid = root_bid
         self.distance_to_root = distance_to_root
+
+        self.root_declaration_time = root_declaration_time
 
     def __repr__(self):
         """The string representation of the STP packet"""
@@ -71,6 +73,10 @@ class BID:
     def __str__(self):
         """The short string representation of the BID"""
         return f"{self.priority}{self.mac}"
+
+    def __hash__(self):
+        """For using this as dictionary keys"""
+        return hash(self.value)
 
     def __eq__(self, other):
         """Returns whether or not two BID objects are equal"""

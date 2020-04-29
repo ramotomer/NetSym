@@ -1,12 +1,13 @@
-from address.mac_address import MACAddress
-from address.ip_address import IPAddress
-from computing.connection import Connection
-from packets.ethernet import Ethernet
-from consts import *
-from packets.packet import Packet
-from exceptions import *
 import random
+
+from address.ip_address import IPAddress
+from address.mac_address import MACAddress
+from computing.connection import Connection
 from computing.loopback_connection import LoopbackConnection
+from consts import *
+from exceptions import *
+from packets.ethernet import Ethernet
+from packets.packet import Packet
 
 
 class Interface:
@@ -43,6 +44,8 @@ class Interface:
         The length of the connection this `Interface` is connected to. (The time a packet takes to go through it in seconds)
         :return: a number of seconds.
         """
+        if not self.is_connected():
+            return None
         return self.connection.connection.deliver_time
 
     @staticmethod

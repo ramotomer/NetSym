@@ -1,6 +1,7 @@
-from gui.graphics_object import GraphicsObject
-from consts import *
 import pyglet
+
+from consts import *
+from gui.graphics_object import GraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rect_no_fill
@@ -47,6 +48,10 @@ class ImageGraphics(GraphicsObject):
         returned.update(scale=scale)
         returned.opacity = sprite.opacity
         return returned
+
+    def toggle_opacity(self):
+        """toggles whether or not the image is opaque"""
+        self.sprite.opacity = OPAQUE if not self.sprite.opacity == OPAQUE else NOT_OPAQUE
 
     def is_mouse_in(self):
         """

@@ -1,4 +1,3 @@
-from consts import *
 from usefuls import get_the_one
 
 
@@ -146,6 +145,7 @@ class MainLoop:
         """
         self.main_window.clear()
         self.main_window.user_interface.drag_object()
+        self.main_window.user_interface.showcase_running_stp()
         self.select_selected_object()
         self.main_window.user_interface.show()
         for function, args, kwargs, can_be_paused in self.call_functions:
