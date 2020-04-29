@@ -8,6 +8,7 @@ from consts import *
 from exceptions import *
 from gui.computer_graphics import ComputerGraphics
 from gui.main_loop import MainLoop
+from packets.stp import STP, LogicalLinkControl
 from processes.stp_process import STPProcess
 
 SwitchTableItem = namedtuple("SwitchTableItem", "leg time")
@@ -126,6 +127,19 @@ class Switch(Computer):
         """
         if not self._is_process_running(STPProcess):
             self.start_process(STPProcess)
+
+    def send_stp(self, sender_bid, root_bid, distance_to_root, root_declaration_time):
+        """
+        Sends an STP packet with the given information on all interfaces. (should only be used on a switch)
+        :param sender_bid: a `BID` object of the sending switch.
+        :param root_bid: a `BID` object of the root switch.
+        :param distance_to_root: The switch's distance to the root switch.
+        :return: None
+        """
+        for interface in self.interfaces:
+            interface.send_with_ethernet(MACAddress.stp_multicast(),
+                                         LogicalLinkControl(
+                                             STP(sender_bid, root_bid, distance_to_root, root_declaration_time)))
 
     def logic(self):
         """

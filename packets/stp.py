@@ -2,6 +2,20 @@ from exceptions import STPError
 from packets.protocol import Protocol
 
 
+class LogicalLinkControl(Protocol):
+    """
+    This is the third layer that the STP goes over.
+    (It does not go over ethernet, only above this logical-link-control layer which takes the IP layer's place as the third layer of the packet.)
+    """
+    def __init__(self, stp_layer):
+        """Initiates the layer with no attributes at all, except for the data of the packet, which is `STP` protocol"""
+        super(LogicalLinkControl, self).__init__(3, stp_layer)
+
+    def multiline_repr(self):
+        """The multiline representation of the `LogicalLinkLayer` protocol"""
+        return f"\n logical link control:\n{self.data.multiline_repr()}"
+
+
 class STP(Protocol):
     """
     An STP packet. (actually in real life called BPDU packet).

@@ -13,7 +13,6 @@ from packets.arp import ARP
 from packets.dhcp import DHCP, DHCPData
 from packets.icmp import ICMP
 from packets.ip import IP
-from packets.stp import STP
 from packets.udp import UDP
 from processes.dhcp_process import DHCPClient
 from processes.dhcp_process import DHCPServer
@@ -519,19 +518,6 @@ class Computer:
         :return: theoretically, whether or not the interface approves of the address given to it by DHCP server.
         """
         return not any(interface.has_this_ip(ip_address) for interface in self.interfaces)
-
-    def send_stp(self, sender_bid, root_bid, distance_to_root, root_declaration_time):
-        """
-        Sends an STP packet with the given information on all interfaces. (should only be used on a switch)
-        :param sender_bid: a `BID` object of the sending switch.
-        :param root_bid: a `BID` object of the root switch.
-        :param distance_to_root: The switch's distance to the root switch.
-        :return: None
-        """
-        for interface in self.interfaces:
-            interface.send_with_ethernet(MACAddress.stp_multicast(),
-                                         IP(IPAddress.no_address(), IPAddress.broadcast(), TTLS[self.os],  # the dst_ip should probably be different
-                                            STP(sender_bid, root_bid, distance_to_root, root_declaration_time)))
 
     # ------------------------- v process related methods v ----------------------------------------------------
 
