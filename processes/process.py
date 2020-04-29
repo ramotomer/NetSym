@@ -4,7 +4,7 @@ from collections import namedtuple
 from exceptions import *
 from gui.main_loop import MainLoop
 
-WaitingFor = namedtuple("WaitingFor", "condition value")
+WaitingForPacket = namedtuple("WaitingForPacket", "condition value")
 """"
 The condition function must receive one argument (a packet object) and return a bool.
 the value in initialization will be a new `ReturnedPacket` object.
@@ -14,7 +14,9 @@ the process when it continues running.
 The condition should be specific so you dont accidentally catch the wrong packet!
 """
 
-WaitingForWithTimeout = namedtuple("WaitingForWithTimeout", "condition value timeout")
+WaitingForPacketWithTimeout = namedtuple("WaitingForPacketWithTimeout", "condition value timeout")
+
+WaitingFor = namedtuple("WaitingFor", "condition")
 
 
 class Process(metaclass=ABCMeta):
@@ -22,14 +24,14 @@ class Process(metaclass=ABCMeta):
     This class is a process in the computer class.
     It holds a state of the process and can run and perform code, then stop, wait for a condition and
         when that condition is met it can continue running.
-    It has a `code` method which is a generator function that yields `WaitingFor` namedtuple-s.
+    It has a `code` method which is a generator function that yields `WaitingForPacket` namedtuple-s.
 
-    The `WaitingFor` tuples have a condition and a value, they tell the computer
+    The `WaitingForPacket` tuples have a condition and a value, they tell the computer
     that's running the process that the process should be stopped until the `condition`
     function is met by a packet that was received recently. Then the computer puts the
     packet in the `value` object and continues the process run.
 
-    So the process runs the `code` method until it yields a `WaitingFor`, then it stops, once a packet fits the condition
+    So the process runs the `code` method until it yields a `WaitingForPacket`, then it stops, once a packet fits the condition
     it continues running until the next yeild. That is the way that a process can run smoothly in one function while waiting
     for packets without blocking the main loop.
 
@@ -52,7 +54,9 @@ class Process(metaclass=ABCMeta):
         usually it will be to wait for some packet.
         :return:
         """
-        yield WaitingFor(lambda p: False, NoNeedForPacket())
+        yield WaitingFor(lambda: False)
+        yield WaitingForPacket(lambda p: False, NoNeedForPacket())
+        yield WaitingForPacketWithTimeout(lambda p: False, NoNeedForPacket(), Timeout(10))
 
     def __repr__(self):
         """The string representation of the Process"""
@@ -111,12 +115,16 @@ class ReturnedPacket:
         packet = self.packet
         return packet, self.packets[packet]
 
+    def has_packets(self):
+        """Returns whether or not this has any packets inside"""
+        return bool(self.packets)
+
 
 class NoNeedForPacket(ReturnedPacket):
     """
     This is the class that you generate an instance of the signal that the process is not interested in the packet
     that will be returned for it.
 
-    A process that is waiting for some packet must yield a `ReturnedPacket` in his `WaitingFor`, this is the way to
+    A process that is waiting for some packet must yield a `ReturnedPacket` in his `WaitingForPacket`, this is the way to
     ignore that packet without raising errors.
     """

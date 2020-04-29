@@ -686,7 +686,7 @@ class UserInterface:
         Displays the roots of all STP processes that are running. (circles the roots with a yellow circle)
         :return: None
         """
-        stp_runners = [computer for computer in self.computers if computer._is_process_running(STPProcess)]
+        stp_runners = [computer for computer in self.computers if computer.is_process_running(STPProcess)]
         roots = [computer.get_running_process(STPProcess).root_bid for computer in stp_runners]
         for computer in stp_runners:
             if computer.get_running_process(STPProcess).my_bid in roots:

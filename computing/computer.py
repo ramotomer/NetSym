@@ -292,10 +292,6 @@ class Computer:
         """
         return any([interface.is_directly_for_me(packet) for interface in self.interfaces])
 
-    def is_reachable(self, ip_address):
-        """Returns whether or not a given ip_address is in a subnet with me (and therefore is reachable)"""
-        return any([interface.has_ip() and interface.ip.is_same_subnet(ip_address) for interface in self.interfaces])
-
     def _forget_arp_cache(self):
         """
         Check through the ARP cache if any addresses should be forgotten and if so forget them. (removes from the arp cache)
@@ -339,7 +335,7 @@ class Computer:
         """
         interface = get_the_one(self.interfaces, lambda i: i.name == interface_name, NoSuchInterfaceError)
         interface.ip = IPAddress(string_ip)
-        if self._is_process_running(DHCPServer):
+        if self.is_process_running(DHCPServer):
             dhcp_server_process = self.get_running_process(DHCPServer)
             dhcp_server_process.update_server_data()
         self.routing_table.add_interface(interface.ip)
@@ -537,10 +533,10 @@ class Computer:
 
     def run_process(self, process):
         """
-        This function receives a process and runs it until yielding a `WaitingFor` namedtuple.
-        Returns the yielded `WaitingFor`.
+        This function receives a process and runs it until yielding a `WaitingForPacket` namedtuple.
+        Returns the yielded `WaitingForPacket`.
         :param process: a `Process` object.
-        :return: a `WaitingFor` namedtuple or if the process is done, None.
+        :return: a `WaitingForPacket` namedtuple or if the process is done, None.
         """
         try:
             return next(process.process)
@@ -557,7 +553,7 @@ class Computer:
             if isinstance(waiting_process.process, process_type):
                 self.waiting_processes.remove(waiting_process)
 
-    def _is_process_running(self, process_type):
+    def is_process_running(self, process_type):
         """
         Receives a type of a `Process` subclass and returns whether or not there is a process of that type that is running.
         :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
@@ -617,6 +613,7 @@ class Computer:
         self.process_last_check = MainLoop.instance.time()
 
         ready_processes = self._start_new_processes()
+        self._decide_ready_processes_no_packet(ready_processes)
 
         waiting_processes_copy = self.waiting_processes[:]
         for received_packet in new_packets[:]:
@@ -625,12 +622,27 @@ class Computer:
 
         self._check_process_timeouts(ready_processes)
         return ready_processes
+    
+    def _decide_ready_processes_no_packet(self, ready_processes):
+        """
+        Receives a list of the already ready processes,
+        Goes over the waiting processes and sees if one of them is waiting for a cerain condition without a packet (if 
+        its `WaitingForPacket` object is actually `WaitingFor`.
+        If so, it tests its condition. If the condition is true, appends the process to the `ready_processes` list and 
+        removes it from the `waiting_processes` list.
+        :return: None
+        """
+        for waiting_process in self.waiting_processes[:]:
+            if not hasattr(waiting_process.waiting_for, "value"):
+                if waiting_process.waiting_for.condition() == True:
+                    self.waiting_processes.remove(waiting_process)
+                    ready_processes.append(waiting_process.process)
 
     def _decide_if_process_ready_by_packet(self, waiting_process, received_packet, ready_processes):
         """
-        This method receives a waiting process, a possible packet that matches its `WaitingFor` condition and a list of
+        This method receives a waiting process, a possible packet that matches its `WaitingForPacket` condition and a list of
         already ready processes.
-        If the packet matches the condition of the `WaitingFor` of the process, this adds the process to `ready_processes`
+        If the packet matches the condition of the `WaitingForPacket` of the process, this adds the process to `ready_processes`
         and removes it from the `self.waiting_processes` list.
         It enables the same process to receive a number of different packets if the condition fits to a number of packets
         in the run. (mainly in DHCP Server when all of the computers send in the same time to the same process...)
@@ -643,13 +655,11 @@ class Computer:
         packet, _, receiving_interface = received_packet
 
         if waiting_for.condition(packet) == True:
-            if process not in ready_processes:
-                ready_processes.append(process)
-                waiting_for.value.packets[packet] = receiving_interface  # this is the behaviour the `Process` object expects
-                self.waiting_processes.remove((process, waiting_for))  # the process is about to run so we remove it from the waiting process list
+            waiting_for.value.packets[packet] = receiving_interface  # this is the behaviour the `Process` object expects
 
-            else:  # if the same process receives a couple of different packets
-                waiting_for.value.packets[packet] = receiving_interface
+            if process not in ready_processes:    # if this is the first packet that the process received in this loop
+                ready_processes.append(process)
+                self.waiting_processes.remove(waiting_process)  # the process is about to run so we remove it from the waiting process list
             return True
         return False
 

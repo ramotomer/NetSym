@@ -4,7 +4,7 @@ from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
 from packets.stp import BID
-from processes.process import Process, WaitingForWithTimeout, ReturnedPacket, Timeout
+from processes.process import Process, WaitingForPacketWithTimeout, ReturnedPacket, Timeout
 
 
 class STPPort:
@@ -297,7 +297,7 @@ class STPProcess(Process):
         The actual code of the STP process.
         It sends out its-own information and waits and learns from the other STP packets' information.
         Updates its-own information accordingly.
-        :return: yields `WaitingFor` namedtuple-s.
+        :return: yields `WaitingForPacket` namedtuple-s.
         """
         self.computer.print("Start STP...")
 
@@ -307,7 +307,7 @@ class STPProcess(Process):
                 self._send_packet()
 
             stp_packets = ReturnedPacket()
-            yield WaitingForWithTimeout(lambda p: ("STP" in p), stp_packets, Timeout(0))
+            yield WaitingForPacketWithTimeout(lambda p: ("STP" in p), stp_packets, Timeout(0))
             self._update_disconnected_ports()
 
             for packet, port in stp_packets.packets.items():

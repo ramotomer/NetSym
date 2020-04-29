@@ -125,7 +125,7 @@ class Switch(Computer):
         Starts the process of STP sending and receiving.
         :return: None
         """
-        if not self._is_process_running(STPProcess):
+        if not self.is_process_running(STPProcess):
             self.start_process(STPProcess)
 
     def send_stp(self, sender_bid, root_bid, distance_to_root, root_declaration_time):
