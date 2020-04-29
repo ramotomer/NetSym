@@ -51,7 +51,7 @@ class ImageGraphics(GraphicsObject):
 
     def toggle_opacity(self):
         """toggles whether or not the image is opaque"""
-        self.sprite.opacity = OPAQUE if not self.sprite.opacity == OPAQUE else NOT_OPAQUE
+        self.sprite.opacity = A_LITTLE_OPAQUE if self.sprite.opacity == NOT_OPAQUE else NOT_OPAQUE
 
     def is_mouse_in(self):
         """

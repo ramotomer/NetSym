@@ -1,3 +1,5 @@
+import time
+
 from usefuls import get_the_one
 
 
@@ -24,6 +26,14 @@ class MainLoop:
 
         self.graphics_objects = []
         # ^ a list of all registered `GraphicsObject`-s that are being drawn and moved.
+
+        self.is_paused = False
+        # ^ whether or not the program is paused now.
+
+        self._time = time.time()  # the time that this will return when the `self.time()` method is called.
+        self.paused_time = 0
+        #  ^ the total time the program has been paused so far
+        self.last_time_update = time.time()  # the last time that the `self.update_time` method was called.
 
         self.main_window.user_interface.initiate_buttons()
         # ^ creates the buttons of the user interface.
@@ -134,6 +144,30 @@ class MainLoop:
         """
         return get_the_one(reversed(self.graphics_objects), lambda go: go.is_mouse_in() and not go.is_button)
 
+    def update_time(self):
+        """
+        Updates the time that the `self.time()` method returns, adjusted to pauses.
+        :return: None
+        """
+        if not self.is_paused:
+            self._time = (time.time() - self.paused_time)
+        else:  # if the program is paused now
+            self.paused_time += (time.time() - self.last_time_update)  # add to `self.paused_time` the amount of time since the last update.
+
+        self.last_time_update = time.time()
+
+    def time(self):
+        """
+        This method is just like the `time.time()` method, with one differenct, when the program is paused, the time does
+        not run. this is very important for some processes (STP, TCP, Switches, etc...)
+        :return:
+        """
+        return self._time
+
+    def time_since(self, other_time):
+        """Returns the amount of time that passed since another time (adjusted to pauses of course)"""
+        return (self.time() - other_time)
+
     def main_loop(self):
         """
         The main loop:
@@ -144,11 +178,15 @@ class MainLoop:
         :return: None
         """
         self.main_window.clear()
-        self.main_window.user_interface.drag_object()
-        self.main_window.user_interface.showcase_running_stp()
+
+        self.update_time()
         self.select_selected_object()
+        self.main_window.user_interface.drag_object()
         self.main_window.user_interface.show()
+
+        self.main_window.user_interface.showcase_running_stp()
+
         for function, args, kwargs, can_be_paused in self.call_functions:
-            if self.main_window.user_interface.is_paused and can_be_paused:
+            if self.is_paused and can_be_paused:
                 continue
             function(*args, **kwargs)

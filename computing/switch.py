@@ -1,14 +1,14 @@
+import copy
+from collections import namedtuple
+
+from address.mac_address import MACAddress
 from computing.computer import Computer
 from computing.interface import Interface
-from gui.computer_graphics import ComputerGraphics
-from address.mac_address import MACAddress
 from consts import *
-import time
-from collections import namedtuple
 from exceptions import *
-import copy
+from gui.computer_graphics import ComputerGraphics
+from gui.main_loop import MainLoop
 from processes.stp_process import STPProcess
-
 
 SwitchTableItem = namedtuple("SwitchTableItem", "leg time")
 
@@ -34,8 +34,8 @@ class Switch(Computer):
         self.is_hub = False
 
         self.switching_table = {}  # a dictionary mapping mac addresses to the corresponding leg (interface) they sit behind.
-        self.last_switch_table_update_time = time.time()
-        self.last_packet_sending_time = time.time()
+        self.last_switch_table_update_time = MainLoop.instance.time()
+        self.last_packet_sending_time = MainLoop.instance.time()
 
         self.stp_enabled = True
         self.priority = priority
@@ -66,13 +66,13 @@ class Switch(Computer):
         :return: None
         """
         new_packets = self._new_packets_since(self.last_switch_table_update_time)
-        self.last_switch_table_update_time = time.time()
+        self.last_switch_table_update_time = MainLoop.instance.time()
         for packet, _, leg in new_packets:
             try:
                 src_mac = packet["Ethernet"].src_mac
             except KeyError:
                 raise UnknownPacketTypeError("The packet contains no Ethernet layer!!!")
-            self.switching_table[src_mac] = SwitchTableItem(leg, time.time())
+            self.switching_table[src_mac] = SwitchTableItem(leg, MainLoop.instance.time())
 
     def delete_old_switch_table_items(self):
         """
@@ -81,7 +81,7 @@ class Switch(Computer):
         :return: None
         """
         for src_mac, switch_table_item in list(self.switching_table.items()):
-            if time.time() - switch_table_item.time > SWITCH_TABLE_ITEM_LIFETIME:
+            if MainLoop.instance.time_since(switch_table_item.time) > SWITCH_TABLE_ITEM_LIFETIME:
                 del self.switching_table[src_mac]
 
     def send_new_packets_to_destinations(self):
@@ -91,7 +91,7 @@ class Switch(Computer):
         :return: None
         """
         new_packets = self._new_packets_since(self.last_packet_sending_time)
-        self.last_packet_sending_time = time.time()
+        self.last_packet_sending_time = MainLoop.instance.time()
 
         for packet, _, source_leg in new_packets:
             if self.is_directly_for_me(packet) or self.is_arp_for_me(packet):

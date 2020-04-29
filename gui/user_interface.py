@@ -1,4 +1,5 @@
 import random
+import time
 from collections import namedtuple
 from math import sqrt
 
@@ -121,9 +122,6 @@ class UserInterface:
         self.object_view = None
         # ^ the `ObjectView` object that is currently is_showing in the side window.
 
-        self.is_paused = False
-        # ^ whether or not the program is paused
-
         self.is_asking_for_string = False
         # ^ whether or not a popup window is currently open on the screen
         self.popup_window = None
@@ -158,7 +156,7 @@ class UserInterface:
                                              self.WIDTH,
                                              WINDOW_HEIGHT, MODES_TO_COLORS[self.mode])
         # ^ the window rectangle itself
-        if self.is_paused:
+        if MainLoop.instance.is_paused:
             draw_pause_rectangles()
 
         if self.is_asking_for_string:
@@ -267,7 +265,7 @@ class UserInterface:
         Toggling from pause back and fourth.
         :return: None
         """
-        self.is_paused = not self.is_paused
+        MainLoop.instance.is_paused = not MainLoop.instance.is_paused
 
     def on_mouse_press(self):
         """
@@ -584,20 +582,23 @@ class UserInterface:
         Prints out lots of useful information for debugging.
         :return: None
         """
+        print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
         print(f"graphicsObject-s (no buttons or texts): {[go for go in MainLoop.instance.graphics_objects if not isinstance(go, Button) and not isinstance(go, Text)]}")
         print(f"selected object: {self.selected_object}, dragged: {self.dragged_object}")
         print(f"mouse: {MainWindow.main_window.get_mouse_location()}")
         print(f"""computers, {len(self.computers)}, connections, {len(self.connection_data)}, packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}""")
         print(f"running processes: ", end='')
         for computer in self.computers:
-            procs = [f"{wp.process} of {computer}" for wp in computer.waiting_processes]
-            print(procs if procs else '', end=' ')
+            processes = [f"{wp.process} of {computer}" for wp in computer.waiting_processes]
+            print(processes if processes else '', end=' ')
         print()
         if self.selected_object is not None and self.selected_object.is_computer:
-            print(repr(self.selected_object.computer.routing_table))
-            self.selected_object.computer.print("------------DEBUG------------------")
-            if isinstance(self.selected_object.computer, Switch) and self.selected_object.computer.stp_enabled:
-                print(self.selected_object.computer.get_running_process(STPProcess).get_info())
+            computer = self.selected_object.computer
+            computer.print("------------DEBUG------------------")
+            if not isinstance(computer, Switch):
+                print(repr(computer.routing_table))
+            elif computer.stp_enabled:  # computer is a Switch
+                print(computer.get_running_process(STPProcess).get_info())
 
     def create_computer_with_ip(self):
         """

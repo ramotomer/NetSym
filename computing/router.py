@@ -1,10 +1,10 @@
 from computing.computer import Computer
-from consts import *
-from processes.process import Process, WaitingFor, NoNeedForPacket
-import time
-from gui.computer_graphics import ComputerGraphics
-from processes.dhcp_process import DHCPServer
 from computing.routing_table import RoutingTable
+from consts import *
+from gui.computer_graphics import ComputerGraphics
+from gui.main_loop import MainLoop
+from processes.dhcp_process import DHCPServer
+from processes.process import Process, WaitingFor, NoNeedForPacket
 
 
 def arp_reply_from(source_ip):
@@ -56,7 +56,7 @@ class RoutePacket(Process):
         """
         sender_ip = self.packet["IP"].src_ip
         if self.packet["IP"].ttl == 0:
-            self.computer.send_ping_to(self.computer.arp_cache[sender_ip].mac, sender_ip, ICMP_TIME_EXCEEDED)
+            self.computer.send_time_exceeded(self.computer.arp_cache[sender_ip].mac, sender_ip)
             return True
 
         self.packet["IP"].ttl -= 1
@@ -125,7 +125,7 @@ class Router(Computer):
         super(Router, self).__init__(name, OS_SOLARIS, None, *interfaces)
         self.routing_table = RoutingTable.create_default(self, False)
 
-        self.last_route_check = time.time()
+        self.last_route_check = MainLoop.instance.time()
 
         self.is_dhcp_server = is_dhcp_server
 
@@ -145,7 +145,7 @@ class Router(Computer):
         :return: None
         """
         new_packets = self._new_packets_since(self.last_route_check)
-        self.last_route_check = time.time()
+        self.last_route_check = MainLoop.instance.time()
 
         for packet, _, _ in new_packets:
             if "IP" in packet and not self.has_this_ip(packet["IP"].dst_ip) and "DHCP" not in packet:

@@ -1,5 +1,4 @@
 import random
-import time
 from collections import namedtuple
 
 from address.ip_address import IPAddress
@@ -63,7 +62,7 @@ class Computer:
         self.received = []  # a list of the `ReceivedPacket` namedtuple-s that were received at this computer.
 
         self.waiting_processes = []  # a list of `WaitingProcess` namedtuple-s. If the process is new, its `WaitingProcess.waiting_for` should be None.
-        self.process_last_check = time.time()  # the last time that the waiting_processes were checked for 'can they run?'
+        self.process_last_check = MainLoop.instance.time()  # the last time that the waiting_processes were checked for 'can they run?'
 
         self.graphics = None
         # ^ The `GraphicsObject` of the computer, not initiated for now.
@@ -234,7 +233,7 @@ class Computer:
         except KeyError:
             raise NoARPLayerError("This function should only be called with an ARP packet!!!")
 
-        self.arp_cache[arp.src_ip] = ARPCacheItem(arp.src_mac, time.time())  # learn from the ARP
+        self.arp_cache[arp.src_ip] = ARPCacheItem(arp.src_mac, MainLoop.instance.time())  # learn from the ARP
 
         if arp.opcode == ARP_REQUEST and interface.has_this_ip(arp.dst_ip):
             self.send_arp_reply(packet)                     # Answer if request
@@ -287,7 +286,7 @@ class Computer:
         :return: None
         """
         for ip, arp_cache_item in list(self.arp_cache.items()):
-            if time.time() - arp_cache_item.time > ARP_CACHE_FORGET_TIME:
+            if MainLoop.instance.time_since(arp_cache_item.time) > ARP_CACHE_FORGET_TIME:
                 del self.arp_cache[ip]
 
     def ask_dhcp(self):
@@ -430,6 +429,17 @@ class Computer:
         :return: None
         """
         self.send_to(mac_address, ip_address, ICMP(opcode, data))
+
+    def send_time_exceeded(self, dst_mac, dst_ip, data=''):
+        """
+        Sends an ICMP time exceeded packet.
+        It has the maximum time to live (must be more than the original packet it sends a time exceeded for)
+        :return: None
+        """
+        interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
+        interface.send_with_ethernet(dst_mac,
+                                     IP(interface.ip, dst_ip, MAX_TTL,
+                                        ICMP(ICMP_TIME_EXCEEDED, data)))
 
     def send_dhcp_discover(self):
         """Sends out a `DHCP_DISCOVER` packet (This is sent by a DHCP client)"""
@@ -601,7 +611,7 @@ class Computer:
         :return: a list of `Process` objects that are ready to run. (they will run in the next call to `self._handle_processes`
         """
         new_packets = self._new_packets_since(self.process_last_check)
-        self.process_last_check = time.time()
+        self.process_last_check = MainLoop.instance.time()
 
         ready_processes = self._start_new_processes()
 
@@ -672,7 +682,7 @@ class Computer:
             if not interface.is_connected():
                 continue
             for packet in interface.receive():
-                self.received.append(ReceivedPacket(packet, time.time(), interface))
+                self.received.append(ReceivedPacket(packet, MainLoop.instance.time(), interface))
 
                 if interface.is_sniffing:
                     self._sniff_packet(packet)

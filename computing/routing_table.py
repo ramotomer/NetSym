@@ -1,9 +1,9 @@
 from collections import namedtuple
-from exceptions import *
-from address.ip_address import IPAddress
 from os import linesep
-from consts import *
 
+from address.ip_address import IPAddress
+from consts import *
+from exceptions import *
 
 RoutingTableItem = namedtuple("RoutingTableItem", "ip_address interface_ip")
 """
@@ -94,8 +94,8 @@ class RoutingTable:
         :param interface_ip: an `IPAddress` object of the IP address of the interface that one wishes to add to the routing table.
         :return: None
         """
-        send_to = self.default_gateway
-        if self.default_gateway.ip_address is None or self.default_gateway.ip_address.is_same_subnet(interface_ip):
+        send_to = self.default_gateway.ip_address
+        if send_to is None or send_to.is_same_subnet(interface_ip):
             send_to = ON_LINK
 
         self.route_add(interface_ip.subnet(), send_to, interface_ip)

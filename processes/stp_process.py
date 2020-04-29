@@ -1,23 +1,26 @@
-import time
 from os import linesep
 
 from consts import *
 from exceptions import *
+from gui.main_loop import MainLoop
 from packets.stp import BID
 from processes.process import Process, WaitingForWithTimeout, ReturnedPacket, Timeout
 
 
 class STPPort:
     """
-
+    This represents a port of the switch that receives STP packets. (That means there is another STP switch behind it)
+    It contains all kinds of information that the process has to remember per-port of the switch.
     """
     def __init__(self, interface, state, distance_to_root, last_time_got_packet):
         """
+        Initiates the STP-port with the original interface, the state of the port, the distance that that port has to the
+        root switch and the last time that an STP packet was received in this port.
 
-        :param interface:
-        :param state:
-        :param distance_to_root:
-        :param last_time_got_packet:
+        :param interface: an `Interface` object
+        :param state: the state of the port (`ROOT_PORT`, `DESIGNATED_PORT`, `BLOCKED_PORT` or `NO_STATE`)
+        :param distance_to_root: the distance that if you go out from this port you have to go to get to the root switch
+        :param last_time_got_packet: a result of the `time.time()` method of the last time an STP packet was received on this port.
         """
         self.interface = interface
         self.state = state
@@ -40,10 +43,10 @@ class STPProcess(Process):
         self.root_bid = self.my_bid
         self.stp_ports = {}  # a dictionary {`Interface`: `STPPort`}
 
-        self.root_declaration_time = time.time()
-        self.last_root_changing_time = time.time()
-        self.last_sending_time = time.time()
-        self.last_port_blocking_time = time.time()
+        self.root_declaration_time = MainLoop.instance.time()
+        self.last_root_changing_time = MainLoop.instance.time()
+        self.last_sending_time = MainLoop.instance.time()
+        self.last_port_blocking_time = MainLoop.instance.time()
 
         self.sending_interval = STP_NORMAL_SENDING_INTERVAL
         self.tree_stable = False
@@ -86,8 +89,8 @@ class STPProcess(Process):
         self.computer.send_stp(self.my_bid,
                                self.root_bid,
                                self.distance_to_root,
-                               time.time() if self._i_am_root() else self.root_declaration_time)
-        self.last_sending_time = time.time()
+                               MainLoop.instance.time() if self._i_am_root() else self.root_declaration_time)
+        self.last_sending_time = MainLoop.instance.time()
 
     def _update_root(self, new_root_bid, distance_to_new_root, root_declaration_time, receiving_port):
         """
@@ -97,11 +100,11 @@ class STPProcess(Process):
         :param receiving_port: The `Interface` that received the STP packet.
         :return: None
         """
-        if (time.time() - root_declaration_time) > ROOT_MAX_DISAPPEARING_TIME:
+        if MainLoop.instance.time_since(root_declaration_time) > ROOT_MAX_DISAPPEARING_TIME:
             return
 
         self.root_bid = new_root_bid
-        self.last_root_changing_time = time.time()
+        self.last_root_changing_time = MainLoop.instance.time()
         if root_declaration_time > self.root_declaration_time:
             self.root_declaration_time = root_declaration_time
 
@@ -135,7 +138,7 @@ class STPProcess(Process):
         :param interface: an `Interface` object of the switch.
         :return: None
         """
-        self.stp_ports[interface] = STPPort(interface, NO_STATE, 0, time.time())
+        self.stp_ports[interface] = STPPort(interface, NO_STATE, 0, MainLoop.instance.time())
 
     def _set_state(self, port, state):
         """
@@ -194,20 +197,20 @@ class STPProcess(Process):
     my BID: {self.my_bid}                   {"(ROOT!)" if self._i_am_root() else ""}
     root BID: {self.root_bid!r}
     distance to root: {self.distance_to_root}
-    root declaration time: {str(time.time() - self.root_declaration_time)[:5]} seconds ago
+    root declaration time: {str(MainLoop.instance.time_since(self.root_declaration_time))[:5]} seconds ago
     port states:
     
-{linesep.join(f"{port.name}: {self.stp_ports[port].state} (last got packet {str(time.time() - self.stp_ports[port].last_time_got_packet)[:5]} seconds ago)" for port in self.stp_ports)}
+{linesep.join(f"{port.name}: {self.stp_ports[port].state} (last got packet {str(MainLoop.instance.time_since(self.stp_ports[port].last_time_got_packet))[:5]} seconds ago)" for port in self.stp_ports)}
 -----------------------------------------------
     """
 
     def _root_not_updated_for(self, seconds):
         """Returns whether or not the root was updated in the last `seconds` seconds."""
-        return (time.time() - self.last_root_changing_time) > seconds
+        return MainLoop.instance.time_since(self.last_root_changing_time) > seconds
 
     def _root_disappeared(self):
         """Returns whether or not the root has disappeared and did not report for a long time"""
-        return (time.time() - self.root_declaration_time) > ROOT_MAX_DISAPPEARING_TIME
+        return MainLoop.instance.time_since(self.root_declaration_time) > ROOT_MAX_DISAPPEARING_TIME
 
     def _port_disappeared(self, port):
         """
@@ -215,14 +218,14 @@ class STPProcess(Process):
         If it has not, it should be removed from the STP interfaces list.
         :param port: a key in the `self.stp_ports` dictionary.
         """
-        return (time.time() - self.stp_ports[port].last_time_got_packet) > MAX_CONNECTION_DISAPPEARED_TIME
+        return MainLoop.instance.time_since(self.stp_ports[port].last_time_got_packet) > MAX_CONNECTION_DISAPPEARED_TIME
 
     def _block_blocked_ports(self):
         """Blocks the `BLOCKED_PORT`-s and unblocks the other ones."""
-        if (time.time() - self.last_port_blocking_time) < BLOCKED_INTERFACE_UPDATE_INTERVAL:
+        if MainLoop.instance.time_since(self.last_port_blocking_time) < BLOCKED_INTERFACE_UPDATE_INTERVAL:
             return
 
-        self.last_port_blocking_time = time.time()
+        self.last_port_blocking_time = MainLoop.instance.time()
         for port in self.stp_ports:
             if self.stp_ports[port].state == BLOCKED_PORT and not port.is_blocked:
                 port.block(accept="STP")
@@ -252,7 +255,7 @@ class STPProcess(Process):
     def _recalculate_root(self):
         """Restarts the root calculation process with itself as the new root"""
         for port in self.stp_ports:
-            self._update_root(self.my_bid, 0, time.time(), port)
+            self._update_root(self.my_bid, 0, MainLoop.instance.time(), port)
 
     def _learn_from_packet(self, packet, receiving_port):
         """
@@ -265,7 +268,7 @@ class STPProcess(Process):
 
         if receiving_port not in self.stp_ports:  # if a new interface received an STP packet, add it to the known ones.
             self._add_port(receiving_port)
-        self.stp_ports[receiving_port].last_time_got_packet = time.time()
+        self.stp_ports[receiving_port].last_time_got_packet = MainLoop.instance.time()
 
         if packet["STP"].root_bid < self.root_bid:  # if there is a new root that is better than yours, update yours
             self._update_root(packet["STP"].root_bid, packet["STP"].distance_to_root, packet["STP"].root_declaration_time, receiving_port)
@@ -300,7 +303,7 @@ class STPProcess(Process):
 
         while True:
 
-            if (time.time() - self.last_sending_time) > self.sending_interval:
+            if MainLoop.instance.time_since(self.last_sending_time) > self.sending_interval:
                 self._send_packet()
 
             stp_packets = ReturnedPacket()

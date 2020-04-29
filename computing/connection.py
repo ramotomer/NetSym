@@ -1,10 +1,9 @@
-from consts import *
 from collections import namedtuple
-import time
+
+from consts import *
 from exceptions import SomethingWentTerriblyWrongError, NoSuchConnectionSideError
 from gui.connection_graphics import ConnectionGraphics
 from gui.main_loop import MainLoop
-
 
 SentPacket = namedtuple("SentPacket", "packet sending_time direction")
 # ^ a packet that is currently being sent through the connection.
@@ -39,7 +38,7 @@ class Connection:
 
         self.right_side, self.left_side = ConnectionSide(self), ConnectionSide(self)
 
-        self.last_packet_motion = time.time()
+        self.last_packet_motion = MainLoop.instance.time()
 
         self.graphics = None
 
@@ -101,7 +100,7 @@ class Connection:
         :param direction: the diection the packet is going to (PACKET_GOING_RIGHT or PACKET_GOING_LEFT)
         :return: None
         """
-        self.sent_packets.append(SentPacket(packet, time.time(), direction))
+        self.sent_packets.append(SentPacket(packet, MainLoop.instance.time(), direction))
         packet.show(self.graphics, direction, is_opaque=self.is_blocked)  # initiate the `GraphicsObject` of the packet.
 
     def reach_destination(self, sent_packet):
@@ -145,26 +144,12 @@ class Connection:
         :param sent_packet: a `SentPacket` namedtuple
         :return: None
         """
-        packet_travel_percent = (time.time() - sent_packet.sending_time) / self.deliver_time
+        packet_travel_percent = MainLoop.instance.time_since(sent_packet.sending_time) / self.deliver_time
 
         if packet_travel_percent >= 1:
             self.reach_destination(sent_packet)
         else:
             sent_packet.packet.graphics.progress = packet_travel_percent
-
-    def _adjust_to_pauses(self):
-        """
-        This function is required for the case that the `move_packets` method is paused (using the space bar in the
-        program). It adjusts the sending-time of the packets so that they continue from where they were when the pause began.
-        :return: None
-        """
-        time_since_last_packet_motion = time.time() - self.last_packet_motion
-
-        if time_since_last_packet_motion > PACKETS_ARE_NOT_MOVING_MAX_TIME:  # the time that says, yes we are definately paused!
-            self.sent_packets = [SentPacket(packet, (sending_time + time_since_last_packet_motion), direction) for \
-                                 packet, sending_time, direction in self.sent_packets]
-
-        self.last_packet_motion = time.time()
 
     def move_packets(self):
         """
@@ -174,8 +159,6 @@ class Connection:
             removes them if they reached the end.
         :return: None
         """
-        self._adjust_to_pauses()
-
         for side in self.get_sides():
             self._send_packets_from_side(side)
 

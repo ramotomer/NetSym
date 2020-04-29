@@ -1,9 +1,8 @@
-from collections import namedtuple
-from exceptions import *
 from abc import ABCMeta, abstractmethod
-import time
-from consts import *
+from collections import namedtuple
 
+from exceptions import *
+from gui.main_loop import MainLoop
 
 WaitingFor = namedtuple("WaitingFor", "condition value")
 """"
@@ -70,13 +69,13 @@ class Timeout:
         :param seconds: the amount of seconds of the timeout
         """
         self.seconds = seconds
-        self.init_time = time.time()
+        self.init_time = MainLoop.instance.time()
 
     def __bool__(self):
         """
         Returns whether or not the timeout has passed yet or not
         """
-        return (time.time() - self.init_time) > self.seconds
+        return MainLoop.instance.time_since(self.init_time) > self.seconds
 
 
 class ReturnedPacket:
