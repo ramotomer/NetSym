@@ -69,6 +69,11 @@ class Computer:
 
         self.is_powered_on = True
 
+        self.packet_types_and_handlers = {
+            "ARP": self._handle_arp,
+            "ICMP": self._handle_ping,
+        }
+
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ the fact that it is 'pausable' means that when the space bar is pressed and the program pauses, this method does not run.
 
@@ -250,6 +255,18 @@ class Computer:
             if interface.has_this_ip(packet["IP"].dst_ip) or (interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):  # only if the packet is for me also on the third layer!
                 dst_ip = packet["IP"].src_ip
                 self.start_ping_process(dst_ip, ICMP_REPLY)
+
+    def _handle_special_packet(self, packet, receiving_interface):
+        """
+        Checks if the packet that was received is of some special type that requires handling (ARP, ICMP, TPC-SYN) and
+        if so, calls the appropriate handler.
+        :param packet: a `Packet` object that was received
+        :param receiving_interface: an `Interface` object that received that packet.s
+        :return: None
+        """
+        for packet_type in self.packet_types_and_handlers:
+            if packet_type in packet:
+                self.packet_types_and_handlers[packet_type](packet, receiving_interface)
 
     def start_ping_process(self, ip_address, opcode=ICMP_REQUEST):
         """
@@ -687,11 +704,7 @@ class Computer:
                 if interface.is_sniffing:
                     self._sniff_packet(packet)
 
-                if "ARP" in packet:
-                    self._handle_arp(packet, interface)
-
-                if "ICMP" in packet:
-                    self._handle_ping(packet, interface)
+                self._handle_special_packet(packet, interface)
 
         self._handle_processes()
         self._forget_arp_cache()  # deletes just the required items in the arp cache....

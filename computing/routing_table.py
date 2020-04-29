@@ -101,7 +101,11 @@ class RoutingTable:
         self.route_add(interface_ip.subnet(), send_to, interface_ip)
 
     def __getitem__(self, item):
-        """allows the dictionary notation of dict[key] """
+        """
+        allows the dictionary notation of dict[key].
+        :param item: The key. Has to be an `IPAddress` object.
+        :return: a `RoutingTableItem` object.
+        """
         if not isinstance(item, IPAddress):
             raise InvalidAddressError("Key of a routing table must be an IPAddress object!!!")
 
@@ -114,7 +118,12 @@ class RoutingTable:
         return result
 
     def __setitem__(self, key, value):
-        """allows the dictionary notation of dict[key] = value """
+        """
+        allows the dictionary notation of dict[key] = value
+        :param key: has to be an `IPAddress` object.
+        :param value: a `RoutingTableItem` object.
+        :return: None
+        """
         if not isinstance(key, IPAddress):
             raise InvalidAddressError("Key of a routing table must be an IPAddress object!!!")
 
