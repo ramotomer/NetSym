@@ -1,3 +1,4 @@
+import random
 from collections import namedtuple
 
 from consts import *
@@ -5,7 +6,7 @@ from exceptions import SomethingWentTerriblyWrongError, NoSuchConnectionSideErro
 from gui.connection_graphics import ConnectionGraphics
 from gui.main_loop import MainLoop
 
-SentPacket = namedtuple("SentPacket", "packet sending_time direction")
+SentPacket = namedtuple("SentPacket", "packet sending_time direction is_dropped")
 # ^ a packet that is currently being sent through the connection.
 
 
@@ -22,7 +23,7 @@ class Connection:
     The `Connection` object keeps references to its two `ConnectionSide` objects. These are nice interfaces for
         the `Interface` object to talk to its connection.
     """
-    def __init__(self, length=DEFAULT_CONNECTION_LENGTH, speed=DEFAULT_CONNECTION_SPEED):
+    def __init__(self, length=DEFAULT_CONNECTION_LENGTH, speed=DEFAULT_CONNECTION_SPEED, packet_loss=0):
         """
         Initiates a Connection object.
 
@@ -43,6 +44,8 @@ class Connection:
         self.graphics = None
 
         self.is_blocked = False
+
+        self.packet_loss = packet_loss
 
         MainLoop.instance.insert_to_loop_pausable(self.move_packets)
 
@@ -66,7 +69,7 @@ class Connection:
         :param end_computer: The `GraphicsObject` of the computer which is the end of the connection
         :return: None
         """
-        self.graphics = ConnectionGraphics(start_computer, end_computer)
+        self.graphics = ConnectionGraphics(self, start_computer, end_computer, self.packet_loss)
 
     def get_sides(self):
         """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""
@@ -89,7 +92,7 @@ class Connection:
         :return: None
         """
         if all(not side.is_blocked for side in self.get_sides()):
-            self.graphics.color = CONNECTION_COLOR
+            self.graphics.color = self.graphics.regular_color
             self.is_blocked = False
 
     def add_packet(self, packet, direction):
@@ -100,7 +103,8 @@ class Connection:
         :param direction: the diection the packet is going to (PACKET_GOING_RIGHT or PACKET_GOING_LEFT)
         :return: None
         """
-        self.sent_packets.append(SentPacket(packet, MainLoop.instance.time(), direction))
+        is_dropped = (random.random() < self.packet_loss)
+        self.sent_packets.append(SentPacket(packet, MainLoop.instance.time(), direction, is_dropped))
         packet.show(self.graphics, direction, is_opaque=self.is_blocked)  # initiate the `GraphicsObject` of the packet.
 
     def reach_destination(self, sent_packet):
@@ -111,7 +115,7 @@ class Connection:
         :param sent_packet: a `SentPacket` namedtuple.
         :return: None
         """
-        packet, _, direction = sent_packet
+        packet, _, direction, _ = sent_packet
         MainLoop.instance.unregister_graphics_object(packet.graphics)
         if direction == PACKET_GOING_RIGHT:
             self.right_side.packets_to_receive.append(packet)
@@ -164,6 +168,20 @@ class Connection:
 
         for sent_packet in self.sent_packets[:]:  # we copy the list because we alter it during the run
             self._update_packet(sent_packet)
+
+        self._drop_packets()  # drops the packets that were chosen by the random PL (packet loss)
+
+    def _drop_packets(self):
+        """
+        Goes through the packets that are being sent, When they reach the middle of the connection, check if they need
+        to be dropped (by PL) if so, remove them from the list, and do the animation.
+        :return: None
+        """
+        for sent_packet in self.sent_packets[:]:
+            packet_travel_percent = MainLoop.instance.time_since(sent_packet.sending_time) / self.deliver_time
+            if sent_packet.is_dropped and packet_travel_percent >= (random.random()+0.3):
+                self.sent_packets.remove(sent_packet)
+                sent_packet.packet.graphics.drop()
 
     def stop_packets(self):
         """

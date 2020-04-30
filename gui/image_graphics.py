@@ -19,10 +19,12 @@ class ImageGraphics(GraphicsObject):
         self.is_opaque = is_opaque
         self.sprite = None
 
+        self.is_image = True
+
         MainLoop.instance.register_graphics_object(self, is_in_background)
 
     @staticmethod
-    def get_image_sprite(image_name, x, y, is_opaque=False):
+    def get_image_sprite(image_name, x=0, y=0, is_opaque=False, scale_factor=VIEWING_OBJECT_SCALE_FACTOR):
         """
         Receives an image_name and x and y coordinates and returns a `pyglet.sprite.Sprite`
         object that can be displyed on the screen.
@@ -34,6 +36,7 @@ class ImageGraphics(GraphicsObject):
         """
         returned = pyglet.sprite.Sprite(pyglet.image.load(image_name), x=x, y=y)
         returned.opacity = OPAQUE if is_opaque else NOT_OPAQUE
+        returned.update(scale_x=scale_factor, scale_y=scale_factor)
         return returned
 
     @staticmethod
@@ -90,6 +93,21 @@ class ImageGraphics(GraphicsObject):
         if self.centered:
             x, y = self.get_centered_coordinates()
         draw_rect_no_fill(x - SELECTED_OBJECT_PADDING, y - SELECTED_OBJECT_PADDING, self.sprite.width + (2 * SELECTED_OBJECT_PADDING), self.sprite.height + (2 * SELECTED_OBJECT_PADDING))
+
+    def start_viewing(self, user_interface):
+        """
+        Returns a tuple a `pyglet.sprite.Sprite` object and a `Text` object that should be shown on the side window
+        when this object is pressed. also returns the added button count in the returned tuple.
+        :return:
+        """
+        return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), self.generate_view_text(), 0
+
+    def generate_view_text(self):
+        """
+        Generates the text that will be displayed on the screen when the object is viewed in the side-window
+        :return: string
+        """
+        return ''
 
     def load(self):
         """

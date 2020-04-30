@@ -1,5 +1,7 @@
-from gui.connection_graphics import ConnectionGraphics
 from math import pi, sin, cos
+
+from consts import *
+from gui.connection_graphics import ConnectionGraphics
 from gui.shape_drawing import draw_circle
 
 
@@ -12,9 +14,9 @@ class LoopbackConnectionGraphics(ConnectionGraphics):
     """
     This is the circular connection of the loopback interface to itself.
     """
-    def __init__(self, computer_graphics, radius):
+    def __init__(self, connection, computer_graphics, radius):
         """Initiates the connection graphics with a given radius"""
-        super(LoopbackConnectionGraphics, self).__init__(None, None)
+        super(LoopbackConnectionGraphics, self).__init__(connection, None, None)
         self.radius = radius
         self.computer_graphics = computer_graphics
         self.is_showing = False
@@ -23,7 +25,10 @@ class LoopbackConnectionGraphics(ConnectionGraphics):
     def length(self):
         return circle_parameter(self.radius)
 
-    def get_coordinates(self, direction):
+    def is_mouse_in(self):
+        return False
+
+    def get_coordinates(self, direction=PACKET_GOING_RIGHT):
         """Returns the start and end coordinates of the connection (both are self.computer_graphics.location)"""
         return (*self.computer_graphics.location, *self.computer_graphics.location)
 

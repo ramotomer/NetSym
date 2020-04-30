@@ -1,10 +1,10 @@
+from collections import namedtuple
+
+from consts import *
 from gui.graphics_object import GraphicsObject
 from gui.main_window import MainWindow
-from gui.text_graphics import Text
-from consts import *
-from collections import namedtuple
 from gui.shape_drawing import draw_rect
-
+from gui.text_graphics import Text
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "text")
 
@@ -36,7 +36,11 @@ class Button(GraphicsObject):
         self.width, self.height = width, height
         self.action = action
         self.child_graphics_objects = ChildGraphicsObjects(
-            Text(text, x, y, self, (self.width / 2, self.height / 2 + BUTTON_TEXT_PADDING), is_button=True, start_hidden=start_hidden, max_width=SIDE_WINDOW_WIDTH)
+            Text(text, x, y, self, (self.width / 2, self.height / 2 + BUTTON_TEXT_PADDING),
+                 is_button=True,
+                 start_hidden=start_hidden,
+                 max_width=SIDE_WINDOW_WIDTH,
+                 color=PINK),
         )
 
     def is_mouse_in(self):

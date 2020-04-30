@@ -1,5 +1,8 @@
-from gui.image_graphics import ImageGraphics
 from consts import *
+from gui.animation_graphics import AnimationGraphics
+from gui.image_graphics import ImageGraphics
+from gui.main_loop import MainLoop
+from usefuls import with_args
 
 
 class PacketGraphics(ImageGraphics):
@@ -34,6 +37,8 @@ class PacketGraphics(ImageGraphics):
         self.progress = 0
         self.str = str(deepest_layer)
 
+        self.drop_animation = None
+
     def move(self):
         """
         Make the packet move on the screen.
@@ -43,6 +48,17 @@ class PacketGraphics(ImageGraphics):
         """
         self.x, self.y = self.connection_graphics.packet_location(self.direction, self.progress)
         super(PacketGraphics, self).move()
+
+        # if self.drop_animation is not None and self.drop_animation.is_finished:
+        #   MainLoop.instance.unregister_graphics_object(self.drop_animation)
+
+    def drop(self):
+        """
+        Displays the animation of the packet when it is dropped by PL in a connection.
+        :return: None
+        """
+        MainLoop.instance.unregister_graphics_object(self)
+        AnimationGraphics(EXPLOSION_ANIMATION, self.x, self.y)
 
     @staticmethod
     def image_from_packet(layer):
@@ -80,6 +96,22 @@ class PacketGraphics(ImageGraphics):
         if hasattr(layer, "opcode"):
             return PACKET_TYPE_TO_IMAGE[type(layer).__name__][layer.opcode]
         return PACKET_TYPE_TO_IMAGE[type(layer).__name__]
+
+    def start_viewing(self, user_interface):
+        """
+        Starts viewing the packet graphics object in the side-window view.
+        :param user_interface: the `UserInterface` object we can use the methods of it.
+        :return: a tuple <display sprite>, <display text>, <new button count>
+        """
+        buttons = {
+            "Drop": with_args(user_interface.drop_packet, self),
+        }
+        self.buttons_id = user_interface.add_buttons(buttons)
+        return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), '', len(buttons)
+
+    def end_viewing(self, user_interface):
+        """Ends the viewing of the object in the side window"""
+        user_interface.remove_buttons(self.buttons_id)
 
     def __repr__(self):
         return self.str

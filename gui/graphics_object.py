@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from exceptions import *
+
 from gui.main_loop import MainLoop
 
 
@@ -34,6 +34,8 @@ class GraphicsObject(metaclass=ABCMeta):
         self.is_button = False
         self.is_computer = False
         self.is_packet = False
+        self.is_image = False
+        self.is_connection = False
 
         if self.do_render:
             MainLoop.instance.register_graphics_object(self, is_in_background)
@@ -52,6 +54,22 @@ class GraphicsObject(metaclass=ABCMeta):
         :return: ^
         """
         return False
+
+    def start_viewing(self, user_interface):
+        """
+        Returns a tuple a `pyglet.sprite.Sprite` object and a string that should be shown on the side window
+        when this object is pressed. Also returns the amount of the new buttons that this viewing added.
+        :param user_interface: a `UserInterface` object to use its methods for initiating buttons in the side window.
+        :return: <pyglet.sprite.Sprite>, <str>, <button count>
+        """
+        return None, '', 0
+
+    def end_viewing(self, user_interface):
+        """
+        Unregisters all of the objects that the `start_viewing` method initiated. (mainly `Text` and `Button`s)
+        :return: None
+        """
+        pass
 
     def load(self):
         """

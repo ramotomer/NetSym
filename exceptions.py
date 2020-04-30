@@ -142,3 +142,8 @@ class NoSuchConnectionSideError(ConnectionError):
     """
     Occurs when a certain connection-side is requested when it does not exist.
     """
+
+class NoSuchConnectionError(ConnectionError):
+    """
+    Occurs when a connection that does not exist is requested or used.
+    """

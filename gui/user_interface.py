@@ -1,3 +1,5 @@
+import functools
+import operator
 import random
 import time
 from collections import namedtuple
@@ -141,10 +143,10 @@ class UserInterface:
             ((*DEFAULT_BUTTON_LOCATION(9), self.delete_all_packets, "delete all packets (Shift+d)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(10), self.delete_all, "delete all (^d)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(11), with_args(self.toggle_mode, DELETING_MODE), "delete (d)", MAIN_MENU_BUTTONS), {}),
-
-            ((*DEFAULT_BUTTON_LOCATION(1), self.ask_user_for_ip, "config IP (i)", VIEW_MODE_BUTTONS, True), {}),
         ]
         self.buttons = []
+
+        self.added_buttons = {} # buttons that are added to the side window while viewing some object. {button_id: list of `Button` objects}
 
     def show(self):
         """
@@ -162,9 +164,6 @@ class UserInterface:
         if self.is_asking_for_string:
             if self.popup_window.is_done:
                 self.end_string_request()  # deletes the popup window if it is done with asking the string from the user.
-
-        if self.mode == VIEW_MODE:
-            self.view_selected_object()
 
     def drag_object(self):
         """
@@ -184,24 +183,20 @@ class UserInterface:
         :param graphics_object: A graphics object to view.
         :return: None
         """
-        info = ''
-        copied_sprite = graphics_object.copy_sprite(graphics_object.sprite, VIEWING_OBJECT_SCALE_FACTOR)
-        copied_sprite.update(*VIEWING_IMAGE_COORDINATES)
 
-        if graphics_object.is_computer:
-            info = graphics_object.generate_view_text()
-            graphics_object.child_graphics_objects.console.show()
+        sprite, text, button_count = graphics_object.start_viewing(self)
+        if sprite is not None:
+            sprite.update(*VIEWING_IMAGE_COORDINATES)
+            MainLoop.instance.insert_to_loop(sprite.draw)
 
-        if graphics_object.is_packet:
-            info = self.packet_from_graphics_object(graphics_object).multiline_repr()
-        self.object_view = ObjectView(copied_sprite, Text(info, *VIEWING_TEXT_COORDINATES, max_width=SIDE_WINDOW_WIDTH), graphics_object)
+            if graphics_object.is_packet:
+                text = self.packet_from_graphics_object(graphics_object).multiline_repr()
 
-    def view_selected_object(self):
-        """
-        Views an object on the side with all of its parameters and attributes so the user sees them nicely.
-        :return: None
-        """
-        self.object_view.sprite.draw()
+            elif graphics_object.is_computer:
+                graphics_object.child_graphics_objects.console.show()
+
+        x, y = VIEWING_TEXT_COORDINATES
+        self.object_view = ObjectView(sprite, Text(text, x, y - button_count * DEFAULT_BUTTON_HEIGHT, max_width=SIDE_WINDOW_WIDTH), graphics_object)
 
     def end_object_view(self):
         """
@@ -209,7 +204,10 @@ class UserInterface:
         if no object was viewed, does nothing.
         """
         if self.object_view is not None:
+            self.object_view.viewed_object.end_viewing(self)
             MainLoop.instance.unregister_graphics_object(self.object_view.text)
+            if self.object_view.sprite is not None:  # if the viewed graphics object is an image graphics object.
+                MainLoop.instance.remove_from_loop(self.object_view.sprite.draw)
 
             if self.object_view.viewed_object.is_computer:
                 self.object_view.viewed_object.child_graphics_objects.console.hide()
@@ -277,6 +275,11 @@ class UserInterface:
         for button in self.buttons:
             if button.is_mouse_in() and not button.is_hidden:
                 button.action()
+
+        for buttons in list(self.added_buttons.values()):
+            for button in buttons:
+                if button.is_mouse_in():
+                    button.action()
 
         action_at_press = self.action_at_press_by_mode[self.mode]
         action_at_press()
@@ -490,14 +493,32 @@ class UserInterface:
         :param graphics_object: a `PacketGraphics` object.
         :return:
         """
-        for connection, _, _ in self.connection_data:
-            for packet, _, _ in connection.sent_packets:
-                if packet.graphics is graphics_object:
-                    return packet
-        for computer in self.computers:
-            for packet, _, _ in computer.loopback.connection.connection.sent_packets:
-                if packet.graphics is graphics_object:
-                    return packet
+        all_connections = [connection_data[0] for connection_data in self.connection_data] +\
+                          [computer.loopback.connection.connection for computer in self.computers]
+        all_sent_packets = functools.reduce(operator.concat, map(operator.attrgetter("sent_packets"), all_connections))
+
+        for packet, _, _, _ in all_sent_packets:
+            if packet.graphics is graphics_object:
+                return packet
+        raise NoSuchPacketError("That packet cannot be found!")
+
+    def drop_packet(self, packet_graphics):
+        """
+        Receives a `PacketGraphics` object and drops its `Packet` from the connection that it is running through
+        :param packet_graphics: a `PacketGraphics` object of the `Packet` we want to drop.
+        :return: None
+        """
+        all_connections = [connection_data[0] for connection_data in self.connection_data] + \
+                          [computer.loopback.connection.connection for computer in self.computers]
+
+        for connection in all_connections:
+            for sent_packet in connection.sent_packets[:]:
+                if sent_packet.packet.graphics is packet_graphics:
+                    self.selected_object = None
+                    self.set_mode(SIMULATION_MODE)
+                    connection.sent_packets.remove(sent_packet)
+                    packet_graphics.drop()
+                    return
         raise NoSuchPacketError("That packet cannot be found!")
 
     def config_ip(self, computer, user_input):
@@ -697,3 +718,80 @@ class UserInterface:
         if self.selected_object is not None:
             if self.selected_object.is_computer:
                 self.selected_object.computer.power()
+
+    def set_connection_pl(self, connection, pl_string):
+        """
+        Receives a number which is a PL percentage and sets it to a connection.
+        :param pl_string: a number between 0 and 1 which is the pl percentage the connection will have (in a string form)
+        :param connection: a `Connection` object to set the PL to.
+        :return: None
+        """
+        try:
+            pl = float(pl_string)
+        except ValueError:
+            print("invalid PL!!!")
+            return
+
+        if not 0 <= pl <= 1:
+            print("invalid PL!")
+            return
+        connection.packet_loss = pl
+        connection.graphics.update_color_by_pl(pl)
+
+    def ask_user_for_pl(self, connection_graphics):
+        """
+        Asks the user for an input to update the PL amount of a `ConnectionGraphics` object.
+        :return: None
+        """
+        self.is_asking_for_string = True
+        connection = connection_graphics.connection
+        self.popup_window = TextBox("Enter PL amount (a number between 0 and 1):",
+                                    with_args(self.set_connection_pl, connection))
+
+    def set_connection_speed(self, connection, speed):
+        """
+        Sets the speed of a given connection
+        :param connection: a `Connection` object
+        :param speed: a string that represents a `float` number to set the speed of the connection to.
+        :return: None
+        """
+        try:
+            new_speed = float(speed)
+        except ValueError:
+            print("invalid speed!!")
+            return
+
+        connection.speed = new_speed
+
+    def ask_user_for_connection_speed(self, connection_graphics):
+        """
+        Asks the user to set the Speed of a connection using a `ConnectionGraphics` object that is selected.
+        :param connection_graphics: a `ConnectionGraphics` object that is selected and viewed now.
+        :return: None
+        """
+        self.is_asking_for_string = True
+        connection = connection_graphics.connection
+        self.popup_window = TextBox("Enter new connection speed (pixels/second)",
+                                    with_args(self.set_connection_speed, connection))
+
+    def add_buttons(self, dictionary):
+        """
+        Adds buttons to the side window according to requests of the viewed object.
+        :param dictionary: a `dict` of the form {button text: button action}
+        :return: None
+        """
+        buttons_id = 0 if not self.added_buttons else max(self.added_buttons.keys()) + 1
+        self.added_buttons[buttons_id] = [
+            Button(*DEFAULT_BUTTON_LOCATION(i+1), action, string) for i, (string, action) in enumerate(dictionary.items())
+        ]
+        return buttons_id
+
+    def remove_buttons(self, buttons_id):
+        """
+        Unregisters side-view added buttons by their ID. (Buttons that are added using the `self.add_buttons` method.)
+        :param buttons_id: an interger returned by the `self.add_buttons` method
+        :return: None
+        """
+        for button in self.added_buttons[buttons_id]:
+            MainLoop.instance.unregister_graphics_object(button)
+        del self.added_buttons[buttons_id]

@@ -23,7 +23,7 @@ class LoopbackConnection(Connection):
 
     def show(self, computer_graphics, end_computer=None):
         """Starts the graphical appearance of the connection"""
-        self.graphics = LoopbackConnectionGraphics(computer_graphics, self.radius)
+        self.graphics = LoopbackConnectionGraphics(self, computer_graphics, self.radius)
 
     def add_packet(self, packet, direction):
         """performs the super-method of `add_packet` but also makes sure the connection is visible."""
@@ -35,7 +35,7 @@ class LoopbackConnection(Connection):
         performs the super-method of `reach_destination` but also checks if the connection should disappear.
         All of the packets are received on the left side, all of them will also be sent on it.
         """
-        packet, _, direction = sent_packet
+        packet, _, direction, _ = sent_packet
         MainLoop.instance.unregister_graphics_object(packet.graphics)
         self.left_side.packets_to_receive.append(packet)                 # the direction does not matter
         self.sent_packets.remove(sent_packet)

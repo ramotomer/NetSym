@@ -11,29 +11,54 @@ def debugp(string):
     print(f"DEBUG: {string}")
 
 
-WINDOW_NAME = "NetSym"
-WINDOW_WIDTH = 1275
-WINDOW_HEIGHT = 600
-INITIAL_WINDOW_LOCATION = 4, 50
-
-SPRITE_SCALE_FACTOR = 3
-PACKET_SCALE_FACTOR = 1.5
-VIEWING_OBJECT_SCALE_FACTOR = 5
-
-DEFAULT_TEXT_Y_PADDING = -30
-BUTTON_TEXT_PADDING = 8
-SELECTED_OBJECT_PADDING = 5
-DEFAULT_FONT = "Arial"
-DEFAULT_FONT_SIZE = 10
-
-FRAME_RATE = 1 / 60.0
-
 DEFAULT_CONNECTION_SPEED = 350  # pixels / second
 DEFAULT_CONNECTION_LENGTH = 100  # pixels
 LOOPBACK_CONNECTION_RADIUS = 15
 LOOPBACK_CONNECTION_SPEED = 200
 
 SENDING_GRAT_ARPS = False
+
+BROADCAST_MAC = 'ff:ff:ff:ff:ff:ff'
+STP_MULTICAST_MAC = "01:80:C2:00:00:00"
+DEFAULT_COMPUTER_IP = "192.168.1.2/24"
+DHCP_CLIENT_PORT = 68
+DHCP_SERVER_PORT = 67
+ON_LINK = "On-link"
+
+ROOT_PORT = "ROOT"
+DESIGNATED_PORT = "DESIGNATED"
+BLOCKED_PORT = "BLOCKED"
+NO_STATE = "no state!"
+
+OS_WINDOWS = 'Windows'
+OS_LINUX = 'Linux'
+OS_SOLARIS = 'Solaris'
+TTLS = {
+    OS_LINUX: 64,
+    OS_WINDOWS: 128,
+    OS_SOLARIS: 255,
+}
+MAX_TTL = 255
+
+ARP_CACHE_FORGET_TIME = 300  # seconds
+SWITCH_TABLE_ITEM_LIFETIME = 300  # seconds
+# ^ this is the time that if the packets did not move for that much time (in a pause for example) we take them back a bit in the connection and adjust their `sending_time`
+
+STP_NORMAL_SENDING_INTERVAL = 1.7 # seconds
+STP_STABLE_SENDING_INTERVAL = 6 # seconds
+TREE_STABLIZING_MAX_TIME = 30 # seconds
+BLOCKED_INTERFACE_UPDATE_INTERVAL = 10 # seconds
+ROOT_MAX_DISAPPEARING_TIME = 40
+MAX_CONNECTION_DISAPPEARED_TIME = 40
+DEFAULT_SWITCH_PRIORITY = 32768
+
+ARP_RESEND_TIME = 5 # seconds
+ARP_RESEND_COUNT = 3 # seconds
+
+PACKET_GOING_RIGHT = 'R'
+PACKET_GOING_LEFT = 'L'
+CONNECTION_PL_PERCENT = 0.5  # the point in the connection where packets are dropped
+MOUSE_IN_CONNECTION_LENGTH = 5 # pixels
 
 MAC_ADDRESS_SEPARATOR = ':'
 IP_ADDRESS_SEPARATOR = '.'
@@ -63,6 +88,10 @@ if os.name == 'nt':
         FILES = "C:/users/user/pycharmprojects/netsym/res/files/{}"
         IMAGES = "C:/users/user/pycharmprojects/netsym/res/sprites/{}"
 
+INTERFACE_NAMES = [line.strip() for line in open(FILES.format("interface_names.txt")).readlines()]
+COMPUTER_NAMES = [line.strip() for line in open(FILES.format("computer_names.txt")).readlines()]
+ANY_INTERFACE = None
+
 ETHERNET_IMAGE = "ethernet_packet.png"
 ARP_REQUEST_IMAGE = "arp_request.png"
 ARP_REPLY_IMAGE = "arp_reply.png"
@@ -84,6 +113,11 @@ SWITCH_IMAGE = "switch.png"
 ROUTER_IMAGE = "router.png"
 HUB_IMAGE = "hub.png"
 
+CONNECTION_VIEW_IMAGE = "connection_view.png"
+EXPLOSION_ANIMATION = "explosion.png"
+ANIMATION_FRAME_RATE = 0.1
+ANIMATION_X_COUNT, ANIMATION_Y_COUNT = 5, 3
+
 ARP_REPLY = "ARP reply"
 ARP_REQUEST = "ARP request"
 ARP_GRAT = "gratuitous ARP"
@@ -100,50 +134,22 @@ OPAQUE = 35
 A_LITTLE_OPAQUE = 100
 NOT_OPAQUE = 255
 
-BROADCAST_MAC = 'ff:ff:ff:ff:ff:ff'
-STP_MULTICAST_MAC = "01:80:C2:00:00:00"
-DEFAULT_COMPUTER_IP = "192.168.1.2/24"
-DHCP_CLIENT_PORT = 68
-DHCP_SERVER_PORT = 67
-ON_LINK = "On-link"
+WINDOW_NAME = "NetSym"
+WINDOW_WIDTH = 1275
+WINDOW_HEIGHT = 600
+INITIAL_WINDOW_LOCATION = 4, 50
 
-INTERFACE_NAMES = [line.strip() for line in open(FILES.format("interface_names.txt")).readlines()]
-COMPUTER_NAMES = [line.strip() for line in open(FILES.format("computer_names.txt")).readlines()]
-ANY_INTERFACE = None
+SPRITE_SCALE_FACTOR = 3
+PACKET_SCALE_FACTOR = 1.5
+VIEWING_OBJECT_SCALE_FACTOR = 5
 
-ROOT_PORT = "ROOT"
-DESIGNATED_PORT = "DESIGNATED"
-BLOCKED_PORT = "BLOCKED"
-NO_STATE = "no state!"
+DEFAULT_TEXT_Y_PADDING = -30
+BUTTON_TEXT_PADDING = 8
+SELECTED_OBJECT_PADDING = 5
+DEFAULT_FONT = "Arial"
+DEFAULT_FONT_SIZE = 10
 
-OS_WINDOWS = 'Windows'
-OS_LINUX = 'Linux'
-OS_SOLARIS = 'Solaris'
-TTLS = {
-    OS_LINUX: 64,
-    OS_WINDOWS: 128,
-    OS_SOLARIS: 255,
-}
-MAX_TTL = 255
-
-ARP_CACHE_FORGET_TIME = 300  # seconds
-SWITCH_TABLE_ITEM_LIFETIME = 300  # seconds
-PACKETS_ARE_NOT_MOVING_MAX_TIME = 0.5  # second
-# ^ this is the time that if the packets did not move for that much time (in a pause for example) we take them back a bit in the connection and adjust their `sending_time`
-
-STP_NORMAL_SENDING_INTERVAL = 1.7 # seconds
-STP_STABLE_SENDING_INTERVAL = 6 # seconds
-TREE_STABLIZING_MAX_TIME = 30 # seconds
-BLOCKED_INTERFACE_UPDATE_INTERVAL = 10 # seconds
-ROOT_MAX_DISAPPEARING_TIME = 40
-MAX_CONNECTION_DISAPPEARED_TIME = 40
-DEFAULT_SWITCH_PRIORITY = 32768
-
-ARP_RESEND_TIME = 5 # seconds
-ARP_RESEND_COUNT = 3 # seconds
-
-PACKET_GOING_RIGHT = 'R'
-PACKET_GOING_LEFT = 'L'
+FRAME_RATE = 1 / 60.0
 
 DARK_GRAY = (20, 20, 20)
 GRAY = (10, 10, 10)
@@ -157,6 +163,9 @@ PURPLE = (171, 71, 188)
 BROWN = (62, 39, 35)
 RED = (150, 0, 0)
 YELLOW = (200, 200, 0)
+GREEN = (0, 255, 0)
+DARK_GREEN = (0, 100, 0)
+PINK = (255, 170, 170)
 
 SIDE_WINDOW_WIDTH = 230
 
@@ -190,6 +199,8 @@ MODES_TO_COLORS = {
 
 CONNECTION_COLOR = WHITE
 BLOCKED_CONNECTION_COLOR = RED
+PL_CONNECTION_COLOR = DARK_GREEN
+SELECTED_CONNECTION_COLOR = PURPLE
 
 IMAGES_SIZE = 16
 VIEWING_IMAGE_COORDINATES = ((WINDOW_WIDTH - (SIDE_WINDOW_WIDTH / 2)) - (

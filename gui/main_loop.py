@@ -47,14 +47,16 @@ class MainLoop:
             or the back of the other objects.
         :return: None
         """
-        self.graphics_objects.append(graphics_object)
         graphics_object.load()
-        self.insert_to_loop(graphics_object.move)
 
         if is_in_background:
+            self.graphics_objects.insert(0, graphics_object)
             self.reversed_insert_to_loop(graphics_object.draw)
         else:
+            self.graphics_objects.append(graphics_object)
             self.insert_to_loop(graphics_object.draw)
+
+        self.insert_to_loop(graphics_object.move)
 
     def unregister_graphics_object(self, graphics_object):
         """

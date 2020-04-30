@@ -1,10 +1,10 @@
-from gui.image_graphics import ImageGraphics
-from consts import *
-from gui.text_graphics import Text
-from os import linesep
 from collections import namedtuple
-from gui.console import Console
+from os import linesep
 
+from consts import *
+from gui.console import Console
+from gui.image_graphics import ImageGraphics
+from gui.text_graphics import Text
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "text console")
 
@@ -41,6 +41,23 @@ class ComputerGraphics(ImageGraphics):
     def update_text(self):
         """Sometimes the data of the computer is changed and we want to text to change as well"""
         self.child_graphics_objects.text.set_text(self.generate_text())
+
+    def start_viewing(self, user_interface):
+        """
+        Starts viewing the computer graphics object in the side-window view.
+        :param user_interface: the `UserInterface` object we can use the methods of it.
+        :return: a tuple <display sprite>, <display text>, <new button count>
+        """
+        buttons = {
+            "config IP": user_interface.ask_user_for_ip,
+            "power on/off": user_interface.power_selected_computer,
+        }
+        self.buttons_id = user_interface.add_buttons(buttons)
+        return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), self.generate_view_text(), len(buttons)
+
+    def end_viewing(self, user_interface):
+        """Ends the viewing of the object in the side window"""
+        user_interface.remove_buttons(self.buttons_id)
 
     def generate_view_text(self):
         """
