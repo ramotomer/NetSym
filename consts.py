@@ -28,8 +28,10 @@ DEFAULT_FONT_SIZE = 10
 
 FRAME_RATE = 1 / 60.0
 
-DEFAULT_CONNECTION_SPEED = 300  # pixels / second
+DEFAULT_CONNECTION_SPEED = 350  # pixels / second
 DEFAULT_CONNECTION_LENGTH = 100  # pixels
+LOOPBACK_CONNECTION_RADIUS = 15
+LOOPBACK_CONNECTION_SPEED = 200
 
 SENDING_GRAT_ARPS = False
 
@@ -49,7 +51,7 @@ ALT_MODIFIER = 4
 CTRL_MODIFIER = 2
 SHIFT_MODIFIER = 1
 NO_MODIFIER = 0
-# you can `&` them together to get the different combinations.
+# you can `|` them together to get the different combinations.
 
 
 FILES = "res/files/{}"
@@ -75,6 +77,7 @@ DHCP_OFFER_IMAGE = "dhcp_offer.png"
 DHCP_REQUEST_IMAGE = "dhcp_request.png"
 DHCP_PACK_IMAGE = "dhcp_pack.png"
 UDP_IMAGE = "udp_packet.png"
+STP_IMAGE = "stp_packet.png"
 
 COMPUTER_IMAGE = "endpoint.png"
 SWITCH_IMAGE = "switch.png"
@@ -93,7 +96,12 @@ DHCP_OFFER = "DHCP Offer"
 DHCP_REQUEST = "DHCP Request"
 DHCP_PACK = "DHCP Pack"
 
+OPAQUE = 35
+A_LITTLE_OPAQUE = 100
+NOT_OPAQUE = 255
+
 BROADCAST_MAC = 'ff:ff:ff:ff:ff:ff'
+STP_MULTICAST_MAC = "01:80:C2:00:00:00"
 DEFAULT_COMPUTER_IP = "192.168.1.2/24"
 DHCP_CLIENT_PORT = 68
 DHCP_SERVER_PORT = 67
@@ -103,6 +111,11 @@ INTERFACE_NAMES = [line.strip() for line in open(FILES.format("interface_names.t
 COMPUTER_NAMES = [line.strip() for line in open(FILES.format("computer_names.txt")).readlines()]
 ANY_INTERFACE = None
 
+ROOT_PORT = "ROOT"
+DESIGNATED_PORT = "DESIGNATED"
+BLOCKED_PORT = "BLOCKED"
+NO_STATE = "no state!"
+
 OS_WINDOWS = 'Windows'
 OS_LINUX = 'Linux'
 OS_SOLARIS = 'Solaris'
@@ -111,11 +124,23 @@ TTLS = {
     OS_WINDOWS: 128,
     OS_SOLARIS: 255,
 }
+MAX_TTL = 255
 
 ARP_CACHE_FORGET_TIME = 300  # seconds
 SWITCH_TABLE_ITEM_LIFETIME = 300  # seconds
 PACKETS_ARE_NOT_MOVING_MAX_TIME = 0.5  # second
 # ^ this is the time that if the packets did not move for that much time (in a pause for example) we take them back a bit in the connection and adjust their `sending_time`
+
+STP_NORMAL_SENDING_INTERVAL = 1.7 # seconds
+STP_STABLE_SENDING_INTERVAL = 6 # seconds
+TREE_STABLIZING_MAX_TIME = 30 # seconds
+BLOCKED_INTERFACE_UPDATE_INTERVAL = 10 # seconds
+ROOT_MAX_DISAPPEARING_TIME = 40
+MAX_CONNECTION_DISAPPEARED_TIME = 40
+DEFAULT_SWITCH_PRIORITY = 32768
+
+ARP_RESEND_TIME = 5 # seconds
+ARP_RESEND_COUNT = 3 # seconds
 
 PACKET_GOING_RIGHT = 'R'
 PACKET_GOING_LEFT = 'L'
@@ -131,6 +156,7 @@ LIGHT_BLUE = (100, 100, 255)
 PURPLE = (171, 71, 188)
 BROWN = (62, 39, 35)
 RED = (150, 0, 0)
+YELLOW = (200, 200, 0)
 
 SIDE_WINDOW_WIDTH = 230
 
@@ -162,6 +188,9 @@ MODES_TO_COLORS = {
     DELETING_MODE: BROWN,
 }
 
+CONNECTION_COLOR = WHITE
+BLOCKED_CONNECTION_COLOR = RED
+
 IMAGES_SIZE = 16
 VIEWING_IMAGE_COORDINATES = ((WINDOW_WIDTH - (SIDE_WINDOW_WIDTH / 2)) - (
             IMAGES_SIZE * VIEWING_OBJECT_SCALE_FACTOR / 2)), WINDOW_HEIGHT - (
@@ -177,6 +206,8 @@ CONSOLE_LINE_HEIGHT = 14
 PAUSE_RECT_WIDTH = 10
 PAUSE_RECT_HEIGHT = 60
 PAUSE_RECT_COORDINATES = 20, ((WINDOW_HEIGHT - PAUSE_RECT_HEIGHT) - 10)
+
+CIRCLE_SEGMENT_COUNT = 50
 
 TEXTBOX_COORDINATES = WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2  # the popup window
 TEXTBOX_WIDTH = 400

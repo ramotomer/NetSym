@@ -51,6 +51,11 @@ class NoSuchPacketError(PacketError):
     Occurs when a packet that does not exist is required and used.
     """
 
+class STPError(PacketError):
+    """
+    Indicates an STP related error.
+    """
+
 class NoSuchLayerError(PacketError):
     """
     Occurs when a packet does not contain a required Layer.
@@ -100,6 +105,11 @@ class NoSuchComputerError(ComputerError):
     Occurs when a computer that does not exist is accessed
     """
 
+class RoutingTableError(ComputerError):
+    """
+    Indicates an error in the routing table of a computer.
+    """
+
 
 class GraphicsError(NetworkSimulationError):
     """
@@ -120,4 +130,15 @@ class ProcessError(NetworkSimulationError):
 class NoSuchProcessError(ProcessError):
     """
     Occurs when a process that does not exist is required.
+    """
+
+
+class ConnectionError(NetworkSimulationError):
+    """
+    Indicates an error in a connection or in connection related functions.
+    """
+
+class NoSuchConnectionSideError(ConnectionError):
+    """
+    Occurs when a certain connection-side is requested when it does not exist.
     """

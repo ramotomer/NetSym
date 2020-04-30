@@ -1,11 +1,13 @@
-from address.mac_address import MACAddress
-from address.ip_address import IPAddress
-from computing.connection import Connection
-from packets.ethernet import Ethernet
-from consts import *
-from packets.packet import Packet
-from exceptions import *
 import random
+
+from address.ip_address import IPAddress
+from address.mac_address import MACAddress
+from computing.connection import Connection
+from computing.loopback_connection import LoopbackConnection
+from consts import *
+from exceptions import *
+from packets.ethernet import Ethernet
+from packets.packet import Packet
 
 
 class Interface:
@@ -17,7 +19,7 @@ class Interface:
     An interface can be either connected or disconnected to a `ConnectionSide` object, which enables it to move its packets
     down the connection further.
     """
-    def __init__(self, mac, ip=None, name=None):
+    def __init__(self, mac, ip=None, name=None, connection=None):
         """
         Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
         :param os: The operating system of the computer above.
@@ -25,14 +27,26 @@ class Interface:
         :param connection: a `Connection` object
         :param ip: a string ip address ('10.3.252.5/24' for example)
         """
-        self.connection = None
+        self.connection = connection
         self.name = name if name is not None else Interface.random_name()
 
-        self.mac = MACAddress(mac)
+        self.mac = MACAddress(mac) if isinstance(mac, str) else mac
         self.ip = IPAddress(ip) if ip is not None else None
 
         self.is_promisc = True
         self.is_sniffing = False
+        self.is_blocked = False
+        self.accepting = None  # This is the only type of packet that is accepted when the interface is blocked.
+
+    @property
+    def connection_length(self):
+        """
+        The length of the connection this `Interface` is connected to. (The time a packet takes to go through it in seconds)
+        :return: a number of seconds.
+        """
+        if not self.is_connected():
+            return None
+        return self.connection.connection.deliver_time
 
     @staticmethod
     def random_name():
@@ -44,17 +58,25 @@ class Interface:
         """Constructor for an interface with a given (string) IP address, a random name and a random MAC address"""
         return cls(MACAddress.randomac(), ip_address, cls.random_name())
 
+    @classmethod
+    def loopback(cls):
+        """Constructor for a loopback interface"""
+        connection = LoopbackConnection()
+        return cls(MACAddress.no_mac(), IPAddress.loopback(), "loopback", connection.get_side())
+
     def is_directly_for_me(self, packet):
         """
         Receives a packet and determines whether it is destined directly for this Interface (broadcast is not)
+        On the second layer
         :param packet: a `Packet` object.
         :return: whether the destination MAC address is of this Interface
         """
-        return self.mac == packet["Ethernet"].dst_mac
+        return self.mac == packet["Ethernet"].dst_mac or packet["Ethernet"].dst_mac.is_no_mac()
 
     def is_for_me(self, packet):
         """
         Receives a packet and determines whether it is destined for this Interface (or is broadcast)
+        On the second layer
         :param packet: a `Packet` object.
         :return: whether the detination MAC address is of this Interface
         """
@@ -70,7 +92,7 @@ class Interface:
         :param ip_address: IPAddress
         :return: boolean
         """
-        return self.has_ip() and self.ip == ip_address
+        return self.has_ip() and self.ip.string_ip == ip_address.string_ip
 
     def is_connected(self):
         """Returns whether the interface is connected or not"""
@@ -84,7 +106,7 @@ class Interface:
         :return: The `Connection` object.
         """
         if self.is_connected() or other.is_connected():
-            raise DeviceAlreadyConnectedError()
+            raise DeviceAlreadyConnectedError("The interface is connected already!!!")
         connection = Connection()
         self.connection, other.connection = connection.get_sides()
         return connection
@@ -102,6 +124,24 @@ class Interface:
             raise InterfaceNotConnectedError("Cannot disconnect an interface that is not connected!")
         self.connection = None
 
+    def block(self, accept=None):
+        """
+        Blocks the connection and does not receive packets anymore.
+        :return: None
+        """
+        self.is_blocked = True
+        self.accepting = accept
+        self.connection.mark_as_blocked()
+
+    def unblock(self):
+        """
+        Releases the blocking of the connection and allows it to receive packets again.
+        :return: None
+        """
+        self.is_blocked = False
+        self.accepting = None
+        self.connection.mark_as_unblocked()
+
     def send(self, packet):
         """
         Receives a packet to send and just sends it!
@@ -110,7 +150,7 @@ class Interface:
         :param packet: The full packet `Packet` object.
         :return: None
         """
-        if self.is_connected():
+        if self.is_connected() and (not self.is_blocked or (self.is_blocked and self.accepting in packet)):
             self.connection.send(packet)
 
     def receive(self):
@@ -119,14 +159,15 @@ class Interface:
         If the interface is not in promiscuous, only retruns packets that are directed for it (and broadcast).
         :return: A `Packet` object that was sent from the other side of the connection.
         """
-        try:
-            packets = self.connection.receive()
-            if self.is_promisc:
-                return packets
-            return list(filter(lambda packet: self.is_for_me(packet), packets))
-        except AttributeError:
-            # raise InterfaceNotConnectedError()
-            pass
+        if not self.is_connected():
+            raise InterfaceNotConnectedError("The interface is not connected so it cannot receive packets!!!")
+
+        packets = self.connection.receive()
+        if self.is_blocked:
+            return list(filter((lambda packet: self.accepting in packet), packets))
+        if self.is_promisc:
+            return packets
+        return list(filter(lambda packet: self.is_for_me(packet), packets))
 
     def ethernet_wrap(self, dst_mac, data):
         """
@@ -156,7 +197,8 @@ class Interface:
 
     def __str__(self):
         """A shorter string representation of the Interface"""
-        return f"{self.name}: \n{self.mac}" + ('\n' + repr(self.ip) if self.has_ip() else '')
+        mac = f"\n{self.mac}" if not self.mac.is_no_mac() else ""
+        return f"{self.name}: {mac}" + ('\n' + repr(self.ip) if self.has_ip() else '')
 
     def __repr__(self):
         """The string representation of the Interface"""

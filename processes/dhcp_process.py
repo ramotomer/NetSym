@@ -1,8 +1,8 @@
-from processes.process import Process, WaitingFor, ReturnedPacket
-from exceptions import *
-from consts import *
-from packets.dhcp import DHCPData
 from address.ip_address import IPAddress
+from consts import *
+from exceptions import *
+from packets.dhcp import DHCPData
+from processes.process import Process, WaitingForPacket, ReturnedPacket
 
 
 def dhcp_for(mac_addresses):
@@ -61,14 +61,14 @@ class DHCPClient(Process):
         self.computer.print("Asking For DHCP...")
         self.computer.send_dhcp_discover()
         dhcp_offer = ReturnedPacket()
-        yield WaitingFor(dhcp_for(self.computer.macs), dhcp_offer)
+        yield WaitingForPacket(dhcp_for(self.computer.macs), dhcp_offer)
 
         packet, session_interface = dhcp_offer.packet_and_interface
         server_mac = self.validate_offer(packet)
 
         self.computer.send_dhcp_request(server_mac, session_interface)
         dhcp_pack = ReturnedPacket()
-        yield WaitingFor(dhcp_for([session_interface.mac]), dhcp_pack)
+        yield WaitingForPacket(dhcp_for([session_interface.mac]), dhcp_pack)
 
         self.update_routing_table(session_interface, dhcp_pack.packet)
         self.computer.arp_grat(session_interface)
@@ -171,7 +171,7 @@ class DHCPServer(Process):
         """
         while True:
             received_packets = ReturnedPacket()
-            yield WaitingFor(lambda p: "DHCP" in p, received_packets)
+            yield WaitingForPacket(lambda p: "DHCP" in p, received_packets)
             for packet, interface in received_packets.packets.items():
                 self.actions.get(packet["DHCP"].opcode, self.unknown_packet)(packet, interface)
 

@@ -47,6 +47,24 @@ class MACAddress:
         cls.generated_addresses.append(randomized_string)
         return randomized_string
 
+    @classmethod
+    def stp_multicast(cls):
+        """
+        a constructor.
+        The STP multicast address.
+        :return: `MACAddress` object
+        """
+        return cls(STP_MULTICAST_MAC)
+
+    @classmethod
+    def no_mac(cls):
+        """a constructor that Returns the MAC of 0s"""
+        return cls("00:00:00:00:00:00")
+
+    def is_no_mac(self):
+        """Returns whether or not this mac is the 0s mac"""
+        return self.string_mac == "00:00:00:00:00:00"
+
     @staticmethod
     def is_valid(address):
         """
@@ -68,6 +86,13 @@ class MACAddress:
         """
         address_as_numbers = [int(hex_num, 16) for hex_num in address.string_mac.split(MAC_ADDRESS_SEPARATOR)]
         return bytes(address_as_numbers)
+
+    def as_number(self):
+        """
+        Returns the MAC address as one number (00:11:22:33:44:55:66 -> 0x112233445566)
+        :return: an integer which is the MAC address
+        """
+        return int(''.join(hex_part for hex_part in self.string_mac.split(MAC_ADDRESS_SEPARATOR)), base=16)
 
     def __eq__(self, other):
         """Determines whether two MAC addresses are equal or not"""

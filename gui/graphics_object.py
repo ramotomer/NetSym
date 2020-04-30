@@ -83,15 +83,3 @@ class GraphicsObject(metaclass=ABCMeta):
         rendered = 'rendered' if self.do_render else 'non-rendered'
         centered = 'centered' if self.centered else 'non-centered'
         return ' '.join([rendered, centered]) + f" GraphicsObject(x={self.x}, y={self.y})"
-
-
-class NoGraphics(GraphicsObject):
-    """
-    This class is a Null GraphicsObject.
-    It is created when some object has to have some `graphics` property but does not actually have graphics to draw.
-    """
-    def __init__(self):
-        super(NoGraphics, self).__init__(do_render=False)
-
-    def draw(self):
-        raise SomethingWentTerriblyWrongError("This method should never be called!!!")

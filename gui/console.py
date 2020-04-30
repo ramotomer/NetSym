@@ -52,7 +52,7 @@ class Console(GraphicsObject):
 
     def hide(self):
         """
-        Hides the console if it is showing.
+        Hides the console if it is is_showing.
         :return: None
         """
         self.is_hidden = True
@@ -72,6 +72,8 @@ class Console(GraphicsObject):
         """
         if self.is_full():
             self._text = '\n'.join(self._text.split('\n')[1:])    # remove the up most line if we are out of space.
-            debugp(f"going down")
         self._text += text + '\n'
         self.child_graphics_objects.text.set_text(self._text)
+
+    def __repr__(self):
+        return "Console"

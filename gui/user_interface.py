@@ -1,25 +1,27 @@
-from pyglet.window import key
-from computing.computer import Computer
-from usefuls import with_args
-from computing.switch import Switch, Hub
 import random
-from gui.button import Button
-from consts import *
-from gui.text_graphics import Text
+import time
 from collections import namedtuple
-from computing.router import Router
-from address.ip_address import IPAddress
-from usefuls import get_the_one, distance
-from exceptions import *
-from operator import concat
-from functools import reduce
-from computing.interface import Interface
 from math import sqrt
-from gui.text_box import TextBox
+
+from pyglet.window import key
+
+from address.ip_address import IPAddress
+from computing.computer import Computer
+from computing.interface import Interface
+from computing.router import Router
+from computing.switch import Switch, Hub
+from consts import *
+from exceptions import *
+from gui.button import Button
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
+from gui.shape_drawing import draw_circle
 from gui.shape_drawing import draw_pause_rectangles, draw_rect
-
+from gui.text_box import TextBox
+from gui.text_graphics import Text
+from processes.stp_process import STPProcess
+from usefuls import get_the_one, distance
+from usefuls import with_args
 
 ObjectView = namedtuple("ObjectView", "sprite text viewed_object")
 """
@@ -49,7 +51,7 @@ class UserInterface:
     The `self.mode` variable determines in what mode the user interface is currently in.
     if the mode is `SIMULATION_MODE`, the regular menu is presented.
     if the mode is `CONNECTING_MODE` than the two next computers the user will press will become connected.
-    the `VIEW_MODE` is when a computer's details are currently showing in the side window nicely.
+    the `VIEW_MODE` is when a computer's details are currently is_showing in the side window nicely.
     the `SNIFFING_MODE` is when we choose a computer to start sniffing.  (Blue side window)
     the `PINGING_MODE` is when we choose two computer to send a ping between.  (purple side window)
     the `DELETING_MODE` is when we delete a graphics object. (Brown side window)
@@ -71,9 +73,13 @@ class UserInterface:
             (key.N, NO_MODIFIER): with_args(self.create, Computer, True),
             (key.N, CTRL_MODIFIER): self.create_computer_with_ip,
             (key.C, NO_MODIFIER): with_args(self.toggle_mode, CONNECTING_MODE),
+            (key.C, CTRL_MODIFIER): self.connect_all_available,
+            (key.C, SHIFT_MODIFIER): self.connect_all_to_all,
             (key.P, CTRL_MODIFIER): self.send_random_ping,
             (key.P, NO_MODIFIER): with_args(self.toggle_mode, PINGING_MODE),
+            (key.P, SHIFT_MODIFIER): self.send_ping_to_self,
             (key.S, NO_MODIFIER): with_args(self.create, Switch, True),
+            (key.S, CTRL_MODIFIER): self.start_all_stp,
             (key.H, NO_MODIFIER): with_args(self.create, Hub, True),
             (key.R, NO_MODIFIER): self.create_router,
             (key.D, SHIFT_MODIFIER): self.delete_all_packets,
@@ -81,10 +87,10 @@ class UserInterface:
             (key.D, NO_MODIFIER): with_args(self.toggle_mode, DELETING_MODE),
             (key.F, NO_MODIFIER): with_args(self.toggle_mode, SNIFFING_MODE),
             (key.M, NO_MODIFIER): self.debugging_printer,
-            (key.C, CTRL_MODIFIER): self.connect_all_available,
             (key.A, NO_MODIFIER): self.ask_for_dhcp,
             (key.SPACE, NO_MODIFIER): self.toggle_pause,
             (key.I, NO_MODIFIER): self.ask_user_for_ip,
+            (key.O, NO_MODIFIER): self.power_selected_computer,
         }
 
         self.action_at_press_by_mode = {
@@ -95,7 +101,7 @@ class UserInterface:
             PINGING_MODE: with_args(self.two_pressed_computers, self.send_direct_ping),
             DELETING_MODE: self.deleting_mode_at_press,
         }
-        # ^ maps what to do when the board is pressed in each `mode`.
+        # ^ maps what to do when the screen is pressed in each `mode`.
 
         self.computers = []
         self.connection_data = []
@@ -107,15 +113,14 @@ class UserInterface:
 
         self.dragged_object = None
         # ^ the object that is currently being dragged (by the courser)
+        self.dragging_point = 0, 0
+        # ^ the coordinates the mouse is at relative to the object it drags (to avoid weird sudden jumps like it used to do)
 
         self.selected_object = None
         # ^ the object that is currently dragged
 
         self.object_view = None
-        # ^ the `ObjectView` object that is currently showing in the side window.
-
-        self.is_paused = False
-        # ^ whether or not the program is paused
+        # ^ the `ObjectView` object that is currently is_showing in the side window.
 
         self.is_asking_for_string = False
         # ^ whether or not a popup window is currently open on the screen
@@ -128,13 +133,14 @@ class UserInterface:
             ((*DEFAULT_BUTTON_LOCATION(1), with_args(self.create, Switch), "create a switch (s)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(2), with_args(self.create, Hub), "create a hub (h)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(3), with_args(self.create, Router), "create a router (r)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(4), with_args(self.toggle_mode, CONNECTING_MODE), "connect computers (c / ^c)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(5), with_args(self.toggle_mode, PINGING_MODE), "ping (p / ^p)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(4), with_args(self.toggle_mode, CONNECTING_MODE), "connect (c / ^c / Shift+c)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(5), with_args(self.toggle_mode, PINGING_MODE), "ping (p / ^p / Shift+p)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(6), with_args(self.toggle_mode, SNIFFING_MODE), "toggle sniffing (f)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(7), self.ask_for_dhcp, "ask for DHCP (a)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(8), self.delete_all_packets, "delete all packets (Shift+d)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(9), self.delete_all, "delete all (^d)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(10), with_args(self.toggle_mode, DELETING_MODE), "delete (d)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(8), self.start_all_stp, "start STP (^s)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(9), self.delete_all_packets, "delete all packets (Shift+d)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(10), self.delete_all, "delete all (^d)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(11), with_args(self.toggle_mode, DELETING_MODE), "delete (d)", MAIN_MENU_BUTTONS), {}),
 
             ((*DEFAULT_BUTTON_LOCATION(1), self.ask_user_for_ip, "config IP (i)", VIEW_MODE_BUTTONS, True), {}),
         ]
@@ -150,7 +156,7 @@ class UserInterface:
                                              self.WIDTH,
                                              WINDOW_HEIGHT, MODES_TO_COLORS[self.mode])
         # ^ the window rectangle itself
-        if self.is_paused:
+        if MainLoop.instance.is_paused:
             draw_pause_rectangles()
 
         if self.is_asking_for_string:
@@ -159,6 +165,17 @@ class UserInterface:
 
         if self.mode == VIEW_MODE:
             self.view_selected_object()
+
+    def drag_object(self):
+        """
+        Drags the object that should be dragged around the screen.
+        Essentially sets the objects coordinates to be the ones of the mouse.
+        :return: None
+        """
+        if self.dragged_object is not None and not self.dragged_object.is_button:
+            drag_x, drag_y = self.dragging_point
+            mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
+            self.dragged_object.x, self.dragged_object.y = mouse_x + drag_x, mouse_y + drag_y
 
     def start_object_view(self, graphics_object):
         """
@@ -248,7 +265,7 @@ class UserInterface:
         Toggling from pause back and fourth.
         :return: None
         """
-        self.is_paused = not self.is_paused
+        MainLoop.instance.is_paused = not MainLoop.instance.is_paused
 
     def on_mouse_press(self):
         """
@@ -294,7 +311,7 @@ class UserInterface:
             self.delete(self.selected_object)
         self.set_mode(SIMULATION_MODE)
 
-    def is_mouse_in(self):
+    def is_mouse_in_side_window(self):
         """Return whether or not the mouse is currently in the side window."""
         mouse_x, _ = MainWindow.main_window.get_mouse_location()
         return mouse_x > (WINDOW_WIDTH - self.WIDTH)
@@ -346,7 +363,7 @@ class UserInterface:
                 self.other_selected_object = None
                 self.set_mode(SIMULATION_MODE)
 
-        elif not self.is_mouse_in() and self.selected_object is None:  # if we press on nothing and not on the side window
+        elif not self.is_mouse_in_side_window() and self.selected_object is None:  # if we press on nothing and not on the side window
             self.other_selected_object = None
             self.set_mode(SIMULATION_MODE)
 
@@ -379,7 +396,7 @@ class UserInterface:
         """
         try:
             sending_computer = random.choice([computer for computer in self.computers if computer.has_ip()])
-            receiving_computer = random.choice([computer for computer in self.computers if computer is not sending_computer and computer.has_ip()])
+            receiving_computer = random.choice([computer for computer in self.computers if computer.has_ip()])
             sending_computer.start_ping_process(receiving_computer.get_ip())
         except IndexError:
             pass
@@ -457,7 +474,7 @@ class UserInterface:
 
     def show_button_group(self, group):
         """
-        make the buttons of a certain button group showing, all other groups hidden.
+        make the buttons of a certain button group is_showing, all other groups hidden.
         :param group: a group name (`MAIN_MENU_BUTTONS` for example)
         :return: None
         """
@@ -475,6 +492,10 @@ class UserInterface:
         """
         for connection, _, _ in self.connection_data:
             for packet, _, _ in connection.sent_packets:
+                if packet.graphics is graphics_object:
+                    return packet
+        for computer in self.computers:
+            for packet, _, _ in computer.loopback.connection.connection.sent_packets:
                 if packet.graphics is graphics_object:
                     return packet
         raise NoSuchPacketError("That packet cannot be found!")
@@ -561,18 +582,23 @@ class UserInterface:
         Prints out lots of useful information for debugging.
         :return: None
         """
+        print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
         print(f"graphicsObject-s (no buttons or texts): {[go for go in MainLoop.instance.graphics_objects if not isinstance(go, Button) and not isinstance(go, Text)]}")
         print(f"selected object: {self.selected_object}, dragged: {self.dragged_object}")
         print(f"mouse: {MainWindow.main_window.get_mouse_location()}")
         print(f"""computers, {len(self.computers)}, connections, {len(self.connection_data)}, packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}""")
         print(f"running processes: ", end='')
         for computer in self.computers:
-            procs = [f"{wp.process} of {computer}" for wp in computer.waiting_processes]
-            print(procs if procs else '', end=' ')
+            processes = [f"{wp.process} of {computer}" for wp in computer.waiting_processes]
+            print(processes if processes else '', end=' ')
         print()
         if self.selected_object is not None and self.selected_object.is_computer:
-            print(repr(self.selected_object.computer.routing_table))
-            self.selected_object.computer.print("------------DEBUG------------------")
+            computer = self.selected_object.computer
+            computer.print("------------DEBUG------------------")
+            if not isinstance(computer, Switch):
+                print(repr(computer.routing_table))
+            elif computer.stp_enabled:  # computer is a Switch
+                print(computer.get_running_process(STPProcess).get_info())
 
     def create_computer_with_ip(self):
         """
@@ -616,3 +642,58 @@ class UserInterface:
             raise NoIPAddressError("There are no IP addresses that fit the description!")
 
         return IPAddress.increased(greatest_ip_in_subnet)
+
+    def start_all_stp(self):
+        """
+        Starts the STP process on all of the switches that enable it. (Only if not already started)
+        :return: None
+        """
+        for switch in filter(lambda computer: isinstance(computer, Switch), self.computers):
+            if switch.stp_enabled:
+                switch.start_stp()
+
+    def are_connected(self, computer1, computer2):
+        """Receives two computers and returns if they are connected"""
+        for _, computer_1, computer_2 in self.connection_data:
+            if (computer1 is computer_1 and computer2 is computer_2) or (computer2 is computer_1 and computer1 is computer_2):
+                return True
+        return False
+
+    def connect_all_to_all(self):
+        """
+        Connects all of the computers to all other computers!!!
+        very fun!
+        :return: None
+        """
+        for computer in self.computers:
+            for other_computer in self.computers:
+                if computer is not other_computer and not self.are_connected(computer, other_computer) and random.randint(0, 5) == 1:
+                    self.connect_computers(computer, other_computer)
+
+    def send_ping_to_self(self):
+        """
+        The selected computer sends a ping to himself on the loopback.
+        :return: None
+        """
+        if self.selected_object is None or not self.selected_object.is_computer:
+            return
+
+        computer = self.selected_object.computer
+        self.send_direct_ping(computer, computer)
+
+    def showcase_running_stp(self):
+        """
+        Displays the roots of all STP processes that are running. (circles the roots with a yellow circle)
+        :return: None
+        """
+        stp_runners = [computer for computer in self.computers if computer.is_process_running(STPProcess)]
+        roots = [computer.get_running_process(STPProcess).root_bid for computer in stp_runners]
+        for computer in stp_runners:
+            if computer.get_running_process(STPProcess).my_bid in roots:
+                draw_circle(*computer.graphics.location, 60, YELLOW)
+
+    def power_selected_computer(self):
+        """Powers off or on the selected object if it is a computer"""
+        if self.selected_object is not None:
+            if self.selected_object.is_computer:
+                self.selected_object.computer.power()
