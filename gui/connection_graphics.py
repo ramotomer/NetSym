@@ -118,8 +118,8 @@ class ConnectionGraphics(GraphicsObject):
         :return: None
         """
         buttons = {
-            "set PL amount": with_args(user_interface.ask_user_for_pl, self),
-            "set speed": with_args(user_interface.ask_user_for_connection_speed, self),
+            "set PL amount": with_args(user_interface.ask_user_for, float, INSERT_PL_MSG, self.connection.set_pl),
+            "set speed": with_args(user_interface.ask_user_for, float, INSERT_SPEED_MSG, self.connection.set_speed),
         }
 
         self.buttons_id = user_interface.add_buttons(buttons)

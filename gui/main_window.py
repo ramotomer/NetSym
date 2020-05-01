@@ -1,7 +1,7 @@
-from consts import *
 import pyglet
+
+from consts import *
 from gui.main_loop import MainLoop
-from usefuls import distance
 
 
 class MainWindow(pyglet.window.Window):
@@ -72,6 +72,18 @@ class MainWindow(pyglet.window.Window):
         :return:
         """
         self.mouse_x, self.mouse_y = x, y
+
+    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+        """
+        This occurs when the mouse wheel is scrolled.
+        :param x:
+        :param y: mouse coordinates
+        :param scroll_x:
+        :param scroll_y:  The amount of scrolls in each direction
+        :return: None
+        """
+        if self.user_interface.is_mouse_in_side_window() and self.user_interface.mode == VIEW_MODE:
+            self.user_interface.scroll_view(scroll_y)
 
     def on_mouse_press(self, x, y, button, modifiers):
         """

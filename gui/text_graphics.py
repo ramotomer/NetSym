@@ -1,6 +1,7 @@
-from gui.graphics_object import GraphicsObject
 import pyglet
+
 from consts import *
+from gui.graphics_object import GraphicsObject
 
 
 class Text(GraphicsObject):
@@ -105,6 +106,7 @@ class Text(GraphicsObject):
         :return: None
         """
         if self.parent_graphics is None:
+            self.label.x, self.label.y = self.x, self.y
             return
         self.x, self.y = self.parent_graphics.x + self.x_padding, (self.parent_graphics.y + self.y_padding)
         self.label.x, self.label.y = self.x, self.y

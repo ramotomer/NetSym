@@ -1,5 +1,6 @@
 import time
 
+from exceptions import NoSuchGraphicsObjectError
 from usefuls import get_the_one
 
 
@@ -120,6 +121,21 @@ class MainLoop:
         to_remove = [function_and_args for function_and_args in self.call_functions if function_and_args[0] == function]
         for function_and_args in to_remove:
             self.call_functions.remove(function_and_args)
+
+    def move_to_front(self, graphics_object):
+        """
+        Receives a graphics object that is registered and moves it to the front to be on top of all other registered graphics objects
+        :param graphics_object: a `GraphicsObject` object that is registered
+        :return: None
+        """
+        try:
+            self.graphics_objects.remove(graphics_object)
+            self.graphics_objects.append(graphics_object)
+
+            self.remove_from_loop(graphics_object.draw)
+            self.insert_to_loop(graphics_object.draw)
+        except ValueError:
+            raise NoSuchGraphicsObjectError("The graphics object is not registered!!!")
 
     def select_selected_object(self):
         """

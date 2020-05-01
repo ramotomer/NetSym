@@ -75,6 +75,19 @@ class Connection:
         """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""
         return self.left_side, self.right_side
 
+    def set_speed(self, new_speed):
+        """Sets the speed of the connection"""
+        if new_speed <= 0:
+            raise ConnectionError("A connection cannot have negative speed!")
+        self.speed = new_speed
+
+    def set_pl(self, new_pl):
+        """Sets the PL amount of this connection"""
+        if not (0 <= new_pl <= 1):
+            raise ConnectionError(f"A connection cannot have this PL amount!!! {new_pl}")
+        self.packet_loss = new_pl
+        self.graphics.update_color_by_pl(new_pl)
+
     def mark_as_blocked(self):
         """
         Marks the connection as blocked!
@@ -189,7 +202,7 @@ class Connection:
         Kills all of the packets in the connection and unregisters their `GraphicsObject`-s
         :return: None
         """
-        for packet, _, _ in self.sent_packets:
+        for packet, _, _, _ in self.sent_packets:
             MainLoop.instance.unregister_graphics_object(packet.graphics)
         self.sent_packets.clear()
 

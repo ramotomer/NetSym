@@ -121,6 +121,11 @@ class NotAskingForStringError(GraphicsError):
     When you try to end a string request in the UserInterface when one is not currently running.
     """
 
+class NoSuchGraphicsObjectError(GraphicsError):
+    """
+    Occurs when a graphics object that does not exist is required or used.
+    """
+
 
 class ProcessError(NetworkSimulationError):
     """

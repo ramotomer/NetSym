@@ -199,6 +199,14 @@ class Computer:
             raise NoSuchInterfaceError("The computer has no MAC address since it has no network interfaces!!!")
         return self.macs[0]
 
+    def add_interface(self, name=None):
+        """
+        Adds a new interface to this computer with a given name
+        :param name: a string or None, if None, chooses random name.
+        :return: None
+        """
+        self.interfaces.append(Interface(MACAddress.randomac(), name=name))
+
     def has_this_ip(self, ip_address):
         """Returns whether or not this computer has a given IP address. (so whether or not if it is its address)"""
         if ip_address is None:

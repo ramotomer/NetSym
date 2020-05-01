@@ -1,9 +1,10 @@
-from gui.graphics_object import GraphicsObject
 from collections import namedtuple
-from gui.text_graphics import Text
-from gui.shape_drawing import draw_rect
-from consts import *
 
+from consts import *
+from gui.graphics_object import GraphicsObject
+from gui.main_loop import MainLoop
+from gui.shape_drawing import draw_rect
+from gui.text_graphics import Text
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObject", "text")
 
@@ -49,6 +50,8 @@ class Console(GraphicsObject):
         """
         self.is_hidden = False
         self.child_graphics_objects.text.show()
+        MainLoop.instance.move_to_front(self)
+        MainLoop.instance.move_to_front(self.child_graphics_objects.text)
 
     def hide(self):
         """

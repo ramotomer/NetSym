@@ -69,6 +69,10 @@ IP_ADDRESS_BIT_LENGTH = 32
 INVALID_MAC_ADDRESS = "The MAC address is not valid!"
 INVALID_IP_ADDRESS = "The IP address is not valid!"
 NETWORK_UNREACHABLE_MSG = "Cannot send packet, Network is unreachable!"
+INSERT_PL_MSG = "insert your desired pl (0 <= pl <= 1)!!!"
+INSERT_SPEED_MSG = "insert your desired connection speed"
+INSERT_IP_MSG = "Enter your desired IP in the form <INTERFACE NAME>, <IP>"
+INSERT_INTERFACE_INFO_MSG = "Insert the name of the new interface"
 
 # key modifiers:
 CAPS_MODIFIER = 8
@@ -207,6 +211,8 @@ VIEWING_IMAGE_COORDINATES = ((WINDOW_WIDTH - (SIDE_WINDOW_WIDTH / 2)) - (
             IMAGES_SIZE * VIEWING_OBJECT_SCALE_FACTOR / 2)), WINDOW_HEIGHT - (
                                         (IMAGES_SIZE * VIEWING_OBJECT_SCALE_FACTOR) + 15)
 VIEWING_TEXT_COORDINATES = (WINDOW_WIDTH - (SIDE_WINDOW_WIDTH / 2)), VIEWING_IMAGE_COORDINATES[1] - 10
+
+PIXELS_PER_SCROLL = 20
 
 CONSOLE_X, CONSOLE_Y = VIEWING_TEXT_COORDINATES[0] - 105, 10
 CONSOLE_WIDTH = SIDE_WINDOW_WIDTH - 20

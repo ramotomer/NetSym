@@ -54,7 +54,6 @@ class UserInterface:
     if the mode is `SIMULATION_MODE`, the regular menu is presented.
     if the mode is `CONNECTING_MODE` than the two next computers the user will press will become connected.
     the `VIEW_MODE` is when a computer's details are currently is_showing in the side window nicely.
-    the `SNIFFING_MODE` is when we choose a computer to start sniffing.  (Blue side window)
     the `PINGING_MODE` is when we choose two computer to send a ping between.  (purple side window)
     the `DELETING_MODE` is when we delete a graphics object. (Brown side window)
 
@@ -87,7 +86,6 @@ class UserInterface:
             (key.D, SHIFT_MODIFIER): self.delete_all_packets,
             (key.D, CTRL_MODIFIER): self.delete_all,
             (key.D, NO_MODIFIER): with_args(self.toggle_mode, DELETING_MODE),
-            (key.F, NO_MODIFIER): with_args(self.toggle_mode, SNIFFING_MODE),
             (key.M, NO_MODIFIER): self.debugging_printer,
             (key.A, NO_MODIFIER): self.ask_for_dhcp,
             (key.SPACE, NO_MODIFIER): self.toggle_pause,
@@ -99,7 +97,6 @@ class UserInterface:
             SIMULATION_MODE: self.view_mode_at_press,
             CONNECTING_MODE: with_args(self.two_pressed_computers, self.connect_computers),
             VIEW_MODE: self.view_mode_at_press,
-            SNIFFING_MODE: self.sniffing_mode_at_press,
             PINGING_MODE: with_args(self.two_pressed_computers, self.send_direct_ping),
             DELETING_MODE: self.deleting_mode_at_press,
         }
@@ -137,12 +134,11 @@ class UserInterface:
             ((*DEFAULT_BUTTON_LOCATION(3), with_args(self.create, Router), "create a router (r)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(4), with_args(self.toggle_mode, CONNECTING_MODE), "connect (c / ^c / Shift+c)", MAIN_MENU_BUTTONS), {}),
             ((*DEFAULT_BUTTON_LOCATION(5), with_args(self.toggle_mode, PINGING_MODE), "ping (p / ^p / Shift+p)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(6), with_args(self.toggle_mode, SNIFFING_MODE), "toggle sniffing (f)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(7), self.ask_for_dhcp, "ask for DHCP (a)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(8), self.start_all_stp, "start STP (^s)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(9), self.delete_all_packets, "delete all packets (Shift+d)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(10), self.delete_all, "delete all (^d)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(11), with_args(self.toggle_mode, DELETING_MODE), "delete (d)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(6), self.ask_for_dhcp, "ask for DHCP (a)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(7), self.start_all_stp, "start STP (^s)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(8), self.delete_all_packets, "delete all packets (Shift+d)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(9), self.delete_all, "delete all (^d)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(10), with_args(self.toggle_mode, DELETING_MODE), "delete (d)", MAIN_MENU_BUTTONS), {}),
         ]
         self.buttons = []
 
@@ -192,11 +188,11 @@ class UserInterface:
             if graphics_object.is_packet:
                 text = self.packet_from_graphics_object(graphics_object).multiline_repr()
 
-            elif graphics_object.is_computer:
-                graphics_object.child_graphics_objects.console.show()
-
         x, y = VIEWING_TEXT_COORDINATES
         self.object_view = ObjectView(sprite, Text(text, x, y - button_count * DEFAULT_BUTTON_HEIGHT, max_width=SIDE_WINDOW_WIDTH), graphics_object)
+
+        if graphics_object.is_computer:
+            graphics_object.child_graphics_objects.console.show()
 
     def end_object_view(self):
         """
@@ -213,6 +209,22 @@ class UserInterface:
                 self.object_view.viewed_object.child_graphics_objects.console.hide()
 
             self.object_view = None
+
+    def scroll_view(self, scroll_count):
+        """
+        Scrolls through the view of an object if it is too long to view all at once.
+        This is called when the mouse wheel is scrolled.
+        :return: None
+        """
+        if self.object_view is None:
+            raise SomethingWentTerriblyWrongError("Not supposed to get here!!! In VIEW_MODE the `self.object_view` is never None")
+
+        sprite, text_graphics, viewed_object = self.object_view
+        sprite.y -= scroll_count * PIXELS_PER_SCROLL
+        text_graphics.y -= scroll_count * PIXELS_PER_SCROLL
+        for buttons_id in self.added_buttons:
+            for button in self.added_buttons[buttons_id]:
+                button.y -= scroll_count * PIXELS_PER_SCROLL
 
     def initiate_buttons(self):
         """
@@ -293,16 +305,6 @@ class UserInterface:
             self.set_mode(VIEW_MODE)
         elif self.selected_object is None:
             self.set_mode(SIMULATION_MODE)
-
-    def sniffing_mode_at_press(self):
-        """
-        Happens when we press the screen in SNIFFING_MODE.
-        Decides if to step out of the mode or to start sniffing on a computer.
-        :return:
-        """
-        if self.selected_object is not None and self.selected_object.is_computer:
-            self.selected_object.computer.toggle_sniff(is_promisc=True)
-        self.set_mode(SIMULATION_MODE)
 
     def deleting_mode_at_press(self):
         """
@@ -442,11 +444,19 @@ class UserInterface:
         :return: None
         """
         MainLoop.instance.unregister_graphics_object(graphics_object)
+        self.selected_object = None
+        self.dragged_object = None
+
         if graphics_object.is_computer:
             self.computers.remove(graphics_object.computer)
             self._delete_connections_to(graphics_object.computer)
-            self.selected_object = None
-            self.dragged_object = None
+
+        elif graphics_object.is_connection:
+            for connection, computer1, computer2 in self.connection_data:
+                if connection is graphics_object.connection:
+                    computer1.disconnect(connection)
+                    computer2.disconnect(connection)
+                    break
 
     def _delete_connections_to(self, computer):
         """
@@ -550,9 +560,8 @@ class UserInterface:
         :return: None
         """
         if self.selected_object is not None and self.selected_object.is_computer:
-            self.is_asking_for_string = True
             computer = self.selected_object.computer
-            self.popup_window = TextBox("Enter your desired IP in the form <INTERFACE NAME>, <IP>", with_args(self.config_ip, computer))
+            self.ask_user_for(str, INSERT_IP_MSG, with_args(self.config_ip, computer))
 
     def end_string_request(self):
         """
@@ -719,60 +728,26 @@ class UserInterface:
             if self.selected_object.is_computer:
                 self.selected_object.computer.power()
 
-    def set_connection_pl(self, connection, pl_string):
+    def ask_user_for(self, type_, window_text, action, error_msg="invalid input!!!"):
         """
-        Receives a number which is a PL percentage and sets it to a connection.
-        :param pl_string: a number between 0 and 1 which is the pl percentage the connection will have (in a string form)
-        :param connection: a `Connection` object to set the PL to.
+        Pops up the little window that asks the user to insert something.
+        Receives the text of the window, the type that the string should have, and an action to perform with the already casted string.
+        (The parameter that the action will receives will be of type `type_`)
+        :param type_: the type the inserted value should have (`float` / `int` / `IPAddress`)
+        :param window_text: the string that will be displayed on the popup window
+        :param action: a function that receives the casted input value and does something with it.
         :return: None
         """
-        try:
-            pl = float(pl_string)
-        except ValueError:
-            print("invalid PL!!!")
-            return
+        def try_casting_with_action(string):
+            try:
+                arg = type_(string)
+            except (ValueError, InvalidAddressError):
+                print(error_msg)
+                return
+            action(arg)
 
-        if not 0 <= pl <= 1:
-            print("invalid PL!")
-            return
-        connection.packet_loss = pl
-        connection.graphics.update_color_by_pl(pl)
-
-    def ask_user_for_pl(self, connection_graphics):
-        """
-        Asks the user for an input to update the PL amount of a `ConnectionGraphics` object.
-        :return: None
-        """
         self.is_asking_for_string = True
-        connection = connection_graphics.connection
-        self.popup_window = TextBox("Enter PL amount (a number between 0 and 1):",
-                                    with_args(self.set_connection_pl, connection))
-
-    def set_connection_speed(self, connection, speed):
-        """
-        Sets the speed of a given connection
-        :param connection: a `Connection` object
-        :param speed: a string that represents a `float` number to set the speed of the connection to.
-        :return: None
-        """
-        try:
-            new_speed = float(speed)
-        except ValueError:
-            print("invalid speed!!")
-            return
-
-        connection.speed = new_speed
-
-    def ask_user_for_connection_speed(self, connection_graphics):
-        """
-        Asks the user to set the Speed of a connection using a `ConnectionGraphics` object that is selected.
-        :param connection_graphics: a `ConnectionGraphics` object that is selected and viewed now.
-        :return: None
-        """
-        self.is_asking_for_string = True
-        connection = connection_graphics.connection
-        self.popup_window = TextBox("Enter new connection speed (pixels/second)",
-                                    with_args(self.set_connection_speed, connection))
+        self.popup_window = TextBox(window_text, try_casting_with_action)
 
     def add_buttons(self, dictionary):
         """
