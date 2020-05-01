@@ -39,6 +39,7 @@ TTLS = {
     OS_SOLARIS: 255,
 }
 MAX_TTL = 255
+MAX_TCP_WINDOW_SIZE = 2**16
 
 ARP_CACHE_FORGET_TIME = 300  # seconds
 SWITCH_TABLE_ITEM_LIFETIME = 300  # seconds
@@ -111,6 +112,12 @@ DHCP_REQUEST_IMAGE = "dhcp_request.png"
 DHCP_PACK_IMAGE = "dhcp_pack.png"
 UDP_IMAGE = "udp_packet.png"
 STP_IMAGE = "stp_packet.png"
+TCP_SYN_IMAGE = "tcp_syn.png"
+TCP_FIN_IMAGE = "tcp_fin.png"
+TCP_RST_IMAGE = "tcp_rst.png"
+TCP_PSH_IMAGE = "tcp_psh.png"
+TCP_ACK_IMAGE = "tcp_ack.png"
+TCP_PACKET_IMAGE = "tcp_packet.png"
 
 COMPUTER_IMAGE = "endpoint.png"
 SWITCH_IMAGE = "switch.png"
@@ -133,6 +140,27 @@ DHCP_DISCOVER = "DHCP Discover"
 DHCP_OFFER = "DHCP Offer"
 DHCP_REQUEST = "DHCP Request"
 DHCP_PACK = "DHCP Pack"
+
+TCP_ACK = "ACK"
+TCP_SYN = "SYN"
+TCP_FIN = "FIN"
+TCP_RST = "RST"
+TCP_PSH = "PSH"
+NO_TCP_FLAGS = None
+
+TCP_FLAGS = {
+    TCP_ACK,
+    TCP_FIN,
+    TCP_PSH,
+    TCP_SYN,
+    TCP_RST,
+}
+
+TCP_FLAGS_DISPLAY_PRIORITY = [TCP_SYN, TCP_FIN, TCP_RST, TCP_PSH, TCP_ACK]
+
+TCP_MSS_OPTION = "MSS"
+TCP_WINDOW_SCALE_OPTION = "Window Scale"
+TCP_SACK_OPTION = "SACK"
 
 OPAQUE = 35
 A_LITTLE_OPAQUE = 100

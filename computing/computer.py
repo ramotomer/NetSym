@@ -13,6 +13,7 @@ from packets.arp import ARP
 from packets.dhcp import DHCP, DHCPData
 from packets.icmp import ICMP
 from packets.ip import IP
+from packets.tcp import TCP
 from packets.udp import UDP
 from processes.dhcp_process import DHCPClient
 from processes.dhcp_process import DHCPServer
@@ -522,6 +523,15 @@ class Computer:
         :return: theoretically, whether or not the interface approves of the address given to it by DHCP server.
         """
         return not any(interface.has_this_ip(ip_address) for interface in self.interfaces)
+
+    def send_tcp_packet(self, dst_mac, dst_ip, src_port, dst_port, sequence_number, flags=None, ack_number=None,
+                        window_size=MAX_TCP_WINDOW_SIZE, data='', options=None):
+        """
+        Sends a TCP packet!
+        for documentations about all of the arguments go to 'packets.tcp.py'
+        """
+        self.send_to(dst_mac, dst_ip,
+                     TCP(src_port, dst_port, sequence_number, flags, ack_number, window_size, data, options))
 
     # ------------------------- v process related methods v ----------------------------------------------------
 

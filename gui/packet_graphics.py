@@ -91,6 +91,14 @@ class PacketGraphics(ImageGraphics):
                 ICMP_TIME_EXCEEDED: ICMP_TIME_EXCEEDED_IMAGE,
                 ICMP_UNREACHABLE: ICMP_UNREACHABLE_IMAGE,
             },
+            "TCP": {
+                TCP_SYN: TCP_SYN_IMAGE,
+                TCP_FIN: TCP_FIN_IMAGE,
+                TCP_RST: TCP_RST_IMAGE,
+                TCP_PSH: TCP_PSH_IMAGE,
+                TCP_ACK: TCP_ACK_IMAGE,
+                NO_TCP_FLAGS: TCP_PACKET_IMAGE,
+            },
         }
 
         if hasattr(layer, "opcode"):
