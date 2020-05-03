@@ -1,10 +1,12 @@
 from collections import namedtuple
 from os import linesep
 
+from address.ip_address import IPAddress
 from consts import *
 from gui.console import Console
 from gui.image_graphics import ImageGraphics
 from gui.text_graphics import Text
+from processes.daytime_process import DAYTIMEClientProcess
 from usefuls import with_args
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "text console")
@@ -54,6 +56,7 @@ class ComputerGraphics(ImageGraphics):
             "power on/off": user_interface.power_selected_computer,
             "sniffing start/stop": with_args(self.computer.toggle_sniff, is_promisc=True),
             "add interface": with_args(user_interface.ask_user_for, str, INSERT_INTERFACE_INFO_MSG, self.computer.add_interface),
+            "ask daytime": with_args(user_interface.ask_user_for, IPAddress, INSERT_IP_FOR_PROCESS, with_args(self.computer.start_process, DAYTIMEClientProcess)),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
         return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), self.generate_view_text(), len(buttons)

@@ -107,7 +107,7 @@ class RoutingTable:
         :return: a `RoutingTableItem` object.
         """
         if not isinstance(item, IPAddress):
-            raise InvalidAddressError("Key of a routing table must be an IPAddress object!!!")
+            raise InvalidAddressError(f"Key of a routing table must be an IPAddress object!!! not {item}")
 
         possible_addresses = list(filter(lambda destination: destination.is_same_subnet(item), self.dictionary))  # can never be empty!!! (always has 0.0.0.0/0)
         most_fitting_destination = max(possible_addresses, key=lambda address: address.subnet_mask)  # if this raises, you do not have a default!!!

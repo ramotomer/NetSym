@@ -1,6 +1,8 @@
 # this cannot import from anything!!!
 import os
 
+from exceptions import TCPDoneReceiving
+
 
 def debugp(string):
     """
@@ -11,7 +13,7 @@ def debugp(string):
     print(f"DEBUG: {string}")
 
 
-DEFAULT_CONNECTION_SPEED = 350  # pixels / second
+DEFAULT_CONNECTION_SPEED = 300  # pixels / second
 DEFAULT_CONNECTION_LENGTH = 100  # pixels
 LOOPBACK_CONNECTION_RADIUS = 15
 LOOPBACK_CONNECTION_SPEED = 200
@@ -21,8 +23,6 @@ SENDING_GRAT_ARPS = False
 BROADCAST_MAC = 'ff:ff:ff:ff:ff:ff'
 STP_MULTICAST_MAC = "01:80:C2:00:00:00"
 DEFAULT_COMPUTER_IP = "192.168.1.2/24"
-DHCP_CLIENT_PORT = 68
-DHCP_SERVER_PORT = 67
 ON_LINK = "On-link"
 
 ROOT_PORT = "ROOT"
@@ -39,7 +39,6 @@ TTLS = {
     OS_SOLARIS: 255,
 }
 MAX_TTL = 255
-MAX_TCP_WINDOW_SIZE = 2**16
 
 ARP_CACHE_FORGET_TIME = 300  # seconds
 SWITCH_TABLE_ITEM_LIFETIME = 300  # seconds
@@ -55,6 +54,55 @@ DEFAULT_SWITCH_PRIORITY = 32768
 
 ARP_RESEND_TIME = 5 # seconds
 ARP_RESEND_COUNT = 3 # seconds
+
+ARP_REPLY = "ARP reply"
+ARP_REQUEST = "ARP request"
+ARP_GRAT = "gratuitous ARP"
+ICMP_REQUEST = "ping request"
+ICMP_REPLY = "ping reply"
+ICMP_TIME_EXCEEDED = "ICMP Time Exceeded!"
+ICMP_UNREACHABLE = "ICMP Unreachable"
+DHCP_DISCOVER = "DHCP Discover"
+DHCP_OFFER = "DHCP Offer"
+DHCP_REQUEST = "DHCP Request"
+DHCP_PACK = "DHCP Pack"
+
+TCP_ACK = "ACK"
+TCP_SYN = "SYN"
+TCP_FIN = "FIN"
+TCP_RST = "RST"
+TCP_PSH = "PSH"
+NO_TCP_FLAGS = None
+
+TCP_FLAGS = {
+    TCP_ACK,
+    TCP_FIN,
+    TCP_PSH,
+    TCP_SYN,
+    TCP_RST,
+}
+
+TCP_FLAGS_DISPLAY_PRIORITY = [TCP_SYN, TCP_FIN, TCP_RST, TCP_PSH, TCP_ACK]
+
+TCP_MAX_SEQUENCE_NUMBER = 2**32 - 1
+TCP_RESEND_TIME = 7 # seconds
+TCP_USABLE_PORT_RANGE = (2 ** 15 - 2 ** 14), 2 ** 16 - 1
+TCP_MAX_WINDOW_SIZE = 1 # 2**16 - 1
+TCP_SENDING_INTERVAL = 0.5
+TCP_DONE_RECEIVING = TCPDoneReceiving
+TCP_MAX_UNUSED_CONNECTION_TIME = 15 # seconds
+
+TCP_MSS_OPTION = "MSS"  # maximum segment size
+TCP_WINDOW_SCALE_OPTION = "Window Scale"
+TCP_SACK_OPTION = "SACK"
+TCP_TIMESTAMPS_OPTION = "Timestamps"
+
+DAYTIME_PORT = 13
+SSH_PORT = 22
+DHCP_SERVER_PORT = 67
+DHCP_CLIENT_PORT = 68
+HTTP_PORT = 80
+HTTPS_PORT = 443
 
 PACKET_GOING_RIGHT = 'R'
 PACKET_GOING_LEFT = 'L'
@@ -74,6 +122,7 @@ INSERT_PL_MSG = "insert your desired pl (0 <= pl <= 1)!!!"
 INSERT_SPEED_MSG = "insert your desired connection speed"
 INSERT_IP_MSG = "Enter your desired IP in the form <INTERFACE NAME>, <IP>"
 INSERT_INTERFACE_INFO_MSG = "Insert the name of the new interface"
+INSERT_IP_FOR_PROCESS = "Insert an IP to start your process to"
 
 # key modifiers:
 CAPS_MODIFIER = 8
@@ -128,39 +177,6 @@ CONNECTION_VIEW_IMAGE = "connection_view.png"
 EXPLOSION_ANIMATION = "explosion.png"
 ANIMATION_FRAME_RATE = 0.1
 ANIMATION_X_COUNT, ANIMATION_Y_COUNT = 5, 3
-
-ARP_REPLY = "ARP reply"
-ARP_REQUEST = "ARP request"
-ARP_GRAT = "gratuitous ARP"
-ICMP_REQUEST = "ping request"
-ICMP_REPLY = "ping reply"
-ICMP_TIME_EXCEEDED = "ICMP Time Exceeded!"
-ICMP_UNREACHABLE = "ICMP Unreachable"
-DHCP_DISCOVER = "DHCP Discover"
-DHCP_OFFER = "DHCP Offer"
-DHCP_REQUEST = "DHCP Request"
-DHCP_PACK = "DHCP Pack"
-
-TCP_ACK = "ACK"
-TCP_SYN = "SYN"
-TCP_FIN = "FIN"
-TCP_RST = "RST"
-TCP_PSH = "PSH"
-NO_TCP_FLAGS = None
-
-TCP_FLAGS = {
-    TCP_ACK,
-    TCP_FIN,
-    TCP_PSH,
-    TCP_SYN,
-    TCP_RST,
-}
-
-TCP_FLAGS_DISPLAY_PRIORITY = [TCP_SYN, TCP_FIN, TCP_RST, TCP_PSH, TCP_ACK]
-
-TCP_MSS_OPTION = "MSS"
-TCP_WINDOW_SCALE_OPTION = "Window Scale"
-TCP_SACK_OPTION = "SACK"
 
 OPAQUE = 35
 A_LITTLE_OPAQUE = 100

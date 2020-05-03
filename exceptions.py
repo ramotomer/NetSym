@@ -67,6 +67,11 @@ class NoARPLayerError(NoSuchLayerError):
     it contains no ARP layer.
     """
 
+class TCPDoneReceiving(PacketError):
+    """
+    used to indicate that a TCP process has finished to receive information.
+    """
+
 
 class InterfaceError(NetworkSimulationError):
     """

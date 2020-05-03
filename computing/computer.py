@@ -15,6 +15,8 @@ from packets.icmp import ICMP
 from packets.ip import IP
 from packets.tcp import TCP
 from packets.udp import UDP
+from processes.arp_process import ARPProcess, Timeout
+from processes.daytime_process import DAYTIMEServerProcess
 from processes.dhcp_process import DHCPClient
 from processes.dhcp_process import DHCPServer
 from processes.ping_process import SendPing
@@ -72,6 +74,11 @@ class Computer:
         self.packet_types_and_handlers = {
             "ARP": self._handle_arp,
             "ICMP": self._handle_ping,
+            "TCP": self._handle_tcp,
+        }
+
+        self.open_ports = {
+            DAYTIME_PORT: self.start_process(DAYTIMEServerProcess),
         }
 
         MainLoop.instance.insert_to_loop_pausable(self.logic)
@@ -264,6 +271,25 @@ class Computer:
                 dst_ip = packet["IP"].src_ip
                 self.start_ping_process(dst_ip, ICMP_REPLY)
 
+    def _handle_tcp(self, packet, interface):
+        """
+        Receives a TCP packet and decides if it is a TCP SYN to an open port, starts a server process or sends a TCP RST
+        accordingly
+        :param packet: a `Packet` object to test
+        :param interface: the `Interface` that received it.
+        :return: None
+        """
+        if not self.has_ip():
+            return
+
+        if packet["TCP"].flags[TCP_SYN] and not packet["TCP"].flags[TCP_ACK]:
+            dst_port = packet["TCP"].dst_port
+            if dst_port not in self.open_ports:
+                self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip,
+                             TCP(packet["TCP"].dst_port, packet["TCP"].src_port, [TCP_RST]))
+
+
+
     def _handle_special_packet(self, packet, receiving_interface):
         """
         Checks if the packet that was received is of some special type that requires handling (ARP, ICMP, TPC-SYN) and
@@ -385,6 +411,16 @@ class Computer:
 
 # -------------------------v packet sending and wrapping related methods v ---------------------------------------------
 
+    def send(self, packet):
+        """
+        Takes a full and ready packet and just sends it.
+        :param packet: a valid `Packet` object.
+        :return: None
+        """
+        if packet.is_valid():
+            interface = self.get_interface_with_ip(self.routing_table[packet["IP"].dst_ip].interface_ip)
+            interface.send(packet)
+
     def send_to(self, dst_mac, dst_ip, packet):
         """
         Receives destination addresses and a packet, wraps the packet with IP
@@ -396,6 +432,18 @@ class Computer:
         """
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
         interface.send_with_ethernet(dst_mac, IP(interface.ip, dst_ip, TTLS[self.os], packet))
+
+    def ip_wrap(self, dst_mac, dst_ip, protocol):
+        """
+        Takes in some protocol and wraps it up in Ethernet and IP with the appropriate MAC and IP addresses and TTL all
+        ready to be sent.
+        :param dst_mac:
+        :param dst_ip:
+        :param protocol:  The thing to wrap in IP
+        :return: a valid `Packet` object.
+        """
+        interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
+        return interface.ethernet_wrap(dst_mac, IP(interface.ip, dst_ip, TTLS[self.os], protocol))
 
     def send_arp_to(self, ip_address):
         """
@@ -524,14 +572,19 @@ class Computer:
         """
         return not any(interface.has_this_ip(ip_address) for interface in self.interfaces)
 
-    def send_tcp_packet(self, dst_mac, dst_ip, src_port, dst_port, sequence_number, flags=None, ack_number=None,
-                        window_size=MAX_TCP_WINDOW_SIZE, data='', options=None):
+    def request_address(self, ip_address):
         """
-        Sends a TCP packet!
-        for documentations about all of the arguments go to 'packets.tcp.py'
+        Receives an `IPAddress` and sends ARPs to it until it finds it or it did not answer for a long time.
+        This function actually starts a process that does that.
+        :param ip_address: an `IPAddress` object to look for
+        :return: The actual IP address it is looking for (The IP of your gateway (or the original if in the same subnet))
+        and a condition to test whether or not the process is done looking for the IP.
         """
-        self.send_to(dst_mac, dst_ip,
-                     TCP(src_port, dst_port, sequence_number, flags, ack_number, window_size, data, options))
+        ip_for_the_mac = self.routing_table[ip_address].ip_address
+        self.start_process(ARPProcess, ip_address)
+        arp_timeout = Timeout(ARP_RESEND_COUNT * ARP_RESEND_TIME)
+        return ip_for_the_mac , lambda: ip_for_the_mac in self.arp_cache or arp_timeout
+
 
     # ------------------------- v process related methods v ----------------------------------------------------
 
@@ -630,6 +683,7 @@ class Computer:
         new_packets = self._new_packets_since(self.process_last_check)
         self.process_last_check = MainLoop.instance.time()
 
+        self._kill_dead_processes()
         ready_processes = self._start_new_processes()
         self._decide_ready_processes_no_packet(ready_processes)
 
@@ -640,6 +694,17 @@ class Computer:
 
         self._check_process_timeouts(ready_processes)
         return ready_processes
+
+    def _kill_dead_processes(self):
+        """
+        Kills all of the process that have the `kill_me` attribute set.
+        This allows them to terminate themselves from anywhere inside them
+        :return: None
+        """
+        for waiting_process in self.waiting_processes[:]:
+            process, _ = waiting_process
+            if process.kill_me:
+                self.waiting_processes.remove(waiting_process)
     
     def _decide_ready_processes_no_packet(self, ready_processes):
         """

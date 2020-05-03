@@ -45,6 +45,7 @@ class Process(metaclass=ABCMeta):
         """
         self.computer = computer
         self.process = self.code()
+        self.kill_me = False
 
     @abstractmethod
     def code(self):
@@ -80,6 +81,13 @@ class Timeout:
         Returns whether or not the timeout has passed yet or not
         """
         return MainLoop.instance.time_since(self.init_time) > self.seconds
+
+    def reset(self):
+        """
+        Resets the timeout object's initiation time.
+        :return: None
+        """
+        self.init_time = MainLoop.instance.time()
 
 
 class ReturnedPacket:

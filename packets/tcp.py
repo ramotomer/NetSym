@@ -12,7 +12,7 @@ class TCP(Protocol):
     It has some data and its length is specified in the `length` attribute.
     The window size is also specified.
     """
-    def __init__(self, src_port, dst_port, sequence_number, flags=None, ack_number=None, window_size=MAX_TCP_WINDOW_SIZE, data='', options=None):
+    def __init__(self, src_port, dst_port, sequence_number, flags=None, ack_number=None, window_size=TCP_MAX_WINDOW_SIZE, data='', options=None):
         """
         Creates a TCP packet! With all of its parameters!
         :param src_port:
@@ -45,6 +45,14 @@ class TCP(Protocol):
                 return flag
         return NO_TCP_FLAGS
 
+    @property
+    def true_flags_string(self):
+        """
+        Returns a string which is a list of the flags that are true in this packet
+        :return:
+        """
+        return ', '.join([flag for flag in self.flags if self.flags[flag]])
+
     def multiline_repr(self):
         """
         The multiline representation of the TCP packet
@@ -52,10 +60,12 @@ class TCP(Protocol):
         """
         return f"""
 TCP:
-
-from {self.src_port} to {self.dst_port}
-flags: {', '.join([flag for flag in self.flags if self.flags[flag]])}
+from port {self.src_port} to port {self.dst_port}
+length: {self.length}
+flags: {self.true_flags_string}
 seq={self.sequence_number}, ack={self.ack_number}, win={self.window_size}
-options:
-{self.options}
+options: {self.options}
+
+data:
+'{self.data}'
 """

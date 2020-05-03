@@ -4,8 +4,7 @@ from consts import *
 from gui.computer_graphics import ComputerGraphics
 from gui.main_loop import MainLoop
 from processes.dhcp_process import DHCPServer
-from processes.ping_process import request_address
-from processes.process import Process
+from processes.process import Process, WaitingFor
 
 
 def arp_reply_from(source_ip):
@@ -105,7 +104,8 @@ class RoutePacket(Process):
         time_exceeded = self._decrease_ttl()
 
         if not time_exceeded:
-            yield from request_address(self.computer, dst_ip)
+            _, done_searching = self.computer.request_address(dst_ip)
+            yield WaitingFor(done_searching)
             if dst_ip not in self.computer.arp_cache:          # if no one answered the arp
                 self._send_icmp_unreachable()
                 return

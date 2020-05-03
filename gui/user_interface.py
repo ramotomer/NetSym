@@ -630,6 +630,11 @@ class UserInterface:
             elif computer.stp_enabled:  # computer is a Switch
                 print(computer.get_running_process(STPProcess).get_info())
 
+            from processes.tcp_process import TCPProcess
+            if computer.is_process_running(TCPProcess):
+                process = computer.get_running_process(TCPProcess)
+                print(f"window (of {process}): {process.sending_window}")
+
     def create_computer_with_ip(self):
         """
         Creates a computer with an IP fitting to the computers around it.
