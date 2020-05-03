@@ -73,6 +73,7 @@ class RoutePacket(Process):
 
         if self.computer.routing_table[dst_ip].ip_address == self.computer.routing_table.default_gateway.ip_address and \
                 self.computer.routing_table.default_gateway.ip_address is None:
+            debugp(f"{self.computer.routing_table[dst_ip].ip_address} and {self.computer.routing_table.default_gateway.ip_address}")
             self._send_icmp_unreachable()
             return True
         return False
@@ -104,14 +105,14 @@ class RoutePacket(Process):
         time_exceeded = self._decrease_ttl()
 
         if not time_exceeded:
-            _, done_searching = self.computer.request_address(dst_ip)
+            ip_for_the_mac, done_searching = self.computer.request_address(dst_ip)
             yield WaitingFor(done_searching)
-            if dst_ip not in self.computer.arp_cache:          # if no one answered the arp
+            if ip_for_the_mac not in self.computer.arp_cache:          # if no one answered the arp
                 self._send_icmp_unreachable()
                 return
 
             interface = self.computer.get_interface_with_ip(self.computer.routing_table[dst_ip].interface_ip)
-            interface.send_with_ethernet(self.computer.arp_cache[dst_ip].mac, self.packet["IP"])
+            interface.send_with_ethernet(self.computer.arp_cache[ip_for_the_mac].mac, self.packet["IP"])
 
     def __repr__(self):
         """The string representation of the process"""

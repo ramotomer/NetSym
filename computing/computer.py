@@ -19,6 +19,7 @@ from processes.arp_process import ARPProcess, Timeout
 from processes.daytime_process import DAYTIMEServerProcess
 from processes.dhcp_process import DHCPClient
 from processes.dhcp_process import DHCPServer
+from processes.ftp_process import FTPServerProcess
 from processes.ping_process import SendPing
 from usefuls import get_the_one
 
@@ -44,6 +45,7 @@ class Computer:
 
     PORTS_TO_PROCESSES = {
         DAYTIME_PORT: DAYTIMEServerProcess,
+        FTP_PORT: FTPServerProcess,
     }
 
     def __init__(self, name=None, os=OS_WINDOWS, gateway=None, *interfaces):
@@ -282,14 +284,14 @@ class Computer:
         :param interface: the `Interface` that received it.
         :return: None
         """
-        if not self.has_ip():
+        if not self.has_ip() or not self.has_this_ip(packet["IP"].dst_ip):
             return
 
         if packet["TCP"].flags[TCP_SYN] and not packet["TCP"].flags[TCP_ACK]:
             dst_port = packet["TCP"].dst_port
             if dst_port not in self.open_ports:
                 self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip,
-                             TCP(packet["TCP"].dst_port, packet["TCP"].src_port, [TCP_RST]))
+                             TCP(packet["TCP"].dst_port, packet["TCP"].src_port, 0, [TCP_RST]))
 
     def _handle_special_packet(self, packet, receiving_interface):
         """
@@ -356,26 +358,30 @@ class Computer:
             raise UnknownPortError(f"The port you tried to open is unknown!!! {port_number}")
 
         if port_number in self.open_ports:
-            # raise PortAlreadyOpenError(f"This port is already open!!! {port_number}")
-            return
+            self.kill_process(self.PORTS_TO_PROCESSES[port_number])
+            self.open_ports.remove(port_number)
+        else:
+            self.start_process(self.PORTS_TO_PROCESSES[port_number])
+            self.open_ports.append(port_number)
 
-        self.start_process(self.PORTS_TO_PROCESSES[port_number])
-        self.open_ports.append(port_number)
         self.graphics.update_image()
 
     def update_routing_table(self):
         """updates the routing table according to the interfaces at the moment"""
         self.routing_table = RoutingTable.create_default(self)
 
-    def set_default_gateway(self, gateway_ip, interface_ip):
+    def set_default_gateway(self, gateway_ip, interface_ip=None):
         """
         Sets the default gateway of the computer in the routing table with the interface IP that the packets to that gateway
         will be sent from.
         :param gateway_ip: The `IPAaddress` of the default gateway.
-        :param interface_ip: The `IPAddress` of the interface that will send the packets to the gateway.
+        :param interface_ip_address: The `IPAddress` of the interface that will send the packets to the gateway.
         :return: None
         """
-        self.routing_table[IPAddress("0.0.0.0/0")] = RoutingTableItem(gateway_ip, interface_ip)
+        interface_ip_address = interface_ip
+        if interface_ip is None:
+            interface_ip_address = self.same_subnet_interfaces(gateway_ip)[0].ip
+        self.routing_table[IPAddress("0.0.0.0/0")] = RoutingTableItem(gateway_ip, interface_ip_address)
 
     def set_ip(self, interface_name, string_ip):
         """
@@ -599,7 +605,7 @@ class Computer:
         and a condition to test whether or not the process is done looking for the IP.
         """
         ip_for_the_mac = self.routing_table[ip_address].ip_address
-        self.start_process(ARPProcess, ip_address)
+        self.start_process(ARPProcess, ip_for_the_mac)
         arp_timeout = Timeout(ARP_RESEND_COUNT * ARP_RESEND_TIME)
         return ip_for_the_mac , lambda: ip_for_the_mac in self.arp_cache or arp_timeout
 
@@ -755,6 +761,9 @@ class Computer:
         process, waiting_for = waiting_process
         packet, _, receiving_interface = received_packet
 
+        if not hasattr(waiting_for, "value"):
+            return False
+
         if waiting_for.condition(packet) == True:
             waiting_for.value.packets[packet] = receiving_interface  # this is the behaviour the `Process` object expects
 
@@ -792,6 +801,7 @@ class Computer:
         if not self.is_powered_on:
             return
 
+        self.received.clear()
         for interface in self.all_interfaces:
             if not interface.is_connected():
                 continue

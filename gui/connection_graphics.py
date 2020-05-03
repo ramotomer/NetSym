@@ -35,6 +35,7 @@ class ConnectionGraphics(GraphicsObject):
         self.color = self.regular_color
         self.marked_as_blocked = False
         self.is_connection = True
+        self.is_pressable = True
         self.x, self.y = 0, 0  # isnt used, just to avoid errors!
 
         self.connection = connection  # the `Connection` object.
@@ -118,8 +119,8 @@ class ConnectionGraphics(GraphicsObject):
         :return: None
         """
         buttons = {
-            "set PL amount": with_args(user_interface.ask_user_for, float, INSERT_PL_MSG, self.connection.set_pl),
-            "set speed": with_args(user_interface.ask_user_for, float, INSERT_SPEED_MSG, self.connection.set_speed),
+            "set PL amount (alt+p)": with_args(user_interface.ask_user_for, float, INSERT_PL_MSG, self.connection.set_pl),
+            "set speed (alt+s)": with_args(user_interface.ask_user_for, float, INSERT_SPEED_MSG, self.connection.set_speed),
         }
 
         self.buttons_id = user_interface.add_buttons(buttons)

@@ -8,6 +8,7 @@ from gui.image_graphics import ImageGraphics
 from gui.process_graphics import ProcessGraphicsList
 from gui.text_graphics import Text
 from processes.daytime_process import DAYTIMEClientProcess
+from processes.ftp_process import FTPClientProcess
 from usefuls import with_args
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "text console process_list")
@@ -29,6 +30,7 @@ class ComputerGraphics(ImageGraphics):
         """
         super(ComputerGraphics, self).__init__(IMAGES.format(image), x, y, centered=True, is_in_background=True)
         self.is_computer = True
+        self.is_pressable = True
         self.computer = computer
         self.child_graphics_objects = ChildGraphicsObjects(
             Text(self.generate_text(), self.x, self.y, self),
@@ -54,9 +56,9 @@ class ComputerGraphics(ImageGraphics):
         """
         self.image_name = IMAGES.format(SERVER_IMAGE if self.computer.open_ports else COMPUTER_IMAGE)
         self.load()
+        self.child_graphics_objects.process_list.clear()
         for port in self.computer.open_ports:
-            if port not in self.child_graphics_objects.process_list:
-                self.child_graphics_objects.process_list.add(port)
+            self.child_graphics_objects.process_list.add(port)
 
     def start_viewing(self, user_interface):
         """
@@ -65,12 +67,14 @@ class ComputerGraphics(ImageGraphics):
         :return: a tuple <display sprite>, <display text>, <new button count>
         """
         buttons = {
+            "power on/off (o)": user_interface.power_selected_computer,
             "config IP (i)": with_args(user_interface.ask_user_for, str, INSERT_IP_MSG, with_args(user_interface.config_ip, self.computer)),
-            "power on/off": user_interface.power_selected_computer,
-            "sniffing start/stop": with_args(self.computer.toggle_sniff, is_promisc=True),
-            "add interface": with_args(user_interface.ask_user_for, str, INSERT_INTERFACE_INFO_MSG, self.computer.add_interface),
-            "serve DAYTIME": with_args(self.computer.open_port, DAYTIME_PORT),
-            "ask daytime": with_args(user_interface.ask_user_for, IPAddress, INSERT_IP_FOR_PROCESS, with_args(self.computer.start_process, DAYTIMEClientProcess)),
+            "set default gateway (g)": with_args(user_interface.ask_user_for, IPAddress, INSERT_GATEWAY_MSG, self.computer.set_default_gateway),
+            "add interface (^i)": with_args(user_interface.ask_user_for, str, INSERT_INTERFACE_INFO_MSG, self.computer.add_interface),
+            "sniffing start/stop (f)": with_args(self.computer.toggle_sniff, is_promisc=True),
+            "open/close port (^o)": with_args(user_interface.ask_user_for, int, INSERT_PORT_NUMBER, self.computer.open_port),
+            "ask daytime (ctrl+a)": with_args(user_interface.ask_user_for, IPAddress, INSERT_IP_FOR_PROCESS, with_args(self.computer.start_process, DAYTIMEClientProcess)),
+            "download file (alt+a)": with_args(user_interface.ask_user_for, IPAddress, INSERT_IP_FOR_PROCESS, with_args(self.computer.start_process, FTPClientProcess)),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
         return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), self.generate_view_text(), len(buttons)

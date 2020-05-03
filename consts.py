@@ -87,15 +87,18 @@ TCP_FLAGS_DISPLAY_PRIORITY = [TCP_SYN, TCP_FIN, TCP_RST, TCP_PSH, TCP_ACK]
 TCP_MAX_SEQUENCE_NUMBER = 2**32 - 1
 TCP_RESEND_TIME = 7 # seconds
 TCP_USABLE_PORT_RANGE = (2 ** 15 - 2 ** 14), 2 ** 16 - 1
-TCP_MAX_WINDOW_SIZE = 1 # 2**16 - 1
-TCP_SENDING_INTERVAL = 0.5
+TCP_MAX_WINDOW_SIZE = 15 # 2**16 - 1
+TCP_SENDING_INTERVAL = 0.2 # seconds
 TCP_DONE_RECEIVING = TCPDoneReceiving
 TCP_MAX_UNUSED_CONNECTION_TIME = 15 # seconds
+TCP_MAX_MSS = 512 # 1460
 
 TCP_MSS_OPTION = "MSS"  # maximum segment size
 TCP_WINDOW_SCALE_OPTION = "Window Scale"
 TCP_SACK_OPTION = "SACK"
 TCP_TIMESTAMPS_OPTION = "Timestamps"
+
+FTP_REQUEST = "Give Me Data!"
 
 DAYTIME_PORT = 13
 FTP_PORT = 21
@@ -122,8 +125,10 @@ NETWORK_UNREACHABLE_MSG = "Cannot send packet, Network is unreachable!"
 INSERT_PL_MSG = "insert your desired pl (0 <= pl <= 1)!!!"
 INSERT_SPEED_MSG = "insert your desired connection speed"
 INSERT_IP_MSG = "Enter your desired IP in the form <INTERFACE NAME>, <IP>"
+INSERT_GATEWAY_MSG = "Enter your desired IP for the gateway:"
 INSERT_INTERFACE_INFO_MSG = "Insert the name of the new interface"
 INSERT_IP_FOR_PROCESS = "Insert an IP to start your process to"
+INSERT_PORT_NUMBER = "Insert a port number to open/close:"
 
 # key modifiers:
 CAPS_MODIFIER = 8
@@ -146,6 +151,7 @@ if os.name == 'nt':
 INTERFACE_NAMES = [line.strip() for line in open(FILES.format("interface_names.txt")).readlines()]
 COMPUTER_NAMES = [line.strip() for line in open(FILES.format("computer_names.txt")).readlines()]
 ANY_INTERFACE = None
+TRANSFER_FILE = "transfer_me.txt"
 
 ETHERNET_IMAGE = "ethernet_packet.png"
 ARP_REQUEST_IMAGE = "arp_request.png"
@@ -182,6 +188,7 @@ ANIMATION_X_COUNT, ANIMATION_Y_COUNT = 5, 3
 
 PORT_NUMBER_TO_IMAGE = {
     DAYTIME_PORT: "daytime_process.png",
+    FTP_PORT: "ftp_process.png",
 }
 PROCESS_IMAGE_PADDING = 20, -15
 PROCESS_IMAGE_GAP = 20
@@ -228,11 +235,11 @@ SIDE_WINDOW_WIDTH = 230
 
 DEFAULT_BUTTON_TEXT = "BuTTon"
 DEFAULT_BUTTON_WIDTH = SIDE_WINDOW_WIDTH - 40
-DEFAULT_BUTTON_HEIGHT = 30
+DEFAULT_BUTTON_HEIGHT = 35
 
 
 def DEFAULT_BUTTON_LOCATION(button_index):
-    return (WINDOW_WIDTH - SIDE_WINDOW_WIDTH + 20), (510 - (button_index * 40))
+    return (WINDOW_WIDTH - SIDE_WINDOW_WIDTH + 20), (510 - (button_index * DEFAULT_BUTTON_HEIGHT))
 
 
 MAIN_MENU_BUTTONS = 0
@@ -263,7 +270,7 @@ IMAGES_SIZE = 16
 VIEWING_IMAGE_COORDINATES = ((WINDOW_WIDTH - (SIDE_WINDOW_WIDTH / 2)) - (
             IMAGES_SIZE * VIEWING_OBJECT_SCALE_FACTOR / 2)), WINDOW_HEIGHT - (
                                         (IMAGES_SIZE * VIEWING_OBJECT_SCALE_FACTOR) + 15)
-VIEWING_TEXT_COORDINATES = (WINDOW_WIDTH - (SIDE_WINDOW_WIDTH / 2)), VIEWING_IMAGE_COORDINATES[1] - 10
+VIEWING_TEXT_COORDINATES = (WINDOW_WIDTH - (SIDE_WINDOW_WIDTH / 2)), VIEWING_IMAGE_COORDINATES[1] + 40
 
 PIXELS_PER_SCROLL = 20
 

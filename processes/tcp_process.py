@@ -9,6 +9,7 @@ from gui.main_loop import MainLoop
 from packets.tcp import TCP
 from processes.process import Process, WaitingForPacketWithTimeout, Timeout, WaitingForPacket, ReturnedPacket, \
     NoNeedForPacket, WaitingFor
+from usefuls import split_by_size
 
 NotAckedPacket = recordclass("NotAckedPacket", "packet sending_time is_sent")  # this is like a `namedtuple` but it is mutable!
 
@@ -32,7 +33,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         yield from self.goodbye_handshake(initiate=True)
 
     """
-    def __init__(self, computer, dst_ip=None, dst_port=None , src_port=None, is_client=True):
+    def __init__(self, computer, dst_ip=None, dst_port=None , src_port=None, is_client=True, mss=TCP_MAX_MSS):
         """
         Initiates a TCP process.
         :param computer: the `Computer` running the process
@@ -55,19 +56,23 @@ class TCPProcess(Process, metaclass=ABCMeta):
         self.ack_next_sequence_number = 0
 
         self.sending_window = SendingWindow()
+        self.mss = mss
 
         self.last_packet_sent_time = MainLoop.instance.time()
 
     def _create_packet(self, flags=None, data=''):
         """Creates a full packet that contains TCP with all of the appropriate fields according to the state of this process"""
         packet = self.computer.ip_wrap(self.dst_mac, self.dst_ip,
-                                     TCP(self.src_port,
+                                     TCP(
+                                         self.src_port,
                                          self.dst_port,
                                          self.sequence_number,
                                          flags,
                                          self.ack_next_sequence_number,
                                          self.sending_window.window_size,
-                                         data)
+                                         data,
+                                         mss=self.mss,
+                                     )
                                      )
         self.sequence_number += 1 if TCP_SYN in flags else len(data)
         return packet
@@ -91,17 +96,21 @@ class TCPProcess(Process, metaclass=ABCMeta):
                self.computer.has_this_ip(packet["IP"].dst_ip) and packet["IP"].src_ip == self.dst_ip and \
                packet["TCP"].dst_port == self.src_port and packet["TCP"].src_port == self.dst_port
 
-    def _tcp_with_flags(self, flags):
+    def _tcp_with_flags(self, *flag_lists):
         """
-        Returns a function
+        Takes in a bunch of flag lists, if any of them fit exactly returns a function that returns true on them
+        For example if we receive ([TCP_SYN, TCP_ACK], [TCP_RST]) we will return a function that will return True
+        if a packet is either a SYN-ACK or a RST.
         :param flags:
         :return:
         """
         def tester(packet):
-            return "TCP" in packet and \
-            all(packet["TCP"].flags[flag] for flag in flags)  and \
-            not any(packet["TCP"].flags[flag] for flag in (set(TCP_FLAGS) - set(flags))) and \
+            return any("TCP" in packet and
+            packet["TCP"].dst_port == self.src_port and
+            all(packet["TCP"].flags[flag] for flag in flags)  and
+            not any(packet["TCP"].flags[flag] for flag in (set(TCP_FLAGS) - set(flags))) and
             self.computer.has_this_ip(packet["IP"].dst_ip)
+                       for flags in flag_lists)
         return tester
 
     def reset_connection(self):
@@ -122,7 +131,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         self.dst_port = packet["TCP"].src_port
         self.dst_ip = packet["IP"].src_ip
         self.sending_window.window_size = min(packet["TCP"].window_size, self.sending_window.window_size)
-        # add MSS here!
+        self.mss = min(packet["TCP"].options[TCP_MSS_OPTION], self.mss)
 
     def _acknowledge_packets(self, ack_number):
         """
@@ -163,8 +172,12 @@ class TCPProcess(Process, metaclass=ABCMeta):
         self.computer.send(self._create_packet([TCP_SYN]))
 
         tcp_syn_ack = ReturnedPacket()
-        yield WaitingForPacket(self._tcp_with_flags([TCP_SYN, TCP_ACK]), tcp_syn_ack)
+        yield WaitingForPacket(self._tcp_with_flags([TCP_SYN, TCP_ACK], [TCP_RST]), tcp_syn_ack)
         packet = tcp_syn_ack.packet
+        if packet["TCP"].flags[TCP_RST]:
+            self.kill_me = True
+            self.computer.print("Server not available!")
+            return
         self._update_from_handshake_packet(packet)
 
         self.ack_next_sequence_number = 1
@@ -214,7 +227,8 @@ class TCPProcess(Process, metaclass=ABCMeta):
         :param data: the piece of the data that the child process class wants to send over TCP
         :return: None
         """
-        self.sending_window.add_waiting(self._create_packet([TCP_PSH], data))
+        for data_part in split_by_size(data, self.mss):
+            self.sending_window.add_waiting(self._create_packet([TCP_PSH], data_part))
 
     def is_done_transmitting(self):
         """
@@ -250,10 +264,14 @@ class TCPProcess(Process, metaclass=ABCMeta):
 
         for packet in packets.packets:
             if packet["TCP"].flags[TCP_PSH] or packet["TCP"].flags[TCP_SYN]:
-                self._send_ack_for(packet)
-                received_data.append(packet["TCP"].data)
+                if self.ack_next_sequence_number == packet["TCP"].sequence_number:
+                    received_data.append(packet["TCP"].data)
+                if self.ack_next_sequence_number <= packet["TCP"].sequence_number:  # normal packet or retransmission
+                    self._send_ack_for(packet)
+
             if packet["TCP"].flags[TCP_ACK]:
                 self._acknowledge_packets(packet["TCP"].ack_number)
+
             if packet["TCP"].flags[TCP_FIN]:
                 yield from self.goodbye_handshake(initiate=False)
                 received_data.append(TCP_DONE_RECEIVING)
@@ -365,5 +383,5 @@ class SendingWindow:
 waiting to be sent: {[packet["TCP"].sequence_number for packet in self.waiting_for_sending]}
 window: {window}
 window size: {self.window_size}
-sent: {[tcp.sequence_number for tcp in self.sent]}
+sent: {[packet["TCP"].sequence_number for packet in self.sent]}
 """

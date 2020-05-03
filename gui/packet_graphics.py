@@ -31,6 +31,7 @@ class PacketGraphics(ImageGraphics):
                             scale_factor=PACKET_SCALE_FACTOR,
                             is_opaque=is_opaque)
         self.is_packet = True
+        self.is_pressable = True
 
         self.connection_graphics = connection_graphics
         self.direction = direction
@@ -112,7 +113,7 @@ class PacketGraphics(ImageGraphics):
         :return: a tuple <display sprite>, <display text>, <new button count>
         """
         buttons = {
-            "Drop": with_args(user_interface.drop_packet, self),
+            "Drop (alt+d)": with_args(user_interface.drop_packet, self),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
         return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), '', len(buttons)

@@ -53,3 +53,13 @@ def distance(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+
+def split_by_size(string, size):
+    """
+    Takes the string and splits it up to `size` sized pieces (or less - for the last one).
+    :param string: str
+    :param size: int
+    :return: list of strings each of size `size` at most
+    """
+    return [string[i:i + size] for i in range(0, len(string), size)]

@@ -14,7 +14,7 @@ class Button(GraphicsObject):
     A class of a button which you can press and assign text and an action to.
     """
     def __init__(self, x, y, action=lambda: None, text=DEFAULT_BUTTON_TEXT,
-                 button_group=None, start_hidden=False, width=DEFAULT_BUTTON_WIDTH, height=DEFAULT_BUTTON_HEIGHT):
+                 button_group=None, start_hidden=False, width=DEFAULT_BUTTON_WIDTH, height=DEFAULT_BUTTON_HEIGHT, key=None):
         """
         Initiates the button.
         :param x:
@@ -42,6 +42,7 @@ class Button(GraphicsObject):
                  max_width=SIDE_WINDOW_WIDTH,
                  color=PINK),
         )
+        self.key = key
 
     def is_mouse_in(self):
         """Returns whether or not the mouse is located inside of the button."""

@@ -36,6 +36,7 @@ class GraphicsObject(metaclass=ABCMeta):
         self.is_packet = False
         self.is_image = False
         self.is_connection = False
+        self.is_pressable = False
 
         if self.do_render:
             MainLoop.instance.register_graphics_object(self, is_in_background)

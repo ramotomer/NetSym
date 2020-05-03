@@ -71,26 +71,17 @@ class UserInterface:
         `popup_window` is that window.
         """
         self.key_to_action = {
-            (key.N, NO_MODIFIER): with_args(self.create, Computer, True),
             (key.N, CTRL_MODIFIER): self.create_computer_with_ip,
-            (key.C, NO_MODIFIER): with_args(self.toggle_mode, CONNECTING_MODE),
-            (key.C, CTRL_MODIFIER): self.connect_all_available,
+            (key.C, CTRL_MODIFIER): self.smart_connect,
             (key.C, SHIFT_MODIFIER): self.connect_all_to_all,
             (key.P, CTRL_MODIFIER): self.send_random_ping,
-            (key.P, NO_MODIFIER): with_args(self.toggle_mode, PINGING_MODE),
             (key.P, SHIFT_MODIFIER): self.send_ping_to_self,
-            (key.S, NO_MODIFIER): with_args(self.create, Switch, True),
-            (key.S, CTRL_MODIFIER): self.start_all_stp,
-            (key.H, NO_MODIFIER): with_args(self.create, Hub, True),
-            (key.R, NO_MODIFIER): self.create_router,
-            (key.D, SHIFT_MODIFIER): self.delete_all_packets,
-            (key.D, CTRL_MODIFIER): self.delete_all,
-            (key.D, NO_MODIFIER): with_args(self.toggle_mode, DELETING_MODE),
+            (key.R, CTRL_MODIFIER): with_args(self.create, Router),
             (key.M, NO_MODIFIER): self.debugging_printer,
-            (key.A, NO_MODIFIER): self.ask_for_dhcp,
             (key.SPACE, NO_MODIFIER): self.toggle_pause,
-            (key.I, NO_MODIFIER): self.ask_user_for_ip,
-            (key.O, NO_MODIFIER): self.power_selected_computer,
+            (key.TAB, NO_MODIFIER): self.tab_through_selected,
+            (key.TAB, SHIFT_MODIFIER): with_args(self.tab_through_selected, True),
+            (key.ESCAPE, NO_MODIFIER): with_args(self.set_mode, SIMULATION_MODE),
         }
 
         self.action_at_press_by_mode = {
@@ -128,17 +119,17 @@ class UserInterface:
 
         self.button_arguments = [
             ((*DEFAULT_BUTTON_LOCATION(-1), lambda: None, "MAIN MENU:", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(0), with_args(self.create, Computer), "create a computer (n / ^n)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(1), with_args(self.create, Switch), "create a switch (s)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(2), with_args(self.create, Hub), "create a hub (h)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(3), with_args(self.create, Router), "create a router (r)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(4), with_args(self.toggle_mode, CONNECTING_MODE), "connect (c / ^c / Shift+c)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(5), with_args(self.toggle_mode, PINGING_MODE), "ping (p / ^p / Shift+p)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(6), self.ask_for_dhcp, "ask for DHCP (a)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(7), self.start_all_stp, "start STP (^s)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(8), self.delete_all_packets, "delete all packets (Shift+d)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(9), self.delete_all, "delete all (^d)", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(10), with_args(self.toggle_mode, DELETING_MODE), "delete (d)", MAIN_MENU_BUTTONS), {}),
+            ((*DEFAULT_BUTTON_LOCATION(0), with_args(self.create, Computer), "create a computer (n / ^n)", MAIN_MENU_BUTTONS), {"key": (key.N, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(1), with_args(self.create, Switch), "create a switch (s)", MAIN_MENU_BUTTONS), {"key": (key.S, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(2), with_args(self.create, Hub), "create a hub (h)", MAIN_MENU_BUTTONS), {"key": (key.H, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(3), self.create_router, "create a router (r / ^r)", MAIN_MENU_BUTTONS), {"key": (key.R, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(4), with_args(self.toggle_mode, CONNECTING_MODE), "connect (c / ^c / Shift+c)", MAIN_MENU_BUTTONS), {"key": (key.C, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(5), with_args(self.toggle_mode, PINGING_MODE), "ping (p / ^p / Shift+p)", MAIN_MENU_BUTTONS), {"key": (key.P, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(6), self.ask_for_dhcp, "ask for DHCP (a)", MAIN_MENU_BUTTONS), {"key": (key.A, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(7), self.start_all_stp, "start STP (^s)", MAIN_MENU_BUTTONS), {"key": (key.S, CTRL_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(8), self.delete_all_packets, "delete all packets (Shift+d)", MAIN_MENU_BUTTONS), {"key": (key.D, SHIFT_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(9), self.delete_all, "delete all (^d)", MAIN_MENU_BUTTONS), {"key": (key.D, CTRL_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(10), with_args(self.toggle_mode, DELETING_MODE), "delete (d)", MAIN_MENU_BUTTONS), {"key": (key.D, NO_MODIFIER)}),
         ]
         self.buttons = []
 
@@ -161,6 +152,9 @@ class UserInterface:
             if self.popup_window.is_done:
                 self.end_string_request()  # deletes the popup window if it is done with asking the string from the user.
 
+        if self.selected_object is not None and self.selected_object.is_packet and self.packet_from_graphics_object(self.selected_object) is None:
+            self.set_mode(SIMULATION_MODE)
+
     def drag_object(self):
         """
         Drags the object that should be dragged around the screen.
@@ -179,7 +173,6 @@ class UserInterface:
         :param graphics_object: A graphics object to view.
         :return: None
         """
-
         sprite, text, button_count = graphics_object.start_viewing(self)
         if sprite is not None:
             sprite.update(*VIEWING_IMAGE_COORDINATES)
@@ -189,7 +182,7 @@ class UserInterface:
                 text = self.packet_from_graphics_object(graphics_object).multiline_repr()
 
         x, y = VIEWING_TEXT_COORDINATES
-        self.object_view = ObjectView(sprite, Text(text, x, y - button_count * DEFAULT_BUTTON_HEIGHT, max_width=SIDE_WINDOW_WIDTH), graphics_object)
+        self.object_view = ObjectView(sprite, Text(text, x, y - (button_count * DEFAULT_BUTTON_HEIGHT), max_width=SIDE_WINDOW_WIDTH), graphics_object)
 
         if graphics_object.is_computer:
             graphics_object.child_graphics_objects.console.show()
@@ -226,6 +219,26 @@ class UserInterface:
             for button in self.added_buttons[buttons_id]:
                 button.y -= scroll_count * PIXELS_PER_SCROLL
 
+    def tab_through_selected(self, reverse=False):
+        """
+        This is called when the TAB key is pressed.
+        It goes through the graphics objects one by one and selects them.
+        Allows working without the mouse when there are not a lot of objects on the screen
+        :return:
+        """
+        available_graphics_objects = [object_ for object_ in MainLoop.instance.graphics_objects if object_.is_pressable]
+        if not available_graphics_objects:
+            return
+        if reverse:
+            available_graphics_objects = list(reversed(available_graphics_objects))
+
+        if self.selected_object is None:
+            self.selected_object = available_graphics_objects[-1]
+        else:
+            index = available_graphics_objects.index(self.selected_object)
+            self.selected_object = available_graphics_objects[index - 1]
+        self.set_mode(VIEW_MODE)
+
     def initiate_buttons(self):
         """
         Initiates the buttons in the window.
@@ -256,6 +269,7 @@ class UserInterface:
             self.mode = mode
             self.hide_button_group(VIEW_MODE_BUTTONS)
             self.end_object_view()
+            self.selected_object = None
             self.show_button_group(MAIN_MENU_BUTTONS)
 
     def toggle_mode(self, mode):
@@ -293,8 +307,26 @@ class UserInterface:
                 if button.is_mouse_in():
                     button.action()
 
-        action_at_press = self.action_at_press_by_mode[self.mode]
-        action_at_press()
+        self.action_at_press_by_mode[self.mode]()
+
+    def on_key_pressed(self, symbol, modifiers):
+        """
+        Called when a key is pressed
+        :param symbol:
+        :param modifiers:
+        :return:
+        """
+        modified_key = (symbol, int(bin(modifiers)[-4:], base=2))
+        for button in self.buttons:
+            if button.key == modified_key:
+                button.action()
+                return
+        for button_id in self.added_buttons:
+            for button in self.added_buttons[button_id]:
+                if button.key == modified_key:
+                    button.action()
+                    return
+        self.key_to_action.get(modified_key, lambda: None)()
 
     def view_mode_at_press(self):
         """
@@ -321,7 +353,7 @@ class UserInterface:
         mouse_x, _ = MainWindow.main_window.get_mouse_location()
         return mouse_x > (WINDOW_WIDTH - self.WIDTH)
 
-    def create(self, object_type, on_mouse=False):
+    def create(self, object_type):
         """
         Creates an object from a given type.
         :param object_type: an object type that will be created (Computer, Switch, Hub, etc...)
@@ -329,9 +361,9 @@ class UserInterface:
         is created in the middle of the screen.
         :return: None
         """
-        x, y = WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2
-        if on_mouse:
-            x, y = MainWindow.main_window.get_mouse_location()
+        x, y = MainWindow.main_window.get_mouse_location()
+        if self.is_mouse_in_side_window():
+            x, y = WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2
 
         object = object_type()
         object.show(x, y)
@@ -510,7 +542,7 @@ class UserInterface:
         for packet, _, _, _ in all_sent_packets:
             if packet.graphics is graphics_object:
                 return packet
-        raise NoSuchPacketError("That packet cannot be found!")
+        return None
 
     def drop_packet(self, packet_graphics):
         """
@@ -576,18 +608,30 @@ class UserInterface:
         MainLoop.instance.unregister_graphics_object(self.popup_window)
         self.popup_window = None
 
-    def connect_all_available(self):
+    def smart_connect(self):
         """
-        Connects all of the unconnected computers to the latest generated switch or hub
+        Connects all of the unconnected computers to their nearest  switch or hub
+        If there is no such one, to the nearest router, else to connects all of the computers to all others
         :return: None
         """
         switches = list(filter(lambda c: isinstance(c, Switch), self.computers))
-        for computer in self.computers:
-            if isinstance(computer, Switch):
-                continue
-            nearest_switch = min(switches, key=lambda s: distance(s.graphics.location, computer.graphics.location))
-            if not computer.interfaces[0].is_connected():
-                self.connect_computers(computer, nearest_switch)
+        routers = list(filter(lambda c: isinstance(c, Router), self.computers))
+        if switches:
+            for computer in self.computers:
+                if isinstance(computer, Switch):
+                    continue
+                nearest_switch = min(switches, key=lambda s: distance(s.graphics.location, computer.graphics.location))
+                if not computer.interfaces[0].is_connected():
+                    self.connect_computers(computer, nearest_switch)
+        elif routers:
+            for computer in self.computers:
+                if isinstance(computer, Router):
+                    continue
+                nearest_router = min(routers, key=lambda s: distance(s.graphics.location, computer.graphics.location))
+                if not computer.interfaces[0].is_connected():
+                    self.connect_computers(computer, nearest_router)
+        else:
+            self.connect_all_to_all()
 
     def ping_switch_with_ip(self):
         """
@@ -702,7 +746,7 @@ class UserInterface:
         """
         for computer in self.computers:
             for other_computer in self.computers:
-                if computer is not other_computer and not self.are_connected(computer, other_computer) and random.randint(0, 5) == 1:
+                if computer is not other_computer and not self.are_connected(computer, other_computer): # and random.randint(0, 5) == 1:
                     self.connect_computers(computer, other_computer)
 
     def send_ping_to_self(self):
@@ -754,6 +798,31 @@ class UserInterface:
         self.is_asking_for_string = True
         self.popup_window = TextBox(window_text, try_casting_with_action)
 
+    def key_from_string(self, string):
+        """
+        Receives a button-string and returns the key that should be pressed to activate that button
+        for example:
+         'connect all (^c)' -> `key_from_string` -> `(key.C, CTRL_MODIFIER)`
+        :param string:
+        :return:
+        """
+        if '(' not in string:
+            return None
+
+        _, modified_key = string.lower().split('(')
+        modified_key, _ = modified_key.split(')')
+        if modified_key.startswith('^'):
+            return (ord(modified_key[-1]), CTRL_MODIFIER)
+
+        modifiers = NO_MODIFIER
+        if 'ctrl' in modified_key.split('+'):
+            modifiers = modifiers | CTRL_MODIFIER
+        if 'shift' in modified_key.split('+'):
+            modifiers = modifiers | SHIFT_MODIFIER
+        if 'alt' in modified_key.split('+'):
+            modifiers = modifiers | ALT_MODIFIER
+        return (ord(modified_key[-1]), modifiers)
+
     def add_buttons(self, dictionary):
         """
         Adds buttons to the side window according to requests of the viewed object.
@@ -762,7 +831,7 @@ class UserInterface:
         """
         buttons_id = 0 if not self.added_buttons else max(self.added_buttons.keys()) + 1
         self.added_buttons[buttons_id] = [
-            Button(*DEFAULT_BUTTON_LOCATION(i+1), action, string) for i, (string, action) in enumerate(dictionary.items())
+            Button(*DEFAULT_BUTTON_LOCATION(i+1), action, string, key=self.key_from_string(string)) for i, (string, action) in enumerate(dictionary.items())
         ]
         return buttons_id
 

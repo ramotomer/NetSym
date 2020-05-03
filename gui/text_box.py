@@ -1,12 +1,13 @@
-from gui.graphics_object import GraphicsObject
-from gui.text_graphics import Text
-from gui.button import Button
-from consts import *
-from pyglet.window import key
 from collections import namedtuple
+
+from pyglet.window import key
+
+from consts import *
+from gui.button import Button
+from gui.graphics_object import GraphicsObject
 from gui.main_loop import MainLoop
 from gui.shape_drawing import draw_rect
-
+from gui.text_graphics import Text
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "title_text written_text submit_button")
 
@@ -67,6 +68,8 @@ class TextBox(GraphicsObject):
             char = chr(symbol).lower()
             if (modifiers & SHIFT_MODIFIER) ^ (modifiers & CAPS_MODIFIER):
                 char = char.upper()
+                if char == '-': char = '_'
+                if char == '=': char = '+'
             self.child_graphics_objects.written_text.set_text(self.child_graphics_objects.written_text.text + char)
 
     def submit(self):

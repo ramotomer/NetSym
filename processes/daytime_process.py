@@ -28,7 +28,6 @@ class DAYTIMEServerProcess(TCPProcess):
             self.send(str(datetime.datetime.now()))  # sends the time
             while not self.is_done_transmitting():
                 yield from self.handle_tcp_and_receive([])
-            debugp(f"server process done!")
             yield from self.goodbye_handshake(initiate=True)
 
     def __repr__(self):

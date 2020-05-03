@@ -12,7 +12,9 @@ class TCP(Protocol):
     It has some data and its length is specified in the `length` attribute.
     The window size is also specified.
     """
-    def __init__(self, src_port, dst_port, sequence_number, flags=None, ack_number=None, window_size=TCP_MAX_WINDOW_SIZE, data='', options=None):
+    def __init__(self, src_port, dst_port, sequence_number,
+                 flags=None, ack_number=None, window_size=TCP_MAX_WINDOW_SIZE,
+                 data='', options=None, mss=TCP_MAX_MSS):
         """
         Creates a TCP packet! With all of its parameters!
         :param src_port:
@@ -32,7 +34,14 @@ class TCP(Protocol):
         self.window_size = window_size
         self.length = len(data)
 
-        self.options = options  # future implementation
+        self.options = options
+        if options is None:
+            self.options = {
+                TCP_MSS_OPTION: mss,
+                TCP_WINDOW_SCALE_OPTION: None,
+                TCP_SACK_OPTION: None,
+                TCP_TIMESTAMPS_OPTION: None,
+            }
 
     @property
     def opcode(self):

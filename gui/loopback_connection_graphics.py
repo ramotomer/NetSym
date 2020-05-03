@@ -20,6 +20,7 @@ class LoopbackConnectionGraphics(ConnectionGraphics):
         self.radius = radius
         self.computer_graphics = computer_graphics
         self.is_showing = False
+        self.is_pressable = False
 
     @property
     def length(self):
@@ -60,3 +61,6 @@ class LoopbackConnectionGraphics(ConnectionGraphics):
         if self.is_showing:
             x, y = self.computer_graphics.location
             draw_circle(x, y + self.radius, self.radius, self.color)
+
+    def __repr__(self):
+        return "loopback connection graphics"

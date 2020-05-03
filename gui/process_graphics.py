@@ -39,6 +39,15 @@ class ProcessGraphicsList(GraphicsObject):
         if not found:
             raise UnknownPortError(f"The port is not the process list!!! {port}")
 
+    def clear(self):
+        """
+        Clears the list
+        :return:
+        """
+        for process_graphics in self.child_graphics_objects[:]:
+            self.remove(process_graphics.port)
+        self.process_count = 0
+
     def __contains__(self, item):
         """
         Enables the notation '<port num> in <process graphics list>'
@@ -49,6 +58,10 @@ class ProcessGraphicsList(GraphicsObject):
             if process_graphics.port == item:
                 return True
         return False
+
+    def __iter__(self):
+        """enables running over the list"""
+        return iter([pg.port for pg in self.child_graphics_objects])
 
     def draw(self):
         """Is not drawn..."""

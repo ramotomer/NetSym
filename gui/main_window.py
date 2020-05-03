@@ -147,10 +147,8 @@ class MainWindow(pyglet.window.Window):
         """
         try:  # this try and except is done becauese for some reason it is done automatically in pyglet and it is very annoying!!!!!!
 
-
             if not self.user_interface.is_asking_for_string:
-                self.user_interface.key_to_action.get((symbol, int(bin(modifiers)[-4:], base=2)), lambda: None)()
-                # ^ the `int` and `bin` above are because we do not care if NumLock or ScrlLock is down, only ctrl, alt, shift and capslock
+                self.user_interface.on_key_pressed(symbol, modifiers)
             else:
                 self.user_interface.popup_window.pressed(symbol, modifiers)
 
