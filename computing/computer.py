@@ -41,6 +41,11 @@ class Computer:
 
     The computer runs many `Process`-s that are all either currently running or waiting for a certain packet to arrive.
     """
+
+    PORTS_TO_PROCESSES = {
+        DAYTIME_PORT: DAYTIMEServerProcess,
+    }
+
     def __init__(self, name=None, os=OS_WINDOWS, gateway=None, *interfaces):
         """
         Initiates a Computer object.
@@ -77,9 +82,7 @@ class Computer:
             "TCP": self._handle_tcp,
         }
 
-        self.open_ports = {
-            DAYTIME_PORT: self.start_process(DAYTIMEServerProcess),
-        }
+        self.open_ports = [] # a list of the ports that are open on this computer.
 
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ the fact that it is 'pausable' means that when the space bar is pressed and the program pauses, this method does not run.
@@ -126,7 +129,7 @@ class Computer:
         :param y: Coordinates to initiate the `GraphicsObject` at.
         :return: None
         """
-        self.graphics = ComputerGraphics(x, y, self)
+        self.graphics = ComputerGraphics(x, y, self, COMPUTER_IMAGE if not self.open_ports else SERVER_IMAGE)
         self.loopback.connection.connection.show(self.graphics)
 
     def print(self, string):
@@ -288,8 +291,6 @@ class Computer:
                 self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip,
                              TCP(packet["TCP"].dst_port, packet["TCP"].src_port, [TCP_RST]))
 
-
-
     def _handle_special_packet(self, packet, receiving_interface):
         """
         Checks if the packet that was received is of some special type that requires handling (ARP, ICMP, TPC-SYN) and
@@ -344,6 +345,23 @@ class Computer:
         """
         self.kill_process(DHCPClient)  # if currently asking for dhcp, stop it
         self.start_process(DHCPClient)
+
+    def open_port(self, port_number):
+        """
+        Opens a port on the computer. Starts the process that is behind it.
+        :param port_number:
+        :return:
+        """
+        if port_number not in self.PORTS_TO_PROCESSES:
+            raise UnknownPortError(f"The port you tried to open is unknown!!! {port_number}")
+
+        if port_number in self.open_ports:
+            # raise PortAlreadyOpenError(f"This port is already open!!! {port_number}")
+            return
+
+        self.start_process(self.PORTS_TO_PROCESSES[port_number])
+        self.open_ports.append(port_number)
+        self.graphics.update_image()
 
     def update_routing_table(self):
         """updates the routing table according to the interfaces at the moment"""

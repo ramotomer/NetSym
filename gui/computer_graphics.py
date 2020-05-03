@@ -5,11 +5,12 @@ from address.ip_address import IPAddress
 from consts import *
 from gui.console import Console
 from gui.image_graphics import ImageGraphics
+from gui.process_graphics import ProcessGraphicsList
 from gui.text_graphics import Text
 from processes.daytime_process import DAYTIMEClientProcess
 from usefuls import with_args
 
-ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "text console")
+ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "text console process_list")
 
 
 class ComputerGraphics(ImageGraphics):
@@ -32,6 +33,7 @@ class ComputerGraphics(ImageGraphics):
         self.child_graphics_objects = ChildGraphicsObjects(
             Text(self.generate_text(), self.x, self.y, self),
             Console(CONSOLE_X, CONSOLE_Y),
+            ProcessGraphicsList(self),
         )
 
     def generate_text(self):
@@ -45,6 +47,17 @@ class ComputerGraphics(ImageGraphics):
         """Sometimes the data of the computer is changed and we want to text to change as well"""
         self.child_graphics_objects.text.set_text(self.generate_text())
 
+    def update_image(self):
+        """
+        Updates the image according to the current computer state
+        :return:
+        """
+        self.image_name = IMAGES.format(SERVER_IMAGE if self.computer.open_ports else COMPUTER_IMAGE)
+        self.load()
+        for port in self.computer.open_ports:
+            if port not in self.child_graphics_objects.process_list:
+                self.child_graphics_objects.process_list.add(port)
+
     def start_viewing(self, user_interface):
         """
         Starts viewing the computer graphics object in the side-window view.
@@ -56,6 +69,7 @@ class ComputerGraphics(ImageGraphics):
             "power on/off": user_interface.power_selected_computer,
             "sniffing start/stop": with_args(self.computer.toggle_sniff, is_promisc=True),
             "add interface": with_args(user_interface.ask_user_for, str, INSERT_INTERFACE_INFO_MSG, self.computer.add_interface),
+            "serve DAYTIME": with_args(self.computer.open_port, DAYTIME_PORT),
             "ask daytime": with_args(user_interface.ask_user_for, IPAddress, INSERT_IP_FOR_PROCESS, with_args(self.computer.start_process, DAYTIMEClientProcess)),
         }
         self.buttons_id = user_interface.add_buttons(buttons)

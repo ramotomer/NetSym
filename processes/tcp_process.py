@@ -258,6 +258,12 @@ class TCPProcess(Process, metaclass=ABCMeta):
                 yield from self.goodbye_handshake(initiate=False)
                 received_data.append(TCP_DONE_RECEIVING)
 
+        # TODO: handle PL in the handshakes!
+        # TODO: handle packets that are out of order!
+        # TODO: handle lost ACKs (dup ack and retransmissions that you already received)
+        # TODO: add MSS
+        # TODO: add SACK
+
     @abstractmethod
     def code(self):
         """

@@ -115,6 +115,21 @@ class RoutingTableError(ComputerError):
     Indicates an error in the routing table of a computer.
     """
 
+class PortError(ComputerError):
+    """
+    Indicates a port-related error
+    """
+
+class UnknownPortError(PortError):
+    """
+    Occurs when one tries to open a port that is not familiar to the operating computer
+    """
+
+class PortAlreadyOpenError(PortError):
+    """
+    Occurs when a port that is open is opened
+    """
+
 
 class GraphicsError(NetworkSimulationError):
     """
