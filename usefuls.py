@@ -63,3 +63,16 @@ def split_by_size(string, size):
     :return: list of strings each of size `size` at most
     """
     return [string[i:i + size] for i in range(0, len(string), size)]
+
+
+def called_in_order(*functions):
+    """
+    Receives functions and returns a function performs them one after the other in the order they were received in.
+    calls them without arguments.
+    :param functions: callable objects.
+    :return: a function
+    """
+    def in_order():
+        for function in functions:
+            function()
+    return in_order

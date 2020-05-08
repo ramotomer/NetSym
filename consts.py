@@ -242,8 +242,7 @@ def DEFAULT_BUTTON_LOCATION(button_index):
     return (WINDOW_WIDTH - SIDE_WINDOW_WIDTH + 20), (510 - (button_index * DEFAULT_BUTTON_HEIGHT))
 
 
-MAIN_MENU_BUTTONS = 0
-VIEW_MODE_BUTTONS = 1
+MAIN_BUTTONS_ID = 0
 
 SIMULATION_MODE = 0  # the normal mode of the simulation
 CONNECTING_MODE = 1  # The mode when we are connecting two computers (white on the edges)

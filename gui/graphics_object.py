@@ -59,9 +59,9 @@ class GraphicsObject(metaclass=ABCMeta):
     def start_viewing(self, user_interface):
         """
         Returns a tuple a `pyglet.sprite.Sprite` object and a string that should be shown on the side window
-        when this object is pressed. Also returns the amount of the new buttons that this viewing added.
+        when this object is pressed. Also returns the buttons id of the buttons that are added by this object.
         :param user_interface: a `UserInterface` object to use its methods for initiating buttons in the side window.
-        :return: <pyglet.sprite.Sprite>, <str>, <button count>
+        :return: <pyglet.sprite.Sprite>, <str>, <buttons id>
         """
         return None, '', 0
 

@@ -13,8 +13,8 @@ class Button(GraphicsObject):
     """
     A class of a button which you can press and assign text and an action to.
     """
-    def __init__(self, x, y, action=lambda: None, text=DEFAULT_BUTTON_TEXT,
-                 button_group=None, start_hidden=False, width=DEFAULT_BUTTON_WIDTH, height=DEFAULT_BUTTON_HEIGHT, key=None):
+    def __init__(self, x, y, action=lambda: None, text=DEFAULT_BUTTON_TEXT, start_hidden=False,
+                 width=DEFAULT_BUTTON_WIDTH, height=DEFAULT_BUTTON_HEIGHT, key=None):
         """
         Initiates the button.
         :param x:
@@ -28,10 +28,9 @@ class Button(GraphicsObject):
         :param height: the button's height.
         """
         super(Button, self).__init__(x, y)
+        self.initial_location = x, y
         self.is_button = True
         self.is_hidden = start_hidden
-
-        self.button_group = button_group
 
         self.width, self.height = width, height
         self.action = action
@@ -81,7 +80,8 @@ class Button(GraphicsObject):
             draw_rect(self.x, self.y, self.width, self.height, (DARK_GRAY if self.is_mouse_in() else GRAY))
 
     def __str__(self):
-        return f"Button '{self.child_graphics_objects.text.text}'"
+        state = "HIDDEN" if self.is_hidden else "SHOWING"
+        return f"{state} '{self.child_graphics_objects.text.text}'"
 
     def __repr__(self):
         return f"Button('{self.child_graphics_objects.text}')"

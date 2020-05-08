@@ -97,10 +97,10 @@ class ImageGraphics(GraphicsObject):
     def start_viewing(self, user_interface):
         """
         Returns a tuple a `pyglet.sprite.Sprite` object and a `Text` object that should be shown on the side window
-        when this object is pressed. also returns the added button count in the returned tuple.
+        when this object is pressed. also returns the added button id in the returned tuple.
         :return:
         """
-        return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), self.generate_view_text(), 0
+        return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), self.generate_view_text(), None
 
     def generate_view_text(self):
         """

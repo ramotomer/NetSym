@@ -15,9 +15,9 @@ There is a user interface interactive side-window that contains the buttons and 
 the user can perform.
 By each button there is a key-combination in the keyboard that enables the same
 action using the keyboard. It is naturally much faster.
-When computers a drawn to the screen, they each have a randomly generated unique name.
+When computers are drawn to the screen, they each have a randomly generated unique name.
 Objects can be dragged around the screen with the mouse.
-Once some object is selected the information about it will be displayed in the `VIEW_MODE` 
+Once some object is selected, the information about it will be displayed in the `VIEW_MODE` 
 on the side-window. Actions regarding that object will also be there.
 The program can be paused by pressing the space bar.
 

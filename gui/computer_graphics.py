@@ -67,6 +67,7 @@ class ComputerGraphics(ImageGraphics):
         :return: a tuple <display sprite>, <display text>, <new button count>
         """
         buttons = {
+            "open/close console (shift+o)": self.child_graphics_objects.console.toggle_showing,
             "power on/off (o)": user_interface.power_selected_computer,
             "config IP (i)": with_args(user_interface.ask_user_for, str, INSERT_IP_MSG, with_args(user_interface.config_ip, self.computer)),
             "set default gateway (g)": with_args(user_interface.ask_user_for, IPAddress, INSERT_GATEWAY_MSG, self.computer.set_default_gateway),
@@ -77,7 +78,7 @@ class ComputerGraphics(ImageGraphics):
             "download file (alt+a)": with_args(user_interface.ask_user_for, IPAddress, INSERT_IP_FOR_PROCESS, with_args(self.computer.start_process, FTPClientProcess)),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
-        return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), self.generate_view_text(), len(buttons)
+        return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), self.generate_view_text(), self.buttons_id
 
     def end_viewing(self, user_interface):
         """Ends the viewing of the object in the side window"""

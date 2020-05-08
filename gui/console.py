@@ -61,6 +61,16 @@ class Console(GraphicsObject):
         self.is_hidden = True
         self.child_graphics_objects.text.hide()
 
+    def toggle_showing(self):
+        """
+        If hidden, show, if showing, hide
+        :return:
+        """
+        if self.is_hidden:
+            self.show()
+        else:
+            self.hide()
+
     def is_full(self):
         """
         Returns whether or not the console is full (and should go down a line)

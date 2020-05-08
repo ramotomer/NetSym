@@ -110,13 +110,13 @@ class PacketGraphics(ImageGraphics):
         """
         Starts viewing the packet graphics object in the side-window view.
         :param user_interface: the `UserInterface` object we can use the methods of it.
-        :return: a tuple <display sprite>, <display text>, <new button count>
+        :return: a tuple <display sprite>, <display text>, <new button id>
         """
         buttons = {
             "Drop (alt+d)": with_args(user_interface.drop_packet, self),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
-        return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), '', len(buttons)
+        return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), '', self.buttons_id
 
     def end_viewing(self, user_interface):
         """Ends the viewing of the object in the side window"""

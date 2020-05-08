@@ -124,7 +124,7 @@ class ConnectionGraphics(GraphicsObject):
         }
 
         self.buttons_id = user_interface.add_buttons(buttons)
-        return ImageGraphics.get_image_sprite(IMAGES.format(CONNECTION_VIEW_IMAGE)), self.generate_view_text(), len(buttons)
+        return ImageGraphics.get_image_sprite(IMAGES.format(CONNECTION_VIEW_IMAGE)), self.generate_view_text(), self.buttons_id
 
     def end_viewing(self, user_interface):
         """

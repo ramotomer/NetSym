@@ -1,9 +1,10 @@
 import functools
 import operator
 import random
-import time
 from collections import namedtuple
+from functools import reduce
 from math import sqrt
+from operator import concat
 
 from pyglet.window import key
 
@@ -22,8 +23,7 @@ from gui.shape_drawing import draw_pause_rectangles, draw_rect
 from gui.text_box import TextBox
 from gui.text_graphics import Text
 from processes.stp_process import STPProcess
-from usefuls import get_the_one, distance
-from usefuls import with_args
+from usefuls import get_the_one, distance, with_args, called_in_order
 
 ObjectView = namedtuple("ObjectView", "sprite text viewed_object")
 """
@@ -118,22 +118,24 @@ class UserInterface:
         # ^ the popup window object. None if `self.is_asking_for_string` is False.
 
         self.button_arguments = [
-            ((*DEFAULT_BUTTON_LOCATION(-1), lambda: None, "MAIN MENU:", MAIN_MENU_BUTTONS), {}),
-            ((*DEFAULT_BUTTON_LOCATION(0), with_args(self.create, Computer), "create a computer (n / ^n)", MAIN_MENU_BUTTONS), {"key": (key.N, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(1), with_args(self.create, Switch), "create a switch (s)", MAIN_MENU_BUTTONS), {"key": (key.S, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(2), with_args(self.create, Hub), "create a hub (h)", MAIN_MENU_BUTTONS), {"key": (key.H, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(3), self.create_router, "create a router (r / ^r)", MAIN_MENU_BUTTONS), {"key": (key.R, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(4), with_args(self.toggle_mode, CONNECTING_MODE), "connect (c / ^c / Shift+c)", MAIN_MENU_BUTTONS), {"key": (key.C, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(5), with_args(self.toggle_mode, PINGING_MODE), "ping (p / ^p / Shift+p)", MAIN_MENU_BUTTONS), {"key": (key.P, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(6), self.ask_for_dhcp, "ask for DHCP (a)", MAIN_MENU_BUTTONS), {"key": (key.A, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(7), self.start_all_stp, "start STP (^s)", MAIN_MENU_BUTTONS), {"key": (key.S, CTRL_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(8), self.delete_all_packets, "delete all packets (Shift+d)", MAIN_MENU_BUTTONS), {"key": (key.D, SHIFT_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(9), self.delete_all, "delete all (^d)", MAIN_MENU_BUTTONS), {"key": (key.D, CTRL_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(10), with_args(self.toggle_mode, DELETING_MODE), "delete (d)", MAIN_MENU_BUTTONS), {"key": (key.D, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(-1), lambda: None, "MAIN MENU:"), {}),
+            ((*DEFAULT_BUTTON_LOCATION(0), with_args(self.create, Computer), "create a computer (n / ^n)"), {"key": (key.N, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(1), with_args(self.create, Switch), "create a switch (s)"), {"key": (key.S, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(2), with_args(self.create, Hub), "create a hub (h)"), {"key": (key.H, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(3), self.create_router, "create a router (r / ^r)"), {"key": (key.R, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(4), with_args(self.toggle_mode, CONNECTING_MODE), "connect (c / ^c / Shift+c)"), {"key": (key.C, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(5), with_args(self.toggle_mode, PINGING_MODE), "ping (p / ^p / Shift+p)"), {"key": (key.P, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(6), self.ask_for_dhcp, "ask for DHCP (a)"), {"key": (key.A, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(7), self.start_all_stp, "start STP (^s)"), {"key": (key.S, CTRL_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(8), self.delete_all_packets, "delete all packets (Shift+d)"), {"key": (key.D, SHIFT_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(9), self.delete_all, "delete all (^d)"), {"key": (key.D, CTRL_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(10), with_args(self.toggle_mode, DELETING_MODE), "delete (d)"), {"key": (key.D, NO_MODIFIER)}),
         ]
-        self.buttons = []
+        self.buttons = {}
+        #{button_id: list of `Button` objects}
+        self.showing_buttons_id = MAIN_BUTTONS_ID
 
-        self.added_buttons = {} # buttons that are added to the side window while viewing some object. {button_id: list of `Button` objects}
+        self.scrolled_view = None
 
     def show(self):
         """
@@ -173,7 +175,9 @@ class UserInterface:
         :param graphics_object: A graphics object to view.
         :return: None
         """
-        sprite, text, button_count = graphics_object.start_viewing(self)
+        self.scrolled_view = 0
+
+        sprite, text, buttons_id = graphics_object.start_viewing(self)
         if sprite is not None:
             sprite.update(*VIEWING_IMAGE_COORDINATES)
             MainLoop.instance.insert_to_loop(sprite.draw)
@@ -182,10 +186,19 @@ class UserInterface:
                 text = self.packet_from_graphics_object(graphics_object).multiline_repr()
 
         x, y = VIEWING_TEXT_COORDINATES
-        self.object_view = ObjectView(sprite, Text(text, x, y - (button_count * DEFAULT_BUTTON_HEIGHT), max_width=SIDE_WINDOW_WIDTH), graphics_object)
+        self.object_view = ObjectView(sprite, Text(text, x, y, max_width=SIDE_WINDOW_WIDTH), graphics_object)
+        self.adjust_viewed_text_to_buttons(buttons_id+1)
 
-        if graphics_object.is_computer:
-            graphics_object.child_graphics_objects.console.show()
+    def adjust_viewed_text_to_buttons(self, buttons_id):
+        """
+        This is called when the buttons of the viewed object are changed.
+        The location of the viewed text is changed according to it.
+        :return:
+        """
+        if self.object_view is None:
+            raise SomethingWentTerriblyWrongError("Only call this in VIEW MODE")
+
+        self.object_view.text.y = VIEWING_TEXT_COORDINATES[1] - ((len(self.buttons[buttons_id]) + 0.5) * DEFAULT_BUTTON_HEIGHT) - self.scrolled_view
 
     def end_object_view(self):
         """
@@ -202,6 +215,7 @@ class UserInterface:
                 self.object_view.viewed_object.child_graphics_objects.console.hide()
 
             self.object_view = None
+            self.scrolled_view = None
 
     def scroll_view(self, scroll_count):
         """
@@ -212,12 +226,18 @@ class UserInterface:
         if self.object_view is None:
             raise SomethingWentTerriblyWrongError("Not supposed to get here!!! In VIEW_MODE the `self.object_view` is never None")
 
+
         sprite, text_graphics, viewed_object = self.object_view
-        sprite.y -= scroll_count * PIXELS_PER_SCROLL
-        text_graphics.y -= scroll_count * PIXELS_PER_SCROLL
-        for buttons_id in self.added_buttons:
-            for button in self.added_buttons[buttons_id]:
-                button.y -= scroll_count * PIXELS_PER_SCROLL
+        if scroll_count < 0 or self.scrolled_view <= -scroll_count * PIXELS_PER_SCROLL:
+            self.scrolled_view += scroll_count * PIXELS_PER_SCROLL
+
+            sprite.y = VIEWING_IMAGE_COORDINATES[1] - self.scrolled_view
+            self.adjust_viewed_text_to_buttons(self.showing_buttons_id)
+
+            for buttons_id in self.buttons:
+                for button in self.buttons[buttons_id]:
+                    if not button.is_hidden:
+                        button.y = button.initial_location[1] - self.scrolled_view
 
     def tab_through_selected(self, reverse=False):
         """
@@ -246,7 +266,7 @@ class UserInterface:
         `MainWindow.main_window` is still uninitiated so it cannot register the graphics objects of the buttons.
         :return: None
         """
-        self.buttons = [Button(*args, **kwargs) for args, kwargs in self.button_arguments]
+        self.buttons[MAIN_BUTTONS_ID] = [Button(*args, **kwargs) for args, kwargs in self.button_arguments]
 
     def set_mode(self, mode):
         """
@@ -261,16 +281,14 @@ class UserInterface:
         if mode == VIEW_MODE:
             self.end_object_view()
             self.mode = mode
-            self.hide_button_group(MAIN_MENU_BUTTONS)
+            self.hide_buttons(MAIN_BUTTONS_ID)
             self.start_object_view(self.selected_object)
-            self.show_button_group(VIEW_MODE_BUTTONS)
 
         else:
             self.mode = mode
-            self.hide_button_group(VIEW_MODE_BUTTONS)
             self.end_object_view()
             self.selected_object = None
-            self.show_button_group(MAIN_MENU_BUTTONS)
+            self.show_buttons(MAIN_BUTTONS_ID)
 
     def toggle_mode(self, mode):
         """
@@ -298,14 +316,9 @@ class UserInterface:
         The choosing of a selected and dragged objects should be performed BEFORE this is called!
         :return: None
         """
-        for button in self.buttons:
-            if button.is_mouse_in() and not button.is_hidden:
+        for button in reduce(concat, list(self.buttons.values())):
+            if not button.is_hidden and button.is_mouse_in():
                 button.action()
-
-        for buttons in list(self.added_buttons.values()):
-            for button in buttons:
-                if button.is_mouse_in():
-                    button.action()
 
         self.action_at_press_by_mode[self.mode]()
 
@@ -317,12 +330,8 @@ class UserInterface:
         :return:
         """
         modified_key = (symbol, int(bin(modifiers)[-4:], base=2))
-        for button in self.buttons:
-            if button.key == modified_key:
-                button.action()
-                return
-        for button_id in self.added_buttons:
-            for button in self.added_buttons[button_id]:
+        for button_id in self.buttons:
+            for button in self.buttons[button_id]:
                 if button.key == modified_key:
                     button.action()
                     return
@@ -333,10 +342,11 @@ class UserInterface:
         Happens when we are in viewing mode (or simulation mode) and we press our mouse.
         decides whether to start viewing a new graphics object or finish a previous one.
         """
-        if self.selected_object is not None:
-            self.set_mode(VIEW_MODE)
-        elif self.selected_object is None:
-            self.set_mode(SIMULATION_MODE)
+        if not self.is_mouse_in_side_window():
+            if self.selected_object is not None:
+                self.set_mode(VIEW_MODE)
+            elif self.selected_object is None:
+                self.set_mode(SIMULATION_MODE)
 
     def deleting_mode_at_press(self):
         """
@@ -375,6 +385,8 @@ class UserInterface:
         :return: None
         """
         x, y = MainWindow.main_window.get_mouse_location()
+        if self.is_mouse_in_side_window():
+            x, y = WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2
 
         interfaces = (Interface.with_ip('192.168.1.1'),
                       Interface.with_ip('10.10.10.1'),
@@ -507,27 +519,28 @@ class UserInterface:
                 connection.stop_packets()
                 self.connection_data.remove(connection_data)
 
-    def hide_button_group(self, group=None):
+    def hide_buttons(self, buttons_id=None):
         """
-        make all of the buttons in a certain button group hidden, if no group is given, hide all
+        make all of the buttons with a certain button_id hidden, if no group is given, hide all
         :param group: a group name (`MAIN_MENU_BUTTONS` for example)
         :return: None
         """
-        for button in self.buttons:
-            if (group is None) or (button.button_group == group):
-                button.hide()
+        if buttons_id is None:
+            for other_buttons_id in self.buttons:
+                self.hide_buttons(other_buttons_id)
 
-    def show_button_group(self, group):
+        for button in self.buttons[buttons_id]:
+            button.hide()
+
+    def show_buttons(self, buttons_id):
         """
-        make the buttons of a certain button group is_showing, all other groups hidden.
+        make the buttons of a certain buttons_id is_showing, all other groups hidden.
         :param group: a group name (`MAIN_MENU_BUTTONS` for example)
         :return: None
         """
-        for button in self.buttons:
-            if button.button_group == group:
-                button.show()
-            else:
-                button.hide()
+        for button in self.buttons[buttons_id]:
+            button.show()
+        self.showing_buttons_id = buttons_id
 
     def packet_from_graphics_object(self, graphics_object):
         """
@@ -656,28 +669,30 @@ class UserInterface:
         Prints out lots of useful information for debugging.
         :return: None
         """
-        print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
-        print(f"graphicsObject-s (no buttons or texts): {[go for go in MainLoop.instance.graphics_objects if not isinstance(go, Button) and not isinstance(go, Text)]}")
-        print(f"selected object: {self.selected_object}, dragged: {self.dragged_object}")
-        print(f"mouse: {MainWindow.main_window.get_mouse_location()}")
-        print(f"""computers, {len(self.computers)}, connections, {len(self.connection_data)}, packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}""")
-        print(f"running processes: ", end='')
-        for computer in self.computers:
-            processes = [f"{wp.process} of {computer}" for wp in computer.waiting_processes]
-            print(processes if processes else '', end=' ')
-        print()
-        if self.selected_object is not None and self.selected_object.is_computer:
-            computer = self.selected_object.computer
-            computer.print("------------DEBUG------------------")
-            if not isinstance(computer, Switch):
-                print(repr(computer.routing_table))
-            elif computer.stp_enabled:  # computer is a Switch
-                print(computer.get_running_process(STPProcess).get_info())
-
-            from processes.tcp_process import TCPProcess
-            if computer.is_process_running(TCPProcess):
-                process = computer.get_running_process(TCPProcess)
-                print(f"window (of {process}): {process.sending_window}")
+        for buttons_id in self.buttons:
+            print(f"{buttons_id}: {[str(b) for b in self.buttons[buttons_id]]}")
+        # print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
+        # print(f"graphicsObject-s (no buttons or texts): {[go for go in MainLoop.instance.graphics_objects if not isinstance(go, Button) and not isinstance(go, Text)]}")
+        # print(f"selected object: {self.selected_object}, dragged: {self.dragged_object}")
+        # print(f"mouse: {MainWindow.main_window.get_mouse_location()}")
+        # print(f"""computers, {len(self.computers)}, connections, {len(self.connection_data)}, packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}""")
+        # print(f"running processes: ", end='')
+        # for computer in self.computers:
+        #     processes = [f"{wp.process} of {computer}" for wp in computer.waiting_processes]
+        #     print(processes if processes else '', end=' ')
+        # print()
+        # if self.selected_object is not None and self.selected_object.is_computer:
+        #     computer = self.selected_object.computer
+        #     computer.print("------------DEBUG------------------")
+        #     if not isinstance(computer, Switch):
+        #         print(repr(computer.routing_table))
+        #     elif computer.stp_enabled:  # computer is a Switch
+        #         print(computer.get_running_process(STPProcess).get_info())
+        #
+        #     from processes.tcp_process import TCPProcess
+        #     if computer.is_process_running(TCPProcess):
+        #         process = computer.get_running_process(TCPProcess)
+        #         print(f"window (of {process}): {process.sending_window}")
 
     def create_computer_with_ip(self):
         """
@@ -816,23 +831,59 @@ class UserInterface:
 
         modifiers = NO_MODIFIER
         if 'ctrl' in modified_key.split('+'):
-            modifiers = modifiers | CTRL_MODIFIER
+            modifiers |= CTRL_MODIFIER
         if 'shift' in modified_key.split('+'):
-            modifiers = modifiers | SHIFT_MODIFIER
+            modifiers |= SHIFT_MODIFIER
         if 'alt' in modified_key.split('+'):
-            modifiers = modifiers | ALT_MODIFIER
+            modifiers |= ALT_MODIFIER
         return (ord(modified_key[-1]), modifiers)
 
     def add_buttons(self, dictionary):
         """
         Adds buttons to the side window according to requests of the viewed object.
+        One plus the buttons_id is the button of the options
         :param dictionary: a `dict` of the form {button text: button action}
         :return: None
         """
-        buttons_id = 0 if not self.added_buttons else max(self.added_buttons.keys()) + 1
-        self.added_buttons[buttons_id] = [
-            Button(*DEFAULT_BUTTON_LOCATION(i+1), action, string, key=self.key_from_string(string)) for i, (string, action) in enumerate(dictionary.items())
+        buttons_id = 0 if not self.buttons else max(self.buttons.keys()) + 1
+        self.buttons[buttons_id] = [
+            Button(
+                *DEFAULT_BUTTON_LOCATION(len(dictionary) + 1),
+                called_in_order(
+                    with_args(self.hide_buttons, buttons_id),
+                    with_args(self.show_buttons, buttons_id + 1),
+                    with_args(self.adjust_viewed_text_to_buttons, buttons_id + 1),
+                ),
+                "back (backspace)",
+                key=(key.BACKSPACE, NO_MODIFIER),
+                start_hidden=True,
+            ),
+
+            *[
+                Button(
+                    *DEFAULT_BUTTON_LOCATION(i+1),
+                    action,
+                    string,
+                    key=self.key_from_string(string),
+                    start_hidden=True,
+                )
+                for i, (string, action) in enumerate(dictionary.items())
+              ],
         ]
+
+        self.buttons[buttons_id + 1] = [
+            Button(
+                *DEFAULT_BUTTON_LOCATION(1),
+                called_in_order(
+                    with_args(self.hide_buttons, buttons_id + 1),
+                    with_args(self.show_buttons, buttons_id),
+                    with_args(self.adjust_viewed_text_to_buttons, buttons_id),
+                ),
+                "options (enter)",
+                key=(key.ENTER, NO_MODIFIER),
+            ),
+        ]
+        self.showing_buttons_id = buttons_id + 1
         return buttons_id
 
     def remove_buttons(self, buttons_id):
@@ -841,6 +892,7 @@ class UserInterface:
         :param buttons_id: an interger returned by the `self.add_buttons` method
         :return: None
         """
-        for button in self.added_buttons[buttons_id]:
+        for button in self.buttons[buttons_id] + self.buttons[buttons_id + 1]:
             MainLoop.instance.unregister_graphics_object(button)
-        del self.added_buttons[buttons_id]
+        del self.buttons[buttons_id]
+        del self.buttons[buttons_id + 1]
