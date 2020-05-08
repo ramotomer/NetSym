@@ -37,6 +37,7 @@ class ComputerGraphics(ImageGraphics):
             Console(CONSOLE_X, CONSOLE_Y),
             ProcessGraphicsList(self),
         )
+        self.buttons_id = None
 
     def generate_text(self):
         """
@@ -69,13 +70,18 @@ class ComputerGraphics(ImageGraphics):
         buttons = {
             "open/close console (shift+o)": self.child_graphics_objects.console.toggle_showing,
             "power on/off (o)": user_interface.power_selected_computer,
-            "config IP (i)": with_args(user_interface.ask_user_for, str, INSERT_IP_MSG, with_args(user_interface.config_ip, self.computer)),
-            "set default gateway (g)": with_args(user_interface.ask_user_for, IPAddress, INSERT_GATEWAY_MSG, self.computer.set_default_gateway),
-            "add interface (^i)": with_args(user_interface.ask_user_for, str, INSERT_INTERFACE_INFO_MSG, self.computer.add_interface),
+            "config IP (i)": user_interface.ask_user_for_ip,
+            "set default gateway (g)": with_args(user_interface.ask_user_for, IPAddress, INSERT_GATEWAY_MSG,
+                                                 self.computer.set_default_gateway),
+            "add/delete interface (^i)": with_args(user_interface.ask_user_for, str, INSERT_INTERFACE_INFO_MSG,
+                                                   with_args(user_interface.add_delete_interface, self)),
             "sniffing start/stop (f)": with_args(self.computer.toggle_sniff, is_promisc=True),
-            "open/close port (^o)": with_args(user_interface.ask_user_for, int, INSERT_PORT_NUMBER, self.computer.open_port),
-            "ask daytime (ctrl+a)": with_args(user_interface.ask_user_for, IPAddress, INSERT_IP_FOR_PROCESS, with_args(self.computer.start_process, DAYTIMEClientProcess)),
-            "download file (alt+a)": with_args(user_interface.ask_user_for, IPAddress, INSERT_IP_FOR_PROCESS, with_args(self.computer.start_process, FTPClientProcess)),
+            "open/close port (^o)": with_args(user_interface.ask_user_for, int, INSERT_PORT_NUMBER,
+                                              self.computer.open_port),
+            "ask daytime (ctrl+a)": with_args(user_interface.ask_user_for, IPAddress, INSERT_IP_FOR_PROCESS,
+                                              with_args(self.computer.start_process, DAYTIMEClientProcess)),
+            "download file (alt+a)": with_args(user_interface.ask_user_for, IPAddress, INSERT_IP_FOR_PROCESS,
+                                               with_args(self.computer.start_process, FTPClientProcess)),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
         return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), self.generate_view_text(), self.buttons_id

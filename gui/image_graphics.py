@@ -27,7 +27,7 @@ class ImageGraphics(GraphicsObject):
     def get_image_sprite(image_name, x=0, y=0, is_opaque=False, scale_factor=VIEWING_OBJECT_SCALE_FACTOR):
         """
         Receives an image_name and x and y coordinates and returns a `pyglet.sprite.Sprite`
-        object that can be displyed on the screen.
+        object that can be displayed on the screen.
 
         :param image_name: come on bro....
         :param x:

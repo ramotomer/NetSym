@@ -50,6 +50,9 @@ while the other handles other movements that should happen repeatedly.
 Upon Creation, a `GraphicsObject` inserts these two methods to the main loop to be called
 on every loop of the program.
 
+When a `GraphicsObject` has `GraphicsObject` attributes recursively needs to put them inside a `child_graphics_objects`
+iterable in-order for them to be unregistered when the main object is unregistered.
+
 When a packet is sent, it leaves the `Interface` object of the sending computer,
 It goes into the `sent_packets` list of the `Connection` it is sent through.
 The connection constantly updates the location of the `PacketGraphics` according to its

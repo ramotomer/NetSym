@@ -212,13 +212,22 @@ class Computer:
             raise NoSuchInterfaceError("The computer has no MAC address since it has no network interfaces!!!")
         return self.macs[0]
 
-    def add_interface(self, name=None):
+    def add_remove_interface(self, name):
         """
         Adds a new interface to this computer with a given name
         :param name: a string or None, if None, chooses random name.
         :return: None
         """
-        self.interfaces.append(Interface(MACAddress.randomac(), name=name))
+        interface = get_the_one(self.interfaces, lambda i: i.name == name)
+        if interface is None:
+            self.interfaces.append(Interface(MACAddress.randomac(), name=name))
+            return
+
+        if interface.is_connected():
+            raise DeviceAlreadyConnectedError("Cannot remove a connected interface!!!")
+        if interface.has_ip():
+            self.routing_table.remove_interface(interface)
+        self.interfaces.remove(interface)
 
     def has_this_ip(self, ip_address):
         """Returns whether or not this computer has a given IP address. (so whether or not if it is its address)"""

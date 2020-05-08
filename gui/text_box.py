@@ -6,7 +6,7 @@ from consts import *
 from gui.button import Button
 from gui.graphics_object import GraphicsObject
 from gui.main_loop import MainLoop
-from gui.shape_drawing import draw_rect
+from gui.shape_drawing import draw_rect_with_outline
 from gui.text_graphics import Text
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "title_text written_text submit_button")
@@ -27,6 +27,7 @@ class TextBox(GraphicsObject):
         """
         super(TextBox, self).__init__(*TEXTBOX_COORDINATES, centered=True)
         self.action = action
+        self.outline_color = TEXTBOX_OUTLINE_COLOR
 
         title_text = Text(text, self.x, self.y + (TEXTBOX_HEIGHT / 2), None)
 
@@ -68,8 +69,10 @@ class TextBox(GraphicsObject):
             char = chr(symbol).lower()
             if (modifiers & SHIFT_MODIFIER) ^ (modifiers & CAPS_MODIFIER):
                 char = char.upper()
-                if char == '-': char = '_'
-                if char == '=': char = '+'
+                if char == '-':
+                    char = '_'
+                if char == '=':
+                    char = '+'
             self.child_graphics_objects.written_text.set_text(self.child_graphics_objects.written_text.text + char)
 
     def submit(self):
@@ -88,7 +91,9 @@ class TextBox(GraphicsObject):
         Basically a rectangle.
         :return: None
         """
-        draw_rect(self.x - (TEXTBOX_WIDTH / 2), self.y - (TEXTBOX_HEIGHT / 2), TEXTBOX_WIDTH, TEXTBOX_HEIGHT, TEXTBOX_COLOR)
+        draw_rect_with_outline(self.x - (TEXTBOX_WIDTH / 2), self.y - (TEXTBOX_HEIGHT / 2),
+                               TEXTBOX_WIDTH, TEXTBOX_HEIGHT,
+                               TEXTBOX_COLOR, self.outline_color)
 
     def __str__(self):
         return "TextBox Graphics"

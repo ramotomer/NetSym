@@ -126,7 +126,7 @@ INSERT_PL_MSG = "insert your desired pl (0 <= pl <= 1)!!!"
 INSERT_SPEED_MSG = "insert your desired connection speed"
 INSERT_IP_MSG = "Enter your desired IP in the form <INTERFACE NAME>, <IP>"
 INSERT_GATEWAY_MSG = "Enter your desired IP for the gateway:"
-INSERT_INTERFACE_INFO_MSG = "Insert the name of the new interface"
+INSERT_INTERFACE_INFO_MSG = "Insert the name of the interface"
 INSERT_IP_FOR_PROCESS = "Insert an IP to start your process to"
 INSERT_PORT_NUMBER = "Insert a port number to open/close:"
 
@@ -242,6 +242,7 @@ def DEFAULT_BUTTON_LOCATION(button_index):
     return (WINDOW_WIDTH - SIDE_WINDOW_WIDTH + 20), (510 - (button_index * DEFAULT_BUTTON_HEIGHT))
 
 
+ERROR_WINDOW_BUTTONS_ID = -1
 MAIN_BUTTONS_ID = 0
 
 SIMULATION_MODE = 0  # the normal mode of the simulation
@@ -289,4 +290,7 @@ TEXTBOX_COORDINATES = WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2  # the popup window
 TEXTBOX_WIDTH = 400
 TEXTBOX_HEIGHT = 170
 TEXTBOX_COLOR = DARK_GRAY
+TEXTBOX_OUTLINE_COLOR = WHITE
 SUBMIT_BUTTON_WIDTH = 100
+
+DEFAULT_OUTLINE_WIDTH = 5

@@ -63,7 +63,7 @@ class ConnectionGraphics(GraphicsObject):
 
         beta = acos((c**2 + a**2 - b**2) / (2*a*c))  # the law of the cosines
         mouse_distance_to_connection = a * sin(beta)
-        return (mouse_distance_to_connection <= MOUSE_IN_CONNECTION_LENGTH)
+        return mouse_distance_to_connection <= MOUSE_IN_CONNECTION_LENGTH
 
     def get_coordinates(self, direction=PACKET_GOING_RIGHT):
         """
@@ -103,7 +103,8 @@ class ConnectionGraphics(GraphicsObject):
         """
         start_x, start_y, end_x, end_y = self.get_coordinates()
         x, y = (start_x + end_x) / 2, (start_y + end_y) / 2
-        draw_rect_no_fill(x - 2*SELECTED_OBJECT_PADDING, y - 2*SELECTED_OBJECT_PADDING, (4 * SELECTED_OBJECT_PADDING), (4 * SELECTED_OBJECT_PADDING))
+        draw_rect_no_fill(x - 2*SELECTED_OBJECT_PADDING, y - 2*SELECTED_OBJECT_PADDING,
+                          (4 * SELECTED_OBJECT_PADDING), (4 * SELECTED_OBJECT_PADDING))
 
     def draw(self):
         """
@@ -138,7 +139,7 @@ class ConnectionGraphics(GraphicsObject):
         Generates the text that is under the buttons in the side-window when the connection is viewed.
         :return: None
         """
-        return f"Connection:\n\nfrom: {self.computers.start.computer.name}\nto: " \
+        return f"\nConnection:\n\nfrom: {self.computers.start.computer.name}\nto: " \
             f"{self.computers.end.computer.name}\nlength: {str(self.connection.length)[:6]} pixels\nspeed: " \
             f"{self.connection.speed} pixels/second\ndeliver time: {str(self.connection.deliver_time)[:4]} seconds" \
             f"\nPL percent: {self.connection.packet_loss}"

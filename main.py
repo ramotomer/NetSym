@@ -12,9 +12,7 @@ if __name__ == '__main__':
     pyglet.clock.schedule_interval(main_window.update, FRAME_RATE)
     pyglet.app.run()
 
-    # TODO: add `options` tab to a viewed object.
-    # TODO: make console collapse-able
-    # TODO: cannot remove an interfaces.
+    # TODO: Movable popup windows
     # TODO: cannot display (well) error messages from a popup window!
     # TODO: the console does not work we ll if the line is too long. (because it counts lines and not actual height)
     # TODO: there are errors with removing connections and the routing table
@@ -22,7 +20,8 @@ if __name__ == '__main__':
     # TODO: cannot add routes to a router.
     # TODO: routers do not send unreachable-s sometimes.
     # TODO: add different computer images (printer, phone, etc..)
-    # TODO: maybe some-day add a `receiving_time` and a `receiving_interface` attributes to a `Packet` object. - you will have a big refactoring to do but the code will be muchhh cleaner!
+    # TODO: maybe some-day add a `receiving_time` and a `receiving_interface` attributes to a `Packet` object. -
+    #  you will have a big refactoring to do but the code will be *much* cleaner!
     # TODO: add udp `open_ports` list. Add to it DHCP
     # TODO: add lost packets handling for DHCP and non-existent DHCP server
     # TODO: handle PL anywhere in TCP! (retransmissions don't quite work)

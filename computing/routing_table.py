@@ -15,8 +15,9 @@ interface is the IPAddress of the interface the packet should be sent on.
 
 class RoutingTable:
     """
-    This is a routing table, it acts like a dictionary except that the keys are not checking equlity, but rather they are
-    checking if the IPAddresses are in the same subnet. (so if the IPAddress that is given fits the network destination and netmask in the key)
+    This is a routing table, it acts like a dictionary except that the keys are not checking equality, but rather they
+    are checking if the IPAddresses are in the same subnet. (so if the IPAddress that is given fits the network
+    destination and netmask in the key)
 
     The class is based on an `OrderedDict` because the order matters in a routing table!
     """
@@ -39,7 +40,8 @@ class RoutingTable:
 
     def set_default_gateway(self, gateway, interface_ip):
         """
-        Sets the default gateway in the routing table, using a gateway and an IP of an interface to go out from the computer to it.
+        Sets the default gateway in the routing table, using a gateway and an IP of an interface to go out
+        from the computer to it.
         :return: None
         """
         self.dictionary[IPAddress("0.0.0.0/0")] = RoutingTableItem(gateway, interface_ip)
@@ -51,6 +53,7 @@ class RoutingTable:
         This is a constructor class method.
         Creates a default routing table for a given `Computer`.
         :param computer: a `Computer` object.
+        :param expect_normal_gateway: whether or not to set the gateway to be the expected one (192.168.1.1 for example)
         :return: a `RoutingTable` object.
         """
         try:
@@ -67,7 +70,9 @@ class RoutingTable:
         for interface in computer.interfaces:
             if interface.has_ip():
                 returned.route_add(interface.ip.subnet(), ON_LINK, IPAddress.copy(interface.ip))
-                returned.route_add(IPAddress(interface.ip.string_ip + "/32"), IPAddress.copy(computer.loopback.ip), IPAddress.copy(computer.loopback.ip))
+                returned.route_add(IPAddress(interface.ip.string_ip + "/32"),
+                                   IPAddress.copy(computer.loopback.ip),
+                                   IPAddress.copy(computer.loopback.ip))
 
         return returned
 
@@ -81,17 +86,29 @@ class RoutingTable:
         """
         arguments = (destination_ip, gateway_ip, interface_ip)
         if any(not isinstance(address, IPAddress) for address in arguments) and gateway_ip is not ON_LINK:
-            raise NoIPAddressError(f"One of the arguments to this function is not an IPAddress object!!!!! ({arguments})")
+            raise NoIPAddressError(
+                f"One of the arguments to this function is not an IPAddress object!!!!! ({arguments})")
 
         if destination_ip in self.dictionary:
             raise RoutingTableError("Cannot add a route to a destination that already exists!!!")
 
         self.dictionary[destination_ip] = RoutingTableItem(gateway_ip, interface_ip)
 
+    def route_delete(self, destination_ip):
+        """
+        Deletes a route from the routing table
+        :param destination_ip: The destination IP address and netmask
+        :return: None
+        """
+        if destination_ip not in self.dictionary:
+            raise RoutingTableError(f"Cannot remove route. it is not in the routing table {destination_ip}!!!")
+        del self.dictionary[destination_ip]
+
     def add_interface(self, interface_ip):
         """
         Adds a new interface to the routing table in the default way.
-        :param interface_ip: an `IPAddress` object of the IP address of the interface that one wishes to add to the routing table.
+        :param interface_ip: an `IPAddress` object of the IP address of the interface that one wishes to add to
+        the routing table.
         :return: None
         """
         send_to = self.default_gateway.ip_address
@@ -109,8 +126,8 @@ class RoutingTable:
         if not isinstance(item, IPAddress):
             raise InvalidAddressError(f"Key of a routing table must be an IPAddress object!!! not {item}")
 
-        possible_addresses = list(filter(lambda destination: destination.is_same_subnet(item), self.dictionary))  # can never be empty!!! (always has 0.0.0.0/0)
-        most_fitting_destination = max(possible_addresses, key=lambda address: address.subnet_mask)  # if this raises, you do not have a default!!!
+        possible_addresses = list(filter(lambda destination: destination.is_same_subnet(item), self.dictionary))
+        most_fitting_destination = max(possible_addresses, key=lambda address: address.subnet_mask)
 
         result = self.dictionary[most_fitting_destination]
         if result.ip_address is ON_LINK:
@@ -139,7 +156,8 @@ class RoutingTable:
 ====================================================================
 Active Routes:
 Network Destination             Gateway           Interface  
-{linesep.join(''.join([repr(key).rjust(20, ' '), str(self.dictionary[key].ip_address).rjust(20, ' '), str(self.dictionary[key].interface_ip).rjust(20, ' ')]) for key in self.dictionary)}	
+{linesep.join(''.join([repr(key).rjust(20, ' '), str(self.dictionary[key].ip_address).rjust(20, ' '), 
+                       str(self.dictionary[key].interface_ip).rjust(20, ' ')]) for key in self.dictionary)}	
 
 Default Gateway:        {self.default_gateway.ip_address}
 ===================================================================
