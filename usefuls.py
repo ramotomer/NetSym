@@ -76,3 +76,13 @@ def called_in_order(*functions):
         for function in functions:
             function()
     return in_order
+
+
+def get_first(iterable):
+    """
+    Returns one of the iterable's items. Usually the first one.
+    :param iterable: an iterable
+    :return:
+    """
+    for item in iterable:
+        return item

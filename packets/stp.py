@@ -1,3 +1,5 @@
+import copy
+
 from exceptions import STPError
 from packets.protocol import Protocol
 
@@ -5,11 +7,21 @@ from packets.protocol import Protocol
 class LogicalLinkControl(Protocol):
     """
     This is the third layer that the STP goes over.
-    (It does not go over ethernet, only above this logical-link-control layer which takes the IP layer's place as the third layer of the packet.)
+    (It does not go over ethernet, only above this logical-link-control layer which takes the IP layer's place as
+    the third layer of the packet.)
     """
     def __init__(self, stp_layer):
         """Initiates the layer with no attributes at all, except for the data of the packet, which is `STP` protocol"""
         super(LogicalLinkControl, self).__init__(3, stp_layer)
+
+    def copy(self):
+        """
+        Copy the layer
+        :return:
+        """
+        return self.__class__(
+            self.data.copy(),
+        )
 
     def multiline_repr(self):
         """The multiline representation of the `LogicalLinkLayer` protocol"""
@@ -35,13 +47,27 @@ class STP(Protocol):
 
         self.root_declaration_time = root_declaration_time
 
+    def copy(self):
+        """
+        Copy the STP packet
+        :return:
+        """
+        return self.__class__(
+            copy.copy(self.my_bid),
+            copy.copy(self.root_bid),
+            self.distance_to_root,
+            self.root_declaration_time,
+        )
+
     def __repr__(self):
         """The string representation of the STP packet"""
         return f"STP(my_bid={self.my_bid}, root_bid={self.root_bid}, distance_to_root={self.distance_to_root})"
 
     def multiline_repr(self):
         """The multiline representation of the STP packet"""
-        return f"\nBPDU (STP):\nsender's BID:\n{self.my_bid!r}\nroot BID:\n{self.root_bid!r}\n distance to root: {self.distance_to_root}"
+        return f"\nBPDU (STP):\nsender's BID:\n{self.my_bid!r}\nroot BID:\n{self.root_bid!r}\n " \
+            f"distance to root: {self.distance_to_root}"
+
 
 class BID:
     """

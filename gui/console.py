@@ -71,11 +71,22 @@ class Console(GraphicsObject):
         else:
             self.hide()
 
+    @staticmethod
+    def num_lines(text):
+        """
+        The number of lines that some text would be split into in the console.
+        This is somewhat of an approximation.
+        :param text: a string
+        :return: None
+        """
+        return ((len(text) * CONSOLE_CHAR_WIDTH) // CONSOLE_WIDTH) + 1
+
     def is_full(self):
         """
         Returns whether or not the console is full (and should go down a line)
         """
-        return len(self._text.split('\n')) * CONSOLE_LINE_HEIGHT >= CONSOLE_HEIGHT
+        text_height = sum([self.num_lines(line) for line in self._text.split('\n')]) * CONSOLE_LINE_HEIGHT
+        return text_height > CONSOLE_HEIGHT
 
     def write(self, text):
         """
@@ -84,7 +95,8 @@ class Console(GraphicsObject):
         :return: None
         """
         if self.is_full():
-            self._text = '\n'.join(self._text.split('\n')[1:])    # remove the up most line if we are out of space.
+            self._text = '\n'.join(self._text.split('\n')[self.num_lines(text):])
+            # remove the up most lines if we are out of space.
         self._text += text + '\n'
         self.child_graphics_objects.text.set_text(self._text)
 

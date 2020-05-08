@@ -1,3 +1,5 @@
+import copy
+
 from consts import *
 from packets.protocol import Protocol
 
@@ -46,7 +48,7 @@ class TCP(Protocol):
     @property
     def opcode(self):
         """
-        This is used to determine which packet drawing will be displayed for this packet (prioretizing the flags)
+        This is used to determine which packet drawing will be displayed for this packet (prioritizing the flags)
         :return: one of the TCP flags.
         """
         for flag in TCP_FLAGS_DISPLAY_PRIORITY:
@@ -61,6 +63,23 @@ class TCP(Protocol):
         :return:
         """
         return ', '.join([flag for flag in self.flags if self.flags[flag]])
+
+    def copy(self):
+        """
+        Copy the TCP packet
+        :return:
+        """
+        return self.__class__(
+            self.src_port,
+            self.dst_port,
+            self.sequence_number,
+            copy.deepcopy(self.flags),
+            self.ack_number,
+            self.window_size,
+            self.data.copy() if hasattr(self.data, "copy") else self.data,
+            copy.deepcopy(self.options),
+            self.options[TCP_MSS_OPTION],
+        )
 
     def multiline_repr(self):
         """

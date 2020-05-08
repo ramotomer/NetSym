@@ -1,3 +1,4 @@
+from address.mac_address import MACAddress
 from packets.protocol import Protocol
 
 
@@ -10,6 +11,17 @@ class Ethernet(Protocol):
         super(Ethernet, self).__init__(2, data)
         self.src_mac = src_mac
         self.dst_mac = dst_mac
+
+    def copy(self):
+        """
+        Copy the ethernet packet
+        :return:
+        """
+        return self.__class__(
+            MACAddress.copy(self.src_mac),
+            MACAddress.copy(self.dst_mac),
+            self.data.copy(),
+        )
 
     def __repr__(self):
         """

@@ -47,14 +47,15 @@ def draw_rect(x, y, width, height, color=GRAY):
     :param y: coordinates of the bottom left corner of the rectangle.
     :param width:
     :param height:
+    :param color:
     :return: None
     """
-    ix, iy, iwidth, iheight = map(int, (x, y, width, height))
+    int_x, int_y, int_width, int_height = map(int, (x, y, width, height))
     pyglet.graphics.draw(4, pyglet.gl.GL_QUADS,
-                         ('v2i', (ix, iy,
-                                  ix + iwidth, iy,
-                                  ix + iwidth, iy + iheight,
-                                  ix, iy + iheight)),
+                         ('v2i', (int_x, int_y,
+                                  int_x + int_width, int_y,
+                                  int_x + int_width, int_y + int_height,
+                                  int_x, int_y + int_height)),
                          ('c3B', color * 4)
                          )
 
@@ -93,7 +94,8 @@ def draw_circle(x, y, radius, color=WHITE):
     :return:
     """
     d_theta = (2 * pi) / CIRCLE_SEGMENT_COUNT
-    vertices = list(chain(*[(x + radius * cos(i * d_theta), y + radius * sin(i * d_theta)) for i in range(0, CIRCLE_SEGMENT_COUNT)]))
+    vertices = list(chain(*[(x + radius * cos(i * d_theta), y + radius * sin(i * d_theta))
+                            for i in range(0, CIRCLE_SEGMENT_COUNT)]))
 
     pyglet.graphics.draw(CIRCLE_SEGMENT_COUNT, pyglet.gl.GL_LINE_LOOP,
                          ('v2f', tuple(vertices)),

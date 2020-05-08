@@ -587,7 +587,7 @@ class Computer:
         Sends a `DHCP_PACK` that tells the DHCP client all of the new data it needs to update (IP, gateway, DNS)
         :param client_mac: The `MACAddress` of the client.
         :param dhcp_data:  a `DHCPData` namedtuple (from 'dhcp_process.py') that is sent in the DHCP pack.
-        :param session_interface: The `Interface` that is running the seesion with the client.
+        :param session_interface: The `Interface` that is running the session with the client.
         :return: None
         """
         dst_ip = dhcp_data.given_ip
@@ -616,8 +616,7 @@ class Computer:
         ip_for_the_mac = self.routing_table[ip_address].ip_address
         self.start_process(ARPProcess, ip_for_the_mac)
         arp_timeout = Timeout(ARP_RESEND_COUNT * ARP_RESEND_TIME)
-        return ip_for_the_mac , lambda: ip_for_the_mac in self.arp_cache or arp_timeout
-
+        return ip_for_the_mac, lambda: ip_for_the_mac in self.arp_cache or arp_timeout
 
     # ------------------------- v process related methods v ----------------------------------------------------
 
@@ -635,7 +634,8 @@ class Computer:
         """
         self.waiting_processes.append((process_type(self, *args), None))
 
-    def run_process(self, process):
+    @staticmethod
+    def run_process(process):
         """
         This function receives a process and runs it until yielding a `WaitingForPacket` namedtuple.
         Returns the yielded `WaitingForPacket`.
@@ -659,7 +659,8 @@ class Computer:
 
     def is_process_running(self, process_type):
         """
-        Receives a type of a `Process` subclass and returns whether or not there is a process of that type that is running.
+        Receives a type of a `Process` subclass and returns whether or not there is a process of that type that
+        is running.
         :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
         :return: `bool`
         """
@@ -670,7 +671,8 @@ class Computer:
 
     def get_running_process(self, process_type):
         """
-        Receives a type of a `Process` subclass and returns the process object of the `Process` that is currently running in the computer.
+        Receives a type of a `Process` subclass and returns the process object of the `Process` that is currently
+        running in the computer.
         If no such process is running in the computer, raise NoSuchProcessError
         :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
         :return: `bool`
@@ -697,7 +699,8 @@ class Computer:
 
     def _handle_processes(self):
         """
-        Handles all of running the processes, runs the ones that should be run and puts them back to the `waiting_processes`
+        Handles all of running the processes, runs the ones that should be run and puts them back to the
+         `waiting_processes`
         list if they are now waiting.
         Read more about processes at 'process.py'
         :return: None
@@ -711,7 +714,8 @@ class Computer:
     def _get_ready_processes(self):
         """
         Returns a list of the waiting processes that finished waiting and are ready to run.
-        :return: a list of `Process` objects that are ready to run. (they will run in the next call to `self._handle_processes`
+        :return: a list of `Process` objects that are ready to run. (they will run in the next call to
+        `self._handle_processes`
         """
         new_packets = self._new_packets_since(self.process_last_check)
         self.process_last_check = MainLoop.instance.time()
@@ -742,7 +746,7 @@ class Computer:
     def _decide_ready_processes_no_packet(self, ready_processes):
         """
         Receives a list of the already ready processes,
-        Goes over the waiting processes and sees if one of them is waiting for a cerain condition without a packet (if 
+        Goes over the waiting processes and sees if one of them is waiting for a certain condition without a packet (if
         its `WaitingForPacket` object is actually `WaitingFor`.
         If so, it tests its condition. If the condition is true, appends the process to the `ready_processes` list and 
         removes it from the `waiting_processes` list.
@@ -750,21 +754,23 @@ class Computer:
         """
         for waiting_process in self.waiting_processes[:]:
             if not hasattr(waiting_process.waiting_for, "value"):
-                if waiting_process.waiting_for.condition() == True:
+                if waiting_process.waiting_for.condition():
                     self.waiting_processes.remove(waiting_process)
                     ready_processes.append(waiting_process.process)
 
     def _decide_if_process_ready_by_packet(self, waiting_process, received_packet, ready_processes):
         """
-        This method receives a waiting process, a possible packet that matches its `WaitingForPacket` condition and a list of
-        already ready processes.
-        If the packet matches the condition of the `WaitingForPacket` of the process, this adds the process to `ready_processes`
-        and removes it from the `self.waiting_processes` list.
-        It enables the same process to receive a number of different packets if the condition fits to a number of packets
-        in the run. (mainly in DHCP Server when all of the computers send in the same time to the same process...)
+        This method receives a waiting process, a possible packet that matches its `WaitingForPacket` condition
+        and a list of already ready processes.
+        If the packet matches the condition of the `WaitingForPacket` of the process, this adds the process
+        to `ready_processes` and removes it from the `self.waiting_processes` list.
+        It enables the same process to receive a number of different packets if the condition fits to a
+        number of packets in the run. (mainly in DHCP Server when all of the computers send in the same time to the same
+        process...)
         :param waiting_process: a `WaitingProcess` namedtuple.
         :param received_packet: a `ReceivedPacket` namedtuple.
-        :param ready_processes: a list of already ready processes that will run in the next call to `self._handle_processes`.
+        :param ready_processes: a list of already ready processes that will run in the next call to
+        `self._handle_processes`.
         :return: whether or not the process is ready and was added to `ready_processes`
         """
         process, waiting_for = waiting_process

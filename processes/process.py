@@ -11,7 +11,7 @@ the value in initialization will be a new `ReturnedPacket` object.
 that object will be filled with the packets that fit the condition and returned to
 the process when it continues running.
 
-The condition should be specific so you dont accidentally catch the wrong packet!
+The condition should be specific so you don't accidentally catch the wrong packet!
 """
 
 WaitingForPacketWithTimeout = namedtuple("WaitingForPacketWithTimeout", "condition value timeout")
@@ -32,7 +32,7 @@ class Process(metaclass=ABCMeta):
     packet in the `value` object and continues the process run.
 
     So the process runs the `code` method until it yields a `WaitingForPacket`, then it stops, once a packet fits the condition
-    it continues running until the next yeild. That is the way that a process can run smoothly in one function while waiting
+    it continues running until the next yield. That is the way that a process can run smoothly in one function while waiting
     for packets without blocking the main loop.
 
     The `process` property of the Process is a generator of the code, the value

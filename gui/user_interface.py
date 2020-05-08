@@ -725,30 +725,31 @@ class UserInterface:
         :return: None
         """
         # print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
-        goes = [go for go in MainLoop.instance.graphics_objects if not isinstance(go, Button) and not isinstance(go,
-                                                                                                                 Text)]
-        print(f"graphicsObject-s (no buttons or texts): {goes}")
-        print(f"selected object: {self.selected_object}, dragged: {self.dragged_object}")
-        print(f"mouse: {MainWindow.main_window.get_mouse_location()}")
-        print(f"""computers, {len(self.computers)}, connections, {len(self.connection_data)}, 
-        packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}""")
-        print(f"running processes: ", end='')
-        for computer in self.computers:
-            processes = [f"{wp.process} of {computer}" for wp in computer.waiting_processes]
-            print(processes if processes else '', end=' ')
-        print()
+        self.debug_counter = self.debug_counter+1 if hasattr(self, "debug_counter") else 0
+        # goes = [go for go in MainLoop.instance.graphics_objects if not isinstance(go, Button) and not isinstance(go,
+        #                                                                                                          Text)]
+        # print(f"graphicsObject-s (no buttons or texts): {goes}")
+        # print(f"selected object: {self.selected_object}, dragged: {self.dragged_object}")
+        # print(f"mouse: {MainWindow.main_window.get_mouse_location()}")
+        # print(f"""computers, {len(self.computers)}, connections, {len(self.connection_data)},
+        # packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}""")
+        # print(f"running processes: ", end='')
+        # for computer in self.computers:
+        #     processes = [f"{wp.process} of {computer}" for wp in computer.waiting_processes]
+        #     print(processes if processes else '', end=' ')
+        # print()
         if self.selected_object is not None and self.selected_object.is_computer:
             computer = self.selected_object.computer
-            computer.print("------------DEBUG------------------")
-            if not isinstance(computer, Switch):
-                print(repr(computer.routing_table))
-            elif computer.stp_enabled:  # computer is a Switch
-                print(computer.get_running_process(STPProcess).get_info())
-
-            from processes.tcp_process import TCPProcess
-            if computer.is_process_running(TCPProcess):
-                process = computer.get_running_process(TCPProcess)
-                print(f"window (of {process}): {process.sending_window}")
+            computer.print(f"{'DEBUG':^20}{self.debug_counter}")
+            # if not isinstance(computer, Switch):
+            #     print(repr(computer.routing_table))
+            # elif computer.stp_enabled:  # computer is a Switch
+            #     print(computer.get_running_process(STPProcess).get_info())
+            #
+            # from processes.tcp_process import TCPProcess
+            # if computer.is_process_running(TCPProcess):
+            #     process = computer.get_running_process(TCPProcess)
+            #     print(f"window (of {process}): {process.sending_window}")
 
     def create_computer_with_ip(self):
         """

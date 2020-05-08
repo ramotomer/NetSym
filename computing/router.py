@@ -7,16 +7,6 @@ from processes.dhcp_process import DHCPServer
 from processes.process import Process, WaitingFor
 
 
-def arp_reply_from(source_ip):
-    """
-    returns a condition for a packet. the condition is a function that receives a packet and returns a boolean.
-    The condition here checks if the packet is an arp reply from `source_ip`.
-    :param source_ip: an `IPAddress` object.
-    :return: a condition function.
-    """
-    return lambda p: ("ARP" in p) and (p["ARP"].opcode == ARP_REPLY) and (p["ARP"].src_ip == source_ip)
-
-
 class RoutePacket(Process):
     """
     This is a process which when run, takes in a packet and routes over the running router, using the
@@ -70,10 +60,10 @@ class RoutePacket(Process):
         """
 
         dst_ip = self.packet["IP"].dst_ip
+        routing_interface = self.computer.routing_table[dst_ip].ip_address
+        gateway = self.computer.routing_table.default_gateway.ip_address
 
-        if self.computer.routing_table[dst_ip].ip_address == self.computer.routing_table.default_gateway.ip_address and \
-                self.computer.routing_table.default_gateway.ip_address is None:
-            debugp(f"{self.computer.routing_table[dst_ip].ip_address} and {self.computer.routing_table.default_gateway.ip_address}")
+        if routing_interface == gateway and gateway is None:
             self._send_icmp_unreachable()
             return True
         return False
@@ -107,6 +97,7 @@ class RoutePacket(Process):
         if not time_exceeded:
             ip_for_the_mac, done_searching = self.computer.request_address(dst_ip)
             yield WaitingFor(done_searching)
+            debugp(f"got out of waiting for")
             if ip_for_the_mac not in self.computer.arp_cache:          # if no one answered the arp
                 self._send_icmp_unreachable()
                 return

@@ -1,4 +1,3 @@
-import copy
 from collections import namedtuple
 
 from address.mac_address import MACAddress
@@ -102,7 +101,7 @@ class Switch(Computer):
             destination_legs = self.where_to_send(packet, source_leg)
             for leg in destination_legs:
                 packet.graphics = None
-                leg.send(copy.deepcopy(packet))
+                leg.send(packet.copy())
 
     def where_to_send(self, packet, source_leg):
         """
