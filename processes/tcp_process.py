@@ -123,7 +123,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
 
     def _update_from_handshake_packet(self, packet):
         """
-        Takes in a `ReeturnedPacket` object which is the SYN or SYN ACK packet of the handshake and updates all of
+        Takes in a `ReturnedPacket` object which is the SYN or SYN ACK packet of the handshake and updates all of
         details of the process according to it.
         :param returned_packet: a `Packet` object
         :return: None
@@ -191,6 +191,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         tcp_syn = ReturnedPacket()
         yield WaitingForPacket(self._tcp_with_flags([TCP_SYN]), tcp_syn)
         self._update_from_handshake_packet(tcp_syn.packet)
+        debugp(f"hei")
 
         ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip)
         yield WaitingFor(done_searching)

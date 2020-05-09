@@ -46,6 +46,9 @@ class Computer:
     PORTS_TO_PROCESSES = {
         DAYTIME_PORT: DAYTIMEServerProcess,
         FTP_PORT: FTPServerProcess,
+        SSH_PORT: None,
+        HTTP_PORT: None,
+        HTTPS_PORT: None,
     }
 
     def __init__(self, name=None, os=OS_WINDOWS, gateway=None, *interfaces):
@@ -364,13 +367,16 @@ class Computer:
         :return:
         """
         if port_number not in self.PORTS_TO_PROCESSES:
-            raise UnknownPortError(f"The port you tried to open is unknown!!! {port_number}")
+            raise PopupWindowWithThisError(f"{port_number} is an unknown port!!!")
 
+        process = self.PORTS_TO_PROCESSES[port_number]
         if port_number in self.open_ports:
-            self.kill_process(self.PORTS_TO_PROCESSES[port_number])
+            if process is not None:
+                self.kill_process(process)
             self.open_ports.remove(port_number)
         else:
-            self.start_process(self.PORTS_TO_PROCESSES[port_number])
+            if process is not None:
+                self.start_process(self.PORTS_TO_PROCESSES[port_number])
             self.open_ports.append(port_number)
 
         self.graphics.update_image()
@@ -381,10 +387,10 @@ class Computer:
 
     def set_default_gateway(self, gateway_ip, interface_ip=None):
         """
-        Sets the default gateway of the computer in the routing table with the interface IP that the packets to that gateway
-        will be sent from.
-        :param gateway_ip: The `IPAaddress` of the default gateway.
-        :param interface_ip_address: The `IPAddress` of the interface that will send the packets to the gateway.
+        Sets the default gateway of the computer in the routing table with the interface IP that the packets to
+        that gateway will be sent from.
+        :param gateway_ip: The `IPAddress` of the default gateway.
+        :param interface_ip: The `IPAddress` of the interface that will send the packets to the gateway.
         :return: None
         """
         interface_ip_address = interface_ip

@@ -1,5 +1,4 @@
 # this cannot import from anything!!!
-import os
 
 from exceptions import TCPDoneReceiving
 
@@ -139,47 +138,41 @@ NO_MODIFIER = 0
 # you can `|` them together to get the different combinations.
 
 
-FILES = "res/files/{}"
-IMAGES = "res/sprites/{}"
-if os.name == 'nt':
-    FILES = "..\\res\\files\\{}"
-    IMAGES = "..\\res\\sprites\\{}"
-    if os.environ['COMPUTERNAME'].lower() == "bottomtext":          # so it will work in my ipython
-        FILES = "C:/users/user/pycharmprojects/netsym/res/files/{}"
-        IMAGES = "C:/users/user/pycharmprojects/netsym/res/sprites/{}"
+FILES = "../res/files/{}"
+IMAGES = "../res/sprites/{}"
 
 INTERFACE_NAMES = [line.strip() for line in open(FILES.format("interface_names.txt")).readlines()]
 COMPUTER_NAMES = [line.strip() for line in open(FILES.format("computer_names.txt")).readlines()]
 ANY_INTERFACE = None
 TRANSFER_FILE = "transfer_me.txt"
 
-ETHERNET_IMAGE = "ethernet_packet.png"
-ARP_REQUEST_IMAGE = "arp_request.png"
-ARP_REPLY_IMAGE = "arp_reply.png"
-ARP_GRAT_IMAGE = "arp_grat.png"
-IP_IMAGE = "ip_packet.png"
-ICMP_REPLY_IMAGE = "ping_reply.png"
-ICMP_REQUEST_IMAGE = "ping_request.png"
-ICMP_TIME_EXCEEDED_IMAGE = "time_exceeded.png"
-ICMP_UNREACHABLE_IMAGE = "icmp_unreachable.png"
-DHCP_DISCOVER_IMAGE = "dhcp_discover.png"
-DHCP_OFFER_IMAGE = "dhcp_offer.png"
-DHCP_REQUEST_IMAGE = "dhcp_request.png"
-DHCP_PACK_IMAGE = "dhcp_pack.png"
-UDP_IMAGE = "udp_packet.png"
-STP_IMAGE = "stp_packet.png"
-TCP_SYN_IMAGE = "tcp_syn.png"
-TCP_FIN_IMAGE = "tcp_fin.png"
-TCP_RST_IMAGE = "tcp_rst.png"
-TCP_PSH_IMAGE = "tcp_psh.png"
-TCP_ACK_IMAGE = "tcp_ack.png"
-TCP_PACKET_IMAGE = "tcp_packet.png"
+ETHERNET_IMAGE = "packets/ethernet_packet.png"
+ARP_REQUEST_IMAGE = "packets/arp_request.png"
+ARP_REPLY_IMAGE = "packets/arp_reply.png"
+ARP_GRAT_IMAGE = "packets/arp_grat.png"
+IP_IMAGE = "packets/ip_packet.png"
+ICMP_REPLY_IMAGE = "packets/ping_reply.png"
+ICMP_REQUEST_IMAGE = "packets/ping_request.png"
+ICMP_TIME_EXCEEDED_IMAGE = "packets/time_exceeded.png"
+ICMP_UNREACHABLE_IMAGE = "packets/icmp_unreachable.png"
+DHCP_DISCOVER_IMAGE = "packets/dhcp_discover.png"
+DHCP_OFFER_IMAGE = "packets/dhcp_offer.png"
+DHCP_REQUEST_IMAGE = "packets/dhcp_request.png"
+DHCP_PACK_IMAGE = "packets/dhcp_pack.png"
+UDP_IMAGE = "packets/udp_packet.png"
+STP_IMAGE = "packets/stp_packet.png"
+TCP_SYN_IMAGE = "packets/tcp_syn.png"
+TCP_FIN_IMAGE = "packets/tcp_fin.png"
+TCP_RST_IMAGE = "packets/tcp_rst.png"
+TCP_PSH_IMAGE = "packets/tcp_psh.png"
+TCP_ACK_IMAGE = "packets/tcp_ack.png"
+TCP_PACKET_IMAGE = "packets/tcp_packet.png"
 
-COMPUTER_IMAGE = "endpoint.png"
-SWITCH_IMAGE = "switch.png"
-ROUTER_IMAGE = "router.png"
-HUB_IMAGE = "hub.png"
-SERVER_IMAGE = "server.png"
+COMPUTER_IMAGE = "computers/endpoint.png"
+SWITCH_IMAGE = "computers/switch.png"
+ROUTER_IMAGE = "computers/router.png"
+HUB_IMAGE = "computers/hub.png"
+SERVER_IMAGE = "computers/server.png"
 
 CONNECTION_VIEW_IMAGE = "connection_view.png"
 EXPLOSION_ANIMATION = "explosion.png"
@@ -187,8 +180,11 @@ ANIMATION_FRAME_RATE = 0.1
 ANIMATION_X_COUNT, ANIMATION_Y_COUNT = 5, 3
 
 PORT_NUMBER_TO_IMAGE = {
-    DAYTIME_PORT: "daytime_process.png",
-    FTP_PORT: "ftp_process.png",
+    DAYTIME_PORT: "processes/daytime_process.png",
+    FTP_PORT: "processes/ftp_process.png",
+    SSH_PORT: "processes/ssh_process.png",
+    HTTP_PORT: "processes/http_process.png",
+    HTTPS_PORT: "processes/https_process.png",
 }
 PROCESS_IMAGE_PADDING = 20, -15
 PROCESS_IMAGE_GAP = 20

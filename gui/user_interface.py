@@ -874,7 +874,11 @@ class UserInterface:
                 self.end_string_request()
                 PopupError(error_msg, self)
                 return
-            action(arg)
+            try:
+                action(arg)
+            except PopupWindowWithThisError as e:
+                PopupError(str(e), self)
+                return
 
         self.is_asking_for_string = True
         self.popup_window = TextBox(window_text, try_casting_with_action)

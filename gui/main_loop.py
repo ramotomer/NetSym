@@ -137,6 +137,13 @@ class MainLoop:
         except ValueError:
             raise NoSuchGraphicsObjectError("The graphics object is not registered!!!")
 
+    def toggle_pause(self):
+        """
+        Toggles the pause
+        :return:
+        """
+        self.is_paused = not self.is_paused
+
     def select_selected_object(self):
         """
         Draws a rectangle around the selected object.

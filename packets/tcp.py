@@ -73,7 +73,7 @@ class TCP(Protocol):
             self.src_port,
             self.dst_port,
             self.sequence_number,
-            copy.deepcopy(self.flags),
+            [flag for flag in self.flags if self.flags[flag]],
             self.ack_number,
             self.window_size,
             self.data.copy() if hasattr(self.data, "copy") else self.data,
@@ -86,13 +86,15 @@ class TCP(Protocol):
         The multiline representation of the TCP packet
         :return: a string that represents it
         """
+        linesep = '\n'
         return f"""
 TCP:
 from port {self.src_port} to port {self.dst_port}
 length: {self.length}
 flags: {self.true_flags_string}
 seq={self.sequence_number}, ack={self.ack_number}, win={self.window_size}
-options: {self.options}
+options: 
+{linesep.join(f'{option}: {value}' for option, value in self.options.items())}
 
 data:
 '{self.data}'

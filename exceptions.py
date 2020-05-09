@@ -146,6 +146,12 @@ class NoSuchGraphicsObjectError(GraphicsError):
     Occurs when a graphics object that does not exist is required or used.
     """
 
+class PopupWindowWithThisError(GraphicsError):
+    """
+    This is raised inside an action of a popup window and it is caught inside the popup and a popup error window
+    is opened.
+    """
+
 
 class ProcessError(NetworkSimulationError):
     """
