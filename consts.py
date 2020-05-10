@@ -146,6 +146,7 @@ INTERFACE_NAMES = [line.strip() for line in open(FILES.format("interface_names.t
 COMPUTER_NAMES = [line.strip() for line in open(FILES.format("computer_names.txt")).readlines()]
 ANY_INTERFACE = None
 TRANSFER_FILE = "transfer_me.txt"
+WINDOW_INPUT_LIST_FILE = FILES.format("window_inputs.txt")
 
 ETHERNET_IMAGE = "packets/ethernet_packet.png"
 ARP_REQUEST_IMAGE = "packets/arp_request.png"

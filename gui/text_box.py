@@ -1,3 +1,4 @@
+import os
 from collections import namedtuple
 
 from pyglet.window import key
@@ -49,6 +50,12 @@ class TextBox(PopupWindow):
 
         self.is_done = False  # whether or not the window is done and completed the action of the submit button.
 
+        self.old_inputs = ['']
+        if os.path.isfile(WINDOW_INPUT_LIST_FILE):
+            self.old_inputs = [''] + list(map(lambda line: line.strip(),
+                                              reversed(open(WINDOW_INPUT_LIST_FILE, 'r').readlines())))
+        self.old_inputs_index = 0
+
     def is_mouse_in(self):
         """
         Returns whether or not the mouse is pressing the upper part of the window (where it can be moved)
@@ -84,6 +91,14 @@ class TextBox(PopupWindow):
         elif symbol == key.BACKSPACE:
             self.child_graphics_objects.written_text.set_text(self.child_graphics_objects.written_text.text[:-1])
 
+        elif symbol == key.UP:
+            self.old_inputs_index += 1 if self.old_inputs_index < len(self.old_inputs) - 1 else 0
+            self.child_graphics_objects.written_text.set_text(self.old_inputs[self.old_inputs_index])
+
+        elif symbol == key.DOWN:
+            self.old_inputs_index -= 1 if self.old_inputs_index > 0 else 0
+            self.child_graphics_objects.written_text.set_text(self.old_inputs[self.old_inputs_index])
+
         elif self._is_printable(symbol):
             char = chr(symbol).lower()
             if (modifiers & SHIFT_MODIFIER) ^ (modifiers & CAPS_MODIFIER):
@@ -99,7 +114,11 @@ class TextBox(PopupWindow):
         Submits the text that was written and activates the `self.action` with it.
         :return: None
         """
-        self.action(self.child_graphics_objects.written_text.text)
+        input_ = self.child_graphics_objects.written_text.text
+        self.action(input_)
+        if os.path.isfile(WINDOW_INPUT_LIST_FILE):
+            input_ = open(WINDOW_INPUT_LIST_FILE, 'r').read() + '\n' + input_
+        open(WINDOW_INPUT_LIST_FILE, 'w').write(input_)
         self.is_done = True
 
     def __str__(self):
