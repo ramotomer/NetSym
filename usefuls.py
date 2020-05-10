@@ -86,3 +86,23 @@ def get_first(iterable):
     """
     for item in iterable:
         return item
+
+
+def insort(list_, item, key=lambda t: t):
+    """
+    Insert an item into a sorted list by a given key while keeping it sorted.
+    :param list_: the list (assumed to be sorted)
+    :param item: an item to insert into the list while keeping it sorted.
+    :param key: a function to check the values of the list by.
+    :return: None
+    """
+    low_index = 0
+    high_index = len(list_)
+
+    while low_index < high_index:
+        middle_index = (low_index + high_index) // 2
+        if key(item) < key(list_[middle_index]):
+            high_index = middle_index
+        else:
+            low_index = middle_index + 1
+    list_.insert(low_index, item)

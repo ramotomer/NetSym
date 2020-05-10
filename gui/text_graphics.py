@@ -29,7 +29,7 @@ class Text(GraphicsObject):
 
         The coordinates `x` and `y` of the `Text` object are in the middle of
         the first line that is drawn on the screen.
-        :param text: the actuall string that is presented.
+        :param text: the actual string that is presented.
         :param x:
         :param y: coordinates
         :param parent_graphics: a `GraphicsObject` to follow
@@ -77,6 +77,7 @@ class Text(GraphicsObject):
         self.label.width = self.max_width
         self.label.multiline = True
         self.x, self.y = self.label.x, self.label.y
+        self.move()
 
     def draw(self):
         """

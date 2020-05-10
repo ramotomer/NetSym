@@ -2,11 +2,17 @@ import random
 from collections import namedtuple
 
 from consts import *
+from exceptions import ConnectionsError
 from exceptions import SomethingWentTerriblyWrongError, NoSuchConnectionSideError
 from gui.connection_graphics import ConnectionGraphics
 from gui.main_loop import MainLoop
 
-SentPacket = namedtuple("SentPacket", "packet sending_time direction is_dropped")
+SentPacket = namedtuple("SentPacket", [
+    "packet",
+    "sending_time",
+    "direction",
+    "is_dropped",
+])
 # ^ a packet that is currently being sent through the connection.
 
 
@@ -78,13 +84,13 @@ class Connection:
     def set_speed(self, new_speed):
         """Sets the speed of the connection"""
         if new_speed <= 0:
-            raise ConnectionError("A connection cannot have negative speed!")
+            raise ConnectionsError("A connection cannot have negative speed!")
         self.speed = new_speed
 
     def set_pl(self, new_pl):
         """Sets the PL amount of this connection"""
         if not (0 <= new_pl <= 1):
-            raise ConnectionError(f"A connection cannot have this PL amount!!! {new_pl}")
+            raise ConnectionsError(f"A connection cannot have this PL amount!!! {new_pl}")
         self.packet_loss = new_pl
         self.graphics.update_color_by_pl(new_pl)
 

@@ -98,6 +98,8 @@ class PacketGraphics(ImageGraphics):
                 TCP_RST: TCP_RST_IMAGE,
                 TCP_PSH: TCP_PSH_IMAGE,
                 TCP_ACK: TCP_ACK_IMAGE,
+                TCP_ACK + TCP_RETRANSMISSION: TCP_ACK_RETRANSMISSION_IMAGE,
+                TCP_PSH + TCP_RETRANSMISSION: TCP_PSH_RETRANSMISSION_IMAGE,
                 NO_TCP_FLAGS: TCP_PACKET_IMAGE,
             },
         }

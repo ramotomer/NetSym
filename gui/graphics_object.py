@@ -75,7 +75,7 @@ class GraphicsObject(metaclass=ABCMeta):
     def load(self):
         """
         The function that should load the object.
-        It is called only once at the start of the objct's lifetime.
+        It is called only once at the start of the object's lifetime.
         :return: None
         """
         pass

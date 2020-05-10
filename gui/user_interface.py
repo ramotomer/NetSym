@@ -170,7 +170,7 @@ class UserInterface:
             draw_pause_rectangles()
 
         if self.is_asking_for_string:
-            if self.popup_window.is_done:
+            if self.popup_window is None or self.popup_window.is_done:
                 self.end_string_request()
                 # deletes the popup window if it is done with asking the string from the user.
 
@@ -209,7 +209,7 @@ class UserInterface:
 
         x, y = VIEWING_TEXT_COORDINATES
         self.object_view = ObjectView(sprite, Text(text, x, y, max_width=SIDE_WINDOW_WIDTH), graphics_object)
-        self.adjust_viewed_text_to_buttons(buttons_id+1)
+        self.adjust_viewed_text_to_buttons(buttons_id + 1)
 
     def adjust_viewed_text_to_buttons(self, buttons_id):
         """
@@ -220,8 +220,11 @@ class UserInterface:
         if self.object_view is None:
             raise SomethingWentTerriblyWrongError("Only call this in VIEW MODE")
 
-        self.object_view.text.y = VIEWING_TEXT_COORDINATES[1] - ((len(self.buttons[buttons_id]) + 0.5) *
-                                                                 DEFAULT_BUTTON_HEIGHT) - self.scrolled_view
+        try:
+            self.object_view.text.y = VIEWING_TEXT_COORDINATES[1] - ((len(self.buttons[buttons_id]) + 0.5) *
+                                                                     DEFAULT_BUTTON_HEIGHT) - self.scrolled_view
+        except KeyError:
+            pass
 
     def end_object_view(self):
         """
@@ -354,7 +357,7 @@ class UserInterface:
         :param modifiers:
         :return:
         """
-        modified_key = (symbol, int(bin(modifiers)[-4:], base=2))
+        modified_key = (symbol, int(bin(modifiers)[2:][-4:], base=2))
         for button_id in sorted(list(self.buttons)):
             for button in self.buttons[button_id]:
                 if button.key == modified_key:
@@ -667,12 +670,7 @@ class UserInterface:
         unregister the asking `TextBox` popup window and set all variables accordingly.
         :return: None
         """
-        if not self.is_asking_for_string:
-            raise NotAskingForStringError(
-                "cannot end string request since currently not asking for string from the user!!")
-
         self.is_asking_for_string = False
-        MainLoop.instance.unregister_graphics_object(self.popup_window)
         self.popup_window = None
 
     def smart_connect(self):
@@ -746,10 +744,10 @@ class UserInterface:
             # elif computer.stp_enabled:  # computer is a Switch
             #     print(computer.get_running_process(STPProcess).get_info())
             #
-            # from processes.tcp_process import TCPProcess
-            # if computer.is_process_running(TCPProcess):
-            #     process = computer.get_running_process(TCPProcess)
-            #     print(f"window (of {process}): {process.sending_window}")
+            from processes.tcp_process import TCPProcess
+            if computer.is_process_running(TCPProcess):
+                process = computer.get_running_process(TCPProcess)
+                print(f"window (of {process}): {process.sending_window}")
 
     def create_computer_with_ip(self):
         """
@@ -881,7 +879,7 @@ class UserInterface:
                 return
 
         self.is_asking_for_string = True
-        self.popup_window = TextBox(window_text, try_casting_with_action)
+        self.popup_window = TextBox(window_text, self, try_casting_with_action)
 
     @staticmethod
     def key_from_string(string):

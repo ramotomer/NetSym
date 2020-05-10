@@ -24,7 +24,7 @@ class ConnectionGraphics(GraphicsObject):
         """
         Initiates the Connection Graphics object which is basically a line between
         two dots (the two ends of the connection).
-        It is given two `ComputerGraphics` objects which are the graphics of the computers that are conneceted on each
+        It is given two `ComputerGraphics` objects which are the graphics of the computers that are connected on each
         side of this connection. They are used for their coordinates.
         :param computer_graphics_start: The computer graphics at the beginning of the connection.
         :param computer_graphics_end: The computer graphics at the end of the connection.
@@ -36,7 +36,8 @@ class ConnectionGraphics(GraphicsObject):
         self.marked_as_blocked = False
         self.is_connection = True
         self.is_pressable = True
-        self.x, self.y = 0, 0  # isnt used, just to avoid errors!
+        self.buttons_id = None
+        self.x, self.y = 0, 0  # isn't used, just to avoid errors!
 
         self.connection = connection  # the `Connection` object.
 
@@ -120,12 +121,16 @@ class ConnectionGraphics(GraphicsObject):
         :return: None
         """
         buttons = {
-            "set PL amount (alt+p)": with_args(user_interface.ask_user_for, float, INSERT_PL_MSG, self.connection.set_pl),
-            "set speed (alt+s)": with_args(user_interface.ask_user_for, float, INSERT_SPEED_MSG, self.connection.set_speed),
+            "set PL amount (alt+p)": with_args(user_interface.ask_user_for, float, INSERT_PL_MSG,
+                                               self.connection.set_pl),
+            "set speed (alt+s)": with_args(user_interface.ask_user_for, float, INSERT_SPEED_MSG,
+                                           self.connection.set_speed),
         }
 
         self.buttons_id = user_interface.add_buttons(buttons)
-        return ImageGraphics.get_image_sprite(IMAGES.format(CONNECTION_VIEW_IMAGE)), self.generate_view_text(), self.buttons_id
+        copied_sprite = ImageGraphics.get_image_sprite(IMAGES.format(CONNECTION_VIEW_IMAGE))
+
+        return copied_sprite, self.generate_view_text(), self.buttons_id
 
     def end_viewing(self, user_interface):
         """

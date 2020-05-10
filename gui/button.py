@@ -43,6 +43,20 @@ class Button(GraphicsObject):
         )
         self.key = key
 
+        self.parent_graphics = None  # see 'text_graphics.py' for documentation
+        self.padding = None
+
+    def set_parent_graphics(self, parent, padding=(0, 0)):
+        """
+        Sets the parent graphics object of the button
+        :param parent: a `GraphicsObject` to follow
+        :param padding: a tuple of integers
+        :return: None
+        """
+        self.parent_graphics = parent
+        self.padding = padding
+        self.move()
+
     def is_mouse_in(self):
         """Returns whether or not the mouse is located inside of the button."""
         mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
@@ -78,6 +92,14 @@ class Button(GraphicsObject):
         """
         if not self.is_hidden:
             draw_rect(self.x, self.y, self.width, self.height, (DARK_GRAY if self.is_mouse_in() else GRAY))
+
+    def move(self):
+        """
+        Moves the button according to its parent graphics (if it has any)
+        :return: None
+        """
+        if self.parent_graphics is not None:
+            self.x, self.y = map(sum, zip(self.parent_graphics.location, self.padding))
 
     def __str__(self):
         state = "HIDDEN" if self.is_hidden else "SHOWING"

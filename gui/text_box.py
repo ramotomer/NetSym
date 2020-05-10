@@ -3,21 +3,24 @@ from collections import namedtuple
 from pyglet.window import key
 
 from consts import *
-from gui.button import Button
-from gui.graphics_object import GraphicsObject
-from gui.main_loop import MainLoop
-from gui.shape_drawing import draw_rect_with_outline
+from gui.main_window import MainWindow
+from gui.popup_window import PopupWindow
 from gui.text_graphics import Text
+from usefuls import called_in_order
 
-ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "title_text written_text submit_button")
+ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", [
+    "title_text",
+    "written_text",
+    "submit_button"
+])
 
 
-class TextBox(GraphicsObject):
+class TextBox(PopupWindow):
     """
     A popup window - a text box that asks for text and does an action with it.
     The `TextBox` has a field of text that you fill up and a below it a button with a 'submit' on it.
     """
-    def __init__(self, text, action):
+    def __init__(self, text, user_interface, action=lambda s: None):
         """
         Initiates the `TextBox` object.
 
@@ -25,19 +28,18 @@ class TextBox(GraphicsObject):
         :param action: the action that will be activated when the button is pressed.
             It should be a function that receives one string argument (the inserted string) and returns None.
         """
-        super(TextBox, self).__init__(*TEXTBOX_COORDINATES, centered=True)
+        super(TextBox, self).__init__(*TEXTBOX_COORDINATES, text, user_interface)
         self.action = action
         self.outline_color = TEXTBOX_OUTLINE_COLOR
+        title_text, submit_button = self.child_graphics_objects
 
-        title_text = Text(text, self.x, self.y + (TEXTBOX_HEIGHT / 2), None)
+        written_text = Text('', title_text.x, title_text.y - 20, title_text, padding=(0, -20), max_width=TEXTBOX_WIDTH)
 
-        written_text = Text('', title_text.x, title_text.y - 20, max_width=TEXTBOX_WIDTH, padding=(0, 0))
-
-        submit_button = Button(self.x - (SUBMIT_BUTTON_WIDTH / 2),
-                               (self.y - (TEXTBOX_HEIGHT / 2)) + 10,
-                               text="SUBMIT",
-                               width=SUBMIT_BUTTON_WIDTH,
-                               action=self.submit)
+        submit_button.child_graphics_objects.text.set_text("SUBMIT")
+        submit_button.action = called_in_order(
+            self.submit,
+            self.delete,
+        )
 
         self.child_graphics_objects = ChildGraphicsObjects(
             title_text,
@@ -46,6 +48,22 @@ class TextBox(GraphicsObject):
         )
 
         self.is_done = False  # whether or not the window is done and completed the action of the submit button.
+
+    def is_mouse_in(self):
+        """
+        Returns whether or not the mouse is pressing the upper part of the window (where it can be moved)
+        :return: `bool`
+        """
+        x, y = MainWindow.main_window.get_mouse_location()
+        return self.x < x < self.x + TEXTBOX_WIDTH and \
+               self.y + TEXTBOX_HEIGHT < y < self.y + TEXTBOX_HEIGHT + TEXTBOX_UPPER_PART_HEIGHT
+
+    def mark_as_selected(self):
+        """
+        required for the API
+        :return:
+        """
+        pass
 
     @staticmethod
     def _is_printable(char_ord):
@@ -61,6 +79,7 @@ class TextBox(GraphicsObject):
         """
         if symbol == key.ENTER:
             self.submit()
+            self.delete()
 
         elif symbol == key.BACKSPACE:
             self.child_graphics_objects.written_text.set_text(self.child_graphics_objects.written_text.text[:-1])
@@ -81,19 +100,7 @@ class TextBox(GraphicsObject):
         :return: None
         """
         self.action(self.child_graphics_objects.written_text.text)
-
-        MainLoop.instance.unregister_graphics_object(self)  # unregisters recursively
         self.is_done = True
-
-    def draw(self):
-        """
-        Draws the popup window (text box) on the screen.
-        Basically a rectangle.
-        :return: None
-        """
-        draw_rect_with_outline(self.x - (TEXTBOX_WIDTH / 2), self.y - (TEXTBOX_HEIGHT / 2),
-                               TEXTBOX_WIDTH, TEXTBOX_HEIGHT,
-                               TEXTBOX_COLOR, self.outline_color)
 
     def __str__(self):
         return "TextBox Graphics"

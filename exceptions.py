@@ -6,26 +6,35 @@ class NetworkSimulationError(Exception):
     """
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class AddressError(NetworkSimulationError):
     """
     This error indicates of a problem with a MAC or IP address. usually that
     they are invalid.
     """
 
+
 class InvalidAddressError(AddressError):
     """
     This error indicates that some address (IP or MAC) is invalid.
     """
+
 
 class NoIPAddressError(AddressError):
     """
     Occurs when an IP is requested and one does not exist!
     """
 
+
 class AddressTooLargeError(AddressError):
     """
     Occurs when one tries to increase an IPAddress that is at its subnet maximum size.
     """
+
+
+# ----------------------------------------------------------------------------------------------------------------------
 
 
 class SomethingWentTerriblyWrongError(NetworkSimulationError):
@@ -35,10 +44,14 @@ class SomethingWentTerriblyWrongError(NetworkSimulationError):
     """
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class PacketError(NetworkSimulationError):
     """
     A super-class to all packet-related errors.
     """
+
 
 class UnknownPacketTypeError(PacketError):
     """
@@ -46,20 +59,24 @@ class UnknownPacketTypeError(PacketError):
     a certain packet.
     """
 
+
 class NoSuchPacketError(PacketError):
     """
     Occurs when a packet that does not exist is required and used.
     """
+
 
 class STPError(PacketError):
     """
     Indicates an STP related error.
     """
 
+
 class NoSuchLayerError(PacketError):
     """
     Occurs when a packet does not contain a required Layer.
     """
+
 
 class NoARPLayerError(NoSuchLayerError):
     """
@@ -67,10 +84,14 @@ class NoARPLayerError(NoSuchLayerError):
     it contains no ARP layer.
     """
 
+
 class TCPDoneReceiving(PacketError):
     """
     used to indicate that a TCP process has finished to receive information.
     """
+
+
+# ----------------------------------------------------------------------------------------------------------------------
 
 
 class InterfaceError(NetworkSimulationError):
@@ -78,10 +99,12 @@ class InterfaceError(NetworkSimulationError):
     An error to indicate something wrong on the interface level
     """
 
+
 class DeviceAlreadyConnectedError(InterfaceError):
     """
     Occurs when trying to connect an interface that is already connected
     """
+
 
 class InterfaceNotConnectedError(InterfaceError):
     """
@@ -89,10 +112,12 @@ class InterfaceNotConnectedError(InterfaceError):
     connected.
     """
 
+
 class NoSuchInterfaceError(InterfaceError):
     """
     Occurs when you look for an interface that does not exist (usually by name)
     """
+
 
 class NotAnInterfaceError(InterfaceError):
     """
@@ -100,30 +125,38 @@ class NotAnInterfaceError(InterfaceError):
     """
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class ComputerError(NetworkSimulationError):
     """
     Occurs in computer-related errors
     """
+
 
 class NoSuchComputerError(ComputerError):
     """
     Occurs when a computer that does not exist is accessed
     """
 
+
 class RoutingTableError(ComputerError):
     """
     Indicates an error in the routing table of a computer.
     """
+
 
 class PortError(ComputerError):
     """
     Indicates a port-related error
     """
 
+
 class UnknownPortError(PortError):
     """
     Occurs when one tries to open a port that is not familiar to the operating computer
     """
+
 
 class PortAlreadyOpenError(PortError):
     """
@@ -131,20 +164,26 @@ class PortAlreadyOpenError(PortError):
     """
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class GraphicsError(NetworkSimulationError):
     """
     An exception that is raised because of some graphics problem.
     """
+
 
 class NotAskingForStringError(GraphicsError):
     """
     When you try to end a string request in the UserInterface when one is not currently running.
     """
 
+
 class NoSuchGraphicsObjectError(GraphicsError):
     """
     Occurs when a graphics object that does not exist is required or used.
     """
+
 
 class PopupWindowWithThisError(GraphicsError):
     """
@@ -152,29 +191,36 @@ class PopupWindowWithThisError(GraphicsError):
     is opened.
     """
 
+# ----------------------------------------------------------------------------------------------------------------------
+
 
 class ProcessError(NetworkSimulationError):
     """
     Indicates some problem with the processes of a computer.
     """
 
+
 class NoSuchProcessError(ProcessError):
     """
     Occurs when a process that does not exist is required.
     """
 
+# ----------------------------------------------------------------------------------------------------------------------
 
-class ConnectionError(NetworkSimulationError):
+
+class ConnectionsError(NetworkSimulationError):
     """
     Indicates an error in a connection or in connection related functions.
     """
 
-class NoSuchConnectionSideError(ConnectionError):
+
+class NoSuchConnectionSideError(ConnectionsError):
     """
     Occurs when a certain connection-side is requested when it does not exist.
     """
 
-class NoSuchConnectionError(ConnectionError):
+
+class NoSuchConnectionError(ConnectionsError):
     """
     Occurs when a connection that does not exist is requested or used.
     """

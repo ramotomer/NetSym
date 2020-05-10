@@ -78,7 +78,7 @@ class Interface:
         Receives a packet and determines whether it is destined for this Interface (or is broadcast)
         On the second layer
         :param packet: a `Packet` object.
-        :return: whether the detination MAC address is of this Interface
+        :return: whether the destination MAC address is of this Interface
         """
         return self.is_directly_for_me(packet) or (packet["Ethernet"].dst_mac.is_broadcast())
 

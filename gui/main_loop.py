@@ -177,13 +177,14 @@ class MainLoop:
         if not self.is_paused:
             self._time = (time.time() - self.paused_time)
         else:  # if the program is paused now
-            self.paused_time += (time.time() - self.last_time_update)  # add to `self.paused_time` the amount of time since the last update.
+            self.paused_time += (time.time() - self.last_time_update)
+            # ^ add to `self.paused_time` the amount of time since the last update.
 
         self.last_time_update = time.time()
 
     def time(self):
         """
-        This method is just like the `time.time()` method, with one differenct, when the program is paused, the time does
+        This method is just like the `time.time()` method, with one different, when the program is paused, the time does
         not run. this is very important for some processes (STP, TCP, Switches, etc...)
         :return:
         """
@@ -191,7 +192,7 @@ class MainLoop:
 
     def time_since(self, other_time):
         """Returns the amount of time that passed since another time (adjusted to pauses of course)"""
-        return (self.time() - other_time)
+        return self.time() - other_time
 
     def main_loop(self):
         """

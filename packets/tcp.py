@@ -16,7 +16,7 @@ class TCP(Protocol):
     """
     def __init__(self, src_port, dst_port, sequence_number,
                  flags=None, ack_number=None, window_size=TCP_MAX_WINDOW_SIZE,
-                 data='', options=None, mss=TCP_MAX_MSS):
+                 data='', options=None, mss=TCP_MAX_MSS, is_retransmission=False):
         """
         Creates a TCP packet! With all of its parameters!
         :param src_port:
@@ -45,6 +45,8 @@ class TCP(Protocol):
                 TCP_TIMESTAMPS_OPTION: None,
             }
 
+        self.is_retransmission = is_retransmission
+
     @property
     def opcode(self):
         """
@@ -53,7 +55,7 @@ class TCP(Protocol):
         """
         for flag in TCP_FLAGS_DISPLAY_PRIORITY:
             if self.flags[flag]:
-                return flag
+                return flag if not self.is_retransmission else flag + TCP_RETRANSMISSION
         return NO_TCP_FLAGS
 
     @property
@@ -79,7 +81,15 @@ class TCP(Protocol):
             self.data.copy() if hasattr(self.data, "copy") else self.data,
             copy.deepcopy(self.options),
             self.options[TCP_MSS_OPTION],
+            is_retransmission=self.is_retransmission,
         )
+
+    def __repr__(self):
+        """
+
+        :return:
+        """
+        return ' / '.join(self.multiline_repr().split('\n'))
 
     def multiline_repr(self):
         """
@@ -88,12 +98,12 @@ class TCP(Protocol):
         """
         linesep = '\n'
         return f"""
-TCP:
+TCP{' (retransmission)' if self.is_retransmission else ''}:
 from port {self.src_port} to port {self.dst_port}
 length: {self.length}
 flags: {self.true_flags_string}
 seq={self.sequence_number}, ack={self.ack_number}, win={self.window_size}
-options: 
+options:
 {linesep.join(f'{option}: {value}' for option, value in self.options.items())}
 
 data:

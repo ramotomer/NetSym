@@ -434,7 +434,9 @@ class Computer:
         interface.is_sniffing = not interface.is_sniffing
 
     def _sniff_packet(self, packet):
-        """Receives a `Packet` and prints it out to the computer's console. should be called only if the packet was sniffed"""
+        """
+        Receives a `Packet` and prints it out to the computer's console. should be called only if the packet was sniffed
+        """
         deepest = packet.deepest_layer()
         packet_str = deepest.opcode if hasattr(deepest, "opcode") else type(deepest).__name__
         self.print(f"({self.packets_sniffed}) sniff: {packet_str}")
@@ -466,11 +468,12 @@ class Computer:
         and Ethernet as required and sends it out.
         :param dst_mac: destination `MACAddress` of the packet
         :param dst_ip: destination `IPAddress` of the packet
-        :param packet: packet to wrap. Could be anything, should be something the destination comuter expects.
+        :param packet: packet to wrap. Could be anything, should be something the destination computer expects.
         :return: None
         """
+        full_packet = self.ip_wrap(dst_mac, dst_ip, packet)
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
-        interface.send_with_ethernet(dst_mac, IP(interface.ip, dst_ip, TTLS[self.os], packet))
+        interface.send(full_packet)
 
     def ip_wrap(self, dst_mac, dst_ip, protocol):
         """

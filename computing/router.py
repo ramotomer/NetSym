@@ -97,7 +97,6 @@ class RoutePacket(Process):
         if not time_exceeded:
             ip_for_the_mac, done_searching = self.computer.request_address(dst_ip)
             yield WaitingFor(done_searching)
-            debugp(f"got out of waiting for")
             if ip_for_the_mac not in self.computer.arp_cache:          # if no one answered the arp
                 self._send_icmp_unreachable()
                 return
