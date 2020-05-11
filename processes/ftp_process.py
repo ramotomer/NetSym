@@ -32,6 +32,7 @@ class FTPServerProcess(TCPProcess):
                         self.send(self.file_content)
                         started = True
                     else:
+                        debugp(f"Recevied {request}")
                         self.reset_connection()
                         return
             yield from self.goodbye_handshake(initiate=True)

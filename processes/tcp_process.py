@@ -1,6 +1,7 @@
 import random
 from abc import ABCMeta, abstractmethod
 from collections import deque
+from operator import attrgetter
 
 from recordclass import recordclass
 
@@ -14,8 +15,8 @@ from usefuls import split_by_size
 
 NotAckedPacket = recordclass("NotAckedPacket", "packet sending_time is_sent")  # this is like a `namedtuple` but it is mutable!
 SackEdges = recordclass("SackEdges", [
-    "right",
     "left",
+    "right",
 ])
 
 
@@ -116,10 +117,10 @@ class TCPProcess(Process, metaclass=ABCMeta):
             is_retransmission = True
             self.receiving_window.add_to_sack(packet)
 
-        self.receiving_window.merge_sack_blocks_to_ack_number()
+        self.receiving_window.merge_sack_blocks()
         ack = self._create_packet([TCP_ACK], is_retransmission=is_retransmission)
 
-        ack["TCP"].options[TCP_SACK_OPTION] = self.receiving_window.sack_blocks
+        ack["TCP"].options[TCP_SACK_OPTION] = self.receiving_window.sack_blocks[:]
         self.sending_window.add_no_wait(ack)
 
     def _my_tcp_packets(self, packet):
@@ -143,7 +144,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         def tester(packet):
             return any("TCP" in packet and
             packet["TCP"].dst_port == self.src_port and
-            all(packet["TCP"].flags[flag] for flag in flags)  and
+            all(packet["TCP"].flags[flag] for flag in flags) and
             not any(packet["TCP"].flags[flag] for flag in (set(TCP_FLAGS) - set(flags))) and
             self.computer.has_this_ip(packet["IP"].dst_ip)
                        for flags in flag_lists)
@@ -168,19 +169,29 @@ class TCPProcess(Process, metaclass=ABCMeta):
         self.sending_window.window_size = min(packet["TCP"].window_size, self.sending_window.window_size)
         self.mss = min(packet["TCP"].options[TCP_MSS_OPTION], self.mss)
 
-    def _acknowledge_packets(self, ack_number):
+    def _acknowledge_with_packet(self, packet):
         """
         Takes in an ACk number and releases all of the packets that are ACKed by it.
-        :param ack_number: a number of an ACK in a TCP ACK packet.
+        :param packet: a packet that contains the ACK information to remove sent packets from my sending window.
         :return: None
         """
+        ack_number = packet["TCP"].ack_number
         acked_count = 0
-        for packet, _, _ in self.sending_window.window:
-            if is_number_acking_packet(ack_number, packet):
+        for not_acked_packet in self.sending_window.window:
+            if is_number_acking_packet(ack_number, not_acked_packet.packet):
                 acked_count += 1
             else:
                 break
         self.sending_window.slide_window(acked_count)
+
+        sack_blocks = packet["TCP"].options[TCP_SACK_OPTION]
+        if not isinstance(sack_blocks, list) or not sack_blocks:
+            return
+        for not_acked_packet in list(self.sending_window.window):
+            for left, right in sack_blocks:
+                if left <= not_acked_packet.packet["TCP"].sequence_number and \
+                        is_number_acking_packet(right, not_acked_packet.packet):
+                    self.sending_window.window.remove(not_acked_packet)
 
     def hello_handshake(self):
         """
@@ -310,7 +321,8 @@ class TCPProcess(Process, metaclass=ABCMeta):
                 self._send_ack_for(packet)
 
             if packet["TCP"].flags[TCP_ACK]:
-                self._acknowledge_packets(packet["TCP"].ack_number)
+                debugp(f"packet is ack: {packet['TCP'].flags[TCP_ACK], packet['TCP'].options[TCP_SACK_OPTION]}")
+                self._acknowledge_with_packet(packet)
 
             if packet["TCP"].flags[TCP_FIN]:
                 yield from self.goodbye_handshake(initiate=False)
@@ -462,7 +474,7 @@ class ReceivingWindow:
         """
         for packet in self.window[:]:
             if is_number_acking_packet(self.ack_number, packet):
-                received_data.append(packet.data)
+                received_data.append(packet["TCP"].data)
                 self.window.remove(packet)
             else:
                 break  # the window is sorted by the sequence number.
@@ -485,9 +497,9 @@ class ReceivingWindow:
                 block.right = packet_end
                 return
 
-        self.sack_blocks.append(SackEdges(packet_start, packet_end))
+        insort(self.sack_blocks, SackEdges(packet_start, packet_end), key=attrgetter('left'))
 
-    def merge_sack_blocks_to_ack_number(self):
+    def merge_sack_blocks(self):
         """
         Merges the SACK blocks to the ack number.
         :return: None
@@ -496,3 +508,10 @@ class ReceivingWindow:
             if self.ack_number == block.left:
                 self.ack_number = block.right
                 self.sack_blocks.remove(block)
+
+        for i, block in enumerate(self.sack_blocks[:-1]):
+            next_block = self.sack_blocks[i + 1]
+
+            if block.right == next_block.left:
+                self.sack_blocks.remove(block)
+                next_block.left = block.left

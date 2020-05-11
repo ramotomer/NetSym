@@ -14,7 +14,7 @@ class Button(GraphicsObject):
     A class of a button which you can press and assign text and an action to.
     """
     def __init__(self, x, y, action=lambda: None, text=DEFAULT_BUTTON_TEXT, start_hidden=False,
-                 width=DEFAULT_BUTTON_WIDTH, height=DEFAULT_BUTTON_HEIGHT, key=None, color=DARK_GRAY, text_color=PINK):
+                 width=DEFAULT_BUTTON_WIDTH, height=DEFAULT_BUTTON_HEIGHT, key=None, color=GRAY, text_color=PINK):
         """
         Initiates the button.
         :param x:
