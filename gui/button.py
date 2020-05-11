@@ -14,14 +14,13 @@ class Button(GraphicsObject):
     A class of a button which you can press and assign text and an action to.
     """
     def __init__(self, x, y, action=lambda: None, text=DEFAULT_BUTTON_TEXT, start_hidden=False,
-                 width=DEFAULT_BUTTON_WIDTH, height=DEFAULT_BUTTON_HEIGHT, key=None):
+                 width=DEFAULT_BUTTON_WIDTH, height=DEFAULT_BUTTON_HEIGHT, key=None, color=DARK_GRAY, text_color=PINK):
         """
         Initiates the button.
         :param x:
         :param y: coordinates of the left
         :param action: a function that will be called when the button is pressed.
         :param text: a string that will be written on the button.
-        :param button_group: a group that the button will belong to, it will allow us to perform actions on all buttons
             in the same group.
         :param start_hidden: whether or not this button should be created hidden, and only later shown.
         :param width: the button's width.
@@ -39,12 +38,15 @@ class Button(GraphicsObject):
                  is_button=True,
                  start_hidden=start_hidden,
                  max_width=SIDE_WINDOW_WIDTH,
-                 color=PINK),
+                 color=text_color),
         )
         self.key = key
 
         self.parent_graphics = None  # see 'text_graphics.py' for documentation
         self.padding = None
+
+        self.color = color
+        self.light_color = tuple(rgb + LIGHT_COLOR_DIFF for rgb in color)
 
     def set_parent_graphics(self, parent, padding=(0, 0)):
         """
@@ -91,7 +93,7 @@ class Button(GraphicsObject):
         :return: None
         """
         if not self.is_hidden:
-            draw_rect(self.x, self.y, self.width, self.height, (DARK_GRAY if self.is_mouse_in() else GRAY))
+            draw_rect(self.x, self.y, self.width, self.height, (self.light_color if self.is_mouse_in() else self.color))
 
     def move(self):
         """

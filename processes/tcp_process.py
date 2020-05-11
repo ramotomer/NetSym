@@ -295,6 +295,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         self.sending_window.fill_window()  # if the amount of sent packets is not the window size
         self.sending_window.send_window()  # send the packets that were not yet sent
         self.sending_window.retransmit_unacked()  # send the packets that were sent a long time ago and not ACKed.
+        self.receiving_window.add_data_and_remove_from_window(received_data)
 
         if MainLoop.instance.time_since(self.last_packet_sent_time) > TCP_SENDING_INTERVAL:
             if self.sending_window.sent:
@@ -305,7 +306,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         for packet in packets.packets:
             if packet["TCP"].flags[TCP_PSH] or packet["TCP"].flags[TCP_SYN]:
                 if not is_number_acking_packet(self.receiving_window.ack_number, packet):
-                    self.receiving_window.add_data_and_remove_from_window(received_data)
+                    self.receiving_window.add_packet(packet)  # if the packet was not received already
                 self._send_ack_for(packet)
 
             if packet["TCP"].flags[TCP_ACK]:
@@ -460,7 +461,7 @@ class ReceivingWindow:
         :return: None
         """
         for packet in self.window[:]:
-            if is_number_acking_packet(self.ack_number, packet["TCP"].sequence_number):
+            if is_number_acking_packet(self.ack_number, packet):
                 received_data.append(packet.data)
                 self.window.remove(packet)
             else:

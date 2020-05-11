@@ -12,7 +12,8 @@ from usefuls import called_in_order
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", [
     "title_text",
     "written_text",
-    "submit_button"
+    "submit_button",
+    "exit_button",
 ])
 
 
@@ -32,7 +33,7 @@ class TextBox(PopupWindow):
         super(TextBox, self).__init__(*TEXTBOX_COORDINATES, text, user_interface)
         self.action = action
         self.outline_color = TEXTBOX_OUTLINE_COLOR
-        title_text, submit_button = self.child_graphics_objects
+        title_text, submit_button, exit_button = self.child_graphics_objects
 
         written_text = Text('', title_text.x, title_text.y - 20, title_text, padding=(0, -20), max_width=TEXTBOX_WIDTH)
 
@@ -46,6 +47,7 @@ class TextBox(PopupWindow):
             title_text,
             written_text,
             submit_button,
+            exit_button,
         )
 
         self.is_done = False  # whether or not the window is done and completed the action of the submit button.

@@ -9,11 +9,12 @@ from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rect, draw_rect_with_outline
 from gui.text_graphics import Text
-from usefuls import with_args
+from usefuls import with_args, called_in_order
 
 ChildGraphicsObjects = namedtuple('ChildGraphicsObjects', [
     "text",
     "ok_button",
+    "exit_button",
 ])
 
 
@@ -42,16 +43,34 @@ class PopupWindow(GraphicsObject):
         ok_button.set_parent_graphics(self, ((TEXTBOX_WIDTH / 2) - (SUBMIT_BUTTON_WIDTH / 2), 8))
         ok_button.key = (key.ENTER, NO_MODIFIER)
 
+        exit_button = Button(
+            self.x + (TEXTBOX_WIDTH / 2) - (SUBMIT_BUTTON_WIDTH / 2),
+            self.y + 8,
+            text="X",
+            width=TEXTBOX_UPPER_PART_HEIGHT,
+            height=TEXTBOX_UPPER_PART_HEIGHT,
+            color=self.outline_color,
+            text_color=BLACK,
+        )
+        exit_button.set_parent_graphics(self, (TEXTBOX_WIDTH - TEXTBOX_UPPER_PART_HEIGHT, TEXTBOX_HEIGHT))
+        exit_button.key = (key.ESCAPE, NO_MODIFIER)
+
         error_buttons = user_interface.buttons.get(WINDOW_BUTTONS_ID, [])
         error_buttons.append(ok_button)
+        error_buttons.append(exit_button)
         user_interface.buttons[WINDOW_BUTTONS_ID] = error_buttons
-        self.remove_buttons = with_args(user_interface.buttons[WINDOW_BUTTONS_ID].remove, ok_button)
+        self.remove_buttons = called_in_order(
+            with_args(user_interface.buttons[WINDOW_BUTTONS_ID].remove, ok_button),
+            with_args(user_interface.buttons[WINDOW_BUTTONS_ID].remove, exit_button),
+        )
 
         ok_button.action = self.delete
+        exit_button.action = self.delete
 
         self.child_graphics_objects = ChildGraphicsObjects(
             title_text,
             ok_button,
+            exit_button,
         )
 
     def is_mouse_in(self):
