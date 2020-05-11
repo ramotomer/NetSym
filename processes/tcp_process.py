@@ -157,6 +157,8 @@ class TCPProcess(Process, metaclass=ABCMeta):
         :return: None
         """
         self.computer.send(self._create_packet([TCP_RST]))
+        self.kill_me = True
+        return
 
     def _update_from_handshake_packet(self, packet):
         """
@@ -218,7 +220,10 @@ class TCPProcess(Process, metaclass=ABCMeta):
         self.computer.send(self._create_packet([TCP_SYN]))
 
         tcp_syn_ack = ReturnedPacket()
-        yield WaitingForPacket(self._tcp_with_flags([TCP_SYN, TCP_ACK], [TCP_RST]), tcp_syn_ack)
+        yield from self._send_and_wait_with_retries(self._create_packet([TCP_SYN]),
+                                                    waiting_for=self._tcp_with_flags([TCP_SYN, TCP_ACK], [TCP_RST]),
+                                                    timeout=TCP_RESEND_TIME,
+                                                    got_packet=tcp_syn_ack)
         packet = tcp_syn_ack.packet
         if packet["TCP"].flags[TCP_RST]:
             self.kill_me = True
@@ -246,9 +251,33 @@ class TCPProcess(Process, metaclass=ABCMeta):
         self.dst_mac = self.computer.arp_cache[ip_for_the_mac].mac
 
         self.receiving_window.ack_number = 1
-        self.computer.send(self._create_packet([TCP_SYN, TCP_ACK]))
+        yield from self._send_and_wait_with_retries(self._create_packet([TCP_SYN, TCP_ACK]),
+                                                    waiting_for=self._tcp_with_flags([TCP_ACK]),
+                                                    timeout=TCP_RESEND_TIME)
 
-        yield WaitingForPacket(self._tcp_with_flags([TCP_ACK]), NoNeedForPacket())
+    def _send_and_wait_with_retries(self, sent, waiting_for, timeout, got_packet=None, max_tries=ARP_RESEND_COUNT):
+        """
+        Receives a packet and a condition for a reply to that packet and receives a timeout for waiting.
+        Sends the packet and waits for the reply for it. If did not get a reply in `timeout` seconds, try again,
+        do this for `max_tries` times. If still did not get the packet, reset the connection.
+        This is a generator that yields `WaitingFor` tuples.
+        :param sent: The `Packet` to send
+        :param waiting_for: a condition packet to wait for which is the answer for the packet you send
+        :param got_packet: a `ReturnedPacket` object that will contain the packet that is returned.
+        :param timeout: the amount of seconds to wait for a reply
+        :param max_tries: the amount of tries before giving up
+        :return: None
+        """
+        returned_packet = NoNeedForPacket() if got_packet is None else got_packet
+        self.computer.send(sent)
+        for _ in range(max_tries):
+            yield WaitingForPacketWithTimeout(waiting_for, returned_packet, Timeout(timeout))
+            if returned_packet.packets:
+                return
+            self.computer.send(sent)
+
+        self.reset_connection()
+        return
 
     def goodbye_handshake(self, initiate=True):
         """
@@ -258,15 +287,15 @@ class TCPProcess(Process, metaclass=ABCMeta):
         :return: None
         """
         if initiate:
-            self.computer.send(self._create_packet([TCP_FIN]))
-            tcp_fin_ack = ReturnedPacket()
-            yield WaitingForPacket(self._tcp_with_flags([TCP_FIN, TCP_ACK]), tcp_fin_ack)
+            yield from self._send_and_wait_with_retries(self._create_packet([TCP_FIN]),
+                                                        waiting_for=self._tcp_with_flags([TCP_FIN, TCP_ACK]),
+                                                        timeout=TCP_RESEND_TIME)
             self.computer.send(self._create_packet([TCP_ACK]))
 
         else:  # if received a FIN
-            self.computer.send(self._create_packet([TCP_FIN, TCP_ACK]))
-            yield WaitingForPacket(self._tcp_with_flags([TCP_ACK]), NoNeedForPacket())
-
+            yield from self._send_and_wait_with_retries(self._create_packet([TCP_FIN, TCP_ACK]),
+                                                        waiting_for=self._tcp_with_flags([TCP_ACK]),
+                                                        timeout=TCP_RESEND_TIME)
         self.sending_window.clear()
         self.sequence_number = 0
         self.receiving_window.ack_number = 0
@@ -300,8 +329,8 @@ class TCPProcess(Process, metaclass=ABCMeta):
         If a FIN was received, appends the list a `DON_RECEIVING` constant (None) that tells it that the process terminates.
         :yields WaitingFor-s.
         """
-        packets = ReturnedPacket()
-        yield WaitingForPacketWithTimeout(self._my_tcp_packets, packets, Timeout(0.01))
+        received_packets = ReturnedPacket()
+        yield WaitingForPacketWithTimeout(self._my_tcp_packets, received_packets, Timeout(0.01))
 
         self.sending_window.fill_window()  # if the amount of sent packets is not the window size
         self.sending_window.send_window()  # send the packets that were not yet sent
@@ -314,19 +343,23 @@ class TCPProcess(Process, metaclass=ABCMeta):
                 self.last_packet_sent_time = MainLoop.instance.time()
                 # physically send all of the packets in the appropriate time gaps
 
-        for packet in packets.packets:
+        for packet in received_packets.packets:
             if packet["TCP"].flags[TCP_PSH] or packet["TCP"].flags[TCP_SYN]:
                 if not is_number_acking_packet(self.receiving_window.ack_number, packet):
                     self.receiving_window.add_packet(packet)  # if the packet was not received already
                 self._send_ack_for(packet)
 
             if packet["TCP"].flags[TCP_ACK]:
-                debugp(f"packet is ack: {packet['TCP'].flags[TCP_ACK], packet['TCP'].options[TCP_SACK_OPTION]}")
                 self._acknowledge_with_packet(packet)
 
             if packet["TCP"].flags[TCP_FIN]:
                 yield from self.goodbye_handshake(initiate=False)
                 received_data.append(TCP_DONE_RECEIVING)
+
+            if packet["TCP"].flags[TCP_RST]:
+                self.kill_me = True
+                received_data.append(TCP_DONE_RECEIVING)
+                return
 
     @abstractmethod
     def code(self):
