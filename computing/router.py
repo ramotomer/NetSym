@@ -95,7 +95,7 @@ class RoutePacket(Process):
         time_exceeded = self._decrease_ttl()
 
         if not time_exceeded:
-            ip_for_the_mac, done_searching = self.computer.request_address(dst_ip)
+            ip_for_the_mac, done_searching = self.computer.request_address(dst_ip, self, False)
             yield WaitingFor(done_searching)
             if ip_for_the_mac not in self.computer.arp_cache:          # if no one answered the arp
                 self._send_icmp_unreachable()

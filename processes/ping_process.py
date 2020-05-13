@@ -62,10 +62,8 @@ class SendPing(Process):
         if self.ping_opcode == ICMP_REQUEST:
             self.computer.print(f"pinging {self.dst_ip} with some bytes")
 
-        ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip)
+        ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip, self)
         yield WaitingFor(done_searching)
-        if not ip_for_the_mac in self.computer.arp_cache:  # the ARPs were not answered
-            return
 
         self._send_the_ping(ip_for_the_mac)
 
@@ -77,4 +75,3 @@ class SendPing(Process):
     def __repr__(self):
         """The string representation of the SendPing process"""
         return "SendPing process"
-

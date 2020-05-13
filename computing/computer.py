@@ -15,7 +15,7 @@ from packets.icmp import ICMP
 from packets.ip import IP
 from packets.tcp import TCP
 from packets.udp import UDP
-from processes.arp_process import ARPProcess, Timeout
+from processes.arp_process import ARPProcess
 from processes.daytime_process import DAYTIMEServerProcess
 from processes.dhcp_process import DHCPClient
 from processes.dhcp_process import DHCPServer
@@ -614,18 +614,20 @@ class Computer:
         """
         return not any(interface.has_this_ip(ip_address) for interface in self.interfaces)
 
-    def request_address(self, ip_address):
+    def request_address(self, ip_address, requesting_process, kill_process_if_not_found=True):
         """
         Receives an `IPAddress` and sends ARPs to it until it finds it or it did not answer for a long time.
         This function actually starts a process that does that.
         :param ip_address: an `IPAddress` object to look for
+        :param requesting_process: the process that is sending the ARP request.
+        :param kill_process_if_not_found: whether or not to kill the process if the arp was not answered
         :return: The actual IP address it is looking for (The IP of your gateway (or the original if in the same subnet))
         and a condition to test whether or not the process is done looking for the IP.
         """
         ip_for_the_mac = self.routing_table[ip_address].ip_address
-        self.start_process(ARPProcess, ip_for_the_mac)
-        arp_timeout = Timeout(ARP_RESEND_COUNT * ARP_RESEND_TIME)
-        return ip_for_the_mac, lambda: ip_for_the_mac in self.arp_cache or arp_timeout
+        kill_process = requesting_process if kill_process_if_not_found else None
+        self.start_process(ARPProcess, ip_for_the_mac, kill_process)
+        return ip_for_the_mac, lambda: ip_for_the_mac in self.arp_cache
 
     # ------------------------- v process related methods v ----------------------------------------------------
 

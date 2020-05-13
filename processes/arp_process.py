@@ -13,7 +13,7 @@ class ARPProcess(Process):
     """
     This is the process of the computer asking for an IP address using ARPs.
     """
-    def __init__(self, computer, address):
+    def __init__(self, computer, address, requesting_process=None):
         """
         Initiates the process with the address to request.
         :param computer:
@@ -21,6 +21,7 @@ class ARPProcess(Process):
         """
         super(ARPProcess, self).__init__(computer)
         self.address = address
+        self.requesting_process = requesting_process
 
     def code(self):
         """The code of the process"""
@@ -37,3 +38,6 @@ class ARPProcess(Process):
             if returned_packets.has_packets():  # if this was not timed-out, so we got an arp reply.
                 return
         self.computer.print("Destination unreachable :(")
+
+        if self.requesting_process is not None:
+            self.computer.kill_process(type(self.requesting_process))

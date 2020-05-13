@@ -210,11 +210,8 @@ class TCPProcess(Process, metaclass=ABCMeta):
         the initial handshake on the client side. sends syn, waits for syn ack, sends ack.
         :return:
         """
-        ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip)
+        ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip, self)
         yield WaitingFor(done_searching)
-        if ip_for_the_mac not in self.computer.arp_cache:
-            self.kill_me = True
-            return
         self.dst_mac = self.computer.arp_cache[ip_for_the_mac].mac
 
         self.computer.send(self._create_packet([TCP_SYN]))
@@ -243,11 +240,8 @@ class TCPProcess(Process, metaclass=ABCMeta):
         yield WaitingForPacket(self._tcp_with_flags([TCP_SYN]), tcp_syn)
         self._update_from_handshake_packet(tcp_syn.packet)
 
-        ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip)
+        ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip, self)
         yield WaitingFor(done_searching)
-        if ip_for_the_mac not in self.computer.arp_cache:
-            self.kill_me = True
-            return
         self.dst_mac = self.computer.arp_cache[ip_for_the_mac].mac
 
         self.receiving_window.ack_number = 1
@@ -320,6 +314,18 @@ class TCPProcess(Process, metaclass=ABCMeta):
         """Returns whether or not the connection should be timed-out"""
         return MainLoop.instance.time_since(self.last_packet_sent_time) >= TCP_MAX_UNUSED_CONNECTION_TIME
 
+    def _send_packets_with_time_gaps(self):
+        """
+        Sends the next packet in the `self.sending_window.sent` list.
+        The packets are not all sent in one go because then the graphics will one over the other.
+        This function sends a packet if was not just sent.
+        :return:
+        """
+        if MainLoop.instance.time_since(self.last_packet_sent_time) > TCP_SENDING_INTERVAL:
+            if self.sending_window.sent:
+                self.computer.send(self.sending_window.sent.popleft())
+                self.last_packet_sent_time = MainLoop.instance.time()
+
     def handle_tcp_and_receive(self, received_data):
         """
         This function is a generator that yield `WaitingFor` and `WaitingForPacket` namedtuple-s.
@@ -331,17 +337,6 @@ class TCPProcess(Process, metaclass=ABCMeta):
         """
         received_packets = ReturnedPacket()
         yield WaitingForPacketWithTimeout(self._my_tcp_packets, received_packets, Timeout(0.01))
-
-        self.sending_window.fill_window()  # if the amount of sent packets is not the window size
-        self.sending_window.send_window()  # send the packets that were not yet sent
-        self.sending_window.retransmit_unacked()  # send the packets that were sent a long time ago and not ACKed.
-        self.receiving_window.add_data_and_remove_from_window(received_data)
-
-        if MainLoop.instance.time_since(self.last_packet_sent_time) > TCP_SENDING_INTERVAL:
-            if self.sending_window.sent:
-                self.computer.send(self.sending_window.sent.popleft())
-                self.last_packet_sent_time = MainLoop.instance.time()
-                # physically send all of the packets in the appropriate time gaps
 
         for packet in received_packets.packets:
             if packet["TCP"].flags[TCP_PSH] or packet["TCP"].flags[TCP_SYN]:
@@ -360,6 +355,14 @@ class TCPProcess(Process, metaclass=ABCMeta):
                 self.kill_me = True
                 received_data.append(TCP_DONE_RECEIVING)
                 return
+
+        self.receiving_window.add_data_and_remove_from_window(received_data)
+
+        self.sending_window.fill_window()  # if the amount of sent packets is not the window size, fill it up
+        self.sending_window.send_window()  # send the packets that were not yet sent
+        self.sending_window.retransmit_unacked()  # send the packets that were sent a long time ago and not ACKed.
+
+        self._send_packets_with_time_gaps()  # physically send all of the packets above in appropriate time gaps
 
     @abstractmethod
     def code(self):
