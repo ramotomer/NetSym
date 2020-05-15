@@ -23,7 +23,9 @@ from gui.shape_drawing import draw_circle
 from gui.shape_drawing import draw_pause_rectangles, draw_rect
 from gui.text_box import TextBox
 from gui.text_graphics import Text
+from processes.ddos_process import DDOSProcess
 from processes.stp_process import STPProcess
+from processes.tcp_process import TCPProcess
 from usefuls import get_the_one, distance, with_args, called_in_order
 
 ObjectView = namedtuple("ObjectView", [
@@ -88,6 +90,8 @@ class UserInterface:
             (key.P, SHIFT_MODIFIER): self.send_ping_to_self,
             (key.R, CTRL_MODIFIER): with_args(self.create, Router),
             (key.M, NO_MODIFIER): self.debugging_printer,
+            (key.W, NO_MODIFIER): self.add_tcp_test,
+            (key.W, CTRL_MODIFIER): self.start_ddos_process_on_selected,
             (key.SPACE, NO_MODIFIER): self.toggle_pause,
             (key.TAB, NO_MODIFIER): self.tab_through_selected,
             (key.TAB, SHIFT_MODIFIER): with_args(self.tab_through_selected, True),
@@ -414,10 +418,10 @@ class UserInterface:
         if self.is_mouse_in_side_window():
             x, y = WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2
 
-        interfaces = (Interface.with_ip('192.168.1.1'),
-                      Interface.with_ip('10.10.10.1'),
-                      Interface.with_ip('172.10.3.1'))
-        router = Router("Router and DHCP Server", interfaces)
+        router = Router("Router and DHCP Server", (
+                        Interface.with_ip('192.168.1.1'),
+                        Interface.with_ip('10.10.10.1'),
+                        ))
         router.show(x, y)
         self.computers.append(router)
 
@@ -724,27 +728,26 @@ class UserInterface:
         """
         # print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
         self.debug_counter = self.debug_counter+1 if hasattr(self, "debug_counter") else 0
-        # goes = [go for go in MainLoop.instance.graphics_objects if not isinstance(go, Button) and not isinstance(go,
-        #                                                                                                          Text)]
-        # print(f"graphicsObject-s (no buttons or texts): {goes}")
-        # print(f"selected object: {self.selected_object}, dragged: {self.dragged_object}")
-        # print(f"mouse: {MainWindow.main_window.get_mouse_location()}")
-        # print(f"""computers, {len(self.computers)}, connections, {len(self.connection_data)},
-        # packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}""")
-        # print(f"running processes: ", end='')
-        # for computer in self.computers:
-        #     processes = [f"{wp.process} of {computer}" for wp in computer.waiting_processes]
-        #     print(processes if processes else '', end=' ')
-        # print()
+        goes = [go for go in MainLoop.instance.graphics_objects
+                if not isinstance(go, Button) and not isinstance(go, Text)]
+        print(f"graphicsObject-s (no buttons or texts): {goes}")
+        print(f"selected object: {self.selected_object}, dragged: {self.dragged_object}")
+        print(f"mouse: {MainWindow.main_window.get_mouse_location()}")
+        print(f"""computers, {len(self.computers)}, connections, {len(self.connection_data)},
+        packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}""")
+        print(f"running processes: ", end='')
+        for computer in self.computers:
+            processes = [f"{wp.process} of {computer}" for wp in computer.waiting_processes]
+            print(processes if processes else '', end=' ')
+        print()
         if self.selected_object is not None and self.selected_object.is_computer:
             computer = self.selected_object.computer
             computer.print(f"{'DEBUG':^20}{self.debug_counter}")
-            # if not isinstance(computer, Switch):
-            #     print(repr(computer.routing_table))
-            # elif computer.stp_enabled:  # computer is a Switch
-            #     print(computer.get_running_process(STPProcess).get_info())
-            #
-            from processes.tcp_process import TCPProcess
+            if not isinstance(computer, Switch):
+                print(repr(computer.routing_table))
+            elif computer.stp_enabled and computer.is_process_running(STPProcess):  # computer is a Switch
+                print(computer.get_running_process(STPProcess).get_info())
+
             if computer.is_process_running(TCPProcess):
                 process = computer.get_running_process(TCPProcess)
                 print(f"window (of {process}): {process.sending_window}")
@@ -821,9 +824,7 @@ class UserInterface:
         """
         for computer in self.computers:
             for other_computer in self.computers:
-                if computer is not other_computer and \
-                        not self.are_connected(computer, other_computer) and \
-                        not random.randint(0, 5):
+                if computer is not other_computer and not self.are_connected(computer, other_computer):
                     self.connect_computers(computer, other_computer)
 
     def send_ping_to_self(self):
@@ -965,3 +966,25 @@ class UserInterface:
             MainLoop.instance.unregister_graphics_object(button)
         del self.buttons[buttons_id]
         del self.buttons[buttons_id + 1]
+
+    def add_tcp_test(self):
+        """
+        Adds the computers that i create every time i do a test for TCP processes. saves time.
+        :return:
+        """
+        self.create_computer_with_ip()
+        self.create_computer_with_ip()
+        self.smart_connect()
+        self.tab_through_selected()
+        self.tab_through_selected()
+        self.selected_object.computer.open_port(13)
+        self.tab_through_selected(reverse=True)
+
+    def start_ddos_process_on_selected(self):
+        """
+        Starts the DDOs process on the selected computer
+        :return: None
+        """
+        if self.selected_object is not None and self.selected_object.is_computer:
+            computer = self.selected_object.computer
+            computer.start_process(DDOSProcess, 1000, 0.3)

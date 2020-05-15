@@ -12,7 +12,7 @@ def debugp(string):
     print(f"DEBUG: {string}")
 
 
-DEFAULT_CONNECTION_SPEED = 300  # pixels / second
+DEFAULT_CONNECTION_SPEED = 250  # pixels / second
 DEFAULT_CONNECTION_LENGTH = 100  # pixels
 LOOPBACK_CONNECTION_RADIUS = 15
 LOOPBACK_CONNECTION_SPEED = 200
@@ -85,7 +85,7 @@ TCP_FLAGS_DISPLAY_PRIORITY = [TCP_SYN, TCP_FIN, TCP_RST, TCP_PSH, TCP_ACK]
 TCP_RETRANSMISSION = " retransmission"
 
 TCP_MAX_SEQUENCE_NUMBER = 2**32 - 1
-TCP_RESEND_TIME = 8  # seconds
+TCP_RESEND_TIME = 14  # seconds
 TCP_USABLE_PORT_RANGE = (2 ** 15 - 2 ** 14), 2 ** 16 - 1
 TCP_MAX_WINDOW_SIZE = 3  # 2**16 - 1
 TCP_SENDING_INTERVAL = 0.3  # seconds
@@ -170,6 +170,7 @@ TCP_PSH_IMAGE = "packets/tcp_psh.png"
 TCP_ACK_IMAGE = "packets/tcp_ack.png"
 TCP_ACK_RETRANSMISSION_IMAGE = "packets/tcp_ack_retransmission.png"
 TCP_PSH_RETRANSMISSION_IMAGE = "packets/tcp_psh_retransmission.png"
+TCP_SYN_RETRANSMISSION_IMAGE = "packets/tcp_syn_retransmission.png"
 TCP_PACKET_IMAGE = "packets/tcp_packet.png"
 
 COMPUTER_IMAGE = "computers/endpoint.png"

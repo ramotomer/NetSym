@@ -41,3 +41,6 @@ class ARPProcess(Process):
 
         if self.requesting_process is not None:
             self.computer.kill_process(type(self.requesting_process))
+
+    def __repr__(self):
+        return "Address Resolution Process (ARP sending)"

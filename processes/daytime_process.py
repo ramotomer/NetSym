@@ -23,12 +23,14 @@ class DAYTIMEServerProcess(TCPProcess):
         """
         self.computer.print("Serving DAYTIME...")
         while True:
+            debugp(f"starting server process...")
             yield from self.hello_handshake()
             # ^ blocks the process until a client is connected.
             self.send(str(datetime.datetime.now()))  # sends the time
             while not self.is_done_transmitting():
                 yield from self.handle_tcp_and_receive([])
             yield from self.goodbye_handshake(initiate=True)
+            debugp(f"process ended, relooping...")
 
     def __repr__(self):
         """String representation of the process"""

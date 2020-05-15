@@ -100,6 +100,7 @@ class PacketGraphics(ImageGraphics):
                 TCP_ACK: TCP_ACK_IMAGE,
                 TCP_ACK + TCP_RETRANSMISSION: TCP_ACK_RETRANSMISSION_IMAGE,
                 TCP_PSH + TCP_RETRANSMISSION: TCP_PSH_RETRANSMISSION_IMAGE,
+                TCP_SYN + TCP_RETRANSMISSION: TCP_SYN_RETRANSMISSION_IMAGE,
                 NO_TCP_FLAGS: TCP_PACKET_IMAGE,
             },
         }

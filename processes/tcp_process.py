@@ -7,13 +7,19 @@ from recordclass import recordclass
 
 from consts import *
 from gui.main_loop import MainLoop
+from packets.packet import Packet
 from packets.tcp import TCP
-from processes.process import Process, WaitingForPacketWithTimeout, Timeout, WaitingForPacket, ReturnedPacket, \
+from processes.process import Process, WaitingForPacketWithTimeout, Timeout, ReturnedPacket, \
     NoNeedForPacket, WaitingFor
 from usefuls import insort
 from usefuls import split_by_size
 
-NotAckedPacket = recordclass("NotAckedPacket", "packet sending_time is_sent")  # this is like a `namedtuple` but it is mutable!
+NotAckedPacket = recordclass("NotAckedPacket", [  # this is like a `namedtuple` but it is mutable!
+    "packet",
+    "sending_time",
+    "is_sent",
+])
+
 SackEdges = recordclass("SackEdges", [
     "left",
     "right",
@@ -97,7 +103,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         self.sequence_number += 1 if TCP_SYN in flags else len(data)
         return packet
 
-    def _send_ack_for(self, packet):
+    def _send_ack_for(self, packet, additional_flags=None):
         """
         Creates and sends an ACK packet for the given `Packet` that was received from the other side.
         :param packet: a `Packet` object.
@@ -121,6 +127,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         ack = self._create_packet([TCP_ACK], is_retransmission=is_retransmission)
 
         ack["TCP"].options[TCP_SACK_OPTION] = self.receiving_window.sack_blocks[:]
+        ack["TCP"].flags += [] if additional_flags is None else additional_flags
         self.sending_window.add_no_wait(ack)
 
     def _my_tcp_packets(self, packet):
@@ -129,9 +136,23 @@ class TCPProcess(Process, metaclass=ABCMeta):
         :param packet: a `Packet` object.
         :return: True of False
         """
-        return "TCP" in packet and packet.is_valid() and \
-               self.computer.has_this_ip(packet["IP"].dst_ip) and packet["IP"].src_ip == self.dst_ip and \
-               packet["TCP"].dst_port == self.src_port and packet["TCP"].src_port == self.dst_port
+        # if "TCP" in packet and packet["TCP"].flags[TCP_SYN] and not packet['TCP'].flags[TCP_ACK]:
+        #     print('hi')
+
+        if "TCP" not in packet or \
+                not packet.is_valid() or \
+                not self.computer.has_this_ip(packet["IP"].dst_ip) or \
+                packet["TCP"].dst_port != self.src_port:
+            return False
+
+        tcp_packet = packet["TCP"]
+
+        if (self.dst_ip is None or self.dst_port is None or self.dst_port is None) and tcp_packet.flags[TCP_SYN]:
+            return True
+
+        return packet["IP"].src_ip == self.dst_ip and \
+            tcp_packet.dst_port == self.src_port and \
+            tcp_packet.src_port == self.dst_port
 
     def _tcp_with_flags(self, *flag_lists):
         """
@@ -142,11 +163,11 @@ class TCPProcess(Process, metaclass=ABCMeta):
         :return:
         """
         def tester(packet):
-            return any("TCP" in packet and
-            packet["TCP"].dst_port == self.src_port and
-            all(packet["TCP"].flags[flag] for flag in flags) and
-            not any(packet["TCP"].flags[flag] for flag in (set(TCP_FLAGS) - set(flags))) and
-            self.computer.has_this_ip(packet["IP"].dst_ip)
+            return self.computer.has_this_ip(packet["IP"].dst_ip) and \
+                   any("TCP" in packet and
+                       packet["TCP"].dst_port == self.src_port and
+                       all(packet["TCP"].flags[flag] for flag in flags) and
+                       not any(packet["TCP"].flags[flag] for flag in (set(TCP_FLAGS) - set(flags)))
                        for flags in flag_lists)
         return tester
 
@@ -158,6 +179,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         """
         self.computer.send(self._create_packet([TCP_RST]))
         self.kill_me = True
+        # TODO: server process should not die!
         return
 
     def _update_from_handshake_packet(self, packet):
@@ -170,6 +192,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         self.dst_ip = packet["IP"].src_ip
         self.sending_window.window_size = min(packet["TCP"].window_size, self.sending_window.window_size)
         self.mss = min(packet["TCP"].options[TCP_MSS_OPTION], self.mss)
+        self.receiving_window.ack_number = 1
 
     def _acknowledge_with_packet(self, packet):
         """
@@ -214,40 +237,40 @@ class TCPProcess(Process, metaclass=ABCMeta):
         yield WaitingFor(done_searching)
         self.dst_mac = self.computer.arp_cache[ip_for_the_mac].mac
 
-        self.computer.send(self._create_packet([TCP_SYN]))
+        self.sending_window.add_waiting(self._create_packet([TCP_SYN]))
 
-        tcp_syn_ack = ReturnedPacket()
-        yield from self._send_and_wait_with_retries(self._create_packet([TCP_SYN]),
-                                                    waiting_for=self._tcp_with_flags([TCP_SYN, TCP_ACK], [TCP_RST]),
-                                                    timeout=TCP_RESEND_TIME,
-                                                    got_packet=tcp_syn_ack)
-        packet = tcp_syn_ack.packet
-        if packet["TCP"].flags[TCP_RST]:
-            self.kill_me = True
-            self.computer.print("Server not available!")
+        tcp_syn_ack_list = []
+        yield from self.handle_tcp_and_receive(tcp_syn_ack_list, is_blocking=True)
+        if self.kill_me:
+            self.computer.print("Server unavailable :(!")
             return
-        self._update_from_handshake_packet(packet)
 
-        self.receiving_window.ack_number = 1
-        self.computer.send(self._create_packet([TCP_ACK]))
+        syn_ack, = tcp_syn_ack_list
+        self._update_from_handshake_packet(syn_ack)
+
+        self._send_ack_for(syn_ack)
 
     def _server_hello_handshake(self):
         """
         The initial handshake on the server side. waits for syn, sends syn ack waits for ack
         :return:
         """
-        tcp_syn = ReturnedPacket()
-        yield WaitingForPacket(self._tcp_with_flags([TCP_SYN]), tcp_syn)
-        self._update_from_handshake_packet(tcp_syn.packet)
+        tcp_syn_list = []
+        while not tcp_syn_list or \
+                not isinstance(tcp_syn_list[0], Packet) or \
+                not "TCP" in tcp_syn_list[0] or \
+                not tcp_syn_list[0]["TCP"].flags[TCP_SYN]:
+            yield from self.handle_tcp_and_receive(tcp_syn_list, is_blocking=True)
+        syn, = tcp_syn_list
+        self._update_from_handshake_packet(syn)
 
         ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip, self)
         yield WaitingFor(done_searching)
         self.dst_mac = self.computer.arp_cache[ip_for_the_mac].mac
 
-        self.receiving_window.ack_number = 1
-        yield from self._send_and_wait_with_retries(self._create_packet([TCP_SYN, TCP_ACK]),
-                                                    waiting_for=self._tcp_with_flags([TCP_ACK]),
-                                                    timeout=TCP_RESEND_TIME)
+        self.sending_window.add_waiting(self._create_packet([TCP_SYN, TCP_ACK]))
+        while not self.sending_window.nothing_to_send():  # while the syn ack was not ACKed
+            yield from self.handle_tcp_and_receive([])
 
     def _send_and_wait_with_retries(self, sent, waiting_for, timeout, got_packet=None, max_tries=ARP_RESEND_COUNT):
         """
@@ -280,19 +303,40 @@ class TCPProcess(Process, metaclass=ABCMeta):
         This should be called with `initiate=False` if a TCP FIN packet was received from the destination computer.
         :return: None
         """
+        self.sending_window.clear()
         if initiate:
-            yield from self._send_and_wait_with_retries(self._create_packet([TCP_FIN]),
-                                                        waiting_for=self._tcp_with_flags([TCP_FIN, TCP_ACK]),
-                                                        timeout=TCP_RESEND_TIME)
-            self.computer.send(self._create_packet([TCP_ACK]))
+            self.sending_window.add_waiting(self._create_packet([TCP_FIN]))
+            fin_ack_list = []
+            while not fin_ack_list or \
+                    not isinstance(fin_ack_list[0], Packet) or \
+                    not "TCP" in fin_ack_list[0] or \
+                    not fin_ack_list[0]["TCP"].flags[TCP_FIN] or \
+                    not fin_ack_list[0]["TCP"].flags[TCP_ACK]:
+                yield from self.handle_tcp_and_receive(fin_ack_list)
 
-        else:  # if received a FIN
+            self._send_ack_for(fin_ack_list[0])
+            while not self.sending_window.nothing_to_send():
+                yield from self.handle_tcp_and_receive([])
+
+        else:  # if received a FIN, then sent a FIN ACK from the main function
             yield from self._send_and_wait_with_retries(self._create_packet([TCP_FIN, TCP_ACK]),
                                                         waiting_for=self._tcp_with_flags([TCP_ACK]),
                                                         timeout=TCP_RESEND_TIME)
+        self._end_session()
+
+    def _end_session(self):
+        """
+        Ends the current session. For the client that kills the process after it is done, this does nothing
+        This is mostly for servers that server multiple clients in the same process. It resets everything and gets ready
+        to serve another client.
+        :return:
+        """
         self.sending_window.clear()
+        self.receiving_window.clear()
         self.sequence_number = 0
         self.receiving_window.ack_number = 0
+        self.dst_port = None
+        self.dst_mac = None
 
     def send(self, data):
         """
@@ -326,43 +370,54 @@ class TCPProcess(Process, metaclass=ABCMeta):
                 self.computer.send(self.sending_window.sent.popleft())
                 self.last_packet_sent_time = MainLoop.instance.time()
 
-    def handle_tcp_and_receive(self, received_data):
+    def handle_tcp_and_receive(self, received_data, is_blocking=False):
         """
         This function is a generator that yield `WaitingFor` and `WaitingForPacket` namedtuple-s.
         It receives TCP packets from the destination sends ACKs sends all of the other packets in the TCP_SENDING_INTERVAL gaps.
         "Blocks" the process until packets are received.
         :param received_data: a list that we append data we receive to it. Any packet's data is appended to it.
+        :param is_blocking: whether or not the function loops until it receives a packet.
         If a FIN was received, appends the list a `DON_RECEIVING` constant (None) that tells it that the process terminates.
         :yields WaitingFor-s.
+
+        when a SYN packet is received, the whole packet is appended to the received_data list.
         """
         received_packets = ReturnedPacket()
-        yield WaitingForPacketWithTimeout(self._my_tcp_packets, received_packets, Timeout(0.01))
 
-        for packet in received_packets.packets:
-            if packet["TCP"].flags[TCP_PSH] or packet["TCP"].flags[TCP_SYN]:
-                if not is_number_acking_packet(self.receiving_window.ack_number, packet):
-                    self.receiving_window.add_packet(packet)  # if the packet was not received already
-                self._send_ack_for(packet)
+        while not received_packets.packets:
+            yield WaitingForPacketWithTimeout(self._my_tcp_packets, received_packets, Timeout(0.01))
 
-            if packet["TCP"].flags[TCP_ACK]:
-                self._acknowledge_with_packet(packet)
+            for packet in received_packets.packets:
+                if packet["TCP"].flags[TCP_PSH]:
+                    if not is_number_acking_packet(self.receiving_window.ack_number, packet):
+                        self.receiving_window.add_packet(packet)  # if the packet was not received already
+                    self._send_ack_for(packet)
 
-            if packet["TCP"].flags[TCP_FIN]:
-                yield from self.goodbye_handshake(initiate=False)
-                received_data.append(TCP_DONE_RECEIVING)
+                if packet["TCP"].flags[TCP_SYN]:
+                    received_data.append(packet)
 
-            if packet["TCP"].flags[TCP_RST]:
-                self.kill_me = True
-                received_data.append(TCP_DONE_RECEIVING)
+                if packet["TCP"].flags[TCP_ACK]:
+                    self._acknowledge_with_packet(packet)
+
+                if packet["TCP"].flags[TCP_FIN]:
+                    yield from self.goodbye_handshake(initiate=False)
+                    received_data.append(TCP_DONE_RECEIVING)
+
+                if packet["TCP"].flags[TCP_RST]:
+                    self.kill_me = True
+                    received_data.append(TCP_DONE_RECEIVING)
+                    return
+
+            self.receiving_window.add_data_and_remove_from_window(received_data)
+
+            self.sending_window.fill_window()  # if the amount of sent packets is not the window size, fill it up
+            self.sending_window.send_window()  # send the packets that were not yet sent
+            self.sending_window.retransmit_unacked()  # send the packets that were sent a long time ago and not ACKed.
+
+            self._send_packets_with_time_gaps()  # physically send all of the packets above in appropriate time gaps
+
+            if not is_blocking:
                 return
-
-        self.receiving_window.add_data_and_remove_from_window(received_data)
-
-        self.sending_window.fill_window()  # if the amount of sent packets is not the window size, fill it up
-        self.sending_window.send_window()  # send the packets that were not yet sent
-        self.sending_window.retransmit_unacked()  # send the packets that were sent a long time ago and not ACKed.
-
-        self._send_packets_with_time_gaps()  # physically send all of the packets above in appropriate time gaps
 
     @abstractmethod
     def code(self):
@@ -493,6 +548,15 @@ class ReceivingWindow:
         self.window = []
         self.ack_number = 0
         self.sack_blocks = []
+
+    def clear(self):
+        """
+        Clears the window and resets it like it was just created
+        :return:
+        """
+        self.window.clear()
+        self.sack_blocks.clear()
+        self.ack_number = 0
 
     def add_packet(self, packet):
         """
