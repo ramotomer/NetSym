@@ -3,8 +3,8 @@ from math import acos, sin
 
 from consts import *
 from exceptions import *
-from gui.graphics_object import GraphicsObject
-from gui.image_graphics import ImageGraphics
+from gui.abstracts.graphics_object import GraphicsObject
+from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_line
 from gui.shape_drawing import draw_rect_no_fill

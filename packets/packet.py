@@ -1,5 +1,5 @@
 from exceptions import *
-from gui.packet_graphics import PacketGraphics
+from gui.tech.packet_graphics import PacketGraphics
 from packets.protocol import Protocol
 
 

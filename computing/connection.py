@@ -4,8 +4,8 @@ from collections import namedtuple
 from consts import *
 from exceptions import ConnectionsError
 from exceptions import SomethingWentTerriblyWrongError, NoSuchConnectionSideError
-from gui.connection_graphics import ConnectionGraphics
 from gui.main_loop import MainLoop
+from gui.tech.connection_graphics import ConnectionGraphics
 
 SentPacket = namedtuple("SentPacket", [
     "packet",

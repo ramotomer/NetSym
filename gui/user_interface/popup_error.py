@@ -1,5 +1,5 @@
 from consts import *
-from gui.popup_window import PopupWindow
+from gui.user_interface.popup_window import PopupWindow
 
 
 class PopupError(PopupWindow):

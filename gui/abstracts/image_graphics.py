@@ -1,7 +1,7 @@
 import pyglet
 
 from consts import *
-from gui.graphics_object import GraphicsObject
+from gui.abstracts.graphics_object import GraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rect_no_fill

@@ -5,8 +5,8 @@ from pyglet.window import key
 
 from consts import *
 from gui.main_window import MainWindow
-from gui.popup_window import PopupWindow
-from gui.text_graphics import Text
+from gui.user_interface.popup_window import PopupWindow
+from gui.user_interface.text_graphics import Text
 from usefuls import called_in_order
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", [

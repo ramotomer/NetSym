@@ -1,8 +1,8 @@
 from computing.computer import Computer
 from computing.routing_table import RoutingTable
 from consts import *
-from gui.computer_graphics import ComputerGraphics
 from gui.main_loop import MainLoop
+from gui.tech.computer_graphics import ComputerGraphics
 from processes.dhcp_process import DHCPServer
 from processes.process import Process, WaitingFor
 

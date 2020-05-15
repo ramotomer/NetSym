@@ -41,12 +41,11 @@ MAX_TTL = 255
 
 ARP_CACHE_FORGET_TIME = 300  # seconds
 SWITCH_TABLE_ITEM_LIFETIME = 300  # seconds
-# ^ this is the time that if the packets did not move for that much time (in a pause for example) we take them back a bit in the connection and adjust their `sending_time`
 
-STP_NORMAL_SENDING_INTERVAL = 1.7 # seconds
-STP_STABLE_SENDING_INTERVAL = 6 # seconds
-TREE_STABLIZING_MAX_TIME = 30 # seconds
-BLOCKED_INTERFACE_UPDATE_INTERVAL = 10 # seconds
+STP_NORMAL_SENDING_INTERVAL = 1.7  # seconds
+STP_STABLE_SENDING_INTERVAL = 6  # seconds
+TREE_STABLIZING_MAX_TIME = 30  # seconds
+BLOCKED_INTERFACE_UPDATE_INTERVAL = 10  # seconds
 ROOT_MAX_DISAPPEARING_TIME = 40
 MAX_CONNECTION_DISAPPEARED_TIME = 40
 DEFAULT_SWITCH_PRIORITY = 32768
@@ -148,6 +147,8 @@ ANY_INTERFACE = None
 TRANSFER_FILE = "transfer_me.txt"
 WINDOW_INPUT_LIST_FILE = FILES.format("window_inputs.txt")
 
+LOGO_ANIMATION_IMAGE = "logo.png"
+
 ETHERNET_IMAGE = "packets/ethernet_packet.png"
 ARP_REQUEST_IMAGE = "packets/arp_request.png"
 ARP_REPLY_IMAGE = "packets/arp_reply.png"
@@ -171,6 +172,7 @@ TCP_ACK_IMAGE = "packets/tcp_ack.png"
 TCP_ACK_RETRANSMISSION_IMAGE = "packets/tcp_ack_retransmission.png"
 TCP_PSH_RETRANSMISSION_IMAGE = "packets/tcp_psh_retransmission.png"
 TCP_SYN_RETRANSMISSION_IMAGE = "packets/tcp_syn_retransmission.png"
+TCP_FIN_RETRANSMISSION_IMAGE = "packets/tcp_fin_retransmission.png"
 TCP_PACKET_IMAGE = "packets/tcp_packet.png"
 
 COMPUTER_IMAGE = "computers/endpoint.png"
@@ -200,7 +202,7 @@ NOT_OPAQUE = 255
 
 WINDOW_NAME = "NetSym"
 WINDOW_WIDTH = 1275
-WINDOW_HEIGHT = 400
+WINDOW_HEIGHT = 600
 INITIAL_WINDOW_LOCATION = 4, 50
 
 SPRITE_SCALE_FACTOR = 3

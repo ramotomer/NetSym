@@ -1,7 +1,7 @@
 from computing.connection import Connection
 from consts import *
-from gui.loopback_connection_graphics import LoopbackConnectionGraphics
 from gui.main_window import MainLoop
+from gui.tech.loopback_connection_graphics import LoopbackConnectionGraphics
 
 
 class LoopbackConnection(Connection):

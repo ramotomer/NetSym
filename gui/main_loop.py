@@ -7,8 +7,9 @@ from usefuls import get_the_one
 class MainLoop:
     """
     This class handles everything related to the main loop of the program.
-    It holds a list of all of the graphics objects that have registered their methods to the loop. (read more about these in 'gui.graphics_object.py')
-    It contains the main loop of the program, and contains methods that allow us to insert new function calls into the main loop.
+    It holds a list of all of the graphics objects that have registered their methods to the loop.
+    (read more about these in 'gui.graphics_object.py') It contains the main loop of the program, and contains methods
+    that allow us to insert new function calls into the main loop.
 
     There is only one instance of this class. That instance is saved in the class attribute `MainLoop.instance`
     """
@@ -39,6 +40,8 @@ class MainLoop:
         self.main_window.user_interface.initiate_buttons()
         # ^ creates the buttons of the user interface.
 
+        # self.logo_animation = self.main_window.user_interface.init_logo_animation()
+
     def register_graphics_object(self, graphics_object, is_in_background=False):
         """
         This method receives a `GraphicsObject` instance, loads it, and enters
@@ -66,7 +69,7 @@ class MainLoop:
         If the object is already unregistered, do nothing.
 
         Any GraphicsObject that wants to have attributes that are also GraphicsObjects needs to have an iterable
-        which is called `child_graphics_objects` and that list is uregistered as well when the main object does.
+        which is called `child_graphics_objects` and that list is unregistered as well when the main object does.
 
         :param graphics_object: The `GraphicsObject`
         :return: None
@@ -108,7 +111,9 @@ class MainLoop:
         self.call_functions.insert(0, (function, args, kwargs, False))  # the False is "can it be paused"
 
     def insert_to_loop_pausable(self, function, *args, **kwargs):
-        """Exactly like `insert_to_loop` but the function is paused when the program is paused (when space bar is pressed)"""
+        """
+        Exactly like `insert_to_loop` but the function is paused when the program is paused (when space bar is pressed)
+        """
         self.call_functions.append((function, args, kwargs, True))
 
     def remove_from_loop(self, function):
@@ -124,7 +129,8 @@ class MainLoop:
 
     def move_to_front(self, graphics_object):
         """
-        Receives a graphics object that is registered and moves it to the front to be on top of all other registered graphics objects
+        Receives a graphics object that is registered and moves it to the front to be on top of all other registered
+        graphics objects
         :param graphics_object: a `GraphicsObject` object that is registered
         :return: None
         """
@@ -158,8 +164,8 @@ class MainLoop:
         Deletes and unregisters all of the graphics objects on the screen. (not buttons)
         :return: None
         """
-        for object in list(filter(lambda go: not go.is_button, self.graphics_objects)):
-            self.unregister_graphics_object(object)
+        for object_ in list(filter(lambda go: not go.is_button, self.graphics_objects)):
+            self.unregister_graphics_object(object_)
 
     def get_object_the_mouse_is_on(self):
         """

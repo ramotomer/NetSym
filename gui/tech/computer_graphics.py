@@ -3,15 +3,20 @@ from os import linesep
 
 from address.ip_address import IPAddress
 from consts import *
-from gui.console import Console
-from gui.image_graphics import ImageGraphics
-from gui.process_graphics import ProcessGraphicsList
-from gui.text_graphics import Text
+from gui.abstracts.image_graphics import ImageGraphics
+from gui.tech.console import Console
+from gui.tech.process_graphics import ProcessGraphicsList
+from gui.user_interface.text_graphics import Text
 from processes.daytime_process import DAYTIMEClientProcess
+from processes.ddos_process import DDOSProcess
 from processes.ftp_process import FTPClientProcess
 from usefuls import with_args
 
-ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "text console process_list")
+ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", [
+    "text",
+    "console",
+    "process_list"
+])
 
 
 class ComputerGraphics(ImageGraphics):
@@ -69,7 +74,7 @@ class ComputerGraphics(ImageGraphics):
         """
         buttons = {
             "open/close console (shift+o)": self.child_graphics_objects.console.toggle_showing,
-            "power on/off (o)": user_interface.power_selected_computer,
+            "power on/off (o)": self.computer.power,
             "config IP (i)": user_interface.ask_user_for_ip,
             "set default gateway (g)": with_args(user_interface.ask_user_for, IPAddress, INSERT_GATEWAY_MSG,
                                                  self.computer.set_default_gateway),
@@ -82,6 +87,7 @@ class ComputerGraphics(ImageGraphics):
                                               with_args(self.computer.start_process, DAYTIMEClientProcess)),
             "download file (alt+a)": with_args(user_interface.ask_user_for, IPAddress, INSERT_IP_FOR_PROCESS,
                                                with_args(self.computer.start_process, FTPClientProcess)),
+            "start DDOS process (ctrl+w)": with_args(self.computer.start_process, DDOSProcess, 1000, 0.1),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
         return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), self.generate_view_text(), self.buttons_id

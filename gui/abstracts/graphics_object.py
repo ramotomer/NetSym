@@ -6,7 +6,7 @@ from gui.main_loop import MainLoop
 class GraphicsObject(metaclass=ABCMeta):
     """
     This is an abstract class that its instances are things that will be drawn on the screen, for example the images of
-    the compuers, the packets the lines that connect the computers and the buttons.
+    the computer, the packets the lines that connect the computers and the buttons.
 
     They have to have a `draw`, a `move` and a `load` method.
     When a graphics object is created, it inserts itself into the main loop of the program.

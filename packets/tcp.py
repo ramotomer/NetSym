@@ -15,7 +15,7 @@ class TCP(Protocol):
     The window size is also specified.
     """
     def __init__(self, src_port, dst_port, sequence_number,
-                 flags=None, ack_number=None, window_size=TCP_MAX_WINDOW_SIZE,
+                 flags: set = None, ack_number=None, window_size=TCP_MAX_WINDOW_SIZE,
                  data='', options=None, mss=TCP_MAX_MSS, is_retransmission=False):
         """
         Creates a TCP packet! With all of its parameters!
@@ -30,11 +30,10 @@ class TCP(Protocol):
         """
         super(TCP, self).__init__(4, data)
         self.src_port, self.dst_port = src_port, dst_port
-        self.flags = {flag: (flags is not None and flag in flags) for flag in TCP_FLAGS}
+        self.flags = flags
         self.sequence_number = sequence_number
-        self.ack_number = ack_number if self.flags[TCP_ACK] else None
+        self.ack_number = ack_number if TCP_ACK in self.flags else None
         self.window_size = window_size
-        self.length = len(data)
 
         self.options = options
         if options is None:
@@ -54,7 +53,7 @@ class TCP(Protocol):
         :return: one of the TCP flags.
         """
         for flag in TCP_FLAGS_DISPLAY_PRIORITY:
-            if self.flags[flag]:
+            if flag in self.flags:
                 return flag if not self.is_retransmission else flag + TCP_RETRANSMISSION
         return NO_TCP_FLAGS
 
@@ -64,7 +63,17 @@ class TCP(Protocol):
         Returns a string which is a list of the flags that are true in this packet
         :return:
         """
-        return ', '.join([flag for flag in self.flags if self.flags[flag]])
+        return ', '.join(self.flags)
+
+    @property
+    def length(self):
+        """
+        The length of the data of the packet
+        :return: int
+        """
+        if {TCP_SYN, TCP_FIN} | self.flags:
+            return 1
+        return len(self.data)
 
     def copy(self):
         """
@@ -75,7 +84,7 @@ class TCP(Protocol):
             self.src_port,
             self.dst_port,
             self.sequence_number,
-            [flag for flag in self.flags if self.flags[flag]],
+            copy.deepcopy(self.flags),
             self.ack_number,
             self.window_size,
             self.data.copy() if hasattr(self.data, "copy") else self.data,

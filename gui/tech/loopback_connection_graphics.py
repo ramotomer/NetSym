@@ -1,8 +1,8 @@
 from math import pi, sin, cos
 
 from consts import *
-from gui.connection_graphics import ConnectionGraphics
 from gui.shape_drawing import draw_circle
+from gui.tech.connection_graphics import ConnectionGraphics
 
 
 def circle_parameter(radius):

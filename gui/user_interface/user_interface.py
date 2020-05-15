@@ -15,18 +15,20 @@ from computing.router import Router
 from computing.switch import Switch, Hub
 from consts import *
 from exceptions import *
-from gui.button import Button
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
-from gui.popup_error import PopupError
 from gui.shape_drawing import draw_circle
 from gui.shape_drawing import draw_pause_rectangles, draw_rect
-from gui.text_box import TextBox
-from gui.text_graphics import Text
-from processes.ddos_process import DDOSProcess
+from gui.user_interface.button import Button
+from gui.user_interface.popup_error import PopupError
+from gui.user_interface.text_box import TextBox
+from gui.user_interface.text_graphics import Text
 from processes.stp_process import STPProcess
 from processes.tcp_process import TCPProcess
 from usefuls import get_the_one, distance, with_args, called_in_order
+
+# from gui.animation_graphics import LogoAnimation
+
 
 ObjectView = namedtuple("ObjectView", [
     "sprite",
@@ -91,7 +93,6 @@ class UserInterface:
             (key.R, CTRL_MODIFIER): with_args(self.create, Router),
             (key.M, NO_MODIFIER): self.debugging_printer,
             (key.W, NO_MODIFIER): self.add_tcp_test,
-            (key.W, CTRL_MODIFIER): self.start_ddos_process_on_selected,
             (key.SPACE, NO_MODIFIER): self.toggle_pause,
             (key.TAB, NO_MODIFIER): self.tab_through_selected,
             (key.TAB, SHIFT_MODIFIER): with_args(self.tab_through_selected, True),
@@ -158,10 +159,10 @@ class UserInterface:
               "delete (d)"), {"key": (key.D, NO_MODIFIER)}),
         ]
         self.buttons = {}
-        # {button_id: list of `Button` objects}
+        # ^ a dictionary in the form, {button_id: [list of `Button` objects]}
         self.showing_buttons_id = MAIN_BUTTONS_ID
-
         self.scrolled_view = None
+        self.debug_counter = 0
 
     def show(self):
         """
@@ -849,12 +850,6 @@ class UserInterface:
             if computer.get_running_process(STPProcess).my_bid in roots:
                 draw_circle(*computer.graphics.location, 60, YELLOW)
 
-    def power_selected_computer(self):
-        """Powers off or on the selected object if it is a computer"""
-        if self.selected_object is not None:
-            if self.selected_object.is_computer:
-                self.selected_object.computer.power()
-
     def ask_user_for(self, type_, window_text, action, error_msg="invalid input!!!"):
         """
         Pops up the little window that asks the user to insert something.
@@ -980,11 +975,10 @@ class UserInterface:
         self.selected_object.computer.open_port(13)
         self.tab_through_selected(reverse=True)
 
-    def start_ddos_process_on_selected(self):
-        """
-        Starts the DDOs process on the selected computer
-        :return: None
-        """
-        if self.selected_object is not None and self.selected_object.is_computer:
-            computer = self.selected_object.computer
-            computer.start_process(DDOSProcess, 1000, 0.3)
+    # @staticmethod
+    # def init_logo_animation():
+    #     """
+    #     Initiates the logo animation in the start of the simulation
+    #     :return:
+    #     """
+    #     return LogoAnimation((WINDOW_WIDTH / 2) - 30, WINDOW_HEIGHT / 2)

@@ -1,6 +1,6 @@
 from consts import *
-from gui.animation_graphics import AnimationGraphics
-from gui.image_graphics import ImageGraphics
+from gui.abstracts.animation_graphics import AnimationGraphics
+from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_loop import MainLoop
 from usefuls import with_args
 
@@ -101,6 +101,7 @@ class PacketGraphics(ImageGraphics):
                 TCP_ACK + TCP_RETRANSMISSION: TCP_ACK_RETRANSMISSION_IMAGE,
                 TCP_PSH + TCP_RETRANSMISSION: TCP_PSH_RETRANSMISSION_IMAGE,
                 TCP_SYN + TCP_RETRANSMISSION: TCP_SYN_RETRANSMISSION_IMAGE,
+                TCP_FIN + TCP_RETRANSMISSION: TCP_FIN_RETRANSMISSION_IMAGE,
                 NO_TCP_FLAGS: TCP_PACKET_IMAGE,
             },
         }

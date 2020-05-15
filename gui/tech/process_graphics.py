@@ -1,7 +1,7 @@
 from consts import *
 from exceptions import UnknownPortError
-from gui.graphics_object import GraphicsObject
-from gui.image_graphics import ImageGraphics
+from gui.abstracts.graphics_object import GraphicsObject
+from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_loop import MainLoop
 
 

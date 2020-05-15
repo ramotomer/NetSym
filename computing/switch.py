@@ -5,8 +5,8 @@ from computing.computer import Computer
 from computing.interface import Interface
 from consts import *
 from exceptions import *
-from gui.computer_graphics import ComputerGraphics
 from gui.main_loop import MainLoop
+from gui.tech.computer_graphics import ComputerGraphics
 from packets.stp import STP, LogicalLinkControl
 from processes.stp_process import STPProcess
 

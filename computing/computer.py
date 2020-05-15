@@ -7,8 +7,8 @@ from computing.interface import Interface
 from computing.routing_table import RoutingTable, RoutingTableItem
 from consts import *
 from exceptions import *
-from gui.computer_graphics import ComputerGraphics
 from gui.main_loop import MainLoop
+from gui.tech.computer_graphics import ComputerGraphics
 from packets.arp import ARP
 from packets.dhcp import DHCP, DHCPData
 from packets.icmp import ICMP
@@ -140,15 +140,20 @@ class Computer:
     def print(self, string):
         """
         Prints out a string to the computer output.
-        :param string: The stirng to print.
+        :param string: The string to print.
         :return: None
         """
         self.graphics.child_graphics_objects.console.write(string)
 
     def power(self):
         """Powers the computer on or off."""
-        self.graphics.toggle_opacity()
+
+        self.waiting_processes.clear()
+
         self.is_powered_on = not self.is_powered_on
+        for interface in self.all_interfaces:
+            interface.is_powered_on = self.is_powered_on
+        self.graphics.toggle_opacity()
 
     def available_interface(self, ip_address=None):
         """
@@ -299,11 +304,11 @@ class Computer:
         if not self.has_ip() or not self.has_this_ip(packet["IP"].dst_ip):
             return
 
-        if packet["TCP"].flags[TCP_SYN] and not packet["TCP"].flags[TCP_ACK]:
+        if {TCP_SYN} == packet["TCP"].flags:
             dst_port = packet["TCP"].dst_port
             if dst_port not in self.open_ports:
                 self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip,
-                             TCP(packet["TCP"].dst_port, packet["TCP"].src_port, 0, [TCP_RST]))
+                             TCP(packet["TCP"].dst_port, packet["TCP"].src_port, 0, {TCP_RST}))
 
     def _handle_special_packet(self, packet, receiving_interface):
         """
@@ -321,6 +326,7 @@ class Computer:
         """
         Starts sending a ping to another computer.
         :param ip_address: an `IPAddress` object to ping.
+        :param opcode: the opcode of the ping to send
         :return: None
         """
         self.start_process(SendPing, ip_address, opcode)
