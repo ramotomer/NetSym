@@ -11,7 +11,7 @@ class DAYTIMEServerProcess(TCPProcess):
     """
     def __init__(self, computer):
         """
-        Initiates the process of serving DAYTIME with the comoputer that run the process
+        Initiates the process of serving DAYTIME with the computer that run the process
         :param computer: the `Computer` that runs the process
         """
         super(DAYTIMEServerProcess, self).__init__(computer, src_port=DAYTIME_PORT, is_client=False)
@@ -37,7 +37,7 @@ class DAYTIMEServerProcess(TCPProcess):
 
 class DAYTIMEClientProcess(TCPProcess):
     """
-    The client process of the DAYTIME protocoll
+    The client process of the DAYTIME protocol
     """
     def __init__(self, computer, server_ip):
         """

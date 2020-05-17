@@ -34,7 +34,7 @@ class RoutePacket(Process):
         if "0.0.0.0" in [self.packet["IP"].dst_ip.string_ip, self.packet["IP"].src_ip.string_ip]:
             return False
 
-        if self.packet["IP"].src_ip.is_broadcast():
+        if self.packet["IP"].src_ip.is_broadcast() or self.packet["Ethernet"].dst_mac.is_broadcast():
             return False
 
         return True
@@ -58,7 +58,6 @@ class RoutePacket(Process):
         If not, return False
         :return: `bool`
         """
-
         dst_ip = self.packet["IP"].dst_ip
         routing_interface = self.computer.routing_table[dst_ip].ip_address
         gateway = self.computer.routing_table.default_gateway.ip_address

@@ -12,6 +12,7 @@ class PopupError(PopupWindow):
         """
         super(PopupError, self).__init__(*TEXTBOX_COORDINATES, text, user_interface)
         self.outline_color = RED
+        self.child_graphics_objects.exit_button.color = RED
 
     def __repr__(self):
         return "Popup Error window"

@@ -71,7 +71,7 @@ class TCP(Protocol):
         The length of the data of the packet
         :return: int
         """
-        if {TCP_SYN, TCP_FIN} | self.flags:
+        if {TCP_SYN, TCP_FIN} & self.flags:
             return 1
         return len(self.data)
 
@@ -98,7 +98,7 @@ class TCP(Protocol):
 
         :return:
         """
-        return ' / '.join(self.multiline_repr().split('\n'))
+        return ' '.join(self.multiline_repr().split('\n'))
 
     def multiline_repr(self):
         """
@@ -109,12 +109,12 @@ class TCP(Protocol):
         return f"""
 TCP{' (retransmission)' if self.is_retransmission else ''}:
 from port {self.src_port} to port {self.dst_port}
-length: {self.length}
+length: {len(self.data)}
 flags: {self.true_flags_string}
 seq={self.sequence_number}, ack={self.ack_number}, win={self.window_size}
 options:
 {linesep.join(f'{option}: {value}' for option, value in self.options.items())}
 
 data:
-'{self.data}'
+{getattr(self.data, "multiline_repr", self.data.__str__)()}
 """

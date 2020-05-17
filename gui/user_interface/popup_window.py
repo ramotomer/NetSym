@@ -80,7 +80,7 @@ class PopupWindow(GraphicsObject):
         """
         x, y = MainWindow.main_window.get_mouse_location()
         return self.x < x < self.x + TEXTBOX_WIDTH and \
-               self.y + TEXTBOX_HEIGHT < y < self.y + TEXTBOX_HEIGHT + TEXTBOX_UPPER_PART_HEIGHT
+            self.y + TEXTBOX_HEIGHT < y < self.y + TEXTBOX_HEIGHT + TEXTBOX_UPPER_PART_HEIGHT
 
     def mark_as_selected(self):
         """
@@ -96,6 +96,7 @@ class PopupWindow(GraphicsObject):
         """
         MainLoop.instance.unregister_graphics_object(self)
         self.remove_buttons()
+        # TODO: fix bug that when after a window is closed you can still press enter and that will submit the text!!!
 
     def draw(self):
         """

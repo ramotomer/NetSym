@@ -1,4 +1,4 @@
-import math
+from math import sqrt, sin, cos, pi
 
 
 def get_the_one(iterable, condition, raises=None):
@@ -16,7 +16,7 @@ def get_the_one(iterable, condition, raises=None):
         if condition(item):
             return item
     if raises is not None:
-        raise raises('Failed to "get_the_one" since it does not exist in your iterrable')
+        raise raises('Failed to "get_the_one" since it does not exist in your iterable')
     return None
 
 
@@ -52,7 +52,7 @@ def distance(p1, p2):
     """
     x1, y1 = p1
     x2, y2 = p2
-    return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+    return sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
 
 def split_by_size(string, size):
@@ -106,3 +106,17 @@ def insort(list_, item, key=lambda t: t):
         else:
             low_index = middle_index + 1
     list_.insert(low_index, item)
+
+
+def circular_coordinates(center_location: tuple, radius, count):
+    """
+    a generator of coordinates in a circular fashion around a given point.
+    :param center_location: The location of the center
+    :param radius: The radius of the circle
+    :param count: The count of points
+    :return: yields tuples of coordinates of the points
+    """
+    x, y = center_location
+    d_theta = (2 * pi) / count
+    for i in range(count):
+        yield x + (radius * cos(i * d_theta)), y + (radius * sin(i * d_theta))

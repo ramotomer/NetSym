@@ -1,9 +1,9 @@
 from itertools import chain
-from math import pi, sin, cos
 
 import pyglet
 
 from consts import *
+from usefuls import circular_coordinates
 
 
 def draw_line(point_1, point_2, color=WHITE):
@@ -93,9 +93,7 @@ def draw_circle(x, y, radius, color=WHITE):
     Draws a circle with a given center location and a radius and a color.
     :return:
     """
-    d_theta = (2 * pi) / CIRCLE_SEGMENT_COUNT
-    vertices = list(chain(*[(x + radius * cos(i * d_theta), y + radius * sin(i * d_theta))
-                            for i in range(0, CIRCLE_SEGMENT_COUNT)]))
+    vertices = list(chain(*circular_coordinates((x, y), radius, CIRCLE_SEGMENT_COUNT)))
 
     pyglet.graphics.draw(CIRCLE_SEGMENT_COUNT, pyglet.gl.GL_LINE_LOOP,
                          ('v2f', tuple(vertices)),

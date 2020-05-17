@@ -116,6 +116,8 @@ class RoutingTable:
             send_to = ON_LINK
 
         self.route_add(interface_ip.subnet(), send_to, interface_ip)
+        self.route_add(interface_ip, IPAddress.loopback(), IPAddress.loopback())
+        # TODO: BUG: when a computer doesn't have an IP and we give it one after it is created it cant send itself pings
 
     def __getitem__(self, item):
         """

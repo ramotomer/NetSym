@@ -85,9 +85,21 @@ class NoARPLayerError(NoSuchLayerError):
     """
 
 
-class TCPDoneReceiving(PacketError):
+class TCPError(PacketError):
+    """
+    A TCP related exception
+    """
+
+
+class TCPDoneReceiving(TCPError):
     """
     used to indicate that a TCP process has finished to receive information.
+    """
+
+
+class TCPDataLargerThanMaxSegmentSize(TCPError):
+    """
+    This is raised when some data is sent by TCP when it is larger than the MSS (max segment size) of that packet
     """
 
 

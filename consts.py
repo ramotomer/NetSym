@@ -12,7 +12,7 @@ def debugp(string):
     print(f"DEBUG: {string}")
 
 
-DEFAULT_CONNECTION_SPEED = 250  # pixels / second
+DEFAULT_CONNECTION_SPEED = 300  # pixels / second
 DEFAULT_CONNECTION_LENGTH = 100  # pixels
 LOOPBACK_CONNECTION_RADIUS = 15
 LOOPBACK_CONNECTION_SPEED = 200
@@ -65,6 +65,9 @@ DHCP_OFFER = "DHCP Offer"
 DHCP_REQUEST = "DHCP Request"
 DHCP_PACK = "DHCP Pack"
 
+FTP_REQUEST_PACKET = "FTP Request"
+FTP_DATA_PACKET = "FTP Data"
+
 TCP_ACK = "ACK"
 TCP_SYN = "SYN"
 TCP_FIN = "FIN"
@@ -84,20 +87,18 @@ TCP_FLAGS_DISPLAY_PRIORITY = [TCP_SYN, TCP_FIN, TCP_RST, TCP_PSH, TCP_ACK]
 TCP_RETRANSMISSION = " retransmission"
 
 TCP_MAX_SEQUENCE_NUMBER = 2**32 - 1
-TCP_RESEND_TIME = 14  # seconds
+TCP_RESEND_TIME = 10  # seconds
 TCP_USABLE_PORT_RANGE = (2 ** 15 - 2 ** 14), 2 ** 16 - 1
-TCP_MAX_WINDOW_SIZE = 3  # 2**16 - 1
-TCP_SENDING_INTERVAL = 0.3  # seconds
+TCP_MAX_WINDOW_SIZE = 5  # packets
+TCP_SENDING_INTERVAL = 0.1  # seconds
 TCP_DONE_RECEIVING = TCPDoneReceiving
 TCP_MAX_UNUSED_CONNECTION_TIME = 15  # seconds
-TCP_MAX_MSS = 1000  # 1460
+TCP_MAX_MSS = 100
 
 TCP_MSS_OPTION = "MSS"  # maximum segment size
 TCP_WINDOW_SCALE_OPTION = "Window Scale"
 TCP_SACK_OPTION = "SACK"
 TCP_TIMESTAMPS_OPTION = "Timestamps"
-
-FTP_REQUEST = "Give Me Data!"
 
 DAYTIME_PORT = 13
 FTP_PORT = 21
@@ -174,6 +175,8 @@ TCP_PSH_RETRANSMISSION_IMAGE = "packets/tcp_psh_retransmission.png"
 TCP_SYN_RETRANSMISSION_IMAGE = "packets/tcp_syn_retransmission.png"
 TCP_FIN_RETRANSMISSION_IMAGE = "packets/tcp_fin_retransmission.png"
 TCP_PACKET_IMAGE = "packets/tcp_packet.png"
+FTP_REQUEST_PACKET_IMAGE = "packets/ftp_request.png"
+FTP_DATA_PACKET_IMAGE = "packets/ftp_data.png"
 
 COMPUTER_IMAGE = "computers/endpoint.png"
 SWITCH_IMAGE = "computers/switch.png"
@@ -196,13 +199,53 @@ PORT_NUMBER_TO_IMAGE = {
 PROCESS_IMAGE_PADDING = 20, -15
 PROCESS_IMAGE_GAP = 20
 
+PACKET_TYPE_TO_IMAGE = {
+            "Ethernet": ETHERNET_IMAGE,
+            "IP": IP_IMAGE,
+            "UDP": UDP_IMAGE,
+            "STP": STP_IMAGE,
+            "ARP": {
+                ARP_REQUEST: ARP_REQUEST_IMAGE,
+                ARP_REPLY: ARP_REPLY_IMAGE,
+                ARP_GRAT: ARP_GRAT_IMAGE,
+            },
+            "DHCP": {
+                DHCP_DISCOVER: DHCP_DISCOVER_IMAGE,
+                DHCP_OFFER: DHCP_OFFER_IMAGE,
+                DHCP_REQUEST: DHCP_REQUEST_IMAGE,
+                DHCP_PACK: DHCP_PACK_IMAGE,
+            },
+            "ICMP": {
+                ICMP_REQUEST: ICMP_REQUEST_IMAGE,
+                ICMP_REPLY: ICMP_REPLY_IMAGE,
+                ICMP_TIME_EXCEEDED: ICMP_TIME_EXCEEDED_IMAGE,
+                ICMP_UNREACHABLE: ICMP_UNREACHABLE_IMAGE,
+            },
+            "TCP": {
+                TCP_SYN: TCP_SYN_IMAGE,
+                TCP_FIN: TCP_FIN_IMAGE,
+                TCP_RST: TCP_RST_IMAGE,
+                TCP_PSH: TCP_PSH_IMAGE,
+                TCP_ACK: TCP_ACK_IMAGE,
+                TCP_ACK + TCP_RETRANSMISSION: TCP_ACK_RETRANSMISSION_IMAGE,
+                TCP_PSH + TCP_RETRANSMISSION: TCP_PSH_RETRANSMISSION_IMAGE,
+                TCP_SYN + TCP_RETRANSMISSION: TCP_SYN_RETRANSMISSION_IMAGE,
+                TCP_FIN + TCP_RETRANSMISSION: TCP_FIN_RETRANSMISSION_IMAGE,
+                NO_TCP_FLAGS: TCP_PACKET_IMAGE,
+            },
+            "FTP": {
+                FTP_REQUEST_PACKET: FTP_REQUEST_PACKET_IMAGE,
+                FTP_DATA_PACKET: FTP_DATA_PACKET_IMAGE,
+            }
+        }
+
 OPAQUE = 35
 A_LITTLE_OPAQUE = 100
 NOT_OPAQUE = 255
 
 WINDOW_NAME = "NetSym"
 WINDOW_WIDTH = 1275
-WINDOW_HEIGHT = 600
+WINDOW_HEIGHT = 400
 INITIAL_WINDOW_LOCATION = 4, 50
 
 SPRITE_SCALE_FACTOR = 3

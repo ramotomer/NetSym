@@ -40,6 +40,8 @@ class PacketGraphics(ImageGraphics):
 
         self.drop_animation = None
 
+        self.buttons_id = None
+
     def move(self):
         """
         Make the packet move on the screen.
@@ -70,42 +72,6 @@ class PacketGraphics(ImageGraphics):
         :return: a string of the corresponding image's location.
         """
 
-        PACKET_TYPE_TO_IMAGE = {
-            "Ethernet": ETHERNET_IMAGE,
-            "IP": IP_IMAGE,
-            "UDP": UDP_IMAGE,
-            "STP": STP_IMAGE,
-            "ARP": {
-                ARP_REQUEST: ARP_REQUEST_IMAGE,
-                ARP_REPLY: ARP_REPLY_IMAGE,
-                ARP_GRAT: ARP_GRAT_IMAGE,
-            },
-            "DHCP": {
-                DHCP_DISCOVER: DHCP_DISCOVER_IMAGE,
-                DHCP_OFFER: DHCP_OFFER_IMAGE,
-                DHCP_REQUEST: DHCP_REQUEST_IMAGE,
-                DHCP_PACK: DHCP_PACK_IMAGE,
-            },
-            "ICMP": {
-                ICMP_REQUEST: ICMP_REQUEST_IMAGE,
-                ICMP_REPLY: ICMP_REPLY_IMAGE,
-                ICMP_TIME_EXCEEDED: ICMP_TIME_EXCEEDED_IMAGE,
-                ICMP_UNREACHABLE: ICMP_UNREACHABLE_IMAGE,
-            },
-            "TCP": {
-                TCP_SYN: TCP_SYN_IMAGE,
-                TCP_FIN: TCP_FIN_IMAGE,
-                TCP_RST: TCP_RST_IMAGE,
-                TCP_PSH: TCP_PSH_IMAGE,
-                TCP_ACK: TCP_ACK_IMAGE,
-                TCP_ACK + TCP_RETRANSMISSION: TCP_ACK_RETRANSMISSION_IMAGE,
-                TCP_PSH + TCP_RETRANSMISSION: TCP_PSH_RETRANSMISSION_IMAGE,
-                TCP_SYN + TCP_RETRANSMISSION: TCP_SYN_RETRANSMISSION_IMAGE,
-                TCP_FIN + TCP_RETRANSMISSION: TCP_FIN_RETRANSMISSION_IMAGE,
-                NO_TCP_FLAGS: TCP_PACKET_IMAGE,
-            },
-        }
-
         if hasattr(layer, "opcode"):
             return PACKET_TYPE_TO_IMAGE[type(layer).__name__][layer.opcode]
         return PACKET_TYPE_TO_IMAGE[type(layer).__name__]
@@ -123,7 +89,9 @@ class PacketGraphics(ImageGraphics):
         return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), '', self.buttons_id
 
     def end_viewing(self, user_interface):
-        """Ends the viewing of the object in the side window"""
+        """
+        Ends the viewing of the object in the side window
+        """
         user_interface.remove_buttons(self.buttons_id)
 
     def __repr__(self):

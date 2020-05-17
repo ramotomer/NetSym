@@ -25,7 +25,7 @@ from gui.user_interface.text_box import TextBox
 from gui.user_interface.text_graphics import Text
 from processes.stp_process import STPProcess
 from processes.tcp_process import TCPProcess
-from usefuls import get_the_one, distance, with_args, called_in_order
+from usefuls import get_the_one, distance, with_args, called_in_order, circular_coordinates
 
 # from gui.animation_graphics import LogoAnimation
 
@@ -464,7 +464,7 @@ class UserInterface:
         Send a ping from `computer1` to `computer2`.
         If one of them does not have an IP address, do nothing.
         :param computer1:
-        :param computer2: The `Computer` objects to send a ping between.
+        :param computer2: The `Computer` objects to send a ping betwecomputer1en.
         :return: None
         """
         if computer1.has_ip() and computer2.has_ip():
@@ -758,7 +758,7 @@ class UserInterface:
         Creates a computer with an IP fitting to the computers around it.
         It will look at the nearest computer's subnet, find the max address in that subnet and take the one above it.
         If there no other computers, takes the default IP (DEFAULT_COMPUTER_IP)
-        :return: None
+        :return: the Computer object.
         """
         x, y = MainWindow.main_window.get_mouse_location()
 
@@ -770,6 +770,7 @@ class UserInterface:
         new_computer = Computer.with_ip(given_ip)
         self.computers.append(new_computer)
         new_computer.show(x, y)
+        return new_computer
 
     def _get_largest_ip_in_nearest_subnet(self, x, y):
         """
@@ -835,7 +836,6 @@ class UserInterface:
         """
         if self.selected_object is None or not self.selected_object.is_computer:
             return
-
         computer = self.selected_object.computer
         self.send_direct_ping(computer, computer)
 
@@ -967,13 +967,17 @@ class UserInterface:
         Adds the computers that i create every time i do a test for TCP processes. saves time.
         :return:
         """
-        self.create_computer_with_ip()
-        self.create_computer_with_ip()
+        new_computers = [self.create_computer_with_ip() for _ in range(6)]
+        self.create(Switch)
         self.smart_connect()
+        for i, (x, y) in enumerate(
+                circular_coordinates(MainWindow.main_window.get_mouse_location(), 150, len(new_computers))):
+            new_computers[i].graphics.x = x
+            new_computers[i].graphics.y = y
+
         self.tab_through_selected()
+        self.selected_object.computer.open_port(21)
         self.tab_through_selected()
-        self.selected_object.computer.open_port(13)
-        self.tab_through_selected(reverse=True)
 
     # @staticmethod
     # def init_logo_animation():
