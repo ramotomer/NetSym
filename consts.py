@@ -89,7 +89,7 @@ TCP_RETRANSMISSION = " retransmission"
 TCP_MAX_SEQUENCE_NUMBER = 2**32 - 1
 TCP_RESEND_TIME = 10  # seconds
 TCP_USABLE_PORT_RANGE = (2 ** 15 - 2 ** 14), 2 ** 16 - 1
-TCP_MAX_WINDOW_SIZE = 5  # packets
+TCP_MAX_WINDOW_SIZE = 15  # packets
 TCP_SENDING_INTERVAL = 0.1  # seconds
 TCP_DONE_RECEIVING = TCPDoneReceiving
 TCP_MAX_UNUSED_CONNECTION_TIME = 15  # seconds
@@ -180,9 +180,12 @@ FTP_DATA_PACKET_IMAGE = "packets/ftp_data.png"
 
 COMPUTER_IMAGE = "computers/endpoint.png"
 SWITCH_IMAGE = "computers/switch.png"
-ROUTER_IMAGE = "computers/router.png"
+ROUTER_IMAGE = "computers/router2.png"
 HUB_IMAGE = "computers/hub.png"
 SERVER_IMAGE = "computers/server.png"
+VPN_IMAGE = "computers/VPN.png"
+PROXY_IMAGE = "computers/proxy.png"
+NAT_IMAGE = "computers/NAT.png"
 
 CONNECTION_VIEW_IMAGE = "connection_view.png"
 EXPLOSION_ANIMATION = "explosion.png"
@@ -245,7 +248,7 @@ NOT_OPAQUE = 255
 
 WINDOW_NAME = "NetSym"
 WINDOW_WIDTH = 1275
-WINDOW_HEIGHT = 400
+WINDOW_HEIGHT = 600
 INITIAL_WINDOW_LOCATION = 4, 50
 
 SPRITE_SCALE_FACTOR = 3
