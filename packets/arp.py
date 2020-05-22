@@ -1,6 +1,6 @@
-from consts import *
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
+from consts import *
 from packets.protocol import Protocol
 
 
@@ -13,13 +13,9 @@ class ARP(Protocol):
         Initiates an ARP layer instance.
         :param opcode: Whether the ARP is a request or a reply or gratuitous
         :param src_mac: The mac of the sender (MACAddress object)
-        :param dst_mac: The mac of the receiver
+        :param dst_ip: The ip of the destination.
         :param src_ip: The IPAddress address of the sender (if not given, is '0.0.0.0' (arp probe))
-        :param dst_ip: The ip of the destination. None if request or gratARP.
-
-        ### The documentation is a little wrong because i forgot the meaning of arp's lol
-        ### i didn't have the strength to fix it. i trust future Tomer.
-
+        :param dst_mac: The mac of the destination. None if request or gratARP.
         """
         super(ARP, self).__init__(3, '')  # 3rd layer.
         self.opcode = opcode
@@ -48,11 +44,23 @@ class ARP(Protocol):
         Receives an arp request (ARP instance with opcode=ARP_REQUEST) and returns
         the appropriate arp reply object.
         :param arp_request: The ARP request object
-        :param my_ip: My IP address to insert in the reply object.
+        :param my_mac: My MAC address to insert in the reply object.
         :return: The ARP reply object
         """
-        return cls(ARP_REPLY, arp_request.dst_mac, my_mac,
-                              arp_request.dst_ip, arp_request.src_ip)
+        return cls(ARP_REPLY, arp_request.dst_mac, my_mac, arp_request.dst_ip, arp_request.src_ip)
+
+    def copy(self):
+        """
+        Copies the ARP
+        :return:
+        """
+        return self.__class__(
+            self.opcode,
+            IPAddress.copy(self.src_ip),
+            IPAddress.copy(self.dst_ip),
+            MACAddress.copy(self.src_mac),
+            MACAddress.copy(self.dst_mac) if isinstance(self.dst_mac, MACAddress) else None,
+        )
 
     def __repr__(self):
         """data representation of the ARP object"""

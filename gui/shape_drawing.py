@@ -1,7 +1,9 @@
-import pyglet
-from consts import *
-from math import pi, sin, cos
 from itertools import chain
+
+import pyglet
+
+from consts import *
+from usefuls import circular_coordinates
 
 
 def draw_line(point_1, point_2, color=WHITE):
@@ -23,16 +25,16 @@ def draw_rect_no_fill(x, y, width, height):
     Draws an unfilled rectangle from the bottom left corner (x,y) with a width of
     `width` and a height of `height`.
     """
-    ix, iy, iwidth, iheight = map(int, (x, y, width, height))
+    int_x, int_y, int_width, int_height = map(int, (x, y, width, height))
     pyglet.graphics.draw(8, pyglet.gl.GL_LINES,
-                         ('v2i', (ix, iy,
-                                  ix + iwidth, iy,
-                                  ix + iwidth, iy,
-                                  ix + iwidth, iy + iheight,
-                                  ix + iwidth, iy + iheight,
-                                  ix, iy + iheight,
-                                  ix, iy + iheight,
-                                  ix, iy)),
+                         ('v2i', (int_x, int_y,
+                                  int_x + int_width, int_y,
+                                  int_x + int_width, int_y,
+                                  int_x + int_width, int_y + int_height,
+                                  int_x + int_width, int_y + int_height,
+                                  int_x, int_y + int_height,
+                                  int_x, int_y + int_height,
+                                  int_x, int_y)),
                          ('c4B', (50, 50, 50, 10) * 8)
                          )
 
@@ -45,16 +47,34 @@ def draw_rect(x, y, width, height, color=GRAY):
     :param y: coordinates of the bottom left corner of the rectangle.
     :param width:
     :param height:
+    :param color:
     :return: None
     """
-    ix, iy, iwidth, iheight = map(int, (x, y, width, height))
+    int_x, int_y, int_width, int_height = map(int, (x, y, width, height))
     pyglet.graphics.draw(4, pyglet.gl.GL_QUADS,
-                         ('v2i', (ix, iy,
-                                  ix + iwidth, iy,
-                                  ix + iwidth, iy + iheight,
-                                  ix, iy + iheight)),
+                         ('v2i', (int_x, int_y,
+                                  int_x + int_width, int_y,
+                                  int_x + int_width, int_y + int_height,
+                                  int_x, int_y + int_height)),
                          ('c3B', color * 4)
                          )
+
+
+def draw_rect_with_outline(x, y, width, height, color=GRAY, outline_color=WHITE, outline_width=DEFAULT_OUTLINE_WIDTH):
+    """
+    Draws a rectangle with an outline.
+    :param x:
+    :param y:
+    :param width:
+    :param height:
+    :param color:
+    :param outline_color:
+    :param outline_width:
+    :return:
+    """
+    draw_rect(x - outline_width/2, y - outline_width/2,
+              width + outline_width, height + outline_width, color=outline_color)
+    draw_rect(x, y, width, height, color=color)
 
 
 def draw_pause_rectangles():
@@ -73,8 +93,7 @@ def draw_circle(x, y, radius, color=WHITE):
     Draws a circle with a given center location and a radius and a color.
     :return:
     """
-    d_theta = (2 * pi) / CIRCLE_SEGMENT_COUNT
-    vertices = list(chain(*[(x + radius * cos(i * d_theta), y + radius * sin(i * d_theta)) for i in range(0, CIRCLE_SEGMENT_COUNT)]))
+    vertices = list(chain(*circular_coordinates((x, y), radius, CIRCLE_SEGMENT_COUNT)))
 
     pyglet.graphics.draw(CIRCLE_SEGMENT_COUNT, pyglet.gl.GL_LINE_LOOP,
                          ('v2f', tuple(vertices)),

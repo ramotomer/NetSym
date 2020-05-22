@@ -21,6 +21,16 @@ class ICMP(Protocol):
         """
         return ''.join([chr(letter) for letter in range(ord('a'), ord('z') + 1)])
 
+    def copy(self):
+        """
+        Copy the ICMP packet
+        :return:
+        """
+        return self.__class__(
+            self.opcode,
+            self.data.copy() if hasattr(self.data, "copy") else self.data,
+        )
+
     def __str__(self):
         """A shorter string representation of the ICMP layer"""
         return f"ICMP({self.opcode})"

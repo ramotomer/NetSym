@@ -1,6 +1,7 @@
-from gui.graphics_object import GraphicsObject
 import pyglet
+
 from consts import *
+from gui.abstracts.graphics_object import GraphicsObject
 
 
 class Text(GraphicsObject):
@@ -28,7 +29,7 @@ class Text(GraphicsObject):
 
         The coordinates `x` and `y` of the `Text` object are in the middle of
         the first line that is drawn on the screen.
-        :param text: the actuall string that is presented.
+        :param text: the actual string that is presented.
         :param x:
         :param y: coordinates
         :param parent_graphics: a `GraphicsObject` to follow
@@ -76,6 +77,7 @@ class Text(GraphicsObject):
         self.label.width = self.max_width
         self.label.multiline = True
         self.x, self.y = self.label.x, self.label.y
+        self.move()
 
     def draw(self):
         """
@@ -105,6 +107,7 @@ class Text(GraphicsObject):
         :return: None
         """
         if self.parent_graphics is None:
+            self.label.x, self.label.y = self.x, self.y
             return
         self.x, self.y = self.parent_graphics.x + self.x_padding, (self.parent_graphics.y + self.y_padding)
         self.label.x, self.label.y = self.x, self.y

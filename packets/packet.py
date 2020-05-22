@@ -1,5 +1,5 @@
 from exceptions import *
-from gui.packet_graphics import PacketGraphics
+from gui.tech.packet_graphics import PacketGraphics
 from packets.protocol import Protocol
 
 
@@ -24,6 +24,8 @@ class Packet:
         This signals the packet that it starts to be sent and that where it
         is sent from and to (Graphically).
         :param connection_graphics: a ConnectionGraphic object.
+        :param direction: The direction that the packet is going in the connection.
+        :param is_opaque: whether or not the packet is opaque (in a blocked connection)
         :return: None
         """
         self.graphics = PacketGraphics(self.deepest_layer(), connection_graphics, direction, is_opaque)
@@ -40,6 +42,16 @@ class Packet:
             layer = layer.data
         return layer
 
+    def copy(self):
+        """
+        Copies the packet.
+        This is done in flooding of switches.
+        :return: a copied `Packet` object.
+        """
+        return self.__class__(
+            self.data.copy(),
+        )
+
     def get_layers(self):
         """
         This is a generator that runs over all of the layers in the packet not including the last one (if it is a string
@@ -53,9 +65,8 @@ class Packet:
 
     def is_valid(self):
         """
-        Receives a `Packet` object and returns whether or not it is valid.
+        Returns whether or not the packet is valid.
         The check is simply if the layer indexes are increasing. (for example layer 2, layer 3 then layer 4 as expected).
-        :param packet: a `Packet` object.
         :return: None
         """
         layer_indexes = [layer.layer_index for layer in self.get_layers()]
@@ -94,4 +105,4 @@ class Packet:
 
     def multiline_repr(self):
         """Multiline representation of the packet"""
-        return f"Packet: \n{self.data.multiline_repr()}"
+        return f"\nPacket: \n{self.data.multiline_repr()}"

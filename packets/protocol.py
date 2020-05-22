@@ -26,6 +26,14 @@ class Protocol(metaclass=ABCMeta):
         return type(self.data)
 
     @abstractmethod
+    def copy(self):
+        """
+        Copy this specific protocol layer. (Not its data)
+        :return: a new `Protocol` instance
+        """
+        pass
+
+    @abstractmethod
     def multiline_repr(self):
         """
         The multiline representation of the layer, used for the VIEW_MODE in the `UserInterface` class.

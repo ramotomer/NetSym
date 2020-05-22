@@ -1,35 +1,6 @@
 from consts import *
 from exceptions import NoIPAddressError
-from processes.process import Process, WaitingForPacket, ReturnedPacket, WaitingForPacketWithTimeout, Timeout
-
-
-def arp_reply_from(ip_address):
-    """Returns a function that tests if the packet given to it is an ARP reply for the `ip_address`"""
-    def tester(packet):
-        return ("ARP" in packet) and (packet["ARP"].opcode == ARP_REPLY) and (packet["ARP"].src_ip == ip_address)
-    return tester
-
-
-def request_address(computer, address):
-    """
-    Handle the sending of ARPs from a computer to request a certain address.
-    Knows to send a couple of ARPs and to give up if it does not get a reply.
-    :param computer: the `Computer` object that sends the ARPs
-    :param address: an `IPAddress` object that is requested.
-    :return: yields the appropriate `WaitingForPacket` namedtuple-s.
-    """
-    if address is None:
-        return
-
-    if address in computer.arp_cache:
-        return
-
-    returned_packets = ReturnedPacket()
-    for _ in range(ARP_RESEND_COUNT):
-        computer.send_arp_to(address)
-        yield WaitingForPacketWithTimeout(arp_reply_from(address), returned_packets, Timeout(ARP_RESEND_TIME))
-        if returned_packets.has_packets():  # if this was not timed-out, so we got an arp reply.
-            break
+from processes.process import Process, WaitingForPacket, ReturnedPacket, WaitingFor
 
 
 class SendPing(Process):
@@ -91,13 +62,8 @@ class SendPing(Process):
         if self.ping_opcode == ICMP_REQUEST:
             self.computer.print(f"pinging {self.dst_ip} with some bytes")
 
-        ip_for_the_mac = self.computer.routing_table[self.dst_ip].ip_address # the IP we use to get our destination MAC address
-
-        yield from request_address(self.computer, ip_for_the_mac)
-
-        if not ip_for_the_mac in self.computer.arp_cache:  # the ARPs were not answered
-            self.computer.print("Destination unreachable :(")
-            return
+        ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip, self)
+        yield WaitingFor(done_searching)
 
         self._send_the_ping(ip_for_the_mac)
 
@@ -109,4 +75,3 @@ class SendPing(Process):
     def __repr__(self):
         """The string representation of the SendPing process"""
         return "SendPing process"
-

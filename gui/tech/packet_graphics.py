@@ -1,5 +1,8 @@
-from gui.image_graphics import ImageGraphics
 from consts import *
+from gui.abstracts.animation_graphics import AnimationGraphics
+from gui.abstracts.image_graphics import ImageGraphics
+from gui.main_loop import MainLoop
+from usefuls import with_args
 
 
 class PacketGraphics(ImageGraphics):
@@ -28,11 +31,16 @@ class PacketGraphics(ImageGraphics):
                             scale_factor=PACKET_SCALE_FACTOR,
                             is_opaque=is_opaque)
         self.is_packet = True
+        self.is_pressable = True
 
         self.connection_graphics = connection_graphics
         self.direction = direction
         self.progress = 0
         self.str = str(deepest_layer)
+
+        self.drop_animation = None
+
+        self.buttons_id = None
 
     def move(self):
         """
@@ -44,6 +52,17 @@ class PacketGraphics(ImageGraphics):
         self.x, self.y = self.connection_graphics.packet_location(self.direction, self.progress)
         super(PacketGraphics, self).move()
 
+        # if self.drop_animation is not None and self.drop_animation.is_finished:
+        #   MainLoop.instance.unregister_graphics_object(self.drop_animation)
+
+    def drop(self):
+        """
+        Displays the animation of the packet when it is dropped by PL in a connection.
+        :return: None
+        """
+        MainLoop.instance.unregister_graphics_object(self)
+        AnimationGraphics(EXPLOSION_ANIMATION, self.x, self.y)
+
     @staticmethod
     def image_from_packet(layer):
         """
@@ -53,33 +72,27 @@ class PacketGraphics(ImageGraphics):
         :return: a string of the corresponding image's location.
         """
 
-        PACKET_TYPE_TO_IMAGE = {
-            "Ethernet": ETHERNET_IMAGE,
-            "IP": IP_IMAGE,
-            "UDP": UDP_IMAGE,
-            "STP": STP_IMAGE,
-            "ARP": {
-                ARP_REQUEST: ARP_REQUEST_IMAGE,
-                ARP_REPLY: ARP_REPLY_IMAGE,
-                ARP_GRAT: ARP_GRAT_IMAGE,
-            },
-            "DHCP": {
-                DHCP_DISCOVER: DHCP_DISCOVER_IMAGE,
-                DHCP_OFFER: DHCP_OFFER_IMAGE,
-                DHCP_REQUEST: DHCP_REQUEST_IMAGE,
-                DHCP_PACK: DHCP_PACK_IMAGE,
-            },
-            "ICMP": {
-                ICMP_REQUEST: ICMP_REQUEST_IMAGE,
-                ICMP_REPLY: ICMP_REPLY_IMAGE,
-                ICMP_TIME_EXCEEDED: ICMP_TIME_EXCEEDED_IMAGE,
-                ICMP_UNREACHABLE: ICMP_UNREACHABLE_IMAGE,
-            },
-        }
-
         if hasattr(layer, "opcode"):
             return PACKET_TYPE_TO_IMAGE[type(layer).__name__][layer.opcode]
         return PACKET_TYPE_TO_IMAGE[type(layer).__name__]
+
+    def start_viewing(self, user_interface):
+        """
+        Starts viewing the packet graphics object in the side-window view.
+        :param user_interface: the `UserInterface` object we can use the methods of it.
+        :return: a tuple <display sprite>, <display text>, <new button id>
+        """
+        buttons = {
+            "Drop (alt+d)": with_args(user_interface.drop_packet, self),
+        }
+        self.buttons_id = user_interface.add_buttons(buttons)
+        return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), '', self.buttons_id
+
+    def end_viewing(self, user_interface):
+        """
+        Ends the viewing of the object in the side window
+        """
+        user_interface.remove_buttons(self.buttons_id)
 
     def __repr__(self):
         return self.str

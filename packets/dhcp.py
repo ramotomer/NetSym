@@ -1,8 +1,12 @@
-from packets.protocol import Protocol
 from collections import namedtuple
 
+from packets.protocol import Protocol
 
-DHCPData = namedtuple("DHCPData", "given_ip given_gateway given_dns_server")
+DHCPData = namedtuple("DHCPData", [
+    "given_ip",
+    "given_gateway",
+    "given_dns_server",
+])
 
 
 class DHCP(Protocol):
@@ -20,6 +24,20 @@ class DHCP(Protocol):
         gateway_string = f"given gateway:\n{given_gateway}" if given_gateway is not None else ''
         dns_string = f"given DNS server:\n{given_dns_server}" if given_dns_server is not None else ''
         return '\n'.join([ip_string, gateway_string, dns_string])
+
+    def copy(self):
+        """
+        Copy the DHCP packets
+        :return:
+        """
+        return self.__class__(
+            self.opcode,
+            DHCPData(
+                self.data.given_ip,
+                self.data.given_gateway,
+                self.data.given_dns_server,
+            ),
+        )
 
     def __repr__(self):
         """The string representation of the DHCP packet"""

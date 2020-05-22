@@ -13,6 +13,17 @@ class UDP(Protocol):
         self.src_port = source_port
         self.dst_port = destination_port
 
+    def copy(self):
+        """
+        Copy the UDP packet
+        :return:
+        """
+        return self.__class__(
+            self.src_port,
+            self.dst_port,
+            self.data.copy() if hasattr(self.data, "copy") else self.data,
+        )
+
     def __str__(self):
         """A simple string representation of the packet"""
         return f"UDP from port {self.src_port} to port {self.dst_port})"

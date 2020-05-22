@@ -1,0 +1,99 @@
+from consts import *
+from exceptions import UnknownPortError
+from gui.abstracts.graphics_object import GraphicsObject
+from gui.abstracts.image_graphics import ImageGraphics
+from gui.main_loop import MainLoop
+
+
+class ProcessGraphicsList(GraphicsObject):
+    """
+    A graphics object which is just a list of `ProcessGraphics`
+    """
+    def __init__(self, server_graphics):
+        """
+        initiates the list empty.
+        """
+        super(ProcessGraphicsList, self).__init__(*server_graphics.location, do_render=False)
+        self.server_graphics = server_graphics
+        self.child_graphics_objects = []
+        self.process_count = 0
+
+    def add(self, port):
+        """Add a new process to the list"""
+        self.child_graphics_objects.append(ProcessGraphics(port, self.server_graphics, self.process_count))
+        self.process_count += 1
+
+    def remove(self, port):
+        """
+        Removes a process from the list and unregisters it.
+        :param port:
+        :return:
+        """
+        found = False
+        for process_graphics in self.child_graphics_objects[:]:
+            if process_graphics.port == port:
+                MainLoop.instance.unregister_graphics_object(process_graphics)
+                found = True
+            elif found:
+                process_graphics.process_index -= 1
+        if not found:
+            raise UnknownPortError(f"The port is not the process list!!! {port}")
+
+    def clear(self):
+        """
+        Clears the list
+        :return:
+        """
+        for process_graphics in self.child_graphics_objects[:]:
+            self.remove(process_graphics.port)
+        self.process_count = 0
+
+    def __contains__(self, item):
+        """
+        Enables the notation '<port num> in <process graphics list>'
+        :param item: a port number
+        :return:
+        """
+        for process_graphics in self.child_graphics_objects:
+            if process_graphics.port == item:
+                return True
+        return False
+
+    def __iter__(self):
+        """enables running over the list"""
+        return iter([pg.port for pg in self.child_graphics_objects])
+
+    def draw(self):
+        """Is not drawn..."""
+        pass
+
+
+class ProcessGraphics(ImageGraphics):
+    """
+    The graphics of a TCP process that is running on a server
+    """
+    def __init__(self, port, server_graphics, process_index):
+        """
+        Initiates the process graphics from a port number
+        :param image:
+        :param x:
+        :param y:
+        """
+        super(ProcessGraphics, self).__init__(IMAGES.format(PORT_NUMBER_TO_IMAGE[port]), *server_graphics.location, True, scale_factor=PROCESS_IMAGE_SCALE_FACTOR)
+        self.server_graphics = server_graphics
+        self.process_index = process_index
+        self.port = port
+
+    def is_mouse_in(self):
+        """Cannot be pressed"""
+        return False
+
+    def move(self):
+        """
+        Moves the process according to the location of the server it runs on.
+        :return: None
+        """
+        pad_x, pad_y = PROCESS_IMAGE_PADDING
+        self.x = self.server_graphics.x + pad_x
+        self.y = self.server_graphics.y + pad_y + (self.process_index * PROCESS_IMAGE_GAP)
+        super(ProcessGraphics, self).move()

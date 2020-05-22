@@ -1,3 +1,4 @@
+from address.ip_address import IPAddress
 from consts import *
 from packets.protocol import Protocol
 
@@ -16,6 +17,18 @@ class IP(Protocol):
         self.src_ip = src_ip
         self.dst_ip = dst_ip
         self.ttl = ttl
+
+    def copy(self):
+        """
+        Copy the IP packet
+        :return:
+        """
+        return self.__class__(
+            IPAddress.copy(self.src_ip),
+            IPAddress.copy(self.dst_ip),
+            self.ttl,
+            self.data.copy(),
+        )
 
     def __repr__(self):
         """The data representation of the IP layer object"""

@@ -38,6 +38,8 @@ class Interface:
         self.is_blocked = False
         self.accepting = None  # This is the only type of packet that is accepted when the interface is blocked.
 
+        self.is_powered_on = True
+
     @property
     def connection_length(self):
         """
@@ -78,7 +80,7 @@ class Interface:
         Receives a packet and determines whether it is destined for this Interface (or is broadcast)
         On the second layer
         :param packet: a `Packet` object.
-        :return: whether the detination MAC address is of this Interface
+        :return: whether the destination MAC address is of this Interface
         """
         return self.is_directly_for_me(packet) or (packet["Ethernet"].dst_mac.is_broadcast())
 
@@ -150,15 +152,21 @@ class Interface:
         :param packet: The full packet `Packet` object.
         :return: None
         """
+        if not self.is_powered_on:
+            return
+
         if self.is_connected() and (not self.is_blocked or (self.is_blocked and self.accepting in packet)):
             self.connection.send(packet)
 
     def receive(self):
         """
         Returns the packet that was received (if one was received) else, returns None.
-        If the interface is not in promiscuous, only retruns packets that are directed for it (and broadcast).
+        If the interface is not in promiscuous, only returns packets that are directed for it (and broadcast).
         :return: A `Packet` object that was sent from the other side of the connection.
         """
+        if not self.is_powered_on:
+            return
+
         if not self.is_connected():
             raise InterfaceNotConnectedError("The interface is not connected so it cannot receive packets!!!")
 
@@ -181,7 +189,7 @@ class Interface:
 
     def send_with_ethernet(self, dst_mac, protocol):
         """
-        Receives a `Procotol` object, wraps it with ethernet and sends it.
+        Receives a `Protocol` object, wraps it with ethernet and sends it.
         :param protocol: a `Protocol` instance.
         :return: None
         """

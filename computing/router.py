@@ -1,21 +1,10 @@
 from computing.computer import Computer
 from computing.routing_table import RoutingTable
 from consts import *
-from gui.computer_graphics import ComputerGraphics
 from gui.main_loop import MainLoop
+from gui.tech.computer_graphics import ComputerGraphics
 from processes.dhcp_process import DHCPServer
-from processes.ping_process import request_address
-from processes.process import Process
-
-
-def arp_reply_from(source_ip):
-    """
-    returns a condition for a packet. the condition is a function that receives a packet and returns a boolean.
-    The condition here checks if the packet is an arp reply from `source_ip`.
-    :param source_ip: an `IPAddress` object.
-    :return: a condition function.
-    """
-    return lambda p: ("ARP" in p) and (p["ARP"].opcode == ARP_REPLY) and (p["ARP"].src_ip == source_ip)
+from processes.process import Process, WaitingFor
 
 
 class RoutePacket(Process):
@@ -45,7 +34,7 @@ class RoutePacket(Process):
         if "0.0.0.0" in [self.packet["IP"].dst_ip.string_ip, self.packet["IP"].src_ip.string_ip]:
             return False
 
-        if self.packet["IP"].src_ip.is_broadcast():
+        if self.packet["IP"].src_ip.is_broadcast() or self.packet["Ethernet"].dst_mac.is_broadcast():
             return False
 
         return True
@@ -69,11 +58,11 @@ class RoutePacket(Process):
         If not, return False
         :return: `bool`
         """
-
         dst_ip = self.packet["IP"].dst_ip
+        routing_interface = self.computer.routing_table[dst_ip].ip_address
+        gateway = self.computer.routing_table.default_gateway.ip_address
 
-        if self.computer.routing_table[dst_ip].ip_address == self.computer.routing_table.default_gateway.ip_address and \
-                self.computer.routing_table.default_gateway.ip_address is None:
+        if routing_interface == gateway and gateway is None:
             self._send_icmp_unreachable()
             return True
         return False
@@ -105,13 +94,14 @@ class RoutePacket(Process):
         time_exceeded = self._decrease_ttl()
 
         if not time_exceeded:
-            yield from request_address(self.computer, dst_ip)
-            if dst_ip not in self.computer.arp_cache:          # if no one answered the arp
+            ip_for_the_mac, done_searching = self.computer.request_address(dst_ip, self, False)
+            yield WaitingFor(done_searching)
+            if ip_for_the_mac not in self.computer.arp_cache:          # if no one answered the arp
                 self._send_icmp_unreachable()
                 return
 
             interface = self.computer.get_interface_with_ip(self.computer.routing_table[dst_ip].interface_ip)
-            interface.send_with_ethernet(self.computer.arp_cache[dst_ip].mac, self.packet["IP"])
+            interface.send_with_ethernet(self.computer.arp_cache[ip_for_the_mac].mac, self.packet["IP"])
 
     def __repr__(self):
         """The string representation of the process"""

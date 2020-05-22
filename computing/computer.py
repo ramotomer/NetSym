@@ -7,15 +7,19 @@ from computing.interface import Interface
 from computing.routing_table import RoutingTable, RoutingTableItem
 from consts import *
 from exceptions import *
-from gui.computer_graphics import ComputerGraphics
 from gui.main_loop import MainLoop
+from gui.tech.computer_graphics import ComputerGraphics
 from packets.arp import ARP
 from packets.dhcp import DHCP, DHCPData
 from packets.icmp import ICMP
 from packets.ip import IP
+from packets.tcp import TCP
 from packets.udp import UDP
+from processes.arp_process import ARPProcess
+from processes.daytime_process import DAYTIMEServerProcess
 from processes.dhcp_process import DHCPClient
 from processes.dhcp_process import DHCPServer
+from processes.ftp_process import FTPServerProcess
 from processes.ping_process import SendPing
 from usefuls import get_the_one
 
@@ -38,6 +42,15 @@ class Computer:
 
     The computer runs many `Process`-s that are all either currently running or waiting for a certain packet to arrive.
     """
+
+    PORTS_TO_PROCESSES = {
+        DAYTIME_PORT: DAYTIMEServerProcess,
+        FTP_PORT: FTPServerProcess,
+        SSH_PORT: None,
+        HTTP_PORT: None,
+        HTTPS_PORT: None,
+    }
+
     def __init__(self, name=None, os=OS_WINDOWS, gateway=None, *interfaces):
         """
         Initiates a Computer object.
@@ -71,7 +84,10 @@ class Computer:
         self.packet_types_and_handlers = {
             "ARP": self._handle_arp,
             "ICMP": self._handle_ping,
+            "TCP": self._handle_tcp,
         }
+
+        self.open_ports = [] # a list of the ports that are open on this computer.
 
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ the fact that it is 'pausable' means that when the space bar is pressed and the program pauses, this method does not run.
@@ -118,21 +134,26 @@ class Computer:
         :param y: Coordinates to initiate the `GraphicsObject` at.
         :return: None
         """
-        self.graphics = ComputerGraphics(x, y, self)
+        self.graphics = ComputerGraphics(x, y, self, COMPUTER_IMAGE if not self.open_ports else SERVER_IMAGE)
         self.loopback.connection.connection.show(self.graphics)
 
     def print(self, string):
         """
         Prints out a string to the computer output.
-        :param string: The stirng to print.
+        :param string: The string to print.
         :return: None
         """
         self.graphics.child_graphics_objects.console.write(string)
 
     def power(self):
         """Powers the computer on or off."""
-        self.graphics.toggle_opacity()
+
+        self.waiting_processes.clear()
+
         self.is_powered_on = not self.is_powered_on
+        for interface in self.all_interfaces:
+            interface.is_powered_on = self.is_powered_on
+        self.graphics.toggle_opacity()
 
     def available_interface(self, ip_address=None):
         """
@@ -199,6 +220,23 @@ class Computer:
             raise NoSuchInterfaceError("The computer has no MAC address since it has no network interfaces!!!")
         return self.macs[0]
 
+    def add_remove_interface(self, name):
+        """
+        Adds a new interface to this computer with a given name
+        :param name: a string or None, if None, chooses random name.
+        :return: None
+        """
+        interface = get_the_one(self.interfaces, lambda i: i.name == name)
+        if interface is None:
+            self.interfaces.append(Interface(MACAddress.randomac(), name=name))
+            return
+
+        if interface.is_connected():
+            raise DeviceAlreadyConnectedError("Cannot remove a connected interface!!!")
+        if interface.has_ip():
+            self.routing_table.remove_interface(interface)
+        self.interfaces.remove(interface)
+
     def has_this_ip(self, ip_address):
         """Returns whether or not this computer has a given IP address. (so whether or not if it is its address)"""
         if ip_address is None:
@@ -255,6 +293,23 @@ class Computer:
                 dst_ip = packet["IP"].src_ip
                 self.start_ping_process(dst_ip, ICMP_REPLY)
 
+    def _handle_tcp(self, packet, interface):
+        """
+        Receives a TCP packet and decides if it is a TCP SYN to an open port, starts a server process or sends a TCP RST
+        accordingly
+        :param packet: a `Packet` object to test
+        :param interface: the `Interface` that received it.
+        :return: None
+        """
+        if not self.has_ip() or not self.has_this_ip(packet["IP"].dst_ip):
+            return
+
+        if {TCP_SYN} == packet["TCP"].flags:
+            dst_port = packet["TCP"].dst_port
+            if dst_port not in self.open_ports:
+                self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip,
+                             TCP(packet["TCP"].dst_port, packet["TCP"].src_port, 0, {TCP_RST}))
+
     def _handle_special_packet(self, packet, receiving_interface):
         """
         Checks if the packet that was received is of some special type that requires handling (ARP, ICMP, TPC-SYN) and
@@ -271,6 +326,7 @@ class Computer:
         """
         Starts sending a ping to another computer.
         :param ip_address: an `IPAddress` object to ping.
+        :param opcode: the opcode of the ping to send
         :return: None
         """
         self.start_process(SendPing, ip_address, opcode)
@@ -310,19 +366,43 @@ class Computer:
         self.kill_process(DHCPClient)  # if currently asking for dhcp, stop it
         self.start_process(DHCPClient)
 
+    def open_port(self, port_number):
+        """
+        Opens a port on the computer. Starts the process that is behind it.
+        :param port_number:
+        :return:
+        """
+        if port_number not in self.PORTS_TO_PROCESSES:
+            raise PopupWindowWithThisError(f"{port_number} is an unknown port!!!")
+
+        process = self.PORTS_TO_PROCESSES[port_number]
+        if port_number in self.open_ports:
+            if process is not None:
+                self.kill_process(process)
+            self.open_ports.remove(port_number)
+        else:
+            if process is not None:
+                self.start_process(self.PORTS_TO_PROCESSES[port_number])
+            self.open_ports.append(port_number)
+
+        self.graphics.update_image()
+
     def update_routing_table(self):
         """updates the routing table according to the interfaces at the moment"""
         self.routing_table = RoutingTable.create_default(self)
 
-    def set_default_gateway(self, gateway_ip, interface_ip):
+    def set_default_gateway(self, gateway_ip, interface_ip=None):
         """
-        Sets the default gateway of the computer in the routing table with the interface IP that the packets to that gateway
-        will be sent from.
-        :param gateway_ip: The `IPAaddress` of the default gateway.
+        Sets the default gateway of the computer in the routing table with the interface IP that the packets to
+        that gateway will be sent from.
+        :param gateway_ip: The `IPAddress` of the default gateway.
         :param interface_ip: The `IPAddress` of the interface that will send the packets to the gateway.
         :return: None
         """
-        self.routing_table[IPAddress("0.0.0.0/0")] = RoutingTableItem(gateway_ip, interface_ip)
+        interface_ip_address = interface_ip
+        if interface_ip is None:
+            interface_ip_address = self.same_subnet_interfaces(gateway_ip)[0].ip
+        self.routing_table[IPAddress("0.0.0.0/0")] = RoutingTableItem(gateway_ip, interface_ip_address)
 
     def set_ip(self, interface_name, string_ip):
         """
@@ -360,7 +440,9 @@ class Computer:
         interface.is_sniffing = not interface.is_sniffing
 
     def _sniff_packet(self, packet):
-        """Receives a `Packet` and prints it out to the computer's console. should be called only if the packet was sniffed"""
+        """
+        Receives a `Packet` and prints it out to the computer's console. should be called only if the packet was sniffed
+        """
         deepest = packet.deepest_layer()
         packet_str = deepest.opcode if hasattr(deepest, "opcode") else type(deepest).__name__
         self.print(f"({self.packets_sniffed}) sniff: {packet_str}")
@@ -376,17 +458,40 @@ class Computer:
 
 # -------------------------v packet sending and wrapping related methods v ---------------------------------------------
 
+    def send(self, packet):
+        """
+        Takes a full and ready packet and just sends it.
+        :param packet: a valid `Packet` object.
+        :return: None
+        """
+        if packet.is_valid():
+            interface = self.get_interface_with_ip(self.routing_table[packet["IP"].dst_ip].interface_ip)
+            interface.send(packet)
+
     def send_to(self, dst_mac, dst_ip, packet):
         """
         Receives destination addresses and a packet, wraps the packet with IP
         and Ethernet as required and sends it out.
         :param dst_mac: destination `MACAddress` of the packet
         :param dst_ip: destination `IPAddress` of the packet
-        :param packet: packet to wrap. Could be anything, should be something the destination comuter expects.
+        :param packet: packet to wrap. Could be anything, should be something the destination computer expects.
         :return: None
         """
+        full_packet = self.ip_wrap(dst_mac, dst_ip, packet)
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
-        interface.send_with_ethernet(dst_mac, IP(interface.ip, dst_ip, TTLS[self.os], packet))
+        interface.send(full_packet)
+
+    def ip_wrap(self, dst_mac, dst_ip, protocol):
+        """
+        Takes in some protocol and wraps it up in Ethernet and IP with the appropriate MAC and IP addresses and TTL all
+        ready to be sent.
+        :param dst_mac:
+        :param dst_ip:
+        :param protocol:  The thing to wrap in IP
+        :return: a valid `Packet` object.
+        """
+        interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
+        return interface.ethernet_wrap(dst_mac, IP(interface.ip, dst_ip, TTLS[self.os], protocol))
 
     def send_arp_to(self, ip_address):
         """
@@ -497,7 +602,7 @@ class Computer:
         Sends a `DHCP_PACK` that tells the DHCP client all of the new data it needs to update (IP, gateway, DNS)
         :param client_mac: The `MACAddress` of the client.
         :param dhcp_data:  a `DHCPData` namedtuple (from 'dhcp_process.py') that is sent in the DHCP pack.
-        :param session_interface: The `Interface` that is running the seesion with the client.
+        :param session_interface: The `Interface` that is running the session with the client.
         :return: None
         """
         dst_ip = dhcp_data.given_ip
@@ -515,6 +620,21 @@ class Computer:
         """
         return not any(interface.has_this_ip(ip_address) for interface in self.interfaces)
 
+    def request_address(self, ip_address, requesting_process, kill_process_if_not_found=True):
+        """
+        Receives an `IPAddress` and sends ARPs to it until it finds it or it did not answer for a long time.
+        This function actually starts a process that does that.
+        :param ip_address: an `IPAddress` object to look for
+        :param requesting_process: the process that is sending the ARP request.
+        :param kill_process_if_not_found: whether or not to kill the process if the arp was not answered
+        :return: The actual IP address it is looking for (The IP of your gateway (or the original if in the same subnet))
+        and a condition to test whether or not the process is done looking for the IP.
+        """
+        ip_for_the_mac = self.routing_table[ip_address].ip_address
+        kill_process = requesting_process if kill_process_if_not_found else None
+        self.start_process(ARPProcess, ip_for_the_mac, kill_process)
+        return ip_for_the_mac, lambda: ip_for_the_mac in self.arp_cache
+
     # ------------------------- v process related methods v ----------------------------------------------------
 
     def start_process(self, process_type, *args):
@@ -531,7 +651,8 @@ class Computer:
         """
         self.waiting_processes.append((process_type(self, *args), None))
 
-    def run_process(self, process):
+    @staticmethod
+    def run_process(process):
         """
         This function receives a process and runs it until yielding a `WaitingForPacket` namedtuple.
         Returns the yielded `WaitingForPacket`.
@@ -555,7 +676,8 @@ class Computer:
 
     def is_process_running(self, process_type):
         """
-        Receives a type of a `Process` subclass and returns whether or not there is a process of that type that is running.
+        Receives a type of a `Process` subclass and returns whether or not there is a process of that type that
+        is running.
         :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
         :return: `bool`
         """
@@ -566,7 +688,8 @@ class Computer:
 
     def get_running_process(self, process_type):
         """
-        Receives a type of a `Process` subclass and returns the process object of the `Process` that is currently running in the computer.
+        Receives a type of a `Process` subclass and returns the process object of the `Process` that is currently
+        running in the computer.
         If no such process is running in the computer, raise NoSuchProcessError
         :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
         :return: `bool`
@@ -593,7 +716,8 @@ class Computer:
 
     def _handle_processes(self):
         """
-        Handles all of running the processes, runs the ones that should be run and puts them back to the `waiting_processes`
+        Handles all of running the processes, runs the ones that should be run and puts them back to the
+         `waiting_processes`
         list if they are now waiting.
         Read more about processes at 'process.py'
         :return: None
@@ -607,11 +731,13 @@ class Computer:
     def _get_ready_processes(self):
         """
         Returns a list of the waiting processes that finished waiting and are ready to run.
-        :return: a list of `Process` objects that are ready to run. (they will run in the next call to `self._handle_processes`
+        :return: a list of `Process` objects that are ready to run. (they will run in the next call to
+        `self._handle_processes`
         """
         new_packets = self._new_packets_since(self.process_last_check)
         self.process_last_check = MainLoop.instance.time()
 
+        self._kill_dead_processes()
         ready_processes = self._start_new_processes()
         self._decide_ready_processes_no_packet(ready_processes)
 
@@ -622,11 +748,22 @@ class Computer:
 
         self._check_process_timeouts(ready_processes)
         return ready_processes
+
+    def _kill_dead_processes(self):
+        """
+        Kills all of the process that have the `kill_me` attribute set.
+        This allows them to terminate themselves from anywhere inside them
+        :return: None
+        """
+        for waiting_process in self.waiting_processes[:]:
+            process, _ = waiting_process
+            if process.kill_me:
+                self.waiting_processes.remove(waiting_process)
     
     def _decide_ready_processes_no_packet(self, ready_processes):
         """
         Receives a list of the already ready processes,
-        Goes over the waiting processes and sees if one of them is waiting for a cerain condition without a packet (if 
+        Goes over the waiting processes and sees if one of them is waiting for a certain condition without a packet (if
         its `WaitingForPacket` object is actually `WaitingFor`.
         If so, it tests its condition. If the condition is true, appends the process to the `ready_processes` list and 
         removes it from the `waiting_processes` list.
@@ -634,25 +771,30 @@ class Computer:
         """
         for waiting_process in self.waiting_processes[:]:
             if not hasattr(waiting_process.waiting_for, "value"):
-                if waiting_process.waiting_for.condition() == True:
+                if waiting_process.waiting_for.condition():
                     self.waiting_processes.remove(waiting_process)
                     ready_processes.append(waiting_process.process)
 
     def _decide_if_process_ready_by_packet(self, waiting_process, received_packet, ready_processes):
         """
-        This method receives a waiting process, a possible packet that matches its `WaitingForPacket` condition and a list of
-        already ready processes.
-        If the packet matches the condition of the `WaitingForPacket` of the process, this adds the process to `ready_processes`
-        and removes it from the `self.waiting_processes` list.
-        It enables the same process to receive a number of different packets if the condition fits to a number of packets
-        in the run. (mainly in DHCP Server when all of the computers send in the same time to the same process...)
+        This method receives a waiting process, a possible packet that matches its `WaitingForPacket` condition
+        and a list of already ready processes.
+        If the packet matches the condition of the `WaitingForPacket` of the process, this adds the process
+        to `ready_processes` and removes it from the `self.waiting_processes` list.
+        It enables the same process to receive a number of different packets if the condition fits to a
+        number of packets in the run. (mainly in DHCP Server when all of the computers send in the same time to the same
+        process...)
         :param waiting_process: a `WaitingProcess` namedtuple.
         :param received_packet: a `ReceivedPacket` namedtuple.
-        :param ready_processes: a list of already ready processes that will run in the next call to `self._handle_processes`.
+        :param ready_processes: a list of already ready processes that will run in the next call to
+        `self._handle_processes`.
         :return: whether or not the process is ready and was added to `ready_processes`
         """
         process, waiting_for = waiting_process
         packet, _, receiving_interface = received_packet
+
+        if not hasattr(waiting_for, "value"):
+            return False
 
         if waiting_for.condition(packet) == True:
             waiting_for.value.packets[packet] = receiving_interface  # this is the behaviour the `Process` object expects
@@ -691,6 +833,7 @@ class Computer:
         if not self.is_powered_on:
             return
 
+        self.received.clear()
         for interface in self.all_interfaces:
             if not interface.is_connected():
                 continue

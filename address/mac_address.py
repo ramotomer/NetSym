@@ -1,6 +1,7 @@
+import random
+
 from consts import *
 from exceptions import *
-import random
 from usefuls import is_hex
 
 
@@ -65,6 +66,15 @@ class MACAddress:
         """Returns whether or not this mac is the 0s mac"""
         return self.string_mac == "00:00:00:00:00:00"
 
+    @classmethod
+    def copy(cls, mac_address):
+        """
+        Copy the mac address and return a new different object.
+        :param mac_address: a `MACAddress` object.
+        :return: a `MACAddress` object.
+        """
+        return cls(mac_address.string_mac)
+
     @staticmethod
     def is_valid(address):
         """
@@ -74,14 +84,13 @@ class MACAddress:
         :return: Whether or not it is valid.
         """
         splitted_address = address.split(MAC_ADDRESS_SEPARATOR)
-        return len(splitted_address) == 6 and \
-               all([is_hex(part) and len(part) == 2 for part in splitted_address])
+        return len(splitted_address) == 6 and all([is_hex(part) and len(part) == 2 for part in splitted_address])
 
     @staticmethod
     def as_bytes(address):
         """
         Returns a byte representation of the MAC address
-        :param mac_address_object: A MACAddress object.
+        :param address: A MACAddress object.
         :return: a `bytes` object which is the representation of the mac address.
         """
         address_as_numbers = [int(hex_num, 16) for hex_num in address.string_mac.split(MAC_ADDRESS_SEPARATOR)]

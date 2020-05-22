@@ -1,12 +1,12 @@
 from abc import ABCMeta, abstractmethod
-from exceptions import *
+
 from gui.main_loop import MainLoop
 
 
 class GraphicsObject(metaclass=ABCMeta):
     """
     This is an abstract class that its instances are things that will be drawn on the screen, for example the images of
-    the compuers, the packets the lines that connect the computers and the buttons.
+    the computer, the packets the lines that connect the computers and the buttons.
 
     They have to have a `draw`, a `move` and a `load` method.
     When a graphics object is created, it inserts itself into the main loop of the program.
@@ -34,6 +34,9 @@ class GraphicsObject(metaclass=ABCMeta):
         self.is_button = False
         self.is_computer = False
         self.is_packet = False
+        self.is_image = False
+        self.is_connection = False
+        self.is_pressable = False
 
         if self.do_render:
             MainLoop.instance.register_graphics_object(self, is_in_background)
@@ -53,10 +56,26 @@ class GraphicsObject(metaclass=ABCMeta):
         """
         return False
 
+    def start_viewing(self, user_interface):
+        """
+        Returns a tuple a `pyglet.sprite.Sprite` object and a string that should be shown on the side window
+        when this object is pressed. Also returns the buttons id of the buttons that are added by this object.
+        :param user_interface: a `UserInterface` object to use its methods for initiating buttons in the side window.
+        :return: <pyglet.sprite.Sprite>, <str>, <buttons id>
+        """
+        return None, '', 0
+
+    def end_viewing(self, user_interface):
+        """
+        Unregisters all of the objects that the `start_viewing` method initiated. (mainly `Text` and `Button`s)
+        :return: None
+        """
+        pass
+
     def load(self):
         """
         The function that should load the object.
-        It is called only once at the start of the objct's lifetime.
+        It is called only once at the start of the object's lifetime.
         :return: None
         """
         pass
