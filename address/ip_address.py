@@ -178,7 +178,7 @@ class IPAddress:
         """
         Receive an IPAddress and return a copy of that object.
         :param other: IPAddress object
-        :return: another differrent but identical IPAddress object.
+        :return: another different but identical IPAddress object.
         """
         return cls(other.string_ip + IP_SUBNET_SEPARATOR + str(other.subnet_mask))
 
