@@ -288,7 +288,12 @@ class UserInterface:
         if self.selected_object is None:
             self.selected_object = available_graphics_objects[-1]
         else:
-            index = available_graphics_objects.index(self.selected_object)
+            try:
+                index = available_graphics_objects.index(self.selected_object)
+            except ValueError:
+                raise NoSuchGraphicsObjectError(
+                    f"This object is not pressable (`object.is_pressable==False`) {self.selected_object}")
+
             self.selected_object = available_graphics_objects[index - 1]
         self.set_mode(VIEW_MODE)
 
@@ -562,6 +567,13 @@ class UserInterface:
                     computer1.disconnect(connection)
                     computer2.disconnect(connection)
                     break
+
+        elif isinstance(graphics_object, InterfaceGraphics):
+            interface = graphics_object.interface
+            computer = get_the_one(self.computers, lambda c: interface in c.interfaces, NoSuchInterfaceError)
+            connection = interface.connection.connection
+            self.delete(connection.graphics)
+            computer.add_remove_interface(interface.name)
 
     def _delete_connections_to(self, computer):
         """

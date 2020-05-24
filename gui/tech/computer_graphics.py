@@ -82,7 +82,6 @@ class ComputerGraphics(ImageGraphics):
                                                  self.computer.set_default_gateway),
             "add/delete interface (^i)": with_args(user_interface.ask_user_for, str, INSERT_INTERFACE_INFO_MSG,
                                                    with_args(user_interface.add_delete_interface, self)),
-            "sniffing start/stop (f)": with_args(self.computer.toggle_sniff, is_promisc=True),
             "open/close port (^o)": with_args(user_interface.ask_user_for, int, INSERT_PORT_NUMBER,
                                               self.computer.open_port),
             "ask daytime (ctrl+a)": with_args(user_interface.ask_user_for, IPAddress, INSERT_IP_FOR_PROCESS,

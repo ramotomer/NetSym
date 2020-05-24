@@ -76,15 +76,17 @@ class MainLoop:
         """
         try:
             self.graphics_objects.remove(graphics_object)
-
-            self.remove_from_loop(graphics_object.draw)
-            self.remove_from_loop(graphics_object.move)
-
-            if hasattr(graphics_object, "child_graphics_objects"):
-                for child in graphics_object.child_graphics_objects:
-                    self.unregister_graphics_object(child)
         except ValueError:
             pass
+
+        self.remove_from_loop(graphics_object.draw)
+        self.remove_from_loop(graphics_object.move)
+
+        # TODO: BUG: loopback connection graphics stays after deleting computers!!!
+
+        if hasattr(graphics_object, "child_graphics_objects"):
+            for child in graphics_object.child_graphics_objects:
+                self.unregister_graphics_object(child)
 
     def insert_to_loop(self, function, *args, **kwargs):
         """
@@ -125,7 +127,10 @@ class MainLoop:
         """
         to_remove = [function_and_args for function_and_args in self.call_functions if function_and_args[0] == function]
         for function_and_args in to_remove:
-            self.call_functions.remove(function_and_args)
+            try:
+                self.call_functions.remove(function_and_args)
+            except ValueError:
+                pass
 
     def move_to_front(self, graphics_object):
         """

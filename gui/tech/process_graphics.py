@@ -67,6 +67,9 @@ class ProcessGraphicsList(GraphicsObject):
         """Is not drawn..."""
         pass
 
+    def __repr__(self):
+        return f"Process Graphics List {[pg.port for pg in self.child_graphics_objects]}"
+
 
 class ProcessGraphics(ImageGraphics):
     """
@@ -97,3 +100,6 @@ class ProcessGraphics(ImageGraphics):
         self.x = self.server_graphics.x + pad_x
         self.y = self.server_graphics.y + pad_y + (self.process_index * PROCESS_IMAGE_GAP)
         super(ProcessGraphics, self).move()
+
+    def __repr__(self):
+        return f"Process Graphics {self.port}"

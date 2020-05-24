@@ -4,7 +4,7 @@ from gui.abstracts.graphics_object import GraphicsObject
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rect, draw_rect_no_fill
-from usefuls import distance, circular_coordinates
+from usefuls import distance, circular_coordinates, with_args, get_the_one
 
 
 class InterfaceGraphics(GraphicsObject):
@@ -17,9 +17,10 @@ class InterfaceGraphics(GraphicsObject):
         :param color:
         """
         super(InterfaceGraphics, self).__init__(x, y, centered=True, is_in_background=True)
+        self.is_pressable = True  # TODO: add this to the initiation line!
         self.color = color
         self.real_x, self.real_y = x, y
-        self.width, self.height = 10, 10
+        self.width, self.height = INTERFACE_WIDTH, INTERFACE_HEIGHT
         self.computer_graphics = computer_graphics
 
         self.interface = interface
@@ -79,6 +80,12 @@ class InterfaceGraphics(GraphicsObject):
         """
         buttons = {
             "config IP (i)": user_interface.ask_user_for_ip,
+            "sniffing start/stop (f)": with_args(
+                get_the_one(user_interface.computers,
+                            lambda c: self.interface in c.interfaces,
+                            NoSuchInterfaceError).toggle_sniff,
+                self.interface.name,
+                is_promisc=True),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
         copied_sprite = ImageGraphics.get_image_sprite(IMAGES.format(INTERFACE_VIEW_IMAGE))
@@ -104,10 +111,13 @@ class InterfaceGraphics(GraphicsObject):
                           self.width + (2 * SELECTED_OBJECT_PADDING),
                           self.height + (2 * SELECTED_OBJECT_PADDING))
 
+    def __repr__(self):
+        return f"Interface Graphics ({self.interface.name})"
+
 
 class InterfaceGraphicsList(GraphicsObject):
     """
-    
+    # TODO: doc here!!!
     """
     def __init__(self, computer_graphics, interfaces):
         """
@@ -160,3 +170,6 @@ class InterfaceGraphicsList(GraphicsObject):
             if interface_graphics.interface is interface:
                 break
         self.child_graphics_objects.remove(interface_graphics)
+
+    def __repr__(self):
+        return f"Interface Graphics list ({len(self.child_graphics_objects)})"

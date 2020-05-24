@@ -219,15 +219,18 @@ class Computer:
         :return: None
         """
         interface = get_the_one(self.interfaces, lambda i: i.name == name)
+        # add:
         if interface is None:
             self.interfaces.append(Interface(MACAddress.randomac(), name=name))
             return
 
+        # remove:
         if interface.is_connected():
             raise DeviceAlreadyConnectedError("Cannot remove a connected interface!!!")
         if interface.has_ip():
             self.routing_table.remove_interface(interface)
         self.interfaces.remove(interface)
+        MainLoop.instance.unregister_graphics_object(interface.graphics)
 
     def has_this_ip(self, ip_address):
         """Returns whether or not this computer has a given IP address. (so whether or not if it is its address)"""
