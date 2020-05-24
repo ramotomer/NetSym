@@ -25,8 +25,8 @@ class PacketGraphics(ImageGraphics):
         """
         super(PacketGraphics, self).__init__(
                             IMAGES.format(self.image_from_packet(deepest_layer)),
-                            connection_graphics.get_coordinates(direction)[0],
-                            connection_graphics.get_coordinates(direction)[1],
+                            connection_graphics.get_computer_coordinates(direction)[0],
+                            connection_graphics.get_computer_coordinates(direction)[1],
                             centered=True,
                             scale_factor=PACKET_SCALE_FACTOR,
                             is_opaque=is_opaque)

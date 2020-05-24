@@ -19,6 +19,8 @@ from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_circle
 from gui.shape_drawing import draw_pause_rectangles, draw_rect
+from gui.tech.computer_graphics import ComputerGraphics
+from gui.tech.interface_graphics import InterfaceGraphics
 from gui.user_interface.button import Button
 from gui.user_interface.popup_error import PopupError
 from gui.user_interface.text_box import TextBox
@@ -101,9 +103,9 @@ class UserInterface:
 
         self.action_at_press_by_mode = {
             SIMULATION_MODE: self.view_mode_at_press,
-            CONNECTING_MODE: with_args(self.two_pressed_computers, self.connect_computers),
+            CONNECTING_MODE: with_args(self.two_pressed_objects, self.connect_devices, [InterfaceGraphics]),
             VIEW_MODE: self.view_mode_at_press,
-            PINGING_MODE: with_args(self.two_pressed_computers, self.send_direct_ping),
+            PINGING_MODE: with_args(self.two_pressed_objects, self.send_direct_ping),
             DELETING_MODE: self.deleting_mode_at_press,
         }
         # ^ maps what to do when the screen is pressed in each `mode`.
@@ -422,23 +424,29 @@ class UserInterface:
         router = Router("Router and DHCP Server", (
                         Interface.with_ip('192.168.1.1'),
                         Interface.with_ip('10.10.10.1'),
+                        Interface.with_ip('172.3.10.1'),
+                        Interface.with_ip('1.1.1.1'),
                         ))
         router.show(x, y)
         self.computers.append(router)
 
-    def two_pressed_computers(self, action):
+    def two_pressed_objects(self, action, more_pressable_types=None):
         """
-        This operates the situation when two computers are required to be selected one after the other (like in
+        This operates the situation when two things are required to be selected one after the other (like in
         CONNECTING_MODE, PINGING_MODE, etc...)
+        Usually allows pressing just ComputerGraphics objects. This can be extended to more types using the
+        `more_pressable_types` list.
         :param action: a function that will be activated on the two computers once they are both selected.
             should receive two computers ane return nothing.
+        :param more_pressable_types: a list of other types that can be pressed using this method.
         :return: None
         """
-        if self.selected_object is not None and self.selected_object.is_computer:
+        pressable_types = [ComputerGraphics] + ([] if more_pressable_types is None else more_pressable_types)
+        if self.selected_object is not None and type(self.selected_object) in pressable_types:
             if self.other_selected_object is None:
                 self.other_selected_object = self.selected_object
             else:  # there is another computer to connect with that was already pressed.
-                action(self.other_selected_object.computer, self.selected_object.computer)
+                action(self.other_selected_object, self.selected_object)
 
                 self.other_selected_object = None
                 self.set_mode(SIMULATION_MODE)
@@ -447,26 +455,47 @@ class UserInterface:
             self.other_selected_object = None
             self.set_mode(SIMULATION_MODE)
 
-    def connect_computers(self, computer1, computer2):
+    def connect_devices(self, device1, device2):
         """
-        Connect two computers to each other, show the connection and everything....
-        :param computer1:
-        :param computer2: the two `Computer` object.
+        Connect two devices to each other, show the connection and everything....
+        The devices can be computers or interfaces. Works either way
+        :param device1:
+        :param device2: the two `Computer` object or `Interface` objects. Could also be their graphics objects.
         :return: None
         """
-        connection = computer1.connect(computer2)
-        connection.show(computer1.graphics, computer2.graphics)
-        self.connection_data.append(ConnectionData(connection, computer1, computer2))
+        devices = device1, device2
+        computers = [device1, device2]  # Computer-s
+        interfaces = [device1, device2]  # Interface-s
+
+        for i, device in enumerate(devices):
+            if isinstance(device, InterfaceGraphics):
+                device = device.interface
+            elif isinstance(device, ComputerGraphics):
+                device = device.computer
+
+            if isinstance(device, Interface):
+                computers[i] = get_the_one(self.computers, lambda c: device in c.interfaces, NoSuchInterfaceError)
+                interfaces[i] = device
+            elif isinstance(device, Computer):
+                computers[i] = device
+                interfaces[i] = device.available_interface()
+            else:
+                raise SomethingWentTerriblyWrongError("Only supply this function with computers or interfaces!!!!")
+
+        connection = interfaces[0].connect(interfaces[1])
+        self.connection_data.append(ConnectionData(connection, *computers))
+        connection.show(computers[0].graphics, computers[1].graphics)
 
     @staticmethod
-    def send_direct_ping(computer1, computer2):
+    def send_direct_ping(computer_graphics1, computer_graphics2):
         """
         Send a ping from `computer1` to `computer2`.
         If one of them does not have an IP address, do nothing.
-        :param computer1:
-        :param computer2: The `Computer` objects to send a ping betwecomputer1en.
+        :param computer_graphics1:
+        :param computer_graphics2: The `ComputerGraphics` objects to send a ping between computers.
         :return: None
         """
+        computer1, computer2 = computer_graphics1.computer, computer_graphics2.computer
         if computer1.has_ip() and computer2.has_ip():
             computer1.start_ping_process(computer2.get_ip())
 
@@ -562,7 +591,9 @@ class UserInterface:
         computer = computer_graphics.computer
         interface = get_the_one(computer.interfaces, lambda i: i.name == interface_name)
         if interface is None:
-            computer.interfaces.append(Interface(MACAddress.randomac(), name=interface_name))
+            interface = Interface(MACAddress.randomac(), name=interface_name)
+            computer.interfaces.append(interface)
+            computer.graphics.add_interface(interface)
             return
 
         if interface.is_connected():
@@ -628,45 +659,19 @@ class UserInterface:
                     return
         raise NoSuchPacketError("That packet cannot be found!")
 
-    def config_ip(self, computer, user_input):
-        """
-        Config the IP of a computer to be one according to a given user input.
-        The user input should be of the syntax '<INTERFACE NAME>, <IP ADDRESS>' or just '<IP ADDRESS>'.
-        :param computer: a `Computer` object.
-        :param user_input: a tuple of (string,
-        :return: None
-        """
-        if len(user_input) == 1:
-            ip, = user_input
-            computer.set_ip(computer.interfaces[0].name, ip)
-        elif len(user_input) == 2:
-            interface_name, new_ip = user_input
-            try:
-                computer.set_ip(interface_name, new_ip)
-            except NoSuchInterfaceError:
-                PopupError("no such interface!!!", self)
-        else:
-            raise SomethingWentTerriblyWrongError(f'not get here please thanks {user_input!r}')
-
     def ask_user_for_ip(self):
         """
         Asks the user for interface name and ip input and sets the computer's IP to be that.
         Does that using popup window in the `TextBox` class.
         :return: None
         """
-        if self.selected_object is not None and self.selected_object.is_computer:
-            computer = self.selected_object.computer
+        if self.selected_object is not None and isinstance(self.selected_object, InterfaceGraphics):
+            interface = self.selected_object.interface
+            computer = get_the_one(self.computers, lambda c: interface in c.interfaces, NoSuchInterfaceError)
 
-            def validate_format(string):
-                if string.count(', ') == 1:
-                    interface_name, ip_string = string.split(', ')
-                    ip_address = IPAddress(ip_string)
-                    return interface_name, ip_address
-                return IPAddress(string),
-
-            self.ask_user_for(validate_format,
+            self.ask_user_for(IPAddress,
                               INSERT_IP_MSG,
-                              with_args(self.config_ip, computer),
+                              with_args(computer.set_ip, interface),
                               "This format is incorrect")
 
     def end_string_request(self):
@@ -692,14 +697,14 @@ class UserInterface:
                     continue
                 nearest_switch = min(switches, key=lambda s: distance(s.graphics.location, computer.graphics.location))
                 if not computer.interfaces[0].is_connected():
-                    self.connect_computers(computer, nearest_switch)
+                    self.connect_devices(computer, nearest_switch)
         elif routers:
             for computer in self.computers:
                 if isinstance(computer, Router):
                     continue
                 nearest_router = min(routers, key=lambda s: distance(s.graphics.location, computer.graphics.location))
                 if not computer.interfaces[0].is_connected():
-                    self.connect_computers(computer, nearest_router)
+                    self.connect_devices(computer, nearest_router)
         else:
             self.connect_all_to_all()
 
@@ -827,7 +832,7 @@ class UserInterface:
         for computer in self.computers:
             for other_computer in self.computers:
                 if computer is not other_computer and not self.are_connected(computer, other_computer):
-                    self.connect_computers(computer, other_computer)
+                    self.connect_devices(computer, other_computer)
 
     def send_ping_to_self(self):
         """

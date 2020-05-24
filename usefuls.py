@@ -118,5 +118,6 @@ def circular_coordinates(center_location: tuple, radius, count):
     """
     x, y = center_location
     d_theta = (2 * pi) / count
+    initial_theta = 0  # pi / 2
     for i in range(count):
-        yield x + (radius * cos(i * d_theta)), y + (radius * sin(i * d_theta))
+        yield x + (radius * cos((i * d_theta) + initial_theta)), y + (radius * sin((i * d_theta) + initial_theta))

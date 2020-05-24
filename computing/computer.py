@@ -166,18 +166,10 @@ class Computer:
         try:
             return get_the_one(self.interfaces, lambda i: not i.is_connected(), NoSuchInterfaceError)
         except NoSuchInterfaceError:
-            new_interface = Interface(MACAddress.randomac(), ip_address)
+            new_interface = Interface.with_ip(ip_address)
             self.interfaces.append(new_interface)
+            self.graphics.add_interface(new_interface)
             return new_interface
-
-    def connect(self, other):
-        """
-        Connects this computer to another one.
-        Use the `self.available_interface`.
-        :param other: another `Computer` object.
-        :return: None
-        """
-        return self.available_interface().connect(other.available_interface())
 
     def disconnect(self, connection):
         """
@@ -404,16 +396,15 @@ class Computer:
             interface_ip_address = self.same_subnet_interfaces(gateway_ip)[0].ip
         self.routing_table[IPAddress("0.0.0.0/0")] = RoutingTableItem(gateway_ip, interface_ip_address)
 
-    def set_ip(self, interface_name, string_ip):
+    def set_ip(self, interface, string_ip):
         """
         Sets the IP address of a given interface.
         Updates all relevant attributes of the computer (routing table, DHCP serving, etc...)
         If there is no interface with that name, `NoSuchInterfaceError` will be raised.
-        :param interface_name: The name of the interface one wishes to change the IP of
-        :param ip_address: a string IP which will be the new IP of the interface.
+        :param interface: The `Interface` one wishes to change the IP of
+        :param string_ip: a string IP which will be the new IP of the interface.
         :return: None
         """
-        interface = get_the_one(self.interfaces, lambda i: i.name == interface_name, NoSuchInterfaceError)
         interface.ip = IPAddress(string_ip)
         if self.is_process_running(DHCPServer):
             dhcp_server_process = self.get_running_process(DHCPServer)

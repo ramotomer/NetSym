@@ -5,6 +5,7 @@ from address.ip_address import IPAddress
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.tech.console import Console
+from gui.tech.interface_graphics import InterfaceGraphicsList
 from gui.tech.process_graphics import ProcessGraphicsList
 from gui.user_interface.text_graphics import Text
 from processes.daytime_process import DAYTIMEClientProcess
@@ -15,7 +16,8 @@ from usefuls import with_args
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", [
     "text",
     "console",
-    "process_list"
+    "process_list",
+    "interface_list",
 ])
 
 
@@ -41,6 +43,7 @@ class ComputerGraphics(ImageGraphics):
             Text(self.generate_text(), self.x, self.y, self),
             Console(CONSOLE_X, CONSOLE_Y),
             ProcessGraphicsList(self),
+            InterfaceGraphicsList(self, self.computer.interfaces),
         )
         self.buttons_id = None
 
@@ -75,7 +78,6 @@ class ComputerGraphics(ImageGraphics):
         buttons = {
             "open/close console (shift+o)": self.child_graphics_objects.console.toggle_showing,
             "power on/off (o)": self.computer.power,
-            "config IP (i)": user_interface.ask_user_for_ip,
             "set default gateway (g)": with_args(user_interface.ask_user_for, IPAddress, INSERT_GATEWAY_MSG,
                                                  self.computer.set_default_gateway),
             "add/delete interface (^i)": with_args(user_interface.ask_user_for, str, INSERT_INTERFACE_INFO_MSG,
@@ -103,6 +105,14 @@ class ComputerGraphics(ImageGraphics):
         """
         return f" \nName:\n{self.computer.name}\n OS: {self.computer.os}\n gateway: {self.computer.routing_table.default_gateway.ip_address}\n\n " \
             f"Interfaces:\n{str(self.computer.loopback)}\n{linesep.join(str(interface) for interface in self.computer.interfaces)}\n "
+
+    def add_interface(self, interface):
+        """
+        Adds an interface to the viewed interfaces.
+        :param interface: `Interface`
+        :return:
+        """
+        self.child_graphics_objects.interface_list.add(interface)
 
     def __str__(self):
         return "ComputerGraphics"

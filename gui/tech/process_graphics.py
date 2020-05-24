@@ -75,9 +75,9 @@ class ProcessGraphics(ImageGraphics):
     def __init__(self, port, server_graphics, process_index):
         """
         Initiates the process graphics from a port number
-        :param image:
-        :param x:
-        :param y:
+        :param :
+        :param :
+        :param :
         """
         super(ProcessGraphics, self).__init__(IMAGES.format(PORT_NUMBER_TO_IMAGE[port]), *server_graphics.location, True, scale_factor=PROCESS_IMAGE_SCALE_FACTOR)
         self.server_graphics = server_graphics

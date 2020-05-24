@@ -9,10 +9,18 @@ from gui.main_window import MainWindow
 from gui.shape_drawing import draw_line
 from gui.shape_drawing import draw_rect_no_fill
 from usefuls import distance
-from usefuls import with_args
+from usefuls import with_args, get_the_one
 
-Computers = namedtuple("Computer", "start end")
+Computers = namedtuple("Computers", [
+    "start",
+    "end",
+])
 """a data structure to save the two ComputerGraphics of the two sides of the connection."""
+
+Interfaces = namedtuple("Interfaces", [
+    "start",
+    "end",
+])
 
 
 class ConnectionGraphics(GraphicsObject):
@@ -41,9 +49,25 @@ class ConnectionGraphics(GraphicsObject):
 
         self.connection = connection  # the `Connection` object.
 
+        self.interfaces = Interfaces(None, None)
+
+        if all(computer is not None for computer in self.computers):
+            self.interfaces = Interfaces(
+                get_the_one(
+                    self.computers.start.computer.interfaces,
+                    lambda i: i.connection is not None and i.connection.connection is connection,
+                    NoSuchInterfaceError,
+                ).graphics,
+                get_the_one(
+                    self.computers.end.computer.interfaces,
+                    lambda i: i.connection is not None and i.connection.connection is connection,
+                    NoSuchInterfaceError,
+                ).graphics,
+            )
+
     @property
     def length(self):  # the length of the connection.
-        return distance(self.computers.start.location, self.computers.end.location)
+        return distance(self.interfaces.start.location, self.interfaces.end.location)
 
     def update_color_by_pl(self, packet_loss):
         """Updates the color of the connection according to the pl of the connection"""
@@ -52,21 +76,38 @@ class ConnectionGraphics(GraphicsObject):
 
     def is_mouse_in(self):
         """Returns whether or not the mouse is close enough to the connection for it to count as pressed"""
+        if any(interface is None for interface in self.interfaces):
+            pass
         mouse_location = MainWindow.main_window.get_mouse_location()
-        a = distance(self.computers.start.location, mouse_location)
-        b = distance(self.computers.end.location, mouse_location)
-        c = distance(self.computers.start.location, self.computers.end.location)
+        a = distance(self.interfaces.start.location, mouse_location)
+        b = distance(self.interfaces.end.location, mouse_location)
+        c = distance(self.interfaces.start.location, self.interfaces.end.location)
         if b > c or a > c:
             return False
 
         if 2*a*c == 0:
             return True
 
-        beta = acos((c**2 + a**2 - b**2) / (2*a*c))  # the law of the cosines
+        cos_of_beta = (c**2 + a**2 - b**2) / (2 * a * c)
+        beta = acos(cos_of_beta)  # the law of the cosines
         mouse_distance_to_connection = a * sin(beta)
         return mouse_distance_to_connection <= MOUSE_IN_CONNECTION_LENGTH
 
     def get_coordinates(self, direction=PACKET_GOING_RIGHT):
+        """
+        Return a tuple of the coordinates at the start and the end of the connection.
+        Receives a `direction` that the we look at the connection from (to know which is the end and which is the start)
+        If the connection is opposite the coordinates will also be flipped.
+        :param direction: `PACKET_GOING_RIGHT` or `PACKET_GOING_LEFT`.
+        :return: (self.computers.start.x, self.computers.start.y, self.computers.end.x, self.computers.end.y)
+        """
+        if direction == PACKET_GOING_RIGHT:
+            return self.interfaces.start.x, self.interfaces.start.y, self.interfaces.end.x, self.interfaces.end.y
+        elif direction == PACKET_GOING_LEFT:
+            return self.interfaces.end.x, self.interfaces.end.y, self.interfaces.start.x, self.interfaces.start.y
+        raise SomethingWentTerriblyWrongError("a packet can only go left or right!")
+
+    def get_computer_coordinates(self, direction=PACKET_GOING_RIGHT):
         """
         Return a tuple of the coordinates at the start and the end of the connection.
         Receives a `direction` that the we look at the connection from (to know which is the end and which is the start)
@@ -92,7 +133,7 @@ class ConnectionGraphics(GraphicsObject):
         :param progress: the progress of the packet through the connection.
         :return: returns coordinates of the packet according to that
         """
-        start_x, start_y, end_x, end_y = self.get_coordinates(direction)
+        start_x, start_y, end_x, end_y = self.get_computer_coordinates(direction)
         return ((((end_x - start_x) * progress) + start_x),
                 (((end_y - start_y) * progress) + start_y))
 
@@ -113,7 +154,8 @@ class ConnectionGraphics(GraphicsObject):
         :return: None
         """
         color = self.color if not self.is_mouse_in() else SELECTED_CONNECTION_COLOR
-        draw_line((self.computers.start.x, self.computers.start.y), (self.computers.end.x, self.computers.end.y), color)
+        sx, sy, ex, ey = self.get_coordinates()
+        draw_line((sx, sy), (ex, ey), color)
 
     def start_viewing(self, user_interface):
         """

@@ -40,6 +40,8 @@ class Interface:
 
         self.is_powered_on = True
 
+        self.graphics = None
+
     @property
     def connection_length(self):
         """
@@ -134,6 +136,7 @@ class Interface:
         self.is_blocked = True
         self.accepting = accept
         self.connection.mark_as_blocked()
+        self.graphics.color = BLOCKED_INTERFACE_COLOR
 
     def unblock(self):
         """
@@ -143,6 +146,7 @@ class Interface:
         self.is_blocked = False
         self.accepting = None
         self.connection.mark_as_unblocked()
+        self.graphics.color = REGULAR_INTERFACE_COLOR
 
     def send(self, packet):
         """
@@ -202,6 +206,23 @@ class Interface:
     def __hash__(self):
         """hash of the interface"""
         return hash(id(self))
+
+    def generate_view_text(self):
+        """
+        Generates the text for the side view of the interface
+        :return: `str`
+        """
+        linesep = '\n'
+        return f"""
+Interface: 
+{self.name}
+
+{str(self.mac) if not self.mac.is_no_mac() else ""} 
+{repr(self.ip) if self.has_ip() else ''}
+{"Connected" if self.is_connected() else "Disconnected"}
+{f"Promisc{linesep}" if self.is_promisc else ""}{f"Sniffing{linesep}" if self.is_sniffing else ""}{"Blocked" if 
+        self.is_blocked else ""}
+"""
 
     def __str__(self):
         """A shorter string representation of the Interface"""

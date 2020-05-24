@@ -119,7 +119,7 @@ class Connection:
         Add a packet that was sent on one of the `ConnectionSide`-s to the `self.sent_packets` list.
         This method starts the motion of the packet through the connection.
         :param packet: a `Packet` object
-        :param direction: the diection the packet is going to (PACKET_GOING_RIGHT or PACKET_GOING_LEFT)
+        :param direction: the direction the packet is going to (PACKET_GOING_RIGHT or PACKET_GOING_LEFT)
         :return: None
         """
         is_dropped = (random.random() < self.packet_loss)
@@ -270,4 +270,3 @@ class ConnectionSide:
         """
         self.is_blocked = False
         self.connection.mark_as_unblocked()
-
