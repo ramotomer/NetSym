@@ -96,7 +96,7 @@ class PopupWindow(GraphicsObject):
         """
         MainLoop.instance.unregister_graphics_object(self)
         self.remove_buttons()
-        # TODO: fix bug that when after a window is closed you can still press enter and that will submit the text!!!
+        # TODO: BUG: when after a window is closed you can still press enter and that will submit the text!!!
 
     def draw(self):
         """

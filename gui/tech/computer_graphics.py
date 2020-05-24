@@ -39,11 +39,12 @@ class ComputerGraphics(ImageGraphics):
         self.is_computer = True
         self.is_pressable = True
         self.computer = computer
+
         self.child_graphics_objects = ChildGraphicsObjects(
             Text(self.generate_text(), self.x, self.y, self),
             Console(CONSOLE_X, CONSOLE_Y),
             ProcessGraphicsList(self),
-            InterfaceGraphicsList(self, self.computer.interfaces),
+            InterfaceGraphicsList(self),
         )
         self.buttons_id = None
 

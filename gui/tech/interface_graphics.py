@@ -9,12 +9,18 @@ from usefuls import distance, circular_coordinates, with_args, get_the_one
 
 class InterfaceGraphics(GraphicsObject):
     """
-
+    This is the graphics of a network interface of a computer.
+    It is the little square next to computers.
+    It allows the user much more control over their computers and to inspect the interfaces of their computers.
     """
     def __init__(self, x, y, interface, color, computer_graphics):
         """
-
-        :param color:
+        initiates the object.
+        :param x:
+        :param y: the location
+        :param interface: the physical `Interface` of the computer.
+        :param color: a tuple that is the color that this interface will be displayed in
+        :param computer_graphics: the graphics object of the computer that this interface belongs to.
         """
         super(InterfaceGraphics, self).__init__(x, y, centered=True, is_in_background=True)
         self.is_pressable = True  # TODO: add this to the initiation line!
@@ -47,7 +53,8 @@ class InterfaceGraphics(GraphicsObject):
 
     def move(self):
         """
-        Move the interface
+        Moves the interface.
+        Keeps it within `INTERFACE_DISTANCE_FROM_COMPUTER` pixels away from the computer.
         :return:
         """
         if self.interface.is_connected():
@@ -63,7 +70,7 @@ class InterfaceGraphics(GraphicsObject):
 
     def draw(self):
         """
-
+        Draw the interface.
         :return:
         """
         draw_rect(
@@ -74,9 +81,9 @@ class InterfaceGraphics(GraphicsObject):
 
     def start_viewing(self, user_interface):
         """
-
-        :param user_interface:
-        :return:
+        Starts the side-window-view of the interface.
+        :param user_interface: a `UserInterface` object to register the buttons in.
+        :return: `Sprite`, `str`, `int`
         """
         buttons = {
             "config IP (i)": user_interface.ask_user_for_ip,
@@ -86,6 +93,7 @@ class InterfaceGraphics(GraphicsObject):
                             NoSuchInterfaceError).toggle_sniff,
                 self.interface.name,
                 is_promisc=True),
+            "block (^b)": with_args(self.interface.toggle_block, "STP"),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
         copied_sprite = ImageGraphics.get_image_sprite(IMAGES.format(INTERFACE_VIEW_IMAGE))
@@ -93,7 +101,7 @@ class InterfaceGraphics(GraphicsObject):
 
     def end_viewing(self, user_interface):
         """
-
+        Unregisters the buttons from the `UserInterface` object.
         :param user_interface:
         :return:
         """
@@ -117,14 +125,17 @@ class InterfaceGraphics(GraphicsObject):
 
 class InterfaceGraphicsList(GraphicsObject):
     """
-    # TODO: doc here!!!
+    A graphics object that groups together all of the `InterfaceGraphics` objects.
+    Allows unregistering them, adding them and manipulating them together with an easy APIs
     """
-    def __init__(self, computer_graphics, interfaces):
+    def __init__(self, computer_graphics):
         """
-
-        :param:
+        Initiates the interfaces with a computer that owns them.
+        :param computer_graphics: `ComputerGraphics` object.
         """
         super(InterfaceGraphicsList, self).__init__(*computer_graphics.location, do_render=False)
+        interfaces = computer_graphics.computer.interfaces
+
         self.child_graphics_objects = []
         self.computer_graphics = computer_graphics
 
@@ -137,8 +148,8 @@ class InterfaceGraphicsList(GraphicsObject):
 
     def contains_interface(self, interface):
         """
-
-        :param interface:
+        whether or not an interface is shown in this list.
+        :param interface: `Interface`
         :return:
         """
         return any(interface_graphics.interface is interface for interface_graphics in self.child_graphics_objects)
@@ -158,7 +169,7 @@ class InterfaceGraphicsList(GraphicsObject):
 
     def remove(self, interface):
         """
-
+        Remove an interface from the list.
         :param interface:
         :return:
         """

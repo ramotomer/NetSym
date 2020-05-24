@@ -130,12 +130,14 @@ class Interface:
 
     def block(self, accept=None):
         """
-        Blocks the connection and does not receive packets anymore.
+        Blocks the connection and does not receive packets from it anymore.
+        It only accepts packets that contain the `accept` layer (for example "STP")
         :return: None
         """
         self.is_blocked = True
         self.accepting = accept
-        self.connection.mark_as_blocked()
+        if self.connection is not None:
+            self.connection.mark_as_blocked()
         self.graphics.color = BLOCKED_INTERFACE_COLOR
 
     def unblock(self):
@@ -145,8 +147,20 @@ class Interface:
         """
         self.is_blocked = False
         self.accepting = None
-        self.connection.mark_as_unblocked()
+        if self.connection is not None:
+            self.connection.mark_as_unblocked()
         self.graphics.color = REGULAR_INTERFACE_COLOR
+
+    def toggle_block(self, accept=None):
+        """
+        Toggles between block() and unblock()
+        :param accept:
+        :return:
+        """
+        if self.is_blocked:
+            self.unblock()
+        else:
+            self.block(accept)
 
     def send(self, packet):
         """
