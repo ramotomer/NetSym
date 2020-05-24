@@ -13,18 +13,17 @@ class InterfaceGraphics(GraphicsObject):
     It is the little square next to computers.
     It allows the user much more control over their computers and to inspect the interfaces of their computers.
     """
-    def __init__(self, x, y, interface, color, computer_graphics):
+    def __init__(self, x, y, interface, computer_graphics):
         """
         initiates the object.
         :param x:
         :param y: the location
         :param interface: the physical `Interface` of the computer.
-        :param color: a tuple that is the color that this interface will be displayed in
         :param computer_graphics: the graphics object of the computer that this interface belongs to.
         """
         super(InterfaceGraphics, self).__init__(x, y, centered=True, is_in_background=True)
         self.is_pressable = True  # TODO: add this to the initiation line!
-        self.color = color
+        self.color = interface.display_color
         self.real_x, self.real_y = x, y
         self.width, self.height = INTERFACE_WIDTH, INTERFACE_HEIGHT
         self.computer_graphics = computer_graphics
@@ -163,7 +162,7 @@ class InterfaceGraphicsList(GraphicsObject):
         if ix is None and iy is None:
             x, y = self.computer_graphics.x + INTERFACE_DISTANCE_FROM_COMPUTER, self.computer_graphics.y
 
-        interface_graphics = InterfaceGraphics(x, y, interface, REGULAR_INTERFACE_COLOR, self.computer_graphics)
+        interface_graphics = InterfaceGraphics(x, y, interface, self.computer_graphics)
         self.child_graphics_objects.append(interface_graphics)
         interface.graphics = interface_graphics
 

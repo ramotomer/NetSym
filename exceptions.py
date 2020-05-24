@@ -137,6 +137,12 @@ class NotAnInterfaceError(InterfaceError):
     """
 
 
+class DeviceNameAlreadyExists(InterfaceError):
+    """
+    Indicates a creation of an interface with a name that is taken.
+    """
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 

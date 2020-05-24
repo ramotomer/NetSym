@@ -117,9 +117,10 @@ class Computer:
         """
         This is a constructor for a computer with a given IP address, defaults the rest of the properties.
         :param ip_address: an IP string that one wishes the new `Computer` to have.
+        :param name: a name that the computer will have.
         :return: a `Computer` object
         """
-        computer = cls(name, OS_WINDOWS, None, Interface(MACAddress.randomac(), IPAddress(ip_address), "IHaveIP"))
+        computer = cls(name, OS_WINDOWS, None, Interface(MACAddress.randomac(), IPAddress(ip_address)))
         return computer
 
     @staticmethod
@@ -160,21 +161,57 @@ class Computer:
             interface.is_powered_on = self.is_powered_on
         self.graphics.toggle_opacity()
 
-    def available_interface(self, ip_address=None):
+    def add_interface(self, name=None):
+        """
+        Adds an interface to the computer with a given name.
+        If the name already exists, raise a DeviceNameAlreadyExists.
+        If no name is given, randomize.
+        :param name:
+        :return:
+        """
+        if any(interface.name == name for interface in self.all_interfaces):
+            raise DeviceNameAlreadyExists("Cannot have two interfaces with the same name!!!")
+        new_interface = Interface(MACAddress.randomac(), name=name)
+        self.interfaces.append(new_interface)
+        self.graphics.add_interface(new_interface)
+        return new_interface
+
+    def remove_interface(self, name):
+        """
+        Removes a computer interface that is named `name`
+        :param name: `str`
+        :return:
+        """
+        interface = get_the_one(self.interfaces, lambda i: i.name == name)
+        if interface.is_connected():
+            raise DeviceAlreadyConnectedError("Cannot remove a connected interface!!!")
+        if interface.has_ip():
+            self.routing_table.remove_interface(interface)
+        self.interfaces.remove(interface)
+        MainLoop.instance.unregister_graphics_object(interface.graphics)
+
+    def add_remove_interface(self, name):
+        """
+        Adds a new interface to this computer with a given name
+        :param name: a string or None, if None, chooses random name.
+        :return: None
+        """
+        try:
+            self.add_interface(name)
+        except DeviceNameAlreadyExists:
+            self.remove_interface(name)
+
+    def available_interface(self):
         """
         Returns an interface of the computer that is disconnected and
         is available to connect to another computer.
         If the computer has no available interfaces, creates one and returns it.
-        :param ip_address: a string which is the address the new interface will have if one is created.
         :return: an `Interface` object.
         """
         try:
             return get_the_one(self.interfaces, lambda i: not i.is_connected(), NoSuchInterfaceError)
         except NoSuchInterfaceError:
-            new_interface = Interface.with_ip(ip_address)
-            self.interfaces.append(new_interface)
-            self.graphics.add_interface(new_interface)
-            return new_interface
+            return self.add_interface()
 
     def disconnect(self, connection):
         """
@@ -194,7 +231,7 @@ class Computer:
         :param ip_address: The `IPAddress` object whose subnet we are talking about.
         :return: an `Interface` list of the Interface objects in the same subnet.
         """
-        return[interface for interface in self.all_interfaces \
+        return [interface for interface in self.all_interfaces
                 if interface.has_ip() and interface.ip.is_same_subnet(ip_address)]
 
     def has_ip(self):
@@ -217,32 +254,13 @@ class Computer:
             raise NoSuchInterfaceError("The computer has no MAC address since it has no network interfaces!!!")
         return self.macs[0]
 
-    def add_remove_interface(self, name):
-        """
-        Adds a new interface to this computer with a given name
-        :param name: a string or None, if None, chooses random name.
-        :return: None
-        """
-        interface = get_the_one(self.interfaces, lambda i: i.name == name)
-        # add:
-        if interface is None:
-            self.interfaces.append(Interface(MACAddress.randomac(), name=name))
-            return
-
-        # remove:
-        if interface.is_connected():
-            raise DeviceAlreadyConnectedError("Cannot remove a connected interface!!!")
-        if interface.has_ip():
-            self.routing_table.remove_interface(interface)
-        self.interfaces.remove(interface)
-        MainLoop.instance.unregister_graphics_object(interface.graphics)
-
     def has_this_ip(self, ip_address):
         """Returns whether or not this computer has a given IP address. (so whether or not if it is its address)"""
         if ip_address is None:
             # raise NoIPAddressError("The address that is given is None!!!")
             return
-        return any(interface.has_ip() and interface.ip.string_ip == ip_address.string_ip for interface in self.all_interfaces)
+        return any(interface.has_ip() and interface.ip.string_ip == ip_address.string_ip
+                   for interface in self.all_interfaces)
 
     def is_arp_for_me(self, packet):
         """Returns whether or not the packet is an ARP request for one of your IP addresses"""

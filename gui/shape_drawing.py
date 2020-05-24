@@ -3,7 +3,7 @@ from itertools import chain
 import pyglet
 
 from consts import *
-from usefuls import circular_coordinates
+from usefuls import circular_coordinates, sine_wave_coordinates
 
 
 def draw_line(point_1, point_2, color=WHITE):
@@ -98,4 +98,25 @@ def draw_circle(x, y, radius, color=WHITE):
     pyglet.graphics.draw(CIRCLE_SEGMENT_COUNT, pyglet.gl.GL_LINE_LOOP,
                          ('v2f', tuple(vertices)),
                          ('c3B', color * CIRCLE_SEGMENT_COUNT),
+                         )
+
+
+def draw_sine_wave(start_coordinates, end_coordinates,
+                   amplitude=10, frequency=1, color=CONNECTION_COLOR):
+    """
+
+    :param start_coordinates:
+    :param end_coordinates:
+    :param amplitude:
+    :param frequency:
+    :param color:
+    :return:
+    """
+    vertices = list(chain(*sine_wave_coordinates(SINE_WAVE_SEGMENT_COUNT,
+                                                 start_coordinates, end_coordinates,
+                                                 amplitude, frequency)))
+
+    pyglet.graphics.draw(SINE_WAVE_SEGMENT_COUNT, pyglet.gl.GL_LINE_STRIP,
+                         ('v2f', tuple(vertices)),
+                         ('c3B', color * SINE_WAVE_SEGMENT_COUNT),
                          )

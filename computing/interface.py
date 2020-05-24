@@ -19,7 +19,9 @@ class Interface:
     An interface can be either connected or disconnected to a `ConnectionSide` object, which enables it to move its packets
     down the connection further.
     """
-    def __init__(self, mac, ip=None, name=None, connection=None):
+    def __init__(self, mac=None, ip=None, name=None, connection=None,
+                 display_color=REGULAR_INTERFACE_COLOR,
+                 is_wireless=False):
         """
         Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
         :param os: The operating system of the computer above.
@@ -30,17 +32,24 @@ class Interface:
         self.connection = connection
         self.name = name if name is not None else Interface.random_name()
 
-        self.mac = MACAddress(mac) if isinstance(mac, str) else mac
+        self.mac = mac
+        if mac is None:
+            self.mac = MACAddress(MACAddress.randomac())
+        elif isinstance(mac, str):
+            self.mac = MACAddress(mac)
+
         self.ip = IPAddress(ip) if ip is not None else None
 
         self.is_promisc = True
         self.is_sniffing = False
         self.is_blocked = False
         self.accepting = None  # This is the only type of packet that is accepted when the interface is blocked.
+        self.is_wireless = is_wireless
 
         self.is_powered_on = True
 
         self.graphics = None
+        self.display_color = display_color
 
     @property
     def connection_length(self):
@@ -111,7 +120,7 @@ class Interface:
         """
         if self.is_connected() or other.is_connected():
             raise DeviceAlreadyConnectedError("The interface is connected already!!!")
-        connection = Connection()
+        connection = Connection(is_wireless=(self.is_wireless or other.is_wireless))
         self.connection, other.connection = connection.get_sides()
         return connection
 

@@ -2,6 +2,7 @@ from collections import namedtuple
 
 from address.mac_address import MACAddress
 from computing.computer import Computer
+from computing.interface import Interface
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
@@ -9,7 +10,10 @@ from gui.tech.computer_graphics import ComputerGraphics
 from packets.stp import STP, LogicalLinkControl
 from processes.stp_process import STPProcess
 
-SwitchTableItem = namedtuple("SwitchTableItem", "leg time")
+SwitchTableItem = namedtuple("SwitchTableItem", [
+    "leg",
+    "time",
+])
 
 
 class Switch(Computer):
@@ -170,3 +174,42 @@ class Hub(Switch):
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, HUB_IMAGE)
+
+
+class Antenna(Switch):
+    """
+    This class represents an Antenna, which is just a Switch that can send things over radio waves.
+    """
+    def __init__(self, name=None):
+        super(Antenna, self).__init__(name)
+        self.stp_enabled = True
+        self.interfaces = [Interface()]
+
+    def show(self, x, y):
+        """
+        Overrides `Switch.show` and shows the same `ComputerGraphics` object only with a antenna's photo.
+        :param x:
+        :param y:  coordinates that the image will have.
+        :return: None
+        """
+        self.graphics = ComputerGraphics(x, y, self, ANTENNA_IMAGE)
+
+    def add_interface(self, name=None):
+        """
+        Overrides the original method and only adds interfaces that are wireless
+        :param name: `str`
+        :return:
+        """
+        if any(interface.name == name for interface in self.all_interfaces):
+            raise DeviceNameAlreadyExists("Cannot have two interfaces with the same name!!!")
+        new_interface = Interface(name=name, is_wireless=True)
+        self.interfaces.append(new_interface)
+        self.graphics.add_interface(new_interface)
+        return new_interface
+
+    # TODO: make it so antennas can only connect with RF to each other (not to endpoints or something)
+    # TODO: display it when hovering over a wireless connection
+    # TODO: todo todo, todo, todo todo todo todo todooooooooo
+    # TODO: make wireless connections slightly slower or jittery or something (maybe add animation of static black
+    #       noise over packets that move through)
+    # TODO: create a drawing for the view mode of a wireless interface and a text for the view as well
