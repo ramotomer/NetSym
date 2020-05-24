@@ -100,8 +100,7 @@ class RoutePacket(Process):
                 self._send_icmp_unreachable()
                 return
 
-            interface = self.computer.get_interface_with_ip(self.computer.routing_table[dst_ip].interface_ip)
-            interface.send_with_ethernet(self.computer.arp_cache[ip_for_the_mac].mac, self.packet["IP"])
+            self.computer.send_with_ethernet(self.computer.arp_cache[ip_for_the_mac].mac, dst_ip, self.packet["IP"])
 
     def __repr__(self):
         """The string representation of the process"""

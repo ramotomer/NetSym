@@ -2,7 +2,6 @@ from collections import namedtuple
 
 from address.mac_address import MACAddress
 from computing.computer import Computer
-from computing.interface import Interface
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
@@ -29,7 +28,7 @@ class Switch(Computer):
 
         :param name: a string that will be the name of the switch. If `None`, it is randomized.
         """
-        super(Switch, self).__init__(name, OS_LINUX, None, Interface(MACAddress.randomac(), name="eth0"))
+        super(Switch, self).__init__(name, OS_LINUX, None)
 
         self.is_hub = False
 

@@ -116,6 +116,8 @@ def circular_coordinates(center_location: tuple, radius, count):
     :param count: The count of points
     :return: yields tuples of coordinates of the points
     """
+    if count == 0:
+        return
     x, y = center_location
     d_theta = (2 * pi) / count
     initial_theta = 0  # pi / 2

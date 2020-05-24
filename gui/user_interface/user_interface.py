@@ -708,14 +708,14 @@ class UserInterface:
                 if isinstance(computer, Switch):
                     continue
                 nearest_switch = min(switches, key=lambda s: distance(s.graphics.location, computer.graphics.location))
-                if not computer.interfaces[0].is_connected():
+                if not computer.interfaces or not computer.interfaces[0].is_connected():
                     self.connect_devices(computer, nearest_switch)
         elif routers:
             for computer in self.computers:
                 if isinstance(computer, Router):
                     continue
                 nearest_router = min(routers, key=lambda s: distance(s.graphics.location, computer.graphics.location))
-                if not computer.interfaces[0].is_connected():
+                if not computer.interfaces or not computer.interfaces[0].is_connected():
                     self.connect_devices(computer, nearest_router)
         else:
             self.connect_all_to_all()

@@ -64,10 +64,10 @@ class ComputerGraphics(ImageGraphics):
         Updates the image according to the current computer state
         :return:
         """
-        self.image_name = IMAGES.format(SERVER_IMAGE if self.computer.open_ports else COMPUTER_IMAGE)
+        self.image_name = IMAGES.format(SERVER_IMAGE if self.computer.open_tcp_ports else COMPUTER_IMAGE)
         self.load()
         self.child_graphics_objects.process_list.clear()
-        for port in self.computer.open_ports:
+        for port in self.computer.open_tcp_ports:
             self.child_graphics_objects.process_list.add(port)
 
     def start_viewing(self, user_interface):
@@ -76,6 +76,9 @@ class ComputerGraphics(ImageGraphics):
         :param user_interface: the `UserInterface` object we can use the methods of it.
         :return: a tuple <display sprite>, <display text>, <new button count>
         """
+
+        self.child_graphics_objects.console.show()
+
         buttons = {
             "open/close console (shift+o)": self.child_graphics_objects.console.toggle_showing,
             "power on/off (o)": self.computer.power,
@@ -97,14 +100,22 @@ class ComputerGraphics(ImageGraphics):
     def end_viewing(self, user_interface):
         """Ends the viewing of the object in the side window"""
         user_interface.remove_buttons(self.buttons_id)
+        self.child_graphics_objects.console.hide()
 
     def generate_view_text(self):
         """
         Generates the text that will be shown in the side window when this computer is pressed.
         :return: a long string.
         """
-        return f" \nName:\n{self.computer.name}\n OS: {self.computer.os}\n gateway: {self.computer.routing_table.default_gateway.ip_address}\n\n " \
-            f"Interfaces:\n{str(self.computer.loopback)}\n{linesep.join(str(interface) for interface in self.computer.interfaces)}\n "
+        gateway = self.computer.routing_table.default_gateway.ip_address
+        addresses = linesep.join(str(interface.ip) for interface in self.computer.interfaces if interface.has_ip())
+
+        return f"""
+Name: {self.computer.name}
+OS: {self.computer.os}
+{f'gateway: {gateway}' if gateway is not None else ""}
+{f'addresses: {linesep + addresses}' if addresses else ""}
+"""
 
     def add_interface(self, interface):
         """

@@ -60,6 +60,7 @@ ICMP_REQUEST = "ping request"
 ICMP_REPLY = "ping reply"
 ICMP_TIME_EXCEEDED = "ICMP Time Exceeded!"
 ICMP_UNREACHABLE = "ICMP Unreachable"
+ICMP_PORT_UNREACHABLE = "ICMP Port Unreachable"
 DHCP_DISCOVER = "DHCP Discover"
 DHCP_OFFER = "DHCP Offer"
 DHCP_REQUEST = "DHCP Request"
@@ -87,10 +88,10 @@ TCP_FLAGS_DISPLAY_PRIORITY = [TCP_SYN, TCP_FIN, TCP_RST, TCP_PSH, TCP_ACK]
 TCP_RETRANSMISSION = " retransmission"
 
 TCP_MAX_SEQUENCE_NUMBER = 2**32 - 1
-TCP_RESEND_TIME = 10  # seconds
+TCP_RESEND_TIME = 15  # seconds
 TCP_USABLE_PORT_RANGE = (2 ** 15 - 2 ** 14), 2 ** 16 - 1
 TCP_MAX_WINDOW_SIZE = 20  # packets
-TCP_SENDING_INTERVAL = 0.2  # seconds
+TCP_SENDING_INTERVAL = 0.1  # seconds
 TCP_DONE_RECEIVING = TCPDoneReceiving
 TCP_MAX_UNUSED_CONNECTION_TIME = 15  # seconds
 TCP_MAX_MSS = 100
@@ -157,8 +158,9 @@ ARP_GRAT_IMAGE = "packets/arp_grat.png"
 IP_IMAGE = "packets/ip_packet.png"
 ICMP_REPLY_IMAGE = "packets/ping_reply.png"
 ICMP_REQUEST_IMAGE = "packets/ping_request.png"
-ICMP_TIME_EXCEEDED_IMAGE = "packets/time_exceeded.png"
+ICMP_TIME_EXCEEDED_IMAGE = "packets/icmp_time_exceeded.png"
 ICMP_UNREACHABLE_IMAGE = "packets/icmp_unreachable.png"
+ICMP_PORT_UNREACHABLE_IMAGE = "packets/icmp_port_unreachable.png"
 DHCP_DISCOVER_IMAGE = "packets/dhcp_discover.png"
 DHCP_OFFER_IMAGE = "packets/dhcp_offer.png"
 DHCP_REQUEST_IMAGE = "packets/dhcp_request.png"
@@ -224,6 +226,7 @@ PACKET_TYPE_TO_IMAGE = {
                 ICMP_REPLY: ICMP_REPLY_IMAGE,
                 ICMP_TIME_EXCEEDED: ICMP_TIME_EXCEEDED_IMAGE,
                 ICMP_UNREACHABLE: ICMP_UNREACHABLE_IMAGE,
+                ICMP_PORT_UNREACHABLE: ICMP_PORT_UNREACHABLE_IMAGE,
             },
             "TCP": {
                 TCP_SYN: TCP_SYN_IMAGE,

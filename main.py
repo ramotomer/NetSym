@@ -18,7 +18,5 @@ if __name__ == '__main__':
     # TODO: cannot add routes to a router.
     # TODO: maybe some-day add a `receiving_time` and a `receiving_interface` attributes to a `Packet` object. -
     #  you will have a big refactoring to do but the code will be *much* cleaner!
-    # TODO: add udp `open_ports` list. Add to it DHCP
+    # TODO: add udp `open_tcp_ports` list. Add to it DHCP
     # TODO: add lost packets handling for DHCP and non-existent DHCP server
-
-    # TODO: Overall learn about FTP and actually implement it similarly to how it actually works!!!

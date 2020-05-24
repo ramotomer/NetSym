@@ -43,13 +43,15 @@ class Computer:
     The computer runs many `Process`-s that are all either currently running or waiting for a certain packet to arrive.
     """
 
-    PORTS_TO_PROCESSES = {
+    TCP_PORTS_TO_PROCESSES = {
         DAYTIME_PORT: DAYTIMEServerProcess,
         FTP_PORT: FTPServerProcess,
         SSH_PORT: None,
         HTTP_PORT: None,
         HTTPS_PORT: None,
     }
+
+    UDP_PORTS_TO_PROCESSES = {}
 
     def __init__(self, name=None, os=OS_WINDOWS, gateway=None, *interfaces):
         """
@@ -65,13 +67,14 @@ class Computer:
 
         self.interfaces = list(interfaces)
         if not interfaces:
-            self.interfaces = [Interface(MACAddress.randomac())]  # a list of all of the interfaces without the loopback
+            self.interfaces = []  # a list of all of the interfaces without the loopback
         self.packets_sniffed = 0
         self.loopback = Interface.loopback()
 
-        self.arp_cache = {}  # a dictionary of {<ip address> : ARPCacheItem(<mac address>, <initiation time of this item>)
-        self.routing_table = RoutingTable.create_default(self)  # a dictionary of {<ip address destination> : RoutingTableItem(<gateway IP>, <interface IP>)}
-        self.received = []  # a list of the `ReceivedPacket` namedtuple-s that were received at this computer.
+        self.arp_cache = {}
+        # ^ a dictionary of {<ip address> : ARPCacheItem(<mac address>, <initiation time of this item>)
+        self.routing_table = RoutingTable.create_default(self)
+        self.received = []
 
         self.waiting_processes = []  # a list of `WaitingProcess` namedtuple-s. If the process is new, its `WaitingProcess.waiting_for` should be None.
         self.process_last_check = MainLoop.instance.time()  # the last time that the waiting_processes were checked for 'can they run?'
@@ -85,9 +88,11 @@ class Computer:
             "ARP": self._handle_arp,
             "ICMP": self._handle_ping,
             "TCP": self._handle_tcp,
+            "UDP": self._handle_udp,
         }
 
-        self.open_ports = [] # a list of the ports that are open on this computer.
+        self.open_tcp_ports = []  # a list of the ports that are open on this computer.
+        self.open_udp_ports = []
 
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ the fact that it is 'pausable' means that when the space bar is pressed and the program pauses, this method does not run.
@@ -134,7 +139,7 @@ class Computer:
         :param y: Coordinates to initiate the `GraphicsObject` at.
         :return: None
         """
-        self.graphics = ComputerGraphics(x, y, self, COMPUTER_IMAGE if not self.open_ports else SERVER_IMAGE)
+        self.graphics = ComputerGraphics(x, y, self, COMPUTER_IMAGE if not self.open_tcp_ports else SERVER_IMAGE)
         self.loopback.connection.connection.show(self.graphics)
 
     def print(self, string):
@@ -301,9 +306,21 @@ class Computer:
 
         if {TCP_SYN} == packet["TCP"].flags:
             dst_port = packet["TCP"].dst_port
-            if dst_port not in self.open_ports:
+            if dst_port not in self.open_tcp_ports:
                 self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip,
                              TCP(packet["TCP"].dst_port, packet["TCP"].src_port, 0, {TCP_RST}))
+
+    def _handle_udp(self, packet, interface):
+        """
+        Handles a UDP packet that is received on the computer
+        :param packet: the `Packet`
+        :return:
+        """
+        if not self.has_ip() or not interface.has_this_ip(packet["IP"].dst_ip):
+            return
+
+        if packet["UDP"].dst_port not in self.open_udp_ports:
+            self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip, ICMP(ICMP_PORT_UNREACHABLE))
 
     def _handle_special_packet(self, packet, receiving_interface):
         """
@@ -367,18 +384,18 @@ class Computer:
         :param port_number:
         :return:
         """
-        if port_number not in self.PORTS_TO_PROCESSES:
+        if port_number not in self.TCP_PORTS_TO_PROCESSES:
             raise PopupWindowWithThisError(f"{port_number} is an unknown port!!!")
 
-        process = self.PORTS_TO_PROCESSES[port_number]
-        if port_number in self.open_ports:
+        process = self.TCP_PORTS_TO_PROCESSES[port_number]
+        if port_number in self.open_tcp_ports:
             if process is not None:
                 self.kill_process(process)
-            self.open_ports.remove(port_number)
+            self.open_tcp_ports.remove(port_number)
         else:
             if process is not None:
-                self.start_process(self.PORTS_TO_PROCESSES[port_number])
-            self.open_ports.append(port_number)
+                self.start_process(self.TCP_PORTS_TO_PROCESSES[port_number])
+            self.open_tcp_ports.append(port_number)
 
         self.graphics.update_image()
 
@@ -421,6 +438,7 @@ class Computer:
         If no such interface exists, raises NoSuchInterfaceError.
         If the interface is sniffing already, stops sniffing on it.
         :param interface_name: ... the interface name
+        :param is_promisc: whether or not the interface should be in promisc while sniffing.
         :return: None
         """
         if interface_name == ANY_INTERFACE:
@@ -445,22 +463,41 @@ class Computer:
     def _new_packets_since(self, time_):
         """
         Returns a list of all the new `ReceivedPacket`s that were received in the last `seconds` seconds.
-        :param seconds: a number of seconds.
-        :return: a list of `ReceievedPacket`s
+        :param time_: a number of seconds.
+        :return: a list of `ReceivedPacket`s
         """
         return list(filter(lambda rp: rp.time > time_, self.received))
 
 # -------------------------v packet sending and wrapping related methods v ---------------------------------------------
 
-    def send(self, packet):
+    def send(self, packet, interface=None):
         """
         Takes a full and ready packet and just sends it.
         :param packet: a valid `Packet` object.
+        :param interface: the `Interface` to send the packet on.
         :return: None
         """
-        if packet.is_valid():
+        if interface is None:
             interface = self.get_interface_with_ip(self.routing_table[packet["IP"].dst_ip].interface_ip)
+
+        if packet.is_valid():
             interface.send(packet)
+            if interface.is_sniffing:
+                self._sniff_packet(packet)
+
+    def send_with_ethernet(self, dst_mac, dst_ip, data):
+        """
+        Just like `send_to` only does not add the IP layer.
+        :param dst_mac:
+        :param dst_ip:
+        :param data:
+        :return:
+        """
+        interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
+        self.send(
+            interface.ethernet_wrap(dst_mac, data),
+            interface
+        )
 
     def send_to(self, dst_mac, dst_ip, packet):
         """
@@ -471,9 +508,7 @@ class Computer:
         :param packet: packet to wrap. Could be anything, should be something the destination computer expects.
         :return: None
         """
-        full_packet = self.ip_wrap(dst_mac, dst_ip, packet)
-        interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
-        interface.send(full_packet)
+        self.send(self.ip_wrap(dst_mac, dst_ip, packet))
 
     def ip_wrap(self, dst_mac, dst_ip, protocol):
         """
@@ -497,7 +532,7 @@ class Computer:
         arp = ARP(ARP_REQUEST, interface.ip, ip_address, interface.mac)
         if interface.ip is None:
             arp = ARP.create_probe(ip_address, interface.mac)
-        interface.send_with_ethernet(MACAddress.broadcast(), arp)
+        self.send(interface.ethernet_wrap(MACAddress.broadcast(), arp), interface)
 
     def send_arp_reply(self, request):
         """
@@ -518,7 +553,7 @@ class Computer:
 
         interface = self.get_interface_with_ip(requested_ip)
         arp = ARP(ARP_REPLY, request["ARP"].dst_ip, sender_ip, interface.mac, request["ARP"].src_mac)
-        interface.send_with_ethernet(request["ARP"].src_mac, arp)
+        self.send(interface.ethernet_wrap(request["ARP"].src_mac, arp), interface)
 
     def arp_grat(self, interface):
         """
@@ -529,7 +564,11 @@ class Computer:
         """
         if self.has_ip() and SENDING_GRAT_ARPS:
             if interface.has_ip():
-                interface.send_with_ethernet(MACAddress.broadcast(), ARP(ARP_GRAT, interface.ip, interface.ip, interface.mac))
+                self.send(
+                    interface.ethernet_wrap(MACAddress.broadcast(),
+                                            ARP(ARP_GRAT, interface.ip, interface.ip, interface.mac)),
+                    interface
+                )
 
     def send_ping_to(self, mac_address, ip_address, opcode=ICMP_REQUEST, data=''):
         """
@@ -548,19 +587,25 @@ class Computer:
         :return: None
         """
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
-        interface.send_with_ethernet(dst_mac,
-                                     IP(interface.ip, dst_ip, MAX_TTL,
-                                        ICMP(ICMP_TIME_EXCEEDED, data)))
+        self.send(
+            interface.ethernet_wrap(dst_mac,
+                                    IP(interface.ip, dst_ip, MAX_TTL,
+                                       ICMP(ICMP_TIME_EXCEEDED, data))),
+            interface
+        )
 
     def send_dhcp_discover(self):
         """Sends out a `DHCP_DISCOVER` packet (This is sent by a DHCP client)"""
         dst_ip = IPAddress.broadcast()
         src_ip = IPAddress.no_address()
         for interface in self.interfaces:
-            interface.send_with_ethernet(MACAddress.broadcast(),
-                                         IP(src_ip, dst_ip, TTLS[self.os],
-                                            UDP(DHCP_CLIENT_PORT, DHCP_SERVER_PORT,
-                                                DHCP(DHCP_DISCOVER, DHCPData(None, None, None)))))
+            self.send(
+                interface.ethernet_wrap(MACAddress.broadcast(),
+                                        IP(src_ip, dst_ip, TTLS[self.os],
+                                           UDP(DHCP_CLIENT_PORT, DHCP_SERVER_PORT,
+                                               DHCP(DHCP_DISCOVER, DHCPData(None, None, None))))),
+                interface
+            )
 
     def send_dhcp_offer(self, client_mac, offer_ip, session_interface):
         """
@@ -571,10 +616,13 @@ class Computer:
         :return: None
         """
         dst_ip = offer_ip
-        session_interface.send_with_ethernet(client_mac,
-                                             IP(session_interface.ip, dst_ip, TTLS[self.os],
-                                                UDP(DHCP_SERVER_PORT, DHCP_CLIENT_PORT,
-                                                    DHCP(DHCP_OFFER, DHCPData(offer_ip, None, None)))))
+        self.send(
+            session_interface.ethernet_wrap(client_mac,
+                                                 IP(session_interface.ip, dst_ip, TTLS[self.os],
+                                                    UDP(DHCP_SERVER_PORT, DHCP_CLIENT_PORT,
+                                                        DHCP(DHCP_OFFER, DHCPData(offer_ip, None, None))))),
+            session_interface
+        )
 
     def send_dhcp_request(self, server_mac, session_interface):
         """
@@ -586,10 +634,13 @@ class Computer:
         """
         dst_ip = IPAddress.broadcast()
         src_ip = IPAddress.no_address()
-        session_interface.send_with_ethernet(server_mac,
-                                             IP(src_ip, dst_ip, TTLS[self.os],
-                                                UDP(DHCP_CLIENT_PORT, DHCP_SERVER_PORT,
-                                                    DHCP(DHCP_REQUEST, DHCPData(None, None, None)))))
+        self.send(
+            session_interface.ethernet_wrap(server_mac,
+                                            IP(src_ip, dst_ip, TTLS[self.os],
+                                               UDP(DHCP_CLIENT_PORT, DHCP_SERVER_PORT,
+                                                   DHCP(DHCP_REQUEST, DHCPData(None, None, None))))),
+            session_interface
+        )
 
     def send_dhcp_pack(self, client_mac, dhcp_data, session_interface):
         """
@@ -600,10 +651,13 @@ class Computer:
         :return: None
         """
         dst_ip = dhcp_data.given_ip
-        session_interface.send_with_ethernet(client_mac,
-                                             IP(session_interface.ip, dst_ip, TTLS[self.os],
-                                                UDP(DHCP_SERVER_PORT, DHCP_CLIENT_PORT,
-                                                    DHCP(DHCP_PACK, dhcp_data))))
+        self.send(
+            session_interface.ethernet_wrap(client_mac,
+                                                 IP(session_interface.ip, dst_ip, TTLS[self.os],
+                                                    UDP(DHCP_SERVER_PORT, DHCP_CLIENT_PORT,
+                                                        DHCP(DHCP_PACK, dhcp_data)))),
+            session_interface
+        )
 
     def validate_dhcp_given_ip(self, ip_address):
         """
