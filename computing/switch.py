@@ -141,7 +141,8 @@ class Switch(Computer):
 
     def logic(self):
         """
-        overrides the original `logic` function of `Computer`, but still calls the original and adds to it the switch logic.
+        overrides the original `logic` function of `Computer`, but still calls the original and adds to it the switch
+        logic.
         :return: None
         """
         super(Switch, self).logic()
