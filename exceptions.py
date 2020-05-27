@@ -44,6 +44,12 @@ class SomethingWentTerriblyWrongError(NetworkSimulationError):
     """
 
 
+class WrongUsageError(SomethingWentTerriblyWrongError):
+    """
+    Occurs when a function is used not in the way it was intended
+    """
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -134,6 +140,12 @@ class NoSuchInterfaceError(InterfaceError):
 class NotAnInterfaceError(InterfaceError):
     """
     Occurs when an interface is requested but another type of object is given.
+    """
+
+
+class DeviceNameAlreadyExists(InterfaceError):
+    """
+    Indicates a creation of an interface with a name that is taken.
     """
 
 

@@ -9,7 +9,10 @@ from gui.tech.computer_graphics import ComputerGraphics
 from packets.stp import STP, LogicalLinkControl
 from processes.stp_process import STPProcess
 
-SwitchTableItem = namedtuple("SwitchTableItem", "leg time")
+SwitchTableItem = namedtuple("SwitchTableItem", [
+    "leg",
+    "time",
+])
 
 
 class Switch(Computer):
@@ -123,7 +126,7 @@ class Switch(Computer):
         Starts the process of STP sending and receiving.
         :return: None
         """
-        if not self.is_process_running(STPProcess):
+        if not self.is_process_running(STPProcess) and self.interfaces:
             self.start_process(STPProcess)
 
     def send_stp(self, sender_bid, root_bid, distance_to_root, root_declaration_time):
@@ -171,3 +174,22 @@ class Hub(Switch):
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, HUB_IMAGE)
+
+
+class Antenna(Switch):
+    """
+    This class represents an Antenna, which is just a Switch that can send things over radio waves.
+    """
+    def __init__(self, name=None):
+        super(Antenna, self).__init__(name)
+        self.stp_enabled = True
+        self.is_supporting_wireless_connections = True
+
+    def show(self, x, y):
+        """
+        Overrides `Switch.show` and shows the same `ComputerGraphics` object only with a antenna's photo.
+        :param x:
+        :param y:  coordinates that the image will have.
+        :return: None
+        """
+        self.graphics = ComputerGraphics(x, y, self, ANTENNA_IMAGE)

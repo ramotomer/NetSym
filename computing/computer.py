@@ -76,8 +76,10 @@ class Computer:
         self.routing_table = RoutingTable.create_default(self)
         self.received = []
 
-        self.waiting_processes = []  # a list of `WaitingProcess` namedtuple-s. If the process is new, its `WaitingProcess.waiting_for` should be None.
-        self.process_last_check = MainLoop.instance.time()  # the last time that the waiting_processes were checked for 'can they run?'
+        self.waiting_processes = []
+        # ^ a list of `WaitingProcess` namedtuple-s. If the process is new, its `WaitingProcess.waiting_for` is None.
+        self.process_last_check = MainLoop.instance.time()
+        # ^ the last time that the waiting_processes were checked for 'can they run?'
 
         self.graphics = None
         # ^ The `GraphicsObject` of the computer, not initiated for now.
@@ -94,8 +96,10 @@ class Computer:
         self.open_tcp_ports = []  # a list of the ports that are open on this computer.
         self.open_udp_ports = []
 
+        self.is_supporting_wireless_connections = False
+
         MainLoop.instance.insert_to_loop_pausable(self.logic)
-        # ^ the fact that it is 'pausable' means that when the space bar is pressed and the program pauses, this method does not run.
+        # ^ method does not run when program is paused
 
     @property
     def macs(self):
@@ -117,9 +121,10 @@ class Computer:
         """
         This is a constructor for a computer with a given IP address, defaults the rest of the properties.
         :param ip_address: an IP string that one wishes the new `Computer` to have.
+        :param name: a name that the computer will have.
         :return: a `Computer` object
         """
-        computer = cls(name, OS_WINDOWS, None, Interface(MACAddress.randomac(), IPAddress(ip_address), "IHaveIP"))
+        computer = cls(name, OS_WINDOWS, None, Interface(MACAddress.randomac(), IPAddress(ip_address)))
         return computer
 
     @staticmethod
@@ -160,21 +165,57 @@ class Computer:
             interface.is_powered_on = self.is_powered_on
         self.graphics.toggle_opacity()
 
-    def available_interface(self, ip_address=None):
+    def add_interface(self, name=None):
+        """
+        Adds an interface to the computer with a given name.
+        If the name already exists, raise a DeviceNameAlreadyExists.
+        If no name is given, randomize.
+        :param name:
+        :return:
+        """
+        if any(interface.name == name for interface in self.all_interfaces):
+            raise DeviceNameAlreadyExists("Cannot have two interfaces with the same name!!!")
+        new_interface = Interface(MACAddress.randomac(), name=name)
+        self.interfaces.append(new_interface)
+        self.graphics.add_interface(new_interface)
+        return new_interface
+
+    def remove_interface(self, name):
+        """
+        Removes a computer interface that is named `name`
+        :param name: `str`
+        :return:
+        """
+        interface = get_the_one(self.interfaces, lambda i: i.name == name)
+        if interface.is_connected():
+            raise DeviceAlreadyConnectedError("Cannot remove a connected interface!!!")
+        if interface.has_ip():
+            self.routing_table.remove_interface(interface)
+        self.interfaces.remove(interface)
+        MainLoop.instance.unregister_graphics_object(interface.graphics)
+
+    def add_remove_interface(self, name):
+        """
+        Adds a new interface to this computer with a given name
+        :param name: a string or None, if None, chooses random name.
+        :return: None
+        """
+        try:
+            self.add_interface(name)
+        except DeviceNameAlreadyExists:
+            self.remove_interface(name)
+
+    def available_interface(self):
         """
         Returns an interface of the computer that is disconnected and
         is available to connect to another computer.
         If the computer has no available interfaces, creates one and returns it.
-        :param ip_address: a string which is the address the new interface will have if one is created.
         :return: an `Interface` object.
         """
         try:
             return get_the_one(self.interfaces, lambda i: not i.is_connected(), NoSuchInterfaceError)
         except NoSuchInterfaceError:
-            new_interface = Interface.with_ip(ip_address)
-            self.interfaces.append(new_interface)
-            self.graphics.add_interface(new_interface)
-            return new_interface
+            return self.add_interface()
 
     def disconnect(self, connection):
         """
@@ -194,7 +235,7 @@ class Computer:
         :param ip_address: The `IPAddress` object whose subnet we are talking about.
         :return: an `Interface` list of the Interface objects in the same subnet.
         """
-        return[interface for interface in self.all_interfaces \
+        return [interface for interface in self.all_interfaces
                 if interface.has_ip() and interface.ip.is_same_subnet(ip_address)]
 
     def has_ip(self):
@@ -217,32 +258,13 @@ class Computer:
             raise NoSuchInterfaceError("The computer has no MAC address since it has no network interfaces!!!")
         return self.macs[0]
 
-    def add_remove_interface(self, name):
-        """
-        Adds a new interface to this computer with a given name
-        :param name: a string or None, if None, chooses random name.
-        :return: None
-        """
-        interface = get_the_one(self.interfaces, lambda i: i.name == name)
-        # add:
-        if interface is None:
-            self.interfaces.append(Interface(MACAddress.randomac(), name=name))
-            return
-
-        # remove:
-        if interface.is_connected():
-            raise DeviceAlreadyConnectedError("Cannot remove a connected interface!!!")
-        if interface.has_ip():
-            self.routing_table.remove_interface(interface)
-        self.interfaces.remove(interface)
-        MainLoop.instance.unregister_graphics_object(interface.graphics)
-
     def has_this_ip(self, ip_address):
         """Returns whether or not this computer has a given IP address. (so whether or not if it is its address)"""
         if ip_address is None:
             # raise NoIPAddressError("The address that is given is None!!!")
             return
-        return any(interface.has_ip() and interface.ip.string_ip == ip_address.string_ip for interface in self.all_interfaces)
+        return any(interface.has_ip() and interface.ip.string_ip == ip_address.string_ip
+                   for interface in self.all_interfaces)
 
     def is_arp_for_me(self, packet):
         """Returns whether or not the packet is an ARP request for one of your IP addresses"""
@@ -425,11 +447,28 @@ class Computer:
         :param string_ip: a string IP which will be the new IP of the interface.
         :return: None
         """
+        if interface is None:
+            raise PopupWindowWithThisError("The computer does not have interfaces!!!")
         interface.ip = IPAddress(string_ip)
         if self.is_process_running(DHCPServer):
             dhcp_server_process = self.get_running_process(DHCPServer)
             dhcp_server_process.update_server_data()
         self.routing_table.add_interface(interface.ip)
+        self.graphics.update_text()
+
+    def set_name(self, name):
+        """
+        Sets the name of the computer and updates the text under it.
+        :param name: the new name for the computer
+        :return: None
+        """
+        if name == self.name:
+            raise PopupWindowWithThisError("new computer name is the same as the previous one!!!")
+        if len(name) < 2:
+            raise PopupWindowWithThisError("name too short!!!")
+        if not any(char.isalpha() for char in name):
+            raise PopupWindowWithThisError("name must contain letters!!!")
+        self.name = name
         self.graphics.update_text()
 
     def toggle_sniff(self, interface_name=ANY_INTERFACE, is_promisc=False):
@@ -549,7 +588,7 @@ class Computer:
             raise NoARPLayerError("The packet has no ARP layer!!!")
 
         if not self.has_this_ip(requested_ip):
-            raise SomethingWentTerriblyWrongError("Do not call this method if the ARP is not for me!!!")
+            raise WrongUsageError("Do not call this method if the ARP is not for me!!!")
 
         interface = self.get_interface_with_ip(requested_ip)
         arp = ARP(ARP_REPLY, request["ARP"].dst_ip, sender_ip, interface.mac, request["ARP"].src_mac)

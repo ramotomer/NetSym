@@ -8,11 +8,10 @@ from operator import concat
 from pyglet.window import key
 
 from address.ip_address import IPAddress
-from address.mac_address import MACAddress
 from computing.computer import Computer
 from computing.interface import Interface
 from computing.router import Router
-from computing.switch import Switch, Hub
+from computing.switch import Switch, Hub, Antenna
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
@@ -143,21 +142,23 @@ class UserInterface:
               "create a switch (s)"), {"key": (key.S, NO_MODIFIER)}),
             ((*DEFAULT_BUTTON_LOCATION(2), with_args(self.create, Hub),
               "create a hub (h)"), {"key": (key.H, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(3), self.create_router,
+            ((*DEFAULT_BUTTON_LOCATION(3), with_args(self.create, Antenna),
+              "create an antenna (shift+r)"), {"key": (key.R, SHIFT_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(4), self.create_router,
               "create a router (r / ^r)"), {"key": (key.R, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(4), with_args(self.toggle_mode, CONNECTING_MODE),
+            ((*DEFAULT_BUTTON_LOCATION(5), with_args(self.toggle_mode, CONNECTING_MODE),
               "connect (c / ^c / Shift+c)"), {"key": (key.C, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(5), with_args(self.toggle_mode, PINGING_MODE),
+            ((*DEFAULT_BUTTON_LOCATION(6), with_args(self.toggle_mode, PINGING_MODE),
               "ping (p / ^p / Shift+p)"), {"key": (key.P, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(6), self.ask_for_dhcp,
+            ((*DEFAULT_BUTTON_LOCATION(7), self.ask_for_dhcp,
               "ask for DHCP (a)"), {"key": (key.A, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(7), self.start_all_stp,
+            ((*DEFAULT_BUTTON_LOCATION(8), self.start_all_stp,
               "start STP (^s)"), {"key": (key.S, CTRL_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(8), self.delete_all_packets,
+            ((*DEFAULT_BUTTON_LOCATION(9), self.delete_all_packets,
               "delete all packets (Shift+d)"), {"key": (key.D, SHIFT_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(9), self.delete_all,
+            ((*DEFAULT_BUTTON_LOCATION(10), self.delete_all,
               "delete all (^d)"), {"key": (key.D, CTRL_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(10), with_args(self.toggle_mode, DELETING_MODE),
+            ((*DEFAULT_BUTTON_LOCATION(11), with_args(self.toggle_mode, DELETING_MODE),
               "delete (d)"), {"key": (key.D, NO_MODIFIER)}),
         ]
         self.buttons = {}
@@ -225,7 +226,7 @@ class UserInterface:
         :return:
         """
         if self.object_view is None:
-            raise SomethingWentTerriblyWrongError("Only call this in VIEW MODE")
+            raise WrongUsageError("Only call this in VIEW MODE")
 
         try:
             self.object_view.text.y = VIEWING_TEXT_COORDINATES[1] - ((len(self.buttons[buttons_id]) + 0.5) *
@@ -258,7 +259,8 @@ class UserInterface:
         """
         if self.object_view is None:
             raise SomethingWentTerriblyWrongError(
-                "Not supposed to get here!!! In VIEW_MODE the `self.object_view` is never None")
+                "Not supposed to get here!!! In VIEW_MODE the `self.object_view` is never None"
+            )
 
         sprite, text_graphics, viewed_object = self.object_view
         if scroll_count < 0 or self.scrolled_view <= -scroll_count * PIXELS_PER_SCROLL:
@@ -485,9 +487,10 @@ class UserInterface:
                 computers[i] = device
                 interfaces[i] = device.available_interface()
             else:
-                raise SomethingWentTerriblyWrongError("Only supply this function with computers or interfaces!!!!")
+                raise WrongUsageError("Only supply this function with computers or interfaces!!!!")
 
-        connection = interfaces[0].connect(interfaces[1])
+        is_wireless = all(computer.is_supporting_wireless_connections for computer in computers)
+        connection = interfaces[0].connect(interfaces[1], is_wireless=is_wireless)
         self.connection_data.append(ConnectionData(connection, *computers))
         connection.show(computers[0].graphics, computers[1].graphics)
 
@@ -602,17 +605,12 @@ class UserInterface:
         """
         computer = computer_graphics.computer
         interface = get_the_one(computer.interfaces, lambda i: i.name == interface_name)
-        if interface is None:
-            interface = Interface(MACAddress.randomac(), name=interface_name)
-            computer.interfaces.append(interface)
-            computer.graphics.add_interface(interface)
-            return
-
-        if interface.is_connected():
-            self.delete(interface.connection.connection.graphics)
-        if interface.has_ip():
-            computer.routing_table.remove_interface(interface)
-        computer.interfaces.remove(interface)
+        try:
+            computer.add_interface(interface_name)
+        except DeviceNameAlreadyExists:
+            if interface.is_connected():
+                self.delete(interface.connection.connection.graphics)
+            computer.remove_interface(interface_name)
 
     def hide_buttons(self, buttons_id=None):
         """
@@ -673,13 +671,20 @@ class UserInterface:
 
     def ask_user_for_ip(self):
         """
-        Asks the user for interface name and ip input and sets the computer's IP to be that.
+        Asks user for an IP address for an interface.
         Does that using popup window in the `TextBox` class.
         :return: None
         """
-        if self.selected_object is not None and isinstance(self.selected_object, InterfaceGraphics):
-            interface = self.selected_object.interface
-            computer = get_the_one(self.computers, lambda c: interface in c.interfaces, NoSuchInterfaceError)
+        computer, interface = None, None
+        if self.selected_object is not None:
+            if isinstance(self.selected_object, InterfaceGraphics):
+                interface = self.selected_object.interface
+                computer = get_the_one(self.computers, lambda c: interface in c.interfaces, NoSuchInterfaceError)
+
+            elif isinstance(self.selected_object, ComputerGraphics):
+                computer = self.selected_object.computer
+                if computer.interfaces:
+                    interface = computer.interfaces[0]
 
             self.ask_user_for(IPAddress,
                               INSERT_IP_MSG,

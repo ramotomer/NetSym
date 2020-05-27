@@ -114,6 +114,14 @@ PACKET_GOING_LEFT = 'L'
 CONNECTION_PL_PERCENT = 0.5  # the point in the connection where packets are dropped
 MOUSE_IN_CONNECTION_LENGTH = 5  # pixels
 
+# key modifiers:
+CAPS_MODIFIER = 8
+ALT_MODIFIER = 4
+CTRL_MODIFIER = 2
+SHIFT_MODIFIER = 1
+NO_MODIFIER = 0
+# you can `|` them together to get the different combinations.
+
 MAC_ADDRESS_SEPARATOR = ':'
 IP_ADDRESS_SEPARATOR = '.'
 IP_SUBNET_SEPARATOR = '/'
@@ -123,22 +131,15 @@ IP_ADDRESS_BIT_LENGTH = 32
 INVALID_MAC_ADDRESS = "The MAC address is not valid!"
 INVALID_IP_ADDRESS = "The IP address is not valid!"
 NETWORK_UNREACHABLE_MSG = "Cannot send packet, Network is unreachable!"
+
 INSERT_PL_MSG = "insert your desired pl (0 <= pl <= 1)!!!"
-INSERT_SPEED_MSG = "insert your desired connection speed"
-INSERT_IP_MSG = "Enter your desired IP in the form <INTERFACE NAME>, <IP>"
+INSERT_SPEED_MSG = "insert your desired connection speed:"
+INSERT_IP_MSG = "Enter your desired IP for this interface:"
 INSERT_GATEWAY_MSG = "Enter your desired IP for the gateway:"
-INSERT_INTERFACE_INFO_MSG = "Insert the name of the interface"
-INSERT_IP_FOR_PROCESS = "Insert an IP to start your process to"
+INSERT_INTERFACE_INFO_MSG = "Insert the name of the interface:"
+INSERT_IP_FOR_PROCESS = "Insert an IP to start your process to:"
 INSERT_PORT_NUMBER = "Insert a port number to open/close:"
-
-# key modifiers:
-CAPS_MODIFIER = 8
-ALT_MODIFIER = 4
-CTRL_MODIFIER = 2
-SHIFT_MODIFIER = 1
-NO_MODIFIER = 0
-# you can `|` them together to get the different combinations.
-
+INSERT_COMPUTER_NAME_MSG = "Insert a new name for the computer:"
 
 FILES = "../res/files/{}"
 IMAGES = "../res/sprites/{}"
@@ -149,7 +150,7 @@ ANY_INTERFACE = None
 TRANSFER_FILE = "transfer_me.txt"
 WINDOW_INPUT_LIST_FILE = FILES.format("window_inputs.txt")
 
-LOGO_ANIMATION_IMAGE = "logo.png"
+LOGO_ANIMATION_IMAGE = "misc/logo.png"
 
 ETHERNET_IMAGE = "packets/ethernet_packet.png"
 ARP_REQUEST_IMAGE = "packets/arp_request.png"
@@ -188,10 +189,12 @@ SERVER_IMAGE = "computers/server.png"
 VPN_IMAGE = "computers/VPN.png"
 PROXY_IMAGE = "computers/proxy.png"
 NAT_IMAGE = "computers/NAT.png"
+ANTENNA_IMAGE = "computers/antenna.png"
 
-CONNECTION_VIEW_IMAGE = "connection_view.png"
-INTERFACE_VIEW_IMAGE = "interface_view.png"
-EXPLOSION_ANIMATION = "explosion.png"
+CONNECTION_VIEW_IMAGE = "viewing_items/connection_view.png"
+WIRELESS_CONNECTION_VIEW_IMAGE = "viewing_items/wireless_connection_view.png"
+INTERFACE_VIEW_IMAGE = "viewing_items/interface_view.png"
+EXPLOSION_ANIMATION = "misc/explosion.png"
 ANIMATION_FRAME_RATE = 0.1
 ANIMATION_X_COUNT, ANIMATION_Y_COUNT = 5, 3
 
@@ -318,9 +321,10 @@ MODES_TO_COLORS = {
 }
 
 CONNECTION_COLOR = WHITE
+WIRELESS_CONNECTION_COLOR = LIGHT_GRAY
 BLOCKED_CONNECTION_COLOR = RED
 PL_CONNECTION_COLOR = DARK_GREEN
-SELECTED_CONNECTION_COLOR = PURPLE
+SELECTED_CONNECTION_COLOR = LIGHT_BLUE
 
 REGULAR_INTERFACE_COLOR = WHITE
 BLOCKED_INTERFACE_COLOR = RED
@@ -346,6 +350,11 @@ PAUSE_RECT_HEIGHT = 60
 PAUSE_RECT_COORDINATES = 20, ((WINDOW_HEIGHT - PAUSE_RECT_HEIGHT) - 10)
 
 CIRCLE_SEGMENT_COUNT = 50
+SINE_WAVE_MINIMAL_POINT_DISTANCE = 5
+INITIAL_SINE_WAVE_ANGLE = 0
+DEFAULT_SINE_WAVE_AMPLITUDE = 10
+DEFAULT_SINE_WAVE_FREQUENCY = 10
+
 DEFAULT_OUTLINE_WIDTH = 5
 
 TEXTBOX_WIDTH = 400

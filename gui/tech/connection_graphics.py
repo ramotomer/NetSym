@@ -105,7 +105,7 @@ class ConnectionGraphics(GraphicsObject):
             return self.interfaces.start.x, self.interfaces.start.y, self.interfaces.end.x, self.interfaces.end.y
         elif direction == PACKET_GOING_LEFT:
             return self.interfaces.end.x, self.interfaces.end.y, self.interfaces.start.x, self.interfaces.start.y
-        raise SomethingWentTerriblyWrongError("a packet can only go left or right!")
+        raise WrongUsageError("a packet can only go left or right!")
 
     def get_computer_coordinates(self, direction=PACKET_GOING_RIGHT):
         """
@@ -119,7 +119,7 @@ class ConnectionGraphics(GraphicsObject):
             return self.computers.start.x, self.computers.start.y, self.computers.end.x, self.computers.end.y
         elif direction == PACKET_GOING_LEFT:
             return self.computers.end.x, self.computers.end.y, self.computers.start.x, self.computers.start.y
-        raise SomethingWentTerriblyWrongError("a packet can only go left or right!")
+        raise WrongUsageError("a packet can only go left or right!")
 
     def packet_location(self, direction, progress):
         """

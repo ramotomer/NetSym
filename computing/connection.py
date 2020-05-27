@@ -3,9 +3,10 @@ from collections import namedtuple
 
 from consts import *
 from exceptions import ConnectionsError
-from exceptions import SomethingWentTerriblyWrongError, NoSuchConnectionSideError
+from exceptions import WrongUsageError, NoSuchConnectionSideError, SomethingWentTerriblyWrongError
 from gui.main_loop import MainLoop
 from gui.tech.connection_graphics import ConnectionGraphics
+from gui.tech.wireless_connection_graphics import WirelessConnectionGraphics
 
 SentPacket = namedtuple("SentPacket", [
     "packet",
@@ -23,13 +24,14 @@ class Connection:
 
     Each packet that is sent takes some time through the cable, that time is
     defined in the `speed` and `length` properties. They can be different for each connection.
-    There is a default value for the speed, and the length is defined by the graphics object and the locations of the connected computers.
-    These properties of the `Connection` class is mainly so the packet sending could be displayed nicely.
+    There is a default value for the speed, and the length is defined by the graphics object and the locations of the
+    connected computers. These properties of the `Connection` class is mainly so the packet sending could be
+    displayed nicely.
 
     The `Connection` object keeps references to its two `ConnectionSide` objects. These are nice interfaces for
         the `Interface` object to talk to its connection.
     """
-    def __init__(self, length=DEFAULT_CONNECTION_LENGTH, speed=DEFAULT_CONNECTION_SPEED, packet_loss=0):
+    def __init__(self, length=DEFAULT_CONNECTION_LENGTH, speed=DEFAULT_CONNECTION_SPEED, packet_loss=0, is_wireless=False):
         """
         Initiates a Connection object.
 
@@ -52,6 +54,7 @@ class Connection:
         self.is_blocked = False
 
         self.packet_loss = packet_loss
+        self.is_wireless = is_wireless
 
         MainLoop.instance.insert_to_loop_pausable(self.move_packets)
 
@@ -75,7 +78,10 @@ class Connection:
         :param end_computer: The `GraphicsObject` of the computer which is the end of the connection
         :return: None
         """
-        self.graphics = ConnectionGraphics(self, start_computer, end_computer, self.packet_loss)
+        if self.is_wireless:
+            self.graphics = WirelessConnectionGraphics(self, start_computer, end_computer, self.packet_loss)
+        else:
+            self.graphics = ConnectionGraphics(self, start_computer, end_computer, self.packet_loss)
 
     def get_sides(self):
         """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""
@@ -141,7 +147,7 @@ class Connection:
         elif direction == PACKET_GOING_LEFT:
             self.left_side.packets_to_receive.append(packet)
         else:
-            raise SomethingWentTerriblyWrongError('The packet can only go left or right!')
+            raise WrongUsageError('The packet can only go left or right!')
 
         self.sent_packets.remove(sent_packet)
 

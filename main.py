@@ -12,6 +12,7 @@ if __name__ == '__main__':
     pyglet.clock.schedule_interval(main_window.update, FRAME_RATE)
     pyglet.app.run()
 
+    # TODO: make sure no two computers or interfaces have the same name!
     # TODO: there are errors with removing connections and the routing table
     # TODO: sniffing sent packets is impossible.
     # TODO: resizable window
