@@ -2,7 +2,6 @@ from collections import namedtuple
 
 from address.mac_address import MACAddress
 from computing.computer import Computer
-from computing.interface import Interface
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
@@ -127,7 +126,7 @@ class Switch(Computer):
         Starts the process of STP sending and receiving.
         :return: None
         """
-        if not self.is_process_running(STPProcess):
+        if not self.is_process_running(STPProcess) and self.interfaces:
             self.start_process(STPProcess)
 
     def send_stp(self, sender_bid, root_bid, distance_to_root, root_declaration_time):
@@ -183,7 +182,7 @@ class Antenna(Switch):
     def __init__(self, name=None):
         super(Antenna, self).__init__(name)
         self.stp_enabled = True
-        self.interfaces = [Interface()]
+        self.is_supporting_wireless_connections = True
 
     def show(self, x, y):
         """
@@ -193,23 +192,3 @@ class Antenna(Switch):
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, ANTENNA_IMAGE)
-
-    def add_interface(self, name=None):
-        """
-        Overrides the original method and only adds interfaces that are wireless
-        :param name: `str`
-        :return:
-        """
-        if any(interface.name == name for interface in self.all_interfaces):
-            raise DeviceNameAlreadyExists("Cannot have two interfaces with the same name!!!")
-        new_interface = Interface(name=name, is_wireless=True)
-        self.interfaces.append(new_interface)
-        self.graphics.add_interface(new_interface)
-        return new_interface
-
-    # TODO: make it so antennas can only connect with RF to each other (not to endpoints or something)
-    # TODO: display it when hovering over a wireless connection
-    # TODO: todo todo, todo, todo todo todo todo todooooooooo
-    # TODO: make wireless connections slightly slower or jittery or something (maybe add animation of static black
-    #       noise over packets that move through)
-    # TODO: create a drawing for the view mode of a wireless interface and a text for the view as well

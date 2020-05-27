@@ -20,11 +20,9 @@ class Interface:
     down the connection further.
     """
     def __init__(self, mac=None, ip=None, name=None, connection=None,
-                 display_color=REGULAR_INTERFACE_COLOR,
-                 is_wireless=False):
+                 display_color=REGULAR_INTERFACE_COLOR):
         """
         Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
-        :param os: The operating system of the computer above.
         :param mac: a string MAC address ('aa:bb:cc:11:22:76' for example)
         :param connection: a `Connection` object
         :param ip: a string ip address ('10.3.252.5/24' for example)
@@ -44,7 +42,6 @@ class Interface:
         self.is_sniffing = False
         self.is_blocked = False
         self.accepting = None  # This is the only type of packet that is accepted when the interface is blocked.
-        self.is_wireless = is_wireless
 
         self.is_powered_on = True
 
@@ -111,16 +108,17 @@ class Interface:
         """Returns whether the interface is connected or not"""
         return self.connection is not None
 
-    def connect(self, other):
+    def connect(self, other, is_wireless=False):
         """
         Connects this interface to another interface, return the `Connection` object.
         If grat arps are enabled, each interface sends a gratuitous arp.
         :param other: The other `Interface` object to connect to.
+        :param is_wireless: whether or not the connection is a wireless connection.
         :return: The `Connection` object.
         """
         if self.is_connected() or other.is_connected():
             raise DeviceAlreadyConnectedError("The interface is connected already!!!")
-        connection = Connection(is_wireless=(self.is_wireless or other.is_wireless))
+        connection = Connection(is_wireless=is_wireless)
         self.connection, other.connection = connection.get_sides()
         return connection
 

@@ -23,6 +23,9 @@ class DDOSProcess(Process):
         then send again.
         :return: yield `WaitingFor` objects
         """
+        if not self.computer.has_ip():
+            return
+
         for _ in range(self.count):
             self.computer.send_to(
                 MACAddress.broadcast(),

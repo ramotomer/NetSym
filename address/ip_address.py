@@ -9,7 +9,7 @@ class IPAddress:
     def __init__(self, string_ip):
         """
         Initiates a IPAddress object from a data
-        :param string_mac: The data mac ('132.23.245.1/24' for example or '1.1.1.1')
+        :param string_ip: The ip ('132.23.245.1/24' for example or '1.1.1.1')
         """
         if isinstance(string_ip, self.__class__):
             self.string_ip, self.subnet_mask = string_ip.string_ip, string_ip.subnet_mask
@@ -30,12 +30,12 @@ class IPAddress:
     @classmethod
     def broadcast(cls):
         """A constructor to create a broadcast address"""
-        return cls("255.255.255.255/0")
+        return cls("255.255.255.255/32")
 
     @classmethod
     def no_address(cls):
         """A constructor to the address that is used where there is no IP address (0.0.0.0)"""
-        return cls("0.0.0.0/32")
+        return cls("0.0.0.0/0")
 
     @classmethod
     def loopback(cls):

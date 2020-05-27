@@ -226,7 +226,7 @@ class UserInterface:
         :return:
         """
         if self.object_view is None:
-            raise SomethingWentTerriblyWrongError("Only call this in VIEW MODE")
+            raise WrongUsageError("Only call this in VIEW MODE")
 
         try:
             self.object_view.text.y = VIEWING_TEXT_COORDINATES[1] - ((len(self.buttons[buttons_id]) + 0.5) *
@@ -259,7 +259,8 @@ class UserInterface:
         """
         if self.object_view is None:
             raise SomethingWentTerriblyWrongError(
-                "Not supposed to get here!!! In VIEW_MODE the `self.object_view` is never None")
+                "Not supposed to get here!!! In VIEW_MODE the `self.object_view` is never None"
+            )
 
         sprite, text_graphics, viewed_object = self.object_view
         if scroll_count < 0 or self.scrolled_view <= -scroll_count * PIXELS_PER_SCROLL:
@@ -486,9 +487,10 @@ class UserInterface:
                 computers[i] = device
                 interfaces[i] = device.available_interface()
             else:
-                raise SomethingWentTerriblyWrongError("Only supply this function with computers or interfaces!!!!")
+                raise WrongUsageError("Only supply this function with computers or interfaces!!!!")
 
-        connection = interfaces[0].connect(interfaces[1])
+        is_wireless = all(computer.is_supporting_wireless_connections for computer in computers)
+        connection = interfaces[0].connect(interfaces[1], is_wireless=is_wireless)
         self.connection_data.append(ConnectionData(connection, *computers))
         connection.show(computers[0].graphics, computers[1].graphics)
 
@@ -669,13 +671,20 @@ class UserInterface:
 
     def ask_user_for_ip(self):
         """
-        Asks the user for interface name and ip input and sets the computer's IP to be that.
+        Asks user for an IP address for an interface.
         Does that using popup window in the `TextBox` class.
         :return: None
         """
-        if self.selected_object is not None and isinstance(self.selected_object, InterfaceGraphics):
-            interface = self.selected_object.interface
-            computer = get_the_one(self.computers, lambda c: interface in c.interfaces, NoSuchInterfaceError)
+        computer, interface = None, None
+        if self.selected_object is not None:
+            if isinstance(self.selected_object, InterfaceGraphics):
+                interface = self.selected_object.interface
+                computer = get_the_one(self.computers, lambda c: interface in c.interfaces, NoSuchInterfaceError)
+
+            elif isinstance(self.selected_object, ComputerGraphics):
+                computer = self.selected_object.computer
+                if computer.interfaces:
+                    interface = computer.interfaces[0]
 
             self.ask_user_for(IPAddress,
                               INSERT_IP_MSG,

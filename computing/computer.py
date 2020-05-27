@@ -76,8 +76,10 @@ class Computer:
         self.routing_table = RoutingTable.create_default(self)
         self.received = []
 
-        self.waiting_processes = []  # a list of `WaitingProcess` namedtuple-s. If the process is new, its `WaitingProcess.waiting_for` should be None.
-        self.process_last_check = MainLoop.instance.time()  # the last time that the waiting_processes were checked for 'can they run?'
+        self.waiting_processes = []
+        # ^ a list of `WaitingProcess` namedtuple-s. If the process is new, its `WaitingProcess.waiting_for` is None.
+        self.process_last_check = MainLoop.instance.time()
+        # ^ the last time that the waiting_processes were checked for 'can they run?'
 
         self.graphics = None
         # ^ The `GraphicsObject` of the computer, not initiated for now.
@@ -94,8 +96,10 @@ class Computer:
         self.open_tcp_ports = []  # a list of the ports that are open on this computer.
         self.open_udp_ports = []
 
+        self.is_supporting_wireless_connections = False
+
         MainLoop.instance.insert_to_loop_pausable(self.logic)
-        # ^ the fact that it is 'pausable' means that when the space bar is pressed and the program pauses, this method does not run.
+        # ^ method does not run when program is paused
 
     @property
     def macs(self):
@@ -443,11 +447,28 @@ class Computer:
         :param string_ip: a string IP which will be the new IP of the interface.
         :return: None
         """
+        if interface is None:
+            raise PopupWindowWithThisError("The computer does not have interfaces!!!")
         interface.ip = IPAddress(string_ip)
         if self.is_process_running(DHCPServer):
             dhcp_server_process = self.get_running_process(DHCPServer)
             dhcp_server_process.update_server_data()
         self.routing_table.add_interface(interface.ip)
+        self.graphics.update_text()
+
+    def set_name(self, name):
+        """
+        Sets the name of the computer and updates the text under it.
+        :param name: the new name for the computer
+        :return: None
+        """
+        if name == self.name:
+            raise PopupWindowWithThisError("new computer name is the same as the previous one!!!")
+        if len(name) < 2:
+            raise PopupWindowWithThisError("name too short!!!")
+        if not any(char.isalpha() for char in name):
+            raise PopupWindowWithThisError("name must contain letters!!!")
+        self.name = name
         self.graphics.update_text()
 
     def toggle_sniff(self, interface_name=ANY_INTERFACE, is_promisc=False):
@@ -567,7 +588,7 @@ class Computer:
             raise NoARPLayerError("The packet has no ARP layer!!!")
 
         if not self.has_this_ip(requested_ip):
-            raise SomethingWentTerriblyWrongError("Do not call this method if the ARP is not for me!!!")
+            raise WrongUsageError("Do not call this method if the ARP is not for me!!!")
 
         interface = self.get_interface_with_ip(requested_ip)
         arp = ARP(ARP_REPLY, request["ARP"].dst_ip, sender_ip, interface.mac, request["ARP"].src_mac)

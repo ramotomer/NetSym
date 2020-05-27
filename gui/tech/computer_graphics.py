@@ -80,19 +80,45 @@ class ComputerGraphics(ImageGraphics):
         self.child_graphics_objects.console.show()
 
         buttons = {
-            "open/close console (shift+o)": self.child_graphics_objects.console.toggle_showing,
+            "set ip (i)": user_interface.ask_user_for_ip,
+            "change name (shift+n)": with_args(
+                user_interface.ask_user_for,
+                str,
+                INSERT_COMPUTER_NAME_MSG,
+                self.computer.set_name,
+            ),
             "power on/off (o)": self.computer.power,
-            "set default gateway (g)": with_args(user_interface.ask_user_for, IPAddress, INSERT_GATEWAY_MSG,
-                                                 self.computer.set_default_gateway),
-            "add/delete interface (^i)": with_args(user_interface.ask_user_for, str, INSERT_INTERFACE_INFO_MSG,
-                                                   with_args(user_interface.add_delete_interface, self)),
-            "open/close port (^o)": with_args(user_interface.ask_user_for, int, INSERT_PORT_NUMBER,
-                                              self.computer.open_port),
-            "ask daytime (ctrl+a)": with_args(user_interface.ask_user_for, IPAddress, INSERT_IP_FOR_PROCESS,
-                                              with_args(self.computer.start_process, DAYTIMEClientProcess)),
-            "download file (alt+a)": with_args(user_interface.ask_user_for, IPAddress, INSERT_IP_FOR_PROCESS,
-                                               with_args(self.computer.start_process, FTPClientProcess)),
-            "start DDOS process (ctrl+w)": with_args(self.computer.start_process, DDOSProcess, 1000, 0.1),
+            "show/hide console (shift+o)": self.child_graphics_objects.console.toggle_showing,
+            "add/delete interface (^i)": with_args(
+                user_interface.ask_user_for,
+                str,
+                INSERT_INTERFACE_INFO_MSG,
+                with_args(user_interface.add_delete_interface, self)),
+            "open/close port (^o)": with_args(
+                user_interface.ask_user_for,
+                int,
+                INSERT_PORT_NUMBER,
+                self.computer.open_port),
+            "set default gateway (g)": with_args(
+                user_interface.ask_user_for,
+                IPAddress,
+                INSERT_GATEWAY_MSG,
+                self.computer.set_default_gateway),
+            "ask daytime (ctrl+a)": with_args(
+                user_interface.ask_user_for,
+                IPAddress,
+                INSERT_IP_FOR_PROCESS,
+                with_args(self.computer.start_process, DAYTIMEClientProcess)),
+            "download file (alt+a)": with_args(
+                user_interface.ask_user_for,
+                IPAddress,
+                INSERT_IP_FOR_PROCESS,
+                with_args(self.computer.start_process, FTPClientProcess)),
+            "start DDOS process (ctrl+w)": with_args(
+                self.computer.start_process,
+                DDOSProcess,
+                1000,
+                0.1),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
         return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), self.generate_view_text(), self.buttons_id
@@ -111,6 +137,8 @@ class ComputerGraphics(ImageGraphics):
         addresses = linesep.join(str(interface.ip) for interface in self.computer.interfaces if interface.has_ip())
 
         return f"""
+Computer:
+
 Name: {self.computer.name}
 OS: {self.computer.os}
 {f'gateway: {gateway}' if gateway is not None else ""}

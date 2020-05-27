@@ -1,6 +1,8 @@
 import cmath
 from math import sqrt, sin, cos, pi, atan
 
+from consts import *
+
 
 def get_the_one(iterable, condition, raises=None):
     """
@@ -126,21 +128,21 @@ def circular_coordinates(center_location: tuple, radius, count):
         yield x + (radius * cos((i * d_theta) + initial_theta)), y + (radius * sin((i * d_theta) + initial_theta))
 
 
-def sine_wave_coordinates(count, start_coordinates, end_coordinates, amplitude=10, frequency=1):
+def sine_wave_coordinates(start_coordinates, end_coordinates, amplitude=10, frequency=1):
     """
     A generator that yields tuples that are coordinates for a sine wave.
     :return:
     """
     start_x, start_y, end_x, end_y = start_coordinates + end_coordinates
-    minimal_unit = distance(start_coordinates, end_coordinates) / count
+    count = int(distance(start_coordinates, end_coordinates) / SINE_WAVE_MINIMAL_POINT_DISTANCE)
     relative_angle_of_end = atan((end_y - start_y) / (end_x - start_x)) if (end_x != start_x) else (pi / 2)
-    if start_x > end_x:
-        relative_angle_of_end -= pi
-    x = 0
+    relative_angle_of_end -= pi if start_x > end_x else 0
+
+    x = INITIAL_SINE_WAVE_ANGLE
     for i in range(count):
         y = amplitude * sin(x * frequency)
         yield rotated_coordinates((x + start_x, y + start_y), start_coordinates, relative_angle_of_end)
-        x += minimal_unit
+        x += SINE_WAVE_MINIMAL_POINT_DISTANCE
 
 
 def rotated_coordinates(coordinates, center, angle):
