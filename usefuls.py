@@ -147,11 +147,12 @@ def sine_wave_coordinates(start_coordinates, end_coordinates, amplitude=10, freq
 
 def rotated_coordinates(coordinates, center, angle):
     """
-    # TODO: doc here!!!!
-    :param coordinates:
-    :param center:
-    :param angle:
-    :return:
+    Takes in a tuple of coordinates and rotates them `angle` radians around the point `center`
+    Returns the rotated coordinates
+    :param coordinates: The tuple of (x, y) of the input coordinates
+    :param center: The tuple (cx, cy) of the point to rotate the other point around
+    :param angle: The amount to rotate (in radians) (2 * pi is a full rotation)
+    :return: a tuple (rx, ry) of the rotated coordinates
     """
     x, y = coordinates
     cx, cy = center

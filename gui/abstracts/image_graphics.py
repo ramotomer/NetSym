@@ -12,8 +12,9 @@ class ImageGraphics(GraphicsObject):
     This class is a superclass of any `GraphicsObject` subclass which uses an image in its `draw` method.
     Put simply, it is a graphics object with a picture.
     """
-    def __init__(self, image_name, x, y, centered=False, is_in_background=False, scale_factor=SPRITE_SCALE_FACTOR, is_opaque=False):
-        super(ImageGraphics, self).__init__(x, y, False, centered, is_in_background)
+    def __init__(self, image_name, x, y, centered=False, is_in_background=False, scale_factor=SPRITE_SCALE_FACTOR,
+                 is_opaque=False, is_pressable=False):
+        super(ImageGraphics, self).__init__(x, y, False, centered, is_in_background, is_pressable=is_pressable)
         self.image_name = image_name
         self.scale_factor = scale_factor
         self.is_opaque = is_opaque

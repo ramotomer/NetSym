@@ -22,7 +22,7 @@ from gui.tech.computer_graphics import ComputerGraphics
 from gui.tech.interface_graphics import InterfaceGraphics
 from gui.user_interface.button import Button
 from gui.user_interface.popup_error import PopupError
-from gui.user_interface.text_box import TextBox
+from gui.user_interface.popup_text_box import PopupTextBox
 from gui.user_interface.text_graphics import Text
 from processes.stp_process import STPProcess
 from processes.tcp_process import TCPProcess
@@ -130,8 +130,8 @@ class UserInterface:
 
         self.is_asking_for_string = False
         # ^ whether or not a popup window is currently open on the screen
-        self.popup_window = None
-        # ^ the popup window object. None if `self.is_asking_for_string` is False.
+        self.popup_windows = []
+        self.active_window = None
 
         self.button_arguments = [
             ((*DEFAULT_BUTTON_LOCATION(-1), lambda: None, "MAIN MENU:"), {}),
@@ -176,11 +176,6 @@ class UserInterface:
         # ^ the window rectangle itself
         if MainLoop.instance.is_paused:
             draw_pause_rectangles()
-
-        if self.is_asking_for_string:
-            if self.popup_window is None or self.popup_window.is_done:
-                self.end_string_request()
-                # deletes the popup window if it is done with asking the string from the user.
 
         if self.selected_object is not None and \
                 self.selected_object.is_packet and \
@@ -281,22 +276,19 @@ class UserInterface:
         Allows working without the mouse when there are not a lot of objects on the screen
         :return:
         """
-        available_graphics_objects = [object_ for object_ in MainLoop.instance.graphics_objects if object_.is_pressable]
+        available_graphics_objects = [object_ for object_ in MainLoop.instance.graphics_objects
+                                      if object_.is_pressable and object_.can_be_viewed]
         if not available_graphics_objects:
             return
         if reverse:
             available_graphics_objects = list(reversed(available_graphics_objects))
 
-        if self.selected_object is None:
-            self.selected_object = available_graphics_objects[-1]
-        else:
-            try:
-                index = available_graphics_objects.index(self.selected_object)
-            except ValueError:
-                raise NoSuchGraphicsObjectError(
-                    f"This object is not pressable (`object.is_pressable==False`) {self.selected_object}")
-
+        try:
+            index = available_graphics_objects.index(self.selected_object)
             self.selected_object = available_graphics_objects[index - 1]
+        except ValueError:
+            self.selected_object = available_graphics_objects[-1]
+
         self.set_mode(VIEW_MODE)
 
     def initiate_buttons(self):
@@ -308,24 +300,28 @@ class UserInterface:
         """
         self.buttons[MAIN_BUTTONS_ID] = [Button(*args, **kwargs) for args, kwargs in self.button_arguments]
 
-    def set_mode(self, mode):
+    def set_mode(self, new_mode):
         """
-        This is the correct way to set the `self.mode` trait of the side window.
+        This is the correct way to set the `self.new_mode` trait of the side window.
         it handles all of the things one needs to do when switching between different modes.
         (especially VIEW_MODE)
         :return: None
         """
-        if self.mode == CONNECTING_MODE and mode != CONNECTING_MODE:
+        if self.mode == CONNECTING_MODE and new_mode != CONNECTING_MODE:
             self.other_selected_object = None
 
-        if mode == VIEW_MODE:
+        if new_mode == VIEW_MODE:
             self.end_object_view()
-            self.mode = mode
+            self.mode = new_mode
             self.hide_buttons(MAIN_BUTTONS_ID)
+            if not self.selected_object.can_be_viewed:
+                raise WrongUsageError(
+                    "The new_mode should not be switched to view new_mode when the selected object cannot be viewed"
+                )
             self.start_object_view(self.selected_object)
 
         else:
-            self.mode = mode
+            self.mode = new_mode
             self.end_object_view()
             self.selected_object = None
             self.show_buttons(MAIN_BUTTONS_ID)
@@ -371,13 +367,16 @@ class UserInterface:
         :param modifiers:
         :return:
         """
-        modified_key = (symbol, int(bin(modifiers)[2:][-4:], base=2))
-        for button_id in sorted(list(self.buttons)):
-            for button in self.buttons[button_id]:
-                if button.key == modified_key:
-                    button.action()
-                    return
-        self.key_to_action.get(modified_key, lambda: None)()
+        if isinstance(self.active_window, PopupTextBox):
+            self.active_window.pressed(symbol, modifiers)
+        else:
+            modified_key = (symbol, int(bin(modifiers)[2:][-4:], base=2))
+            for button_id in sorted(list(self.buttons)):
+                for button in self.buttons[button_id]:
+                    if button.key == modified_key:
+                        button.action()
+                        return
+            self.key_to_action.get(modified_key, lambda: None)()
 
     def view_mode_at_press(self):
         """
@@ -385,10 +384,12 @@ class UserInterface:
         decides whether to start viewing a new graphics object or finish a previous one.
         """
         if not self.is_mouse_in_side_window():
-            if self.selected_object is not None:
+            if self.selected_object is not None and self.selected_object.can_be_viewed:
                 self.set_mode(VIEW_MODE)
             elif self.selected_object is None:
                 self.set_mode(SIMULATION_MODE)
+            else:  # if an an object that cannot be viewed is pressed
+                pass
 
     def deleting_mode_at_press(self):
         """
@@ -672,7 +673,7 @@ class UserInterface:
     def ask_user_for_ip(self):
         """
         Asks user for an IP address for an interface.
-        Does that using popup window in the `TextBox` class.
+        Does that using popup window in the `PopupTextBox` class.
         :return: None
         """
         computer, interface = None, None
@@ -689,16 +690,16 @@ class UserInterface:
             self.ask_user_for(IPAddress,
                               INSERT_IP_MSG,
                               with_args(computer.set_ip, interface),
-                              "This format is incorrect")
+                              "Invalid IP Address!!!")
 
     def end_string_request(self):
         """
         If the `UserInterface` Object currently is asking for user input (via the popup window), end that request,
-        unregister the asking `TextBox` popup window and set all variables accordingly.
+        unregister the asking `PopupTextBox` popup window and set all variables accordingly.
         :return: None
         """
         self.is_asking_for_string = False
-        self.popup_window = None
+        self.active_window = None
 
     def smart_connect(self):
         """
@@ -808,7 +809,7 @@ class UserInterface:
         try:
             nearest_ip_address = nearest_computers_with_ip[0].get_ip()
         except IndexError:
-            raise NoSuchComputerError("There is no such computers!")
+            raise NoSuchComputerError("There is no such computer!")
 
         all_ips_in_that_subnet = [
             IPAddress.copy(computer.get_ip())
@@ -892,12 +893,12 @@ class UserInterface:
                 return
             try:
                 action(arg)
-            except PopupWindowWithThisError as e:
-                PopupError(str(e), self)
+            except PopupWindowWithThisError as err:
+                PopupError(str(err), self)
                 return
 
         self.is_asking_for_string = True
-        self.popup_window = TextBox(window_text, self, try_casting_with_action)
+        PopupTextBox(window_text, self, try_casting_with_action)
 
     @staticmethod
     def key_from_string(string):
@@ -1000,6 +1001,45 @@ class UserInterface:
         self.tab_through_selected()
         self.selected_object.computer.open_port(21)
         self.tab_through_selected()
+
+    def register_window(self, window, *buttons):
+        """
+        Receives a window and adds it to the window list and make it known to the user interface
+        object.
+        :param window: a PopupWindow object
+        :param buttons: the buttons that the
+        window contains
+        :return:
+        """
+        if self.popup_windows:
+            x, y = self.popup_windows[-1].location
+            window.x, window.y = x + 10, y - 10
+        self.popup_windows.append(window)
+        self.active_window = window
+        self.selected_object = window
+        self.buttons[WINDOW_BUTTONS_ID] = self.buttons.get(WINDOW_BUTTONS_ID, []) + list(buttons)
+
+        def remove_buttons():
+            for button in buttons:
+                self.buttons[WINDOW_BUTTONS_ID].remove(button)
+                MainLoop.instance.unregister_graphics_object(button)
+        window.remove_buttons = remove_buttons
+
+    def unregister_window(self, window):
+        """
+        receives a window that is registered in the UI object and removes it, it will be ready to be deleted afterwards
+        :param window: a `PopupWindow` object
+        :return: None
+        """
+        if self.active_window is window:
+            self.active_window = None
+        if self.selected_object is window:
+            self.selected_object = None
+
+        try:
+            self.popup_windows.remove(window)
+        except ValueError:
+            raise WrongUsageError("The window is not registered in the UserInterface!!!")
 
     # @staticmethod
     # def init_logo_animation():

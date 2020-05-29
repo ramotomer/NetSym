@@ -24,14 +24,16 @@ class PacketGraphics(ImageGraphics):
         from the `Connection` class that sent the packet. It updates it in the `Connection.move_packets` method.
         """
         super(PacketGraphics, self).__init__(
-                            IMAGES.format(self.image_from_packet(deepest_layer)),
-                            connection_graphics.get_computer_coordinates(direction)[0],
-                            connection_graphics.get_computer_coordinates(direction)[1],
-                            centered=True,
-                            scale_factor=PACKET_SCALE_FACTOR,
-                            is_opaque=is_opaque)
+            IMAGES.format(self.image_from_packet(deepest_layer)),
+            connection_graphics.get_computer_coordinates(direction)[0],
+            connection_graphics.get_computer_coordinates(direction)[1],
+            centered=True,
+            scale_factor=PACKET_SCALE_FACTOR,
+            is_opaque=is_opaque,
+            is_pressable=True,
+        )
+
         self.is_packet = True
-        self.is_pressable = True
 
         self.connection_graphics = connection_graphics
         self.direction = direction

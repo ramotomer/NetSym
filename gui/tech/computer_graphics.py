@@ -35,9 +35,14 @@ class ComputerGraphics(ImageGraphics):
         :param computer: The computer object itself.
         :param image: the name of the image of the computer. (can be changed for different types of computers)
         """
-        super(ComputerGraphics, self).__init__(IMAGES.format(image), x, y, centered=True, is_in_background=True)
+        super(ComputerGraphics, self).__init__(
+            IMAGES.format(image),
+            x, y,
+            centered=True,
+            is_in_background=True,
+            is_pressable=True,
+        )
         self.is_computer = True
-        self.is_pressable = True
         self.computer = computer
 
         self.child_graphics_objects = ChildGraphicsObjects(
@@ -46,6 +51,7 @@ class ComputerGraphics(ImageGraphics):
             ProcessGraphicsList(self),
             InterfaceGraphicsList(self),
         )
+
         self.buttons_id = None
 
     def generate_text(self):

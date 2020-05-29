@@ -64,6 +64,8 @@ receiving computer and picked up by its `logic` method to be handled in the diff
 When Connecting two computers, The first interfaces of their interface-lists that is not connected will be 
 connected to each other.
 If there is no such interface for one of the computers, it will be created.
+Computers can also be connected directly from their interfaces (drawn like little 
+squares next to the computers themselves).
 Each computer starts with a loopback interface. Packets that are sent on it are drawn going in circle
 from the computer back to it.
 

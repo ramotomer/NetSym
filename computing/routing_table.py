@@ -89,9 +89,6 @@ class RoutingTable:
             raise NoIPAddressError(
                 f"One of the arguments to this function is not an IPAddress object!!!!! ({arguments})")
 
-        if destination_ip in self.dictionary:
-            raise RoutingTableError("Cannot add a route to a destination that already exists!!!")
-
         self.dictionary[destination_ip] = RoutingTableItem(gateway_ip, interface_ip)
 
     def route_delete(self, destination_ip):

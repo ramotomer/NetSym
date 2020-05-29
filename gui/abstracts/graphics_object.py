@@ -16,27 +16,27 @@ class GraphicsObject(metaclass=ABCMeta):
     If this object has an iterable attribute in the name `child_graphics_objects`, when this object is unregistered, all of the
     GraphicsObjects in that iterable are unregistered as well.
     """
-    def __init__(self, x=None, y=None, do_render=True, centered=False, is_in_background=False):
+    def __init__(self, x=None, y=None, do_render=True, centered=False, is_in_background=False, is_pressable=False):
         """
         Initiates a graphics object and registers it to the main loop.
         :param x: x coordinate
         :param y: y coordinate
-        :param image_name: The name of the image file to load.
         :param do_render: whether the GraphicsObject is rendered or not.
         :param centered: whether the coordinates of object are in the middle of the sprite or the bottom left point.
         :param is_in_background: whether the object is drawn in the back or the front of the other objects.
+        :param is_pressable: whether or not this object can be clicked on.
         """
         self.x = x
         self.y = y
         self.do_render = do_render
         self.centered = centered
+        self.is_pressable = is_pressable
 
         self.is_button = False
         self.is_computer = False
         self.is_packet = False
         self.is_image = False
         self.is_connection = False
-        self.is_pressable = False
 
         if self.do_render:
             MainLoop.instance.register_graphics_object(self, is_in_background)
@@ -49,28 +49,16 @@ class GraphicsObject(metaclass=ABCMeta):
         """
         return self.x, self.y
 
+    @property
+    def can_be_viewed(self):
+        return hasattr(self, "start_viewing") and hasattr(self, "end_viewing")
+
     def is_mouse_in(self):
         """
         Returns whether or not the mouse is located inside this graphics object.
-        :return: ^
-        """
-        return False
-
-    def start_viewing(self, user_interface):
-        """
-        Returns a tuple a `pyglet.sprite.Sprite` object and a string that should be shown on the side window
-        when this object is pressed. Also returns the buttons id of the buttons that are added by this object.
-        :param user_interface: a `UserInterface` object to use its methods for initiating buttons in the side window.
-        :return: <pyglet.sprite.Sprite>, <str>, <buttons id>
-        """
-        return None, '', 0
-
-    def end_viewing(self, user_interface):
-        """
-        Unregisters all of the objects that the `start_viewing` method initiated. (mainly `Text` and `Button`s)
         :return: None
         """
-        pass
+        return False
 
     def load(self):
         """

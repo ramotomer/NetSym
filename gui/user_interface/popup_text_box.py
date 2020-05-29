@@ -17,20 +17,20 @@ ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", [
 ])
 
 
-class TextBox(PopupWindow):
+class PopupTextBox(PopupWindow):
     """
     A popup window - a text box that asks for text and does an action with it.
-    The `TextBox` has a field of text that you fill up and a below it a button with a 'submit' on it.
+    The `PopupTextBox` has a field of text that you fill up and a below it a button with a 'submit' on it.
     """
     def __init__(self, text, user_interface, action=lambda s: None):
         """
-        Initiates the `TextBox` object.
+        Initiates the `PopupTextBox` object.
 
         :param text: the text for `self._text` attribute.
         :param action: the action that will be activated when the button is pressed.
             It should be a function that receives one string argument (the inserted string) and returns None.
         """
-        super(TextBox, self).__init__(*TEXTBOX_COORDINATES, text, user_interface)
+        super(PopupTextBox, self).__init__(*TEXTBOX_COORDINATES, text, user_interface)
         self.action = action
         self.outline_color = TEXTBOX_OUTLINE_COLOR
         title_text, submit_button, exit_button = self.child_graphics_objects
@@ -81,13 +81,16 @@ class TextBox(PopupWindow):
 
     def pressed(self, symbol, modifiers):
         """
-        This is called when the user is typing the string into the `TextBox`.
+        This is called when the user is typing the string into the `PopupTextBox`.
         :param symbol: a string of the key that was pressed.
         :param modifiers: a bitwise representation of what other button were also pressed (CTRL_MODIFIER, SHIFT_MODIFIER, etc...)
         :return: None
         """
         if symbol == key.ENTER:
             self.submit()
+            self.delete()
+
+        elif symbol == key.ESCAPE:
             self.delete()
 
         elif symbol == key.BACKSPACE:
@@ -124,4 +127,4 @@ class TextBox(PopupWindow):
         self.is_done = True
 
     def __str__(self):
-        return "TextBox Graphics"
+        return "PopupTextBox Graphics"

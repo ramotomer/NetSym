@@ -34,16 +34,17 @@ class ConnectionGraphics(GraphicsObject):
         two dots (the two ends of the connection).
         It is given two `ComputerGraphics` objects which are the graphics of the computers that are connected on each
         side of this connection. They are used for their coordinates.
+        :param connection: the `Connection` object which is the connection that is being drawn
         :param computer_graphics_start: The computer graphics at the beginning of the connection.
         :param computer_graphics_end: The computer graphics at the end of the connection.
+        :param packet_loss: the PL percent of the connection (defaults to 0)
         """
-        super(ConnectionGraphics, self).__init__(is_in_background=True)
+        super(ConnectionGraphics, self).__init__(is_in_background=True, is_pressable=True)
         self.computers = Computers(computer_graphics_start, computer_graphics_end)
         self.regular_color = CONNECTION_COLOR if not packet_loss else PL_CONNECTION_COLOR
         self.color = self.regular_color
         self.marked_as_blocked = False
         self.is_connection = True
-        self.is_pressable = True
         self.buttons_id = None
         self.x, self.y = 0, 0  # isn't used, just to avoid errors!
 

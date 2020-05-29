@@ -145,16 +145,7 @@ class MainWindow(pyglet.window.Window):
         :param modifiers:  additional keys that are pressed (ctrl, shift, caps lock, etc..)
         :return:  None
         """
-        try:  # this try and except is done becauese for some reason it is done automatically in pyglet and it is very annoying!!!!!!
-
-            if not self.user_interface.is_asking_for_string:
-                self.user_interface.on_key_pressed(symbol, modifiers)
-            else:
-                self.user_interface.popup_window.pressed(symbol, modifiers)
-
-        except (TypeError, AttributeError) as err:
-            print(f"error in `on_key_press`: {err}")
-            raise err
+        self.user_interface.on_key_pressed(symbol, modifiers)
 
     def on_draw(self):
         """

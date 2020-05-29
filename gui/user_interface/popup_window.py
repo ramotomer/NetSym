@@ -9,7 +9,7 @@ from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rect, draw_rect_with_outline
 from gui.user_interface.button import Button
 from gui.user_interface.text_graphics import Text
-from usefuls import with_args, called_in_order
+from usefuls import with_args
 
 ChildGraphicsObjects = namedtuple('ChildGraphicsObjects', [
     "text",
@@ -24,7 +24,7 @@ class PopupWindow(GraphicsObject):
     """
     def __init__(self, x, y, text, user_interface):
         """
-        Initiates the `TextBox` object.
+        Initiates the `PopupTextBox` object.
 
         :param text: the text for `self._text` attribute.
         :param action: the action that will be activated when the button is pressed.
@@ -37,9 +37,10 @@ class PopupWindow(GraphicsObject):
 
         ok_button = Button(
             self.x + (TEXTBOX_WIDTH / 2) - (SUBMIT_BUTTON_WIDTH / 2),
-                               self.y + 8,
-                               text="OK",
-                               width=SUBMIT_BUTTON_WIDTH)
+            self.y + 8,
+            text="OK",
+            width=SUBMIT_BUTTON_WIDTH
+        )
         ok_button.set_parent_graphics(self, ((TEXTBOX_WIDTH / 2) - (SUBMIT_BUTTON_WIDTH / 2), 8))
         ok_button.key = (key.ENTER, NO_MODIFIER)
 
@@ -55,14 +56,10 @@ class PopupWindow(GraphicsObject):
         exit_button.set_parent_graphics(self, (TEXTBOX_WIDTH - TEXTBOX_UPPER_PART_HEIGHT, TEXTBOX_HEIGHT))
         exit_button.key = (key.ESCAPE, NO_MODIFIER)
 
-        error_buttons = user_interface.buttons.get(WINDOW_BUTTONS_ID, [])
-        error_buttons.append(ok_button)
-        error_buttons.append(exit_button)
-        user_interface.buttons[WINDOW_BUTTONS_ID] = error_buttons
-        self.remove_buttons = called_in_order(
-            with_args(user_interface.buttons[WINDOW_BUTTONS_ID].remove, ok_button),
-            with_args(user_interface.buttons[WINDOW_BUTTONS_ID].remove, exit_button),
-        )
+        self.remove_buttons = None
+        user_interface.register_window(self, ok_button, exit_button)
+
+        self.unregister_from_user_interface = with_args(user_interface.unregister_window, self)
 
         ok_button.action = self.delete
         exit_button.action = self.delete
@@ -85,18 +82,18 @@ class PopupWindow(GraphicsObject):
     def mark_as_selected(self):
         """
         required for the API
-        :return:
+        :return: None
         """
         pass
 
     def delete(self):
         """
-        Deletes the window
-        :return:
+        Deletes the window and removes it from the UserInterface.popup_windows list
+        :return: None
         """
         MainLoop.instance.unregister_graphics_object(self)
         self.remove_buttons()
-        # TODO: BUG: when after a window is closed you can still press enter and that will submit the text!!!
+        self.unregister_from_user_interface()
 
     def draw(self):
         """
@@ -110,14 +107,6 @@ class PopupWindow(GraphicsObject):
         draw_rect(self.x - (TEXTBOX_OUTLINE_WIDTH / 2), self.y + TEXTBOX_HEIGHT,
                   TEXTBOX_WIDTH + TEXTBOX_OUTLINE_WIDTH, TEXTBOX_UPPER_PART_HEIGHT,
                   self.outline_color)
-
-    def start_viewing(self, user_interface):
-        """
-        Starts viewing the window
-        :param user_interface: a UserInterface object
-        :return:
-        """
-        return None, 'A window', 0
 
     def __str__(self):
         return "A popup window"

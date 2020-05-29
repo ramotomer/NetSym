@@ -21,8 +21,7 @@ class InterfaceGraphics(GraphicsObject):
         :param interface: the physical `Interface` of the computer.
         :param computer_graphics: the graphics object of the computer that this interface belongs to.
         """
-        super(InterfaceGraphics, self).__init__(x, y, centered=True, is_in_background=True)
-        self.is_pressable = True  # TODO: add this to the initiation line!
+        super(InterfaceGraphics, self).__init__(x, y, centered=True, is_in_background=True, is_pressable=True)
         self.color = interface.display_color
         self.real_x, self.real_y = x, y
         self.width, self.height = INTERFACE_WIDTH, INTERFACE_HEIGHT
@@ -63,6 +62,7 @@ class InterfaceGraphics(GraphicsObject):
         comp_x, comp_y = self.computer_location
         dist = distance((comp_x, comp_y), (self.x, self.y))
         dist /= INTERFACE_DISTANCE_FROM_COMPUTER
+        dist = dist if dist else 1  # cannot be 0
 
         self.real_x, self.real_y = ((self.x - comp_x) / dist) + comp_x, ((self.y - comp_y) / dist) + comp_y
         self.x, self.y = self.real_x, self.real_y
