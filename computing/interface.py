@@ -108,6 +108,14 @@ class Interface:
         """Returns whether the interface is connected or not"""
         return self.connection is not None
 
+    def set_mac(self, new_mac: MACAddress):
+        """
+        Receive a new mac address and change my MAC to be that mac
+        :param new_mac: the new mac
+        :return: None
+        """
+        self.mac = new_mac
+
     def connect(self, other, is_wireless=False):
         """
         Connects this interface to another interface, return the `Connection` object.

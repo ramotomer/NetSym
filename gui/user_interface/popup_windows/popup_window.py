@@ -1,5 +1,3 @@
-from collections import namedtuple
-
 from pyglet.window import key
 
 from consts import *
@@ -11,64 +9,52 @@ from gui.user_interface.button import Button
 from gui.user_interface.text_graphics import Text
 from usefuls import with_args
 
-ChildGraphicsObjects = namedtuple('ChildGraphicsObjects', [
-    "text",
-    "ok_button",
-    "exit_button",
-])
-
 
 class PopupWindow(GraphicsObject):
     """
-
+    A window that pops up sometime.
+    It can contain buttons, text and maybe images?
     """
-    def __init__(self, x, y, text, user_interface):
+    def __init__(self, x, y, text, user_interface, buttons, color=TEXTBOX_OUTLINE_COLOR, title="window!"):
         """
-        Initiates the `PopupTextBox` object.
-
+        Initiates the `PopupWindow` object.
+        :param x, y: the location of the bottom left corner of the window
         :param text: the text for `self._text` attribute.
-        :param action: the action that will be activated when the button is pressed.
-            It should be a function that receives one string argument (the inserted string) and returns None.
+        :param user_interface: the UserInterface object that holds all of the windows
+        :param buttons: a list of buttons that will be displayed on this window. The `X` button is not included.
         """
         super(PopupWindow, self).__init__(x, y)
-        self.outline_color = TEXTBOX_OUTLINE_COLOR
+        self.__is_active = False
+        self.outline_color = color
 
-        title_text = Text(text, self.x, self.y, self, (TEXTBOX_WIDTH / 2, 6 * TEXTBOX_HEIGHT / 7))
+        title_text = Text(title, self.x, self.y, self, POPUP_WINDOW_TITLE_TEXT_PADDING)
+        information_text = Text(text, self.x, self.y, self, POPUP_WINDOW_INFO_TEXT_PADDING)
 
-        ok_button = Button(
-            self.x + (TEXTBOX_WIDTH / 2) - (SUBMIT_BUTTON_WIDTH / 2),
-            self.y + 8,
-            text="OK",
-            width=SUBMIT_BUTTON_WIDTH
-        )
-        ok_button.set_parent_graphics(self, ((TEXTBOX_WIDTH / 2) - (SUBMIT_BUTTON_WIDTH / 2), 8))
-        ok_button.key = (key.ENTER, NO_MODIFIER)
+        for button in buttons:
+            button.set_parent_graphics(self, (button.x - self.x, button.y - self.y))
 
         exit_button = Button(
-            self.x + (TEXTBOX_WIDTH / 2) - (SUBMIT_BUTTON_WIDTH / 2),
-            self.y + 8,
+            *SUBMIT_BUTTON_COORDINATES,
+            action=self.delete,
             text="X",
             width=TEXTBOX_UPPER_PART_HEIGHT,
             height=TEXTBOX_UPPER_PART_HEIGHT,
             color=self.outline_color,
             text_color=BLACK,
+            key=(key.ESCAPE, NO_MODIFIER),
         )
         exit_button.set_parent_graphics(self, (TEXTBOX_WIDTH - TEXTBOX_UPPER_PART_HEIGHT, TEXTBOX_HEIGHT))
-        exit_button.key = (key.ESCAPE, NO_MODIFIER)
 
         self.remove_buttons = None
-        user_interface.register_window(self, ok_button, exit_button)
-
+        user_interface.register_window(self, exit_button, *buttons)
         self.unregister_from_user_interface = with_args(user_interface.unregister_window, self)
 
-        ok_button.action = self.delete
-        exit_button.action = self.delete
-
-        self.child_graphics_objects = ChildGraphicsObjects(
+        self.child_graphics_objects = [
             title_text,
-            ok_button,
+            information_text,
             exit_button,
-        )
+            *buttons,
+        ]
 
     def is_mouse_in(self):
         """
@@ -77,7 +63,7 @@ class PopupWindow(GraphicsObject):
         """
         x, y = MainWindow.main_window.get_mouse_location()
         return self.x < x < self.x + TEXTBOX_WIDTH and \
-            self.y + TEXTBOX_HEIGHT < y < self.y + TEXTBOX_HEIGHT + TEXTBOX_UPPER_PART_HEIGHT
+            self.y < y < self.y + TEXTBOX_HEIGHT + TEXTBOX_UPPER_PART_HEIGHT
 
     def mark_as_selected(self):
         """
@@ -103,10 +89,27 @@ class PopupWindow(GraphicsObject):
         """
         draw_rect_with_outline(self.x, self.y,
                                TEXTBOX_WIDTH, TEXTBOX_HEIGHT,
-                               TEXTBOX_COLOR, self.outline_color, TEXTBOX_OUTLINE_WIDTH)
+                               TEXTBOX_COLOR, self.outline_color,
+                               TEXTBOX_OUTLINE_WIDTH - (0 if self.__is_active else 2))
+        # TODO: make self.outline_width a thing instead of the const
+
         draw_rect(self.x - (TEXTBOX_OUTLINE_WIDTH / 2), self.y + TEXTBOX_HEIGHT,
                   TEXTBOX_WIDTH + TEXTBOX_OUTLINE_WIDTH, TEXTBOX_UPPER_PART_HEIGHT,
                   self.outline_color)
+
+    def activate(self):
+        """
+        Marks the window as activated
+        :return:
+        """
+        self.__is_active = True
+
+    def deactivate(self):
+        """
+        Marks the window as deactivated
+        :return:
+        """
+        self.__is_active = False
 
     def __str__(self):
         return "A popup window"

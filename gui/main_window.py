@@ -28,7 +28,7 @@ class MainWindow(pyglet.window.Window):
         self.set_location(*INITIAL_WINDOW_LOCATION)
         # ^ window initial location on the screen
 
-        self.mouse_x, self.mouse_y = 0, 0
+        self.mouse_x, self.mouse_y = WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2
         self.mouse_pressed = False
 
         self.user_interface = user_interface

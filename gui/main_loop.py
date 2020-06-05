@@ -145,6 +145,13 @@ class MainLoop:
 
             self.remove_from_loop(graphics_object.draw)
             self.insert_to_loop(graphics_object.draw)
+
+            if hasattr(graphics_object, "child_graphics_objects"):
+                for child_graphics_object in graphics_object.child_graphics_objects:
+                    self.move_to_front(child_graphics_object)
+                    # if this is not the order that they were meant to be in, this might cause bugs, fix in the future
+                    # if necessary
+
         except ValueError:
             raise NoSuchGraphicsObjectError("The graphics object is not registered!!!")
 

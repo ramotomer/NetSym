@@ -21,8 +21,9 @@ from gui.shape_drawing import draw_pause_rectangles, draw_rect
 from gui.tech.computer_graphics import ComputerGraphics
 from gui.tech.interface_graphics import InterfaceGraphics
 from gui.user_interface.button import Button
-from gui.user_interface.popup_error import PopupError
-from gui.user_interface.popup_text_box import PopupTextBox
+from gui.user_interface.popup_windows.popup_error import PopupError
+from gui.user_interface.popup_windows.popup_text_box import PopupTextBox
+from gui.user_interface.popup_windows.popup_window import PopupWindow
 from gui.user_interface.text_graphics import Text
 from processes.stp_process import STPProcess
 from processes.tcp_process import TCPProcess
@@ -122,7 +123,7 @@ class UserInterface:
         self.dragging_point = 0, 0
         # ^ the coordinates the mouse is at relative to the object it drags
 
-        self.selected_object = None
+        self.__selected_object = None
         # ^ the object that is currently dragged
 
         self.object_view = None
@@ -131,7 +132,7 @@ class UserInterface:
         self.is_asking_for_string = False
         # ^ whether or not a popup window is currently open on the screen
         self.popup_windows = []
-        self.active_window = None
+        self.__active_window = None
 
         self.button_arguments = [
             ((*DEFAULT_BUTTON_LOCATION(-1), lambda: None, "MAIN MENU:"), {}),
@@ -166,6 +167,32 @@ class UserInterface:
         self.showing_buttons_id = MAIN_BUTTONS_ID
         self.scrolled_view = None
         self.debug_counter = 0
+
+    @property
+    def active_window(self):
+        return self.__active_window
+
+    @active_window.setter
+    def active_window(self, window):
+        if self.active_window is not None:
+            self.active_window.deactivate()
+
+        if window is not None:
+            window.activate()
+        self.__active_window = window
+
+    @property
+    def selected_object(self):
+        return self.__selected_object
+
+    @selected_object.setter
+    def selected_object(self, graphics_object):
+        self.__selected_object = graphics_object
+
+        if isinstance(graphics_object, PopupWindow):
+            self.active_window = graphics_object
+        else:
+            self.active_window = None
 
     def show(self):
         """
@@ -751,7 +778,7 @@ class UserInterface:
         :return: None
         """
         # print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
-        self.debug_counter = self.debug_counter+1 if hasattr(self, "debug_counter") else 0
+        self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
         goes = [go for go in MainLoop.instance.graphics_objects
                 if not isinstance(go, Button) and not isinstance(go, Text)]
         print(f"graphicsObject-s (no buttons or texts): {goes}")
@@ -886,13 +913,14 @@ class UserInterface:
         """
         def try_casting_with_action(string):
             try:
-                arg = type_(string)
+                user_input_object = type_(string)
             except (ValueError, InvalidAddressError):
                 self.end_string_request()
                 PopupError(error_msg, self)
                 return
+
             try:
-                action(arg)
+                action(user_input_object)
             except PopupWindowWithThisError as err:
                 PopupError(str(err), self)
                 return
@@ -1012,12 +1040,15 @@ class UserInterface:
         :return:
         """
         if self.popup_windows:
-            x, y = self.popup_windows[-1].location
-            window.x, window.y = x + 10, y - 10
+            window.x, window.y = map(sum, zip(self.popup_windows[-1].location, NEW_WINDOW_LOCATION_PADDING))
+
         self.popup_windows.append(window)
         self.active_window = window
         self.selected_object = window
         self.buttons[WINDOW_BUTTONS_ID] = self.buttons.get(WINDOW_BUTTONS_ID, []) + list(buttons)
+
+        for button in buttons:
+            MainLoop.instance.move_to_front(button)
 
         def remove_buttons():
             for button in buttons:

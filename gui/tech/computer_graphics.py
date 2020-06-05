@@ -82,7 +82,6 @@ class ComputerGraphics(ImageGraphics):
         :param user_interface: the `UserInterface` object we can use the methods of it.
         :return: a tuple <display sprite>, <display text>, <new button count>
         """
-
         self.child_graphics_objects.console.show()
 
         buttons = {
@@ -99,32 +98,38 @@ class ComputerGraphics(ImageGraphics):
                 user_interface.ask_user_for,
                 str,
                 INSERT_INTERFACE_INFO_MSG,
-                with_args(user_interface.add_delete_interface, self)),
+                with_args(user_interface.add_delete_interface, self)
+            ),
             "open/close port (^o)": with_args(
                 user_interface.ask_user_for,
                 int,
                 INSERT_PORT_NUMBER,
-                self.computer.open_port),
+                self.computer.open_port
+            ),
             "set default gateway (g)": with_args(
                 user_interface.ask_user_for,
                 IPAddress,
                 INSERT_GATEWAY_MSG,
-                self.computer.set_default_gateway),
+                self.computer.set_default_gateway
+            ),
             "ask daytime (ctrl+a)": with_args(
                 user_interface.ask_user_for,
                 IPAddress,
                 INSERT_IP_FOR_PROCESS,
-                with_args(self.computer.start_process, DAYTIMEClientProcess)),
+                with_args(self.computer.start_process, DAYTIMEClientProcess)
+            ),
             "download file (alt+a)": with_args(
                 user_interface.ask_user_for,
                 IPAddress,
                 INSERT_IP_FOR_PROCESS,
-                with_args(self.computer.start_process, FTPClientProcess)),
+                with_args(self.computer.start_process, FTPClientProcess)
+            ),
             "start DDOS process (ctrl+w)": with_args(
                 self.computer.start_process,
                 DDOSProcess,
                 1000,
-                0.1),
+                0.1
+            ),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
         return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), self.generate_view_text(), self.buttons_id

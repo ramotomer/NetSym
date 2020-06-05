@@ -1,3 +1,4 @@
+from address.mac_address import MACAddress
 from consts import *
 from exceptions import *
 from gui.abstracts.graphics_object import GraphicsObject
@@ -86,6 +87,12 @@ class InterfaceGraphics(GraphicsObject):
         """
         buttons = {
             "config IP (i)": user_interface.ask_user_for_ip,
+            "change MAC (^m)": with_args(
+                user_interface.ask_user_for,
+                MACAddress,
+                "Insert a new mac address:",
+                self.interface.set_mac,
+            ),
             "sniffing start/stop (f)": with_args(
                 get_the_one(user_interface.computers,
                             lambda c: self.interface in c.interfaces,

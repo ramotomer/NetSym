@@ -4,13 +4,13 @@ from collections import namedtuple
 from pyglet.window import key
 
 from consts import *
-from gui.main_window import MainWindow
-from gui.user_interface.popup_window import PopupWindow
+from gui.user_interface.button import Button
+from gui.user_interface.popup_windows.popup_window import PopupWindow
 from gui.user_interface.text_graphics import Text
-from usefuls import called_in_order
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", [
     "title_text",
+    "information_text",
     "written_text",
     "submit_button",
     "exit_button",
@@ -22,6 +22,12 @@ class PopupTextBox(PopupWindow):
     A popup window - a text box that asks for text and does an action with it.
     The `PopupTextBox` has a field of text that you fill up and a below it a button with a 'submit' on it.
     """
+
+    TO_UPPERCASE = {
+        '-': '_', '=': '+', '0': ')', '9': '(', '8': '*', '7': '&', '6': '^', '5': '%', '4': '$', '3': '#', '2': '@',
+        '1': '!', '`': '~', '/': '?', ',': '<', '.': '>', '[': '{', ']': '}', ';': ':', '\'': '"', '\\': '|'
+    }
+
     def __init__(self, text, user_interface, action=lambda s: None):
         """
         Initiates the `PopupTextBox` object.
@@ -30,21 +36,28 @@ class PopupTextBox(PopupWindow):
         :param action: the action that will be activated when the button is pressed.
             It should be a function that receives one string argument (the inserted string) and returns None.
         """
-        super(PopupTextBox, self).__init__(*TEXTBOX_COORDINATES, text, user_interface)
-        self.action = action
-        self.outline_color = TEXTBOX_OUTLINE_COLOR
-        title_text, submit_button, exit_button = self.child_graphics_objects
-
-        written_text = Text('', title_text.x, title_text.y - 20, title_text, padding=(0, -20), max_width=TEXTBOX_WIDTH)
-
-        submit_button.child_graphics_objects.text.set_text("SUBMIT")
-        submit_button.action = called_in_order(
+        submit_button = Button(
+            *SUBMIT_BUTTON_COORDINATES,
             self.submit,
-            self.delete,
+            "SUBMIT",
+            width=SUBMIT_BUTTON_WIDTH,
+            key=(key.ENTER, NO_MODIFIER),
         )
+
+        super(PopupTextBox, self).__init__(*TEXTBOX_COORDINATES, text, user_interface,
+                                           [submit_button],
+                                           TEXTBOX_OUTLINE_COLOR,
+                                           "input text")
+
+        title_text, information_text, exit_button = self.child_graphics_objects[:3]
+        self.action = action
+
+        written_text = Text('', information_text.x, information_text.y - 20,
+                            information_text, padding=(0, -20), max_width=TEXTBOX_WIDTH)
 
         self.child_graphics_objects = ChildGraphicsObjects(
             title_text,
+            information_text,
             written_text,
             submit_button,
             exit_button,
@@ -57,15 +70,6 @@ class PopupTextBox(PopupWindow):
             self.old_inputs = [''] + list(map(lambda line: line.strip(),
                                               reversed(open(WINDOW_INPUT_LIST_FILE, 'r').readlines())))
         self.old_inputs_index = 0
-
-    def is_mouse_in(self):
-        """
-        Returns whether or not the mouse is pressing the upper part of the window (where it can be moved)
-        :return: `bool`
-        """
-        x, y = MainWindow.main_window.get_mouse_location()
-        return self.x < x < self.x + TEXTBOX_WIDTH and \
-               self.y + TEXTBOX_HEIGHT < y < self.y + TEXTBOX_HEIGHT + TEXTBOX_UPPER_PART_HEIGHT
 
     def mark_as_selected(self):
         """
@@ -88,7 +92,6 @@ class PopupTextBox(PopupWindow):
         """
         if symbol == key.ENTER:
             self.submit()
-            self.delete()
 
         elif symbol == key.ESCAPE:
             self.delete()
@@ -108,10 +111,7 @@ class PopupTextBox(PopupWindow):
             char = chr(symbol).lower()
             if (modifiers & SHIFT_MODIFIER) ^ (modifiers & CAPS_MODIFIER):
                 char = char.upper()
-                if char == '-':
-                    char = '_'
-                if char == '=':
-                    char = '+'
+                char = self.TO_UPPERCASE.get(char, char)
             self.child_graphics_objects.written_text.set_text(self.child_graphics_objects.written_text.text + char)
 
     def submit(self):
@@ -120,11 +120,24 @@ class PopupTextBox(PopupWindow):
         :return: None
         """
         input_ = self.child_graphics_objects.written_text.text
+        self.add_input_to_file(input_)
         self.action(input_)
-        if os.path.isfile(WINDOW_INPUT_LIST_FILE):
-            input_ = open(WINDOW_INPUT_LIST_FILE, 'r').read() + '\n' + input_
-        open(WINDOW_INPUT_LIST_FILE, 'w').write(input_)
+        self.delete()
         self.is_done = True
+
+    @staticmethod
+    def add_input_to_file(input_):
+        """
+        Adds another item to the file of inputs given to the window
+        :param input_: the input that was entered
+        :return: None
+        """
+        new_file_content = input_
+
+        if os.path.isfile(WINDOW_INPUT_LIST_FILE):
+            new_file_content = "{}\n{}".format(open(WINDOW_INPUT_LIST_FILE, 'r').read(), input_)
+
+        open(WINDOW_INPUT_LIST_FILE, 'w').write(new_file_content)
 
     def __str__(self):
         return "PopupTextBox Graphics"
