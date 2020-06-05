@@ -21,6 +21,7 @@ from gui.shape_drawing import draw_pause_rectangles, draw_rect
 from gui.tech.computer_graphics import ComputerGraphics
 from gui.tech.interface_graphics import InterfaceGraphics
 from gui.user_interface.button import Button
+from gui.user_interface.popup_windows.device_creation_window import DeviceCreationWindow
 from gui.user_interface.popup_windows.popup_error import PopupError
 from gui.user_interface.popup_windows.popup_text_box import PopupTextBox
 from gui.user_interface.popup_windows.popup_window import PopupWindow
@@ -92,7 +93,7 @@ class UserInterface:
             (key.C, SHIFT_MODIFIER): self.connect_all_to_all,
             (key.P, CTRL_MODIFIER): self.send_random_ping,
             (key.P, SHIFT_MODIFIER): self.send_ping_to_self,
-            (key.R, CTRL_MODIFIER): with_args(self.create, Router),
+            (key.R, CTRL_MODIFIER): with_args(self.create_device, Router),
             (key.M, NO_MODIFIER): self.debugging_printer,
             (key.W, NO_MODIFIER): self.add_tcp_test,
             (key.SPACE, NO_MODIFIER): self.toggle_pause,
@@ -137,13 +138,13 @@ class UserInterface:
         self.button_arguments = [
             ((*DEFAULT_BUTTON_LOCATION(-1), lambda: None, "MAIN MENU:"), {}),
 
-            ((*DEFAULT_BUTTON_LOCATION(0), with_args(self.create, Computer),
+            ((*DEFAULT_BUTTON_LOCATION(0), with_args(self.create_device, Computer),
               "create a computer (n / ^n)"), {"key": (key.N, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(1), with_args(self.create, Switch),
+            ((*DEFAULT_BUTTON_LOCATION(1), with_args(self.create_device, Switch),
               "create a switch (s)"), {"key": (key.S, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(2), with_args(self.create, Hub),
+            ((*DEFAULT_BUTTON_LOCATION(2), with_args(self.create_device, Hub),
               "create a hub (h)"), {"key": (key.H, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(3), with_args(self.create, Antenna),
+            ((*DEFAULT_BUTTON_LOCATION(3), with_args(self.create_device, Antenna),
               "create an antenna (shift+r)"), {"key": (key.R, SHIFT_MODIFIER)}),
             ((*DEFAULT_BUTTON_LOCATION(4), self.create_router,
               "create a router (r / ^r)"), {"key": (key.R, NO_MODIFIER)}),
@@ -161,6 +162,8 @@ class UserInterface:
               "delete all (^d)"), {"key": (key.D, CTRL_MODIFIER)}),
             ((*DEFAULT_BUTTON_LOCATION(11), with_args(self.toggle_mode, DELETING_MODE),
               "delete (d)"), {"key": (key.D, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(12), with_args(DeviceCreationWindow, self),
+              "create device (e)"), {"key": (key.E, NO_MODIFIER)}),
         ]
         self.buttons = {}
         # ^ a dictionary in the form, {button_id: [list of `Button` objects]}
@@ -433,7 +436,7 @@ class UserInterface:
         mouse_x, _ = MainWindow.main_window.get_mouse_location()
         return mouse_x > (WINDOW_WIDTH - self.WIDTH)
 
-    def create(self, object_type):
+    def create_device(self, object_type):
         """
         Creates an object from a given type.
         :param object_type: an object type that will be created (Computer, Switch, Hub, etc...)
@@ -1019,7 +1022,7 @@ class UserInterface:
         :return:
         """
         new_computers = [self.create_computer_with_ip() for _ in range(6)]
-        self.create(Switch)
+        self.create_device(Switch)
         self.smart_connect()
         for i, (x, y) in enumerate(
                 circular_coordinates(MainWindow.main_window.get_mouse_location(), 150, len(new_computers))):
@@ -1071,6 +1074,13 @@ class UserInterface:
             self.popup_windows.remove(window)
         except ValueError:
             raise WrongUsageError("The window is not registered in the UserInterface!!!")
+
+    def open_device_creation_window(self):
+        """
+        Creates the device creation window
+        :return:
+        """
+        DeviceCreationWindow(self)
 
     # @staticmethod
     # def init_logo_animation():

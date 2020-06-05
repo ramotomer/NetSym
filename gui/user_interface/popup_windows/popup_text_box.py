@@ -44,10 +44,12 @@ class PopupTextBox(PopupWindow):
             key=(key.ENTER, NO_MODIFIER),
         )
 
-        super(PopupTextBox, self).__init__(*TEXTBOX_COORDINATES, text, user_interface,
-                                           [submit_button],
-                                           TEXTBOX_OUTLINE_COLOR,
-                                           "input text")
+        super(PopupTextBox, self).__init__(*TEXTBOX_COORDINATES,
+                                           text=text,
+                                           user_interface=user_interface,
+                                           buttons=[submit_button],
+                                           color=TEXTBOX_OUTLINE_COLOR,
+                                           title="input text")
 
         title_text, information_text, exit_button = self.child_graphics_objects[:3]
         self.action = action

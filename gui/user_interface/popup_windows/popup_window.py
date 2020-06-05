@@ -15,7 +15,8 @@ class PopupWindow(GraphicsObject):
     A window that pops up sometime.
     It can contain buttons, text and maybe images?
     """
-    def __init__(self, x, y, text, user_interface, buttons, color=TEXTBOX_OUTLINE_COLOR, title="window!"):
+    def __init__(self, x, y, text, user_interface, buttons,
+                 width=TEXTBOX_WIDTH, height=TEXTBOX_HEIGHT, color=TEXTBOX_OUTLINE_COLOR, title="window!"):
         """
         Initiates the `PopupWindow` object.
         :param x, y: the location of the bottom left corner of the window
@@ -24,11 +25,13 @@ class PopupWindow(GraphicsObject):
         :param buttons: a list of buttons that will be displayed on this window. The `X` button is not included.
         """
         super(PopupWindow, self).__init__(x, y)
+        self.width, self.height = width, height
         self.__is_active = False
         self.outline_color = color
 
-        title_text = Text(title, self.x, self.y, self, POPUP_WINDOW_TITLE_TEXT_PADDING)
-        information_text = Text(text, self.x, self.y, self, POPUP_WINDOW_INFO_TEXT_PADDING)
+        title_text = Text(title, self.x, self.y, self, ((self.width / 2) + 2, self.height + 22),
+                          color=BLACK, align='left', max_width=self.width)
+        information_text = Text(text, self.x, self.y, self, ((self.width / 2), 6 * (self.height / 7)))
 
         for button in buttons:
             button.set_parent_graphics(self, (button.x - self.x, button.y - self.y))
@@ -43,7 +46,7 @@ class PopupWindow(GraphicsObject):
             text_color=BLACK,
             key=(key.ESCAPE, NO_MODIFIER),
         )
-        exit_button.set_parent_graphics(self, (TEXTBOX_WIDTH - TEXTBOX_UPPER_PART_HEIGHT, TEXTBOX_HEIGHT))
+        exit_button.set_parent_graphics(self, (self.width - TEXTBOX_UPPER_PART_HEIGHT, self.height))
 
         self.remove_buttons = None
         user_interface.register_window(self, exit_button, *buttons)
@@ -62,7 +65,7 @@ class PopupWindow(GraphicsObject):
         :return: `bool`
         """
         x, y = MainWindow.main_window.get_mouse_location()
-        return self.x < x < self.x + TEXTBOX_WIDTH and \
+        return self.x < x < self.x + self.width and \
             self.y < y < self.y + TEXTBOX_HEIGHT + TEXTBOX_UPPER_PART_HEIGHT
 
     def mark_as_selected(self):
@@ -88,13 +91,13 @@ class PopupWindow(GraphicsObject):
         :return: None
         """
         draw_rect_with_outline(self.x, self.y,
-                               TEXTBOX_WIDTH, TEXTBOX_HEIGHT,
+                               self.width, self.height,
                                TEXTBOX_COLOR, self.outline_color,
                                TEXTBOX_OUTLINE_WIDTH - (0 if self.__is_active else 2))
         # TODO: make self.outline_width a thing instead of the const
 
-        draw_rect(self.x - (TEXTBOX_OUTLINE_WIDTH / 2), self.y + TEXTBOX_HEIGHT,
-                  TEXTBOX_WIDTH + TEXTBOX_OUTLINE_WIDTH, TEXTBOX_UPPER_PART_HEIGHT,
+        draw_rect(self.x - (TEXTBOX_OUTLINE_WIDTH / 2), self.y + self.height,
+                  self.width + TEXTBOX_OUTLINE_WIDTH, TEXTBOX_UPPER_PART_HEIGHT,
                   self.outline_color)
 
     def activate(self):

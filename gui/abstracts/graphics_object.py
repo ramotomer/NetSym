@@ -49,6 +49,10 @@ class GraphicsObject(metaclass=ABCMeta):
         """
         return self.x, self.y
 
+    @location.setter
+    def location(self, new_location):
+        self.x, self.y = new_location
+
     @property
     def can_be_viewed(self):
         return hasattr(self, "start_viewing") and hasattr(self, "end_viewing")

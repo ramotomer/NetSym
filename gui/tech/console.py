@@ -26,13 +26,15 @@ class Console(GraphicsObject):
 
         self._text = initial_text
         self.child_graphics_objects = ChildGraphicsObjects(
-            Text(self._text, x, y, self,
-                 padding=(CONSOLE_WIDTH / 2 + 2, CONSOLE_HEIGHT),
-                 start_hidden=True,
-                 font_size=CONSOLE_FONT_SIZE,
-                 max_width=CONSOLE_WIDTH,
-                 align='left',
-                 color=GRAY)
+            Text(
+                self._text, x, y, self,
+                padding=((CONSOLE_WIDTH / 2) + 2, CONSOLE_HEIGHT),
+                start_hidden=True,
+                font_size=CONSOLE_FONT_SIZE,
+                max_width=CONSOLE_WIDTH,
+                align='left',
+                color=GRAY,
+            )
         )
 
     def draw(self):

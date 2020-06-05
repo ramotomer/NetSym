@@ -78,6 +78,7 @@ class DHCPClient(Process):
         """The string representation of the the process"""
         return "DHCP client process"
 
+
 class DHCPServer(Process):
     """
     This is the process of discovering the DHCP client, receiving an IP address,
@@ -170,6 +171,10 @@ class DHCPServer(Process):
         :return: None
         """
         while True:
+            if not self.computer.has_ip():
+                self.computer.print("Cannot server DHCP without and IP address!")
+                continue
+
             received_packets = ReturnedPacket()
             yield WaitingForPacket(lambda p: "DHCP" in p, received_packets)
             for packet, interface in received_packets.packets.items():

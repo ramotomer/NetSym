@@ -18,7 +18,7 @@ class Button(GraphicsObject):
         """
         Initiates the button.
         :param x:
-        :param y: coordinates of the left
+        :param y: coordinates of the bottom left
         :param action: a function that will be called when the button is pressed.
         :param text: a string that will be written on the button.
             in the same group.
