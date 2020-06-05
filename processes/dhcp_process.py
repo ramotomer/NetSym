@@ -171,12 +171,12 @@ class DHCPServer(Process):
         :return: None
         """
         while True:
+            received_packets = ReturnedPacket()
+            yield WaitingForPacket(lambda p: "DHCP" in p, received_packets)
+
             if not self.computer.has_ip():
                 self.computer.print("Cannot server DHCP without and IP address!")
                 continue
-
-            received_packets = ReturnedPacket()
-            yield WaitingForPacket(lambda p: "DHCP" in p, received_packets)
             for packet, interface in received_packets.packets.items():
                 self.actions.get(packet["DHCP"].opcode, self.unknown_packet)(packet, interface)
 

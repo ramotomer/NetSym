@@ -11,7 +11,7 @@ from address.ip_address import IPAddress
 from computing.computer import Computer
 from computing.interface import Interface
 from computing.router import Router
-from computing.switch import Switch, Hub, Antenna
+from computing.switch import Switch
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
@@ -102,6 +102,9 @@ class UserInterface:
             (key.ESCAPE, NO_MODIFIER): with_args(self.set_mode, SIMULATION_MODE),
         }
 
+        for device, (_, key_string) in DeviceCreationWindow.DEVICE_TO_IMAGE.items():
+            self.key_to_action[self.key_from_string(key_string)] = with_args(self.create_device, device)
+
         self.action_at_press_by_mode = {
             SIMULATION_MODE: self.view_mode_at_press,
             CONNECTING_MODE: with_args(self.two_pressed_objects, self.connect_devices, [InterfaceGraphics]),
@@ -138,32 +141,22 @@ class UserInterface:
         self.button_arguments = [
             ((*DEFAULT_BUTTON_LOCATION(-1), lambda: None, "MAIN MENU:"), {}),
 
-            ((*DEFAULT_BUTTON_LOCATION(0), with_args(self.create_device, Computer),
-              "create a computer (n / ^n)"), {"key": (key.N, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(1), with_args(self.create_device, Switch),
-              "create a switch (s)"), {"key": (key.S, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(2), with_args(self.create_device, Hub),
-              "create a hub (h)"), {"key": (key.H, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(3), with_args(self.create_device, Antenna),
-              "create an antenna (shift+r)"), {"key": (key.R, SHIFT_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(4), self.create_router,
-              "create a router (r / ^r)"), {"key": (key.R, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(5), with_args(self.toggle_mode, CONNECTING_MODE),
-              "connect (c / ^c / Shift+c)"), {"key": (key.C, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(6), with_args(self.toggle_mode, PINGING_MODE),
-              "ping (p / ^p / Shift+p)"), {"key": (key.P, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(7), self.ask_for_dhcp,
-              "ask for DHCP (a)"), {"key": (key.A, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(8), self.start_all_stp,
-              "start STP (^s)"), {"key": (key.S, CTRL_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(9), self.delete_all_packets,
-              "delete all packets (Shift+d)"), {"key": (key.D, SHIFT_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(10), self.delete_all,
-              "delete all (^d)"), {"key": (key.D, CTRL_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(11), with_args(self.toggle_mode, DELETING_MODE),
-              "delete (d)"), {"key": (key.D, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(12), with_args(DeviceCreationWindow, self),
+            ((*DEFAULT_BUTTON_LOCATION(0), with_args(DeviceCreationWindow, self),
               "create device (e)"), {"key": (key.E, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(1), with_args(self.toggle_mode, CONNECTING_MODE),
+              "connect (c / ^c / Shift+c)"), {"key": (key.C, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(2), with_args(self.toggle_mode, PINGING_MODE),
+              "ping (p / ^p / Shift+p)"), {"key": (key.P, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(3), self.ask_for_dhcp,
+              "ask for DHCP (shift+a)"), {"key": (key.A, SHIFT_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(4), self.start_all_stp,
+              "start STP (^s)"), {"key": (key.S, CTRL_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(5), self.delete_all_packets,
+              "delete all packets (Shift+d)"), {"key": (key.D, SHIFT_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(6), self.delete_all,
+              "delete all (^d)"), {"key": (key.D, CTRL_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(7), with_args(self.toggle_mode, DELETING_MODE),
+              "delete (d)"), {"key": (key.D, NO_MODIFIER)}),
         ]
         self.buttons = {}
         # ^ a dictionary in the form, {button_id: [list of `Button` objects]}
@@ -384,11 +377,12 @@ class UserInterface:
         The choosing of a selected and dragged objects should be performed BEFORE this is called!
         :return: None
         """
-        for button in reduce(concat, list(self.buttons.values())):
+        for button in reversed(reduce(concat, list(self.buttons.values()))):
             if not button.is_hidden and button.is_mouse_in():
                 button.action()
-
-        self.action_at_press_by_mode[self.mode]()
+                break
+        else:
+            self.action_at_press_by_mode[self.mode]()
 
     def on_key_pressed(self, symbol, modifiers):
         """

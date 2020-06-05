@@ -13,11 +13,11 @@ class DeviceCreationWindow(PopupWindow):
     """
 
     DEVICE_TO_IMAGE = {
-        Computer: COMPUTER_IMAGE,
-        Switch: SWITCH_IMAGE,
-        Router: ROUTER_IMAGE,
-        Hub: HUB_IMAGE,
-        Antenna: ANTENNA_IMAGE,
+        Computer: (COMPUTER_IMAGE, "(n)"),
+        Switch: (SWITCH_IMAGE, "(s)"),
+        Router: (ROUTER_IMAGE, "(r)"),
+        Hub: (HUB_IMAGE, "(h)"),
+        Antenna: (ANTENNA_IMAGE, "(a)"),
     }
 
     def __init__(self, user_interface):
@@ -35,9 +35,10 @@ class DeviceCreationWindow(PopupWindow):
                     with_args(user_interface.create_device, device),
                     self.delete,
                 ),
-                self.DEVICE_TO_IMAGE[device],
-                device.__name__,
+                self.DEVICE_TO_IMAGE[device][0],
+                f"{device.__name__} {self.DEVICE_TO_IMAGE[device][1]}",
                 width=DEVICE_CREATION_BUTTON_SIZE, height=DEVICE_CREATION_BUTTON_SIZE,
+                key=user_interface.key_from_string(self.DEVICE_TO_IMAGE[device][1]),
             ) for i, device in enumerate(self.DEVICE_TO_IMAGE)
         ]
 

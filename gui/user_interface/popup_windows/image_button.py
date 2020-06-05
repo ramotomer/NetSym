@@ -27,13 +27,17 @@ class ImageButton(Button):
         :param text_color: the color of the text on the button
         """
         super(ImageButton, self).__init__(x, y, action, text, start_hidden, width, height, key, color, text_color)
+
+        self.pad_x, self.pad_y = 10, 10
         self.image_name = IMAGES.format(image_name)
-        self.image_sprite = ImageGraphics.get_image_sprite(self.image_name, x, y)
-        scale_x = self.width / self.image_sprite.width
-        scale_y = self.height / self.image_sprite.height
+        self.image_sprite = ImageGraphics.get_image_sprite(self.image_name, x + self.pad_x / 2, y + self.pad_y / 2)
+
+        scale_x, scale_y = self.image_sprite.scale_x, self.image_sprite.scale_y
+        scale_x = ((self.width - 2 * self.pad_x) / self.image_sprite.width) * scale_x
+        scale_y = ((self.height - 2 * self.pad_y) / self.image_sprite.height) * scale_y
         self.image_sprite.update(scale_x=scale_x, scale_y=scale_y)
 
-        # self.child_graphics_objects.text.location =
+        self.child_graphics_objects.text.y_padding = self.height
 
     def draw(self):
         """
@@ -49,4 +53,4 @@ class ImageButton(Button):
         :return: None
         """
         super(ImageButton, self).move()
-        self.image_sprite.update(self.x, self.y)
+        self.image_sprite.update(self.x + self.pad_x / 2, self.y + self.pad_y / 2)
