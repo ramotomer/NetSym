@@ -98,6 +98,8 @@ class Computer:
 
         self.is_supporting_wireless_connections = False
 
+        self.on_startup = []
+
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ method does not run when program is paused
 
@@ -156,14 +158,19 @@ class Computer:
         self.graphics.child_graphics_objects.console.write(string)
 
     def power(self):
-        """Powers the computer on or off."""
-
+        """
+        Powers the computer on or off.
+        """
         self.waiting_processes.clear()
 
         self.is_powered_on = not self.is_powered_on
         for interface in self.all_interfaces:
             interface.is_powered_on = self.is_powered_on
         self.graphics.toggle_opacity()
+
+        if self.is_powered_on:
+            for process, args in self.on_startup:
+                self.start_process(process, *args)
 
     def add_interface(self, name=None):
         """
@@ -499,7 +506,7 @@ class Computer:
         self.print(f"({self.packets_sniffed}) sniff: {packet_str}")
         self.packets_sniffed += 1
 
-    def _new_packets_since(self, time_):
+    def new_packets_since(self, time_):
         """
         Returns a list of all the new `ReceivedPacket`s that were received in the last `seconds` seconds.
         :param time_: a number of seconds.
@@ -738,6 +745,31 @@ class Computer:
         """
         self.waiting_processes.append((process_type(self, *args), None))
 
+    def add_startup_process(self, process_type, *args):
+        """
+        This function adds a process to the `on_startup` list, These processes are run right after the computer is
+        turned on.
+        :param process_type: The process that one wishes to run
+        :param args: its arguments
+        :return:
+        """
+        self.on_startup.append((process_type, args))
+
+        if not self.is_process_running(process_type):
+            self.start_process(process_type, *args)
+
+    def remove_startup_process(self, process_type):
+        """
+        Removes a process from from the on_startup list.
+        :param process_type: a process class that will be removed
+        :return: None
+        """
+        removed = get_the_one(
+            self.on_startup,
+            lambda t: t[0] is process_type,
+            NoSuchProcessError)
+        self.on_startup.remove(removed)
+
     @staticmethod
     def run_process(process):
         """
@@ -821,7 +853,7 @@ class Computer:
         :return: a list of `Process` objects that are ready to run. (they will run in the next call to
         `self._handle_processes`
         """
-        new_packets = self._new_packets_since(self.process_last_check)
+        new_packets = self.new_packets_since(self.process_last_check)
         self.process_last_check = MainLoop.instance.time()
 
         self._kill_dead_processes()

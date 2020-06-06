@@ -140,7 +140,7 @@ class Router(Computer):
         checks what are the new packets that arrived to this router, if they are not for it, routes them on.
         :return: None
         """
-        new_packets = self._new_packets_since(self.last_route_check)
+        new_packets = self.new_packets_since(self.last_route_check)
         self.last_route_check = MainLoop.instance.time()
 
         for packet, _, _ in new_packets:

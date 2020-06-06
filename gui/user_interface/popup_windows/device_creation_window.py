@@ -1,4 +1,5 @@
 from computing.computer import Computer
+from computing.nat import NAT
 from computing.router import Router
 from computing.switch import Switch, Hub, Antenna
 from consts import *
@@ -18,6 +19,7 @@ class DeviceCreationWindow(PopupWindow):
         Router: (ROUTER_IMAGE, "(r)"),
         Hub: (HUB_IMAGE, "(h)"),
         Antenna: (ANTENNA_IMAGE, "(a)"),
+        NAT: (NAT_IMAGE, "(alt+n)"),
     }
 
     def __init__(self, user_interface):
@@ -26,7 +28,7 @@ class DeviceCreationWindow(PopupWindow):
         """
         width = len(self.DEVICE_TO_IMAGE) * (DEVICE_CREATION_BUTTON_SIZE + DEVICE_CREATION_BUTTON_GAP) - DEVICE_CREATION_BUTTON_GAP
         height = TEXTBOX_HEIGHT
-        x, y = TEXTBOX_COORDINATES
+        x, y = WINDOW_WIDTH / 2 - width / 2, WINDOW_HEIGHT / 2 - height / 2
         buttons = [
             ImageButton(
                 x + i * (DEVICE_CREATION_BUTTON_SIZE + DEVICE_CREATION_BUTTON_GAP),
@@ -43,7 +45,7 @@ class DeviceCreationWindow(PopupWindow):
         ]
 
         super(DeviceCreationWindow, self).__init__(
-            *TEXTBOX_COORDINATES,
+            x, y,
             "Pick a device to create:",
             user_interface,
             buttons,

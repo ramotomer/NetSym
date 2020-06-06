@@ -93,6 +93,12 @@ class InterfaceGraphics(GraphicsObject):
                 "Insert a new mac address:",
                 self.interface.set_mac,
             ),
+            "change name (shift+n)": with_args(
+                user_interface.ask_user_for,
+                str,
+                "Insert new name:",
+                self.interface.set_name,
+            ),
             "sniffing start/stop (f)": with_args(
                 get_the_one(user_interface.computers,
                             lambda c: self.interface in c.interfaces,
