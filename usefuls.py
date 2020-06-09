@@ -25,7 +25,7 @@ def get_the_one(iterable, condition, raises=None):
 
 def is_hex(string):
     """
-    returns if a data is a hexadecimal digit or not
+    returns if a ip_layer is a hexadecimal digit or not
     """
     string = string[2:] if string.startswith('0x') else string
     hex_digits = set('0123456789abcdefABCDEF')

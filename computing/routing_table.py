@@ -78,7 +78,7 @@ class RoutingTable:
 
     def route_add(self, destination_ip, gateway_ip, interface_ip):
         """
-        Adds a route from all of the required data to do that
+        Adds a route from all of the required ip_layer to do that
         :param destination_ip: an `IPAddress` of the destination.
         :param gateway_ip: an `IPAddress` of the gateway to send things to.
         :param interface_ip: an `IPAddress` of the interface to send through it things to the gateway.

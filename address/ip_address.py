@@ -8,7 +8,7 @@ class IPAddress:
     """
     def __init__(self, string_ip):
         """
-        Initiates a IPAddress object from a data
+        Initiates a IPAddress object from a ip_layer
         :param string_ip: The ip ('132.23.245.1/24' for example or '1.1.1.1')
         """
         if isinstance(string_ip, self.__class__):
@@ -63,6 +63,25 @@ class IPAddress:
         _, _, _, last_byte = self.string_ip.split(IP_ADDRESS_SEPARATOR)
         return int(last_byte) == 255  # I had some thinking if to put in constant, decided not to...
 
+    def is_private_address(self):
+        """
+        Returns whether or not the IP address is a private one, that cannot be routed on the internet
+        :return: bool
+        """
+        private_subnets = {
+            IPAddress('172.16.0.0/12'),
+            IPAddress('10.0.0.0/8'),
+            IPAddress('192.168.0.0/16'),
+        }
+        return any(subnet.is_same_subnet(self) for subnet in private_subnets)
+
+    def is_internet_address(self):
+        """
+        Returns whether or not the address can be routed on the internet
+        :return: bool
+        """
+        return not self.is_private_address()
+
     @classmethod
     def increased(cls, address):
         """
@@ -70,13 +89,13 @@ class IPAddress:
         (192.168.1.1 /24  -->  192.168.1.2 /24)
         If the address is at the maximum of the subnet, raises `AddressTooLargeError`
 
-        :param other: an IPAddres object.
+        :param address: an IPAddress object.
         :return: a different object which the increased IP address.
         """
         bit_address = int(cls.as_bits(address.string_ip), base=2)
         increased = cls.from_bits('0b' + bin(bit_address + 1)[2:].zfill(IP_ADDRESS_BIT_LENGTH), int(address.subnet_mask))
         if not address.is_same_subnet(increased):
-            raise AddressTooLargeError(f"Cannont increase {address!r} since it is the maximum address for its subnet.")
+            raise AddressTooLargeError(f"Cannot increase {address!r} since it is the maximum address for its subnet.")
         return increased
 
     def increase(self):
@@ -116,23 +135,23 @@ class IPAddress:
     @staticmethod
     def is_valid(address):
         """
-        Receives a data that is supposed to be an ip address and returns whether
+        Receives a ip_layer that is supposed to be an ip address and returns whether
         or not it is a valid address.
-        :param address: The data address
+        :param address: The ip_layer address
         :return: Whether or not it is valid.
         """
         if not isinstance(address, str):
             return False
         splitted_address = address.split(IP_ADDRESS_SEPARATOR)
         return len(splitted_address) == 4 and \
-               all([part.isdigit() and 0 <= int(part) < 256 for part in splitted_address])
+            all([part.isdigit() and 0 <= int(part) < 256 for part in splitted_address])
 
     @staticmethod
     def is_valid_subnet_mask(subnet_mask):
         """
         Receives a subnet mask in the numerical form ('24' or '16') and decides if
         it is valid or not.
-        :param subnet_mask: A data that should be a numerical form of a mask
+        :param subnet_mask: A ip_layer that should be a numerical form of a mask
         :return: whether it is valid
         """
         return isinstance(subnet_mask, str) and subnet_mask.isdigit() and 0 <= int(subnet_mask) <= IP_ADDRESS_BIT_LENGTH
@@ -186,7 +205,8 @@ class IPAddress:
         """Test whether two ip addresses are equal or not (does no include subnet mask)"""
         if other is None:
             return False
-        return self.string_ip == other.string_ip and self.subnet_mask == other.subnet_mask
+        return self.string_ip == other.string_ip
+        # ^ maybe i broke something when i did not also check the subnet mask, take into consideration....
 
     def __hash__(self):
         """Allows the IPAddress object to be a key in a dictionary or a set"""

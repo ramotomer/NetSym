@@ -39,7 +39,7 @@ ObjectView = namedtuple("ObjectView", [
     "viewed_object",
 ])
 """
-A data structure to represent the current viewing of a GraphicsObject on the side window in VIEW_MODE
+A ip_layer structure to represent the current viewing of a GraphicsObject on the side window in VIEW_MODE
 - sprite is the little image that is shown
 - text is a `Text` object of the information about the object
 - viewed_object is a reference to the GraphicsObject that's viewed. 
@@ -94,7 +94,7 @@ class UserInterface:
             (key.P, CTRL_MODIFIER): self.send_random_ping,
             (key.P, SHIFT_MODIFIER): self.send_ping_to_self,
             (key.R, CTRL_MODIFIER): with_args(self.create_device, Router),
-            (key.M, NO_MODIFIER): self.debugging_printer,
+            (key.M, NO_MODIFIER): self.print_debugging_info,
             (key.W, NO_MODIFIER): self.add_tcp_test,
             (key.SPACE, NO_MODIFIER): self.toggle_pause,
             (key.TAB, NO_MODIFIER): self.tab_through_selected,
@@ -219,7 +219,7 @@ class UserInterface:
     def start_object_view(self, graphics_object):
         """
         Starts viewing an object on the side window.
-        Creates an `ObjectView` namedtuple which packs together the data required to view an object.
+        Creates an `ObjectView` namedtuple which packs together the ip_layer required to view an object.
         :param graphics_object: A graphics object to view.
         :return: None
         """
@@ -769,7 +769,7 @@ class UserInterface:
             if not isinstance(computer, Switch) and not isinstance(computer, Router) and not computer.has_ip():
                 computer.ask_dhcp()
 
-    def debugging_printer(self):
+    def print_debugging_info(self):
         """
         Prints out lots of useful information for debugging.
         :return: None

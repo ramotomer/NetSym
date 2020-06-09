@@ -111,7 +111,7 @@ class TCPDoneReceiving(TCPError):
 
 class TCPDataLargerThanMaxSegmentSize(TCPError):
     """
-    This is raised when some data is sent by TCP when it is larger than the MSS (max segment size) of that packet
+    This is raised when some ip_layer is sent by TCP when it is larger than the MSS (max segment size) of that packet
     """
 
 

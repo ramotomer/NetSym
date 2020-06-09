@@ -219,7 +219,7 @@ class Connection:
         self.sent_packets.clear()
 
     def __repr__(self):
-        """The data representation of the connection"""
+        """The ip_layer representation of the connection"""
         return f"Connection({self.length}, {self.speed})"
 
 

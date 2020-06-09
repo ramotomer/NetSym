@@ -15,7 +15,7 @@ Computers = namedtuple("Computers", [
     "start",
     "end",
 ])
-"""a data structure to save the two ComputerGraphics of the two sides of the connection."""
+"""a ip_layer structure to save the two ComputerGraphics of the two sides of the connection."""
 
 Interfaces = namedtuple("Interfaces", [
     "start",

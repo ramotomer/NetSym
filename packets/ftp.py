@@ -5,7 +5,7 @@ from packets.protocol import Protocol
 class FTP(Protocol):
     """
     A Packet of the FTP protocol.
-    Contains (for now) data string for the FTP client and server processes
+    Contains (for now) ip_layer string for the FTP client and server processes
     """
     def __init__(self, data, is_request=False):
         """
@@ -48,7 +48,7 @@ class FTP(Protocol):
         """
         return f"""
 FTP: {"(request)" if self.is_request else ""}
-data:
+ip_layer:
 {self.data}
 """
 

@@ -97,7 +97,7 @@ class DHCPServer(Process):
         self.default_gateway = default_gateway  # a `Computer` that is the default gateway of the subnets this server serves.
 
         self.interface_to_dhcp_data = {} # interface : DHCPData
-        # ^ a mapping for each interface of the server to a data that it packs for its clients.
+        # ^ a mapping for each interface of the server to a ip_layer that it packs for its clients.
         self.update_server_data()
 
         self.in_session_with = {}  # {mac : offered_ip}

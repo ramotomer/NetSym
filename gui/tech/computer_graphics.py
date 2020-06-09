@@ -62,7 +62,7 @@ class ComputerGraphics(ImageGraphics):
         return '\n'.join([self.computer.name] + [str(interface.ip) for interface in self.computer.interfaces if interface.has_ip()])
 
     def update_text(self):
-        """Sometimes the data of the computer is changed and we want to text to change as well"""
+        """Sometimes the ip_layer of the computer is changed and we want to text to change as well"""
         self.child_graphics_objects.text.set_text(self.generate_text())
 
     def update_image(self):

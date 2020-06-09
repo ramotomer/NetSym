@@ -228,8 +228,8 @@ class Interface:
 
     def ethernet_wrap(self, dst_mac, data):
         """
-        Takes in data (string, a `Protocol` object...) and wraps it as an `Ethernet` packet ready to be sent.
-        :param data: any data to put in the ethernet packet (ARP, IP, str, more Ethernet, whatever you want, only
+        Takes in ip_layer (string, a `Protocol` object...) and wraps it as an `Ethernet` packet ready to be sent.
+        :param data: any ip_layer to put in the ethernet packet (ARP, IP, str, more Ethernet, whatever you want, only
             the receiver computer should know whats coming and how to handle it...)
         :param dst_mac: a `MACAddress` object of the destination of the packet.
         :return: the ready `Packet` object

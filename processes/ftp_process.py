@@ -21,7 +21,7 @@ class FTPProcess(TCPProcess):
     def create_ftp_layer(data, is_request=False):
         """
         Creates an FTP layer and returns it.
-        :param data: The actual data that the packet will contain.
+        :param data: The actual ip_layer that the packet will contain.
         :param is_request: whether or not the packet is a request to download or upload a file.
         :return: `FTP` object
         """
@@ -103,9 +103,9 @@ class FTPClientProcess(FTPProcess):
 
     def sum_packets_to_string(self, ftp_list):
         """
-        Receive a list of `FTP` objects, returns a string of the concat-ed data from them
+        Receive a list of `FTP` objects, returns a string of the concat-ed ip_layer from them
         :param ftp_list: list of `FTP` objects
-        :return: a string of the summed data from them
+        :return: a string of the summed ip_layer from them
         """
         return ''.join(ftp.data for ftp in ftp_list)
 

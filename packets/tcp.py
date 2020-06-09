@@ -11,7 +11,7 @@ class TCP(Protocol):
     in-tact.
     It has the TCP flags (SYN, FIN, RST...) they are stored in a dictionary {FLAG: bool}
     It has a sequence number and an ACK number.
-    It has some data and its length is specified in the `length` attribute.
+    It has some ip_layer and its length is specified in the `length` attribute.
     The window size is also specified.
     """
     def __init__(self, src_port, dst_port, sequence_number,
@@ -26,7 +26,7 @@ class TCP(Protocol):
         :param ack_number: an int which is the sequence number that the packet ACKs and expects to receive next.
         :param window_size: The size of the sending window of the sender of this packet
         :param options: a dictionary of the TCP options. (for now it is empty)
-        :param data: the actual data of the packet.
+        :param data: the actual ip_layer of the packet.
         """
         super(TCP, self).__init__(4, data)
         self.src_port, self.dst_port = src_port, dst_port
@@ -68,7 +68,7 @@ class TCP(Protocol):
     @property
     def length(self):
         """
-        The length of the data of the packet
+        The length of the ip_layer of the packet
         :return: int
         """
         if {TCP_SYN, TCP_FIN} & self.flags:
@@ -115,6 +115,6 @@ seq={self.sequence_number}, ack={self.ack_number}, win={self.window_size}
 options:
 {linesep.join(f'{option}: {value}' for option, value in self.options.items())}
 
-data:
+ip_layer:
 {getattr(self.data, "multiline_repr", self.data.__str__)()}
 """

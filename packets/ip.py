@@ -31,7 +31,7 @@ class IP(Protocol):
         )
 
     def __repr__(self):
-        """The data representation of the IP layer object"""
+        """The ip_layer representation of the IP layer object"""
         return f"IP(from {self.src_ip}, to {self.dst_ip}, ttl: {self.ttl}, Data: {self.data!r})"
 
     def multiline_repr(self):

@@ -15,7 +15,7 @@ from packets.icmp import ICMP
 from packets.ip import IP
 from packets.tcp import TCP
 from packets.udp import UDP
-from processes.arp_process import ARPProcess
+from processes.arp_process import ARPProcess, SendPacketWithArpsProcess
 from processes.daytime_process import DAYTIMEServerProcess
 from processes.dhcp_process import DHCPClient
 from processes.dhcp_process import DHCPServer
@@ -531,6 +531,22 @@ class Computer:
             if interface.is_sniffing:
                 self._sniff_packet(packet)
 
+    def start_sending_process(self, dst_ip, data):
+        """
+        Sends out a packet, If it does not know its MAC address, starts a process that finds out
+        the address (sends out ARPs) and sends out the packet.
+        :param dst_ip: the destination IP address
+        :param data: the ip_layer to send (fourth layer and above)
+        :return: None
+        """
+        self.start_process(SendPacketWithArpsProcess,
+                           IP(
+                               self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip),
+                               dst_ip,
+                               TTLS[self.os],
+                               data,
+                           ))
+
     def send_with_ethernet(self, dst_mac, dst_ip, data):
         """
         Just like `send_to` only does not add the IP layer.
@@ -542,7 +558,7 @@ class Computer:
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
         self.send(
             interface.ethernet_wrap(dst_mac, data),
-            interface
+            interface=interface,
         )
 
     def send_to(self, dst_mac, dst_ip, packet):
@@ -571,7 +587,7 @@ class Computer:
     def send_arp_to(self, ip_address):
         """
         Constructs and sends an ARP request to a given IP address.
-        :param ip_address: a data of the IP address you want to find the MAC for.
+        :param ip_address: a ip_layer of the IP address you want to find the MAC for.
         :return: None
         """
         interface = self.get_interface_with_ip(self.routing_table[ip_address].interface_ip)
@@ -690,7 +706,7 @@ class Computer:
 
     def send_dhcp_pack(self, client_mac, dhcp_data, session_interface):
         """
-        Sends a `DHCP_PACK` that tells the DHCP client all of the new data it needs to update (IP, gateway, DNS)
+        Sends a `DHCP_PACK` that tells the DHCP client all of the new ip_layer it needs to update (IP, gateway, DNS)
         :param client_mac: The `MACAddress` of the client.
         :param dhcp_data:  a `DHCPData` namedtuple (from 'dhcp_process.py') that is sent in the DHCP pack.
         :param session_interface: The `Interface` that is running the session with the client.
