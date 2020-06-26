@@ -19,7 +19,7 @@ class PacketGraphics(ImageGraphics):
         :param deepest_layer: The deepest packet layer in the packet.
         :param connection_graphics: The `ConnectionGraphics` object which is the graphics of the `Connection` this packet
             is sent through. It is used for the start and end coordinates.
-
+            
         The self.progress variable is how much of the connection the packet has passed already. That information comes
         from the `Connection` class that sent the packet. It updates it in the `Connection.move_packets` method.
         """

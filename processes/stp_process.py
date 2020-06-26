@@ -66,7 +66,7 @@ class STPProcess(Process):
     def distance_to_root(self):
         """
         Returns this switch's shortest way to the current root switch.
-        If no STP packets were recieved yet, returns 0.
+        If no STP packets were received yet, returns 0.
         :return: `int`
         """
         try:

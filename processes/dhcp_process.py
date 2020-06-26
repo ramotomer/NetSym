@@ -174,10 +174,10 @@ class DHCPServer(Process):
             received_packets = ReturnedPacket()
             yield WaitingForPacket(lambda p: "DHCP" in p, received_packets)
 
-            if not self.computer.has_ip():
-                self.computer.print("Cannot server DHCP without and IP address!")
-                continue
             for packet, interface in received_packets.packets.items():
+                if not interface.has_ip():
+                    self.computer.print("Cannot server DHCP without an IP address!")
+                    continue
                 self.actions.get(packet["DHCP"].opcode, self.unknown_packet)(packet, interface)
 
     def __repr__(self):

@@ -1,7 +1,8 @@
 from computing.computer import Computer
-from computing.nat import NAT
+# from computing.nat import NAT
 from computing.router import Router
 from computing.switch import Switch, Hub, Antenna
+# from computing.internet import Internet
 from consts import *
 from gui.user_interface.popup_windows.image_button import ImageButton
 from gui.user_interface.popup_windows.popup_window import PopupWindow
@@ -19,7 +20,8 @@ class DeviceCreationWindow(PopupWindow):
         Router: (ROUTER_IMAGE, "(r)"),
         Hub: (HUB_IMAGE, "(h)"),
         Antenna: (ANTENNA_IMAGE, "(a)"),
-        NAT: (NAT_IMAGE, "(alt+n)"),
+        # NAT: (NAT_IMAGE, "(alt+n)"),
+        # Internet: (INTERNET_IMAGE, "(alt+i)"),
     }
 
     def __init__(self, user_interface):

@@ -23,7 +23,10 @@ from processes.ftp_process import FTPServerProcess
 from processes.ping_process import SendPing
 from usefuls import get_the_one
 
-ARPCacheItem = namedtuple("ARPCacheItem", "mac time")
+ARPCacheItem = namedtuple("ARPCacheItem", [
+    "mac",
+    "time",
+])
 # ^ the values of the ARP cache of the computer (MAC address and creation time)
 ReceivedPacket = namedtuple("ReceivedPacket", "packet time interface")
 # ^ a packet that was received in this computer  (packet object, receiving time, interface packet is received on)
@@ -444,6 +447,7 @@ class Computer:
         if interface_ip is None:
             interface_ip_address = self.same_subnet_interfaces(gateway_ip)[0].ip
         self.routing_table[IPAddress("0.0.0.0/0")] = RoutingTableItem(gateway_ip, interface_ip_address)
+        self.routing_table[IPAddress("255.255.255.255/32")] = RoutingTableItem(gateway_ip, interface_ip_address)
 
     def set_ip(self, interface, string_ip):
         """
@@ -462,6 +466,8 @@ class Computer:
             dhcp_server_process.update_server_data()
         self.routing_table.add_interface(interface.ip)
         self.graphics.update_text()
+
+    # TODO: deleting an interface and then connecting the device does not work well
 
     def set_name(self, name):
         """
@@ -590,7 +596,10 @@ class Computer:
         :param ip_address: a ip_layer of the IP address you want to find the MAC for.
         :return: None
         """
-        interface = self.get_interface_with_ip(self.routing_table[ip_address].interface_ip)
+        interface_ip = self.routing_table[ip_address].interface_ip
+        if self.name == "test":
+            pass
+        interface = self.get_interface_with_ip(interface_ip)
         arp = ARP(ARP_REQUEST, interface.ip, ip_address, interface.mac)
         if interface.ip is None:
             arp = ARP.create_probe(ip_address, interface.mac)

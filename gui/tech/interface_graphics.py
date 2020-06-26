@@ -57,15 +57,14 @@ class InterfaceGraphics(GraphicsObject):
         :return:
         """
         if self.interface.is_connected():
-            start_comp, end_comp = self.interface.connection.connection.graphics.computers
-            other_computer = start_comp if self.computer_graphics is end_comp else end_comp
+            start_computer, end_comp = self.interface.connection.connection.graphics.computers
+            other_computer = start_computer if self.computer_graphics is end_comp else end_comp
             self.x, self.y = other_computer.location
-        comp_x, comp_y = self.computer_location
-        dist = distance((comp_x, comp_y), (self.x, self.y))
-        dist /= INTERFACE_DISTANCE_FROM_COMPUTER
+        computer_x, computer_y = self.computer_location
+        dist = distance((computer_x, computer_y), (self.x, self.y)) / self.computer_graphics.interface_distance()
         dist = dist if dist else 1  # cannot be 0
 
-        self.real_x, self.real_y = ((self.x - comp_x) / dist) + comp_x, ((self.y - comp_y) / dist) + comp_y
+        self.real_x, self.real_y = ((self.x - computer_x) / dist) + computer_x, ((self.y - computer_y) / dist) + computer_y
         self.x, self.y = self.real_x, self.real_y
 
     def draw(self):
@@ -151,7 +150,7 @@ class InterfaceGraphicsList(GraphicsObject):
         self.child_graphics_objects = []
         self.computer_graphics = computer_graphics
 
-        coords = circular_coordinates(computer_graphics.location, INTERFACE_DISTANCE_FROM_COMPUTER, len(interfaces))
+        coords = circular_coordinates(computer_graphics.location, computer_graphics.interface_distance(), len(interfaces))
         for i, coordinate in enumerate(coords):
             self.add(interfaces[i], *coordinate)
 
@@ -173,7 +172,7 @@ class InterfaceGraphicsList(GraphicsObject):
         """
         x, y = ix, iy
         if ix is None and iy is None:
-            x, y = self.computer_graphics.x + INTERFACE_DISTANCE_FROM_COMPUTER, self.computer_graphics.y
+            x, y = self.computer_graphics.x + self.computer_graphics.interface_distance(), self.computer_graphics.y
 
         interface_graphics = InterfaceGraphics(x, y, interface, self.computer_graphics)
         self.child_graphics_objects.append(interface_graphics)

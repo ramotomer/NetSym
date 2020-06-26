@@ -90,7 +90,11 @@ class ConnectionGraphics(GraphicsObject):
             return True
 
         cos_of_beta = (c**2 + a**2 - b**2) / (2 * a * c)
-        beta = acos(cos_of_beta)  # the law of the cosines
+        beta = 0
+        try:
+            beta = acos(cos_of_beta)  # the law of the cosines
+        except ValueError:
+            pass
         mouse_distance_to_connection = a * sin(beta)
         return mouse_distance_to_connection <= MOUSE_IN_CONNECTION_LENGTH
 

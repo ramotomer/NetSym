@@ -1,4 +1,5 @@
 from computing.computer import Computer
+from computing.interface import Interface
 from computing.routing_table import RoutingTable
 from consts import *
 from gui.main_loop import MainLoop
@@ -93,6 +94,8 @@ class RoutePacket(Process):
         dst_ip = self.packet["IP"].dst_ip
         time_exceeded = self._decrease_ttl()
 
+        assert dst_ip is not None, "error!"
+
         if not time_exceeded:
             ip_for_the_mac, done_searching = self.computer.request_address(dst_ip, self, False)
             yield WaitingFor(done_searching)
@@ -114,10 +117,13 @@ class Router(Computer):
     It has routing table which tells it where to route his packets to. It contains a subnet mask mapped to an interface
     (any packet that fits the subnet mask of the interface goes to that interface)
     """
-    def __init__(self, name=None, interfaces=(), is_dhcp_server=True):
+    def __init__(self, name=None, interfaces=None, is_dhcp_server=True):
         """
         Initiates a router with no IP addresses.
         """
+        if interfaces is None:
+            interfaces = [Interface(ip='1.1.1.1')]
+
         super(Router, self).__init__(name, OS_SOLARIS, None, *interfaces)
         self.routing_table = RoutingTable.create_default(self, False)
 
