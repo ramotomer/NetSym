@@ -14,7 +14,7 @@ class MACAddress:
 
     def __init__(self, string_mac):
         """
-        Initiates a MACAddress object from a data
+        Initiates a MACAddress object from a ip_layer
         :param string_mac: The string mac ('aa:bb:cc:11:22:76' for example)
         """
         if not MACAddress.is_valid(string_mac):
@@ -78,7 +78,7 @@ class MACAddress:
     @staticmethod
     def is_valid(address):
         """
-        Receives a data that is supposed to be a mac address and returns whether
+        Receives a ip_layer that is supposed to be a mac address and returns whether
         or not it is a valid address.
         :param address: The string address
         :return: Whether or not it is valid.
@@ -112,5 +112,5 @@ class MACAddress:
         return hash(repr(self))
 
     def __repr__(self):
-        """The data representation of the MAC address"""
+        """The ip_layer representation of the MAC address"""
         return self.string_mac

@@ -127,6 +127,16 @@ class ReturnedPacket:
         """Returns whether or not this has any packets inside"""
         return bool(self.packets)
 
+    def __bool__(self):
+        return bool(self.packets)
+
+    def __iter__(self):
+        """
+        Returns an iterator of a list of tuples (packet, interface)
+        :return:
+        """
+        return iter(list(self.packets.items()))
+
 
 class NoNeedForPacket(ReturnedPacket):
     """

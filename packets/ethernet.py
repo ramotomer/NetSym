@@ -25,7 +25,7 @@ class Ethernet(Protocol):
 
     def __repr__(self):
         """
-        a data representation of this class.
+        a ip_layer representation of this class.
         """
         return f"Ethernet(from: {self.src_mac!r}, to: {self.dst_mac!r}, Data: {self.data!r})"
 

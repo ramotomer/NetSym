@@ -16,8 +16,8 @@ class ICMP(Protocol):
     @staticmethod
     def create_string():
         """
-        Returns the data that is in the ICMP packets
-        :return: data
+        Returns the ip_layer that is in the ICMP packets
+        :return: ip_layer
         """
         return ''.join([chr(letter) for letter in range(ord('a'), ord('z') + 1)])
 
@@ -36,7 +36,7 @@ class ICMP(Protocol):
         return f"ICMP({self.opcode})"
 
     def __repr__(self):
-        """The data representation of the ICMP packet"""
+        """The ip_layer representation of the ICMP packet"""
         return f"ICMP({self.opcode}, Data: {self.data})"
 
     def multiline_repr(self):

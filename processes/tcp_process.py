@@ -40,7 +40,7 @@ def is_number_acking_packet(ack_number: int, packet):
 class TCPProcess(Process, metaclass=ABCMeta):
     """
     The TCP process abstract class which represents any TCP based process (HTTP, SSH whatever)
-    It creates an abstraction for all of the methods for sending and receiving data without the child process class has
+    It creates an abstraction for all of the methods for sending and receiving ip_layer without the child process class has
     to handle of the retransmissions and ACKs and all of that. that is handled here.
 
     A server-side `code` function example:
@@ -71,7 +71,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         self.is_client = is_client  # decides who sends the original SYN packet (the client does)
 
         self.dst_ip = dst_ip
-        self.src_port = random.randint(*TCP_USABLE_PORT_RANGE) if self.is_client else src_port
+        self.src_port = random.randint(*USERMODE_USABLE_PORT_RANGE) if self.is_client else src_port
         self.dst_port = dst_port
         self.dst_mac = None
 
@@ -339,9 +339,9 @@ class TCPProcess(Process, metaclass=ABCMeta):
 
     def send(self, data, packet_constructor=lambda d: d):
         """
-        Takes in some data and sends it over TCP as soon as possible.
-        :param data: the piece of the data that the child process class wants to send over TCP
-        :param packet_constructor: a function is applied to the data after it is divided to TCP segments and before it
+        Takes in some ip_layer and sends it over TCP as soon as possible.
+        :param data: the piece of the ip_layer that the child process class wants to send over TCP
+        :param packet_constructor: a function is applied to the ip_layer after it is divided to TCP segments and before it
         is sent.
         :return: None
         """
@@ -353,18 +353,18 @@ class TCPProcess(Process, metaclass=ABCMeta):
 
     def send_no_split(self, data):
         """
-        This function assumes that the length of the data is not larger than the MSS of the process.
+        This function assumes that the length of the ip_layer is not larger than the MSS of the process.
         If it is larger, raises an exception.
         :param data:
         :return:
         """
         if len(data) > self.mss:
-            raise TCPDataLargerThanMaxSegmentSize("To split string data, use the `TCPProcess.send` method")
+            raise TCPDataLargerThanMaxSegmentSize("To split string ip_layer, use the `TCPProcess.send` method")
         self.sending_window.add_waiting(self._create_packet({TCP_PSH}, data))
 
     def is_done_transmitting(self):
         """
-        Returns whether or not the process has finished transmitting all of the desired data.
+        Returns whether or not the process has finished transmitting all of the desired ip_layer.
         :return: bool
         """
         return self.sending_window.nothing_to_send()
@@ -390,7 +390,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         This function is a generator that yield `WaitingFor` and `WaitingForPacket` namedtuple-s.
         It receives TCP packets from the destination sends ACKs sends all of the other packets in the
         TCP_SENDING_INTERVAL gaps. "Blocks" the process until packets are received.
-        :param received_data: a list that we append data we receive to it. Any packet's data is appended to it.
+        :param received_data: a list that we append ip_layer we receive to it. Any packet's ip_layer is appended to it.
         :param is_blocking: whether or not the function loops until it receives a packet.
         If a FIN was received, appends the list a `DON_RECEIVING` constant (None) that tells
         it that the process terminates.
@@ -422,9 +422,9 @@ class TCPProcess(Process, metaclass=ABCMeta):
 
     def _handle_packet_and_receive(self, packet, received_data, receive_flags):
         """
-        Receives a packet and handles it, sends ack, learns, and adds the data to a given `received_data` list
+        Receives a packet and handles it, sends ack, learns, and adds the ip_layer to a given `received_data` list
         :param packet: the packet to handle
-        :param received_data: a list of data from the PSH tcp packets
+        :param received_data: a list of ip_layer from the PSH tcp packets
         :return: None
         """
         tcp_layer = packet["TCP"]
@@ -602,9 +602,9 @@ class ReceivingWindow:
 
     def add_data_and_remove_from_window(self, received_data):
         """
-        Adds the data from all of the packets that arrived in-order to the given list.
+        Adds the ip_layer from all of the packets that arrived in-order to the given list.
         Also removes them from the receiving window.
-        :param received_data: a list of data that is received from the destination computer.
+        :param received_data: a list of ip_layer that is received from the destination computer.
         :return: None
         """
         for packet in self.window[:]:
@@ -616,7 +616,7 @@ class ReceivingWindow:
 
     def add_to_sack(self, packet):
         """
-        Adds a packet to the SACK data of the process.
+        Adds a packet to the SACK ip_layer of the process.
         :param packet: a `Packet` object that contains a TCP layer
         :return: None
         """

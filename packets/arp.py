@@ -63,7 +63,7 @@ class ARP(Protocol):
         )
 
     def __repr__(self):
-        """data representation of the ARP object"""
+        """ip_layer representation of the ARP object"""
         return f"{self.opcode} from {self.src_ip!r} to {self.dst_ip!r}, {self.string}"
 
     def multiline_repr(self):

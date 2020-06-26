@@ -27,7 +27,7 @@ class ComputerGraphics(ImageGraphics):
     It inherits from `ImageGraphics` because there is an image of the computer that should just be drawn.
     This class adds to it the text that exists under a computer.
     """
-    def __init__(self, x, y, computer, image=COMPUTER_IMAGE):
+    def __init__(self, x, y, computer, image=COMPUTER_IMAGE, scale_factor=SPRITE_SCALE_FACTOR):
         """
         The graphics objects of computers.
         :param x:
@@ -41,6 +41,7 @@ class ComputerGraphics(ImageGraphics):
             centered=True,
             is_in_background=True,
             is_pressable=True,
+            scale_factor=scale_factor,
         )
         self.is_computer = True
         self.computer = computer
@@ -62,7 +63,7 @@ class ComputerGraphics(ImageGraphics):
         return '\n'.join([self.computer.name] + [str(interface.ip) for interface in self.computer.interfaces if interface.has_ip()])
 
     def update_text(self):
-        """Sometimes the data of the computer is changed and we want to text to change as well"""
+        """Sometimes the ip_layer of the computer is changed and we want to text to change as well"""
         self.child_graphics_objects.text.set_text(self.generate_text())
 
     def update_image(self):
@@ -151,7 +152,7 @@ class ComputerGraphics(ImageGraphics):
 Computer:
 
 Name: {self.computer.name}
-OS: {self.computer.os}
+{f'os: {self.computer.os}' if self.computer.os is not None else ""}
 {f'gateway: {gateway}' if gateway is not None else ""}
 {f'addresses: {linesep + addresses}' if addresses else ""}
 """
@@ -163,6 +164,13 @@ OS: {self.computer.os}
         :return:
         """
         self.child_graphics_objects.interface_list.add(interface)
+
+    def interface_distance(self):
+        """
+        Calculates the distance that the interface should be away from the computer.
+        :return:
+        """
+        return (IMAGES_SIZE * self.sprite.scale_x) - INTERFACE_DISTANCE_PADDING
 
     def __str__(self):
         return "ComputerGraphics"

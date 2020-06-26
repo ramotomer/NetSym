@@ -15,7 +15,7 @@ from packets.icmp import ICMP
 from packets.ip import IP
 from packets.tcp import TCP
 from packets.udp import UDP
-from processes.arp_process import ARPProcess
+from processes.arp_process import ARPProcess, SendPacketWithArpsProcess
 from processes.daytime_process import DAYTIMEServerProcess
 from processes.dhcp_process import DHCPClient
 from processes.dhcp_process import DHCPServer
@@ -23,7 +23,10 @@ from processes.ftp_process import FTPServerProcess
 from processes.ping_process import SendPing
 from usefuls import get_the_one
 
-ARPCacheItem = namedtuple("ARPCacheItem", "mac time")
+ARPCacheItem = namedtuple("ARPCacheItem", [
+    "mac",
+    "time",
+])
 # ^ the values of the ARP cache of the computer (MAC address and creation time)
 ReceivedPacket = namedtuple("ReceivedPacket", "packet time interface")
 # ^ a packet that was received in this computer  (packet object, receiving time, interface packet is received on)
@@ -98,6 +101,8 @@ class Computer:
 
         self.is_supporting_wireless_connections = False
 
+        self.on_startup = []
+
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ method does not run when program is paused
 
@@ -156,14 +161,19 @@ class Computer:
         self.graphics.child_graphics_objects.console.write(string)
 
     def power(self):
-        """Powers the computer on or off."""
-
+        """
+        Powers the computer on or off.
+        """
         self.waiting_processes.clear()
 
         self.is_powered_on = not self.is_powered_on
         for interface in self.all_interfaces:
             interface.is_powered_on = self.is_powered_on
         self.graphics.toggle_opacity()
+
+        if self.is_powered_on:
+            for process, args in self.on_startup:
+                self.start_process(process, *args)
 
     def add_interface(self, name=None):
         """
@@ -437,6 +447,7 @@ class Computer:
         if interface_ip is None:
             interface_ip_address = self.same_subnet_interfaces(gateway_ip)[0].ip
         self.routing_table[IPAddress("0.0.0.0/0")] = RoutingTableItem(gateway_ip, interface_ip_address)
+        self.routing_table[IPAddress("255.255.255.255/32")] = RoutingTableItem(gateway_ip, interface_ip_address)
 
     def set_ip(self, interface, string_ip):
         """
@@ -455,6 +466,8 @@ class Computer:
             dhcp_server_process.update_server_data()
         self.routing_table.add_interface(interface.ip)
         self.graphics.update_text()
+
+    # TODO: deleting an interface and then connecting the device does not work well
 
     def set_name(self, name):
         """
@@ -499,7 +512,7 @@ class Computer:
         self.print(f"({self.packets_sniffed}) sniff: {packet_str}")
         self.packets_sniffed += 1
 
-    def _new_packets_since(self, time_):
+    def new_packets_since(self, time_):
         """
         Returns a list of all the new `ReceivedPacket`s that were received in the last `seconds` seconds.
         :param time_: a number of seconds.
@@ -524,6 +537,22 @@ class Computer:
             if interface.is_sniffing:
                 self._sniff_packet(packet)
 
+    def start_sending_process(self, dst_ip, data):
+        """
+        Sends out a packet, If it does not know its MAC address, starts a process that finds out
+        the address (sends out ARPs) and sends out the packet.
+        :param dst_ip: the destination IP address
+        :param data: the ip_layer to send (fourth layer and above)
+        :return: None
+        """
+        self.start_process(SendPacketWithArpsProcess,
+                           IP(
+                               self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip),
+                               dst_ip,
+                               TTLS[self.os],
+                               data,
+                           ))
+
     def send_with_ethernet(self, dst_mac, dst_ip, data):
         """
         Just like `send_to` only does not add the IP layer.
@@ -535,7 +564,7 @@ class Computer:
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
         self.send(
             interface.ethernet_wrap(dst_mac, data),
-            interface
+            interface=interface,
         )
 
     def send_to(self, dst_mac, dst_ip, packet):
@@ -564,10 +593,13 @@ class Computer:
     def send_arp_to(self, ip_address):
         """
         Constructs and sends an ARP request to a given IP address.
-        :param ip_address: a data of the IP address you want to find the MAC for.
+        :param ip_address: a ip_layer of the IP address you want to find the MAC for.
         :return: None
         """
-        interface = self.get_interface_with_ip(self.routing_table[ip_address].interface_ip)
+        interface_ip = self.routing_table[ip_address].interface_ip
+        if self.name == "test":
+            pass
+        interface = self.get_interface_with_ip(interface_ip)
         arp = ARP(ARP_REQUEST, interface.ip, ip_address, interface.mac)
         if interface.ip is None:
             arp = ARP.create_probe(ip_address, interface.mac)
@@ -683,7 +715,7 @@ class Computer:
 
     def send_dhcp_pack(self, client_mac, dhcp_data, session_interface):
         """
-        Sends a `DHCP_PACK` that tells the DHCP client all of the new data it needs to update (IP, gateway, DNS)
+        Sends a `DHCP_PACK` that tells the DHCP client all of the new ip_layer it needs to update (IP, gateway, DNS)
         :param client_mac: The `MACAddress` of the client.
         :param dhcp_data:  a `DHCPData` namedtuple (from 'dhcp_process.py') that is sent in the DHCP pack.
         :param session_interface: The `Interface` that is running the session with the client.
@@ -737,6 +769,31 @@ class Computer:
         :return: None
         """
         self.waiting_processes.append((process_type(self, *args), None))
+
+    def add_startup_process(self, process_type, *args):
+        """
+        This function adds a process to the `on_startup` list, These processes are run right after the computer is
+        turned on.
+        :param process_type: The process that one wishes to run
+        :param args: its arguments
+        :return:
+        """
+        self.on_startup.append((process_type, args))
+
+        if not self.is_process_running(process_type):
+            self.start_process(process_type, *args)
+
+    def remove_startup_process(self, process_type):
+        """
+        Removes a process from from the on_startup list.
+        :param process_type: a process class that will be removed
+        :return: None
+        """
+        removed = get_the_one(
+            self.on_startup,
+            lambda t: t[0] is process_type,
+            NoSuchProcessError)
+        self.on_startup.remove(removed)
 
     @staticmethod
     def run_process(process):
@@ -821,7 +878,7 @@ class Computer:
         :return: a list of `Process` objects that are ready to run. (they will run in the next call to
         `self._handle_processes`
         """
-        new_packets = self._new_packets_since(self.process_last_check)
+        new_packets = self.new_packets_since(self.process_last_check)
         self.process_last_check = MainLoop.instance.time()
 
         self._kill_dead_processes()

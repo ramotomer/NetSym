@@ -11,7 +11,7 @@ from address.ip_address import IPAddress
 from computing.computer import Computer
 from computing.interface import Interface
 from computing.router import Router
-from computing.switch import Switch, Hub, Antenna
+from computing.switch import Switch
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
@@ -21,6 +21,7 @@ from gui.shape_drawing import draw_pause_rectangles, draw_rect
 from gui.tech.computer_graphics import ComputerGraphics
 from gui.tech.interface_graphics import InterfaceGraphics
 from gui.user_interface.button import Button
+from gui.user_interface.popup_windows.device_creation_window import DeviceCreationWindow
 from gui.user_interface.popup_windows.popup_error import PopupError
 from gui.user_interface.popup_windows.popup_text_box import PopupTextBox
 from gui.user_interface.popup_windows.popup_window import PopupWindow
@@ -38,7 +39,7 @@ ObjectView = namedtuple("ObjectView", [
     "viewed_object",
 ])
 """
-A data structure to represent the current viewing of a GraphicsObject on the side window in VIEW_MODE
+A ip_layer structure to represent the current viewing of a GraphicsObject on the side window in VIEW_MODE
 - sprite is the little image that is shown
 - text is a `Text` object of the information about the object
 - viewed_object is a reference to the GraphicsObject that's viewed. 
@@ -92,14 +93,17 @@ class UserInterface:
             (key.C, SHIFT_MODIFIER): self.connect_all_to_all,
             (key.P, CTRL_MODIFIER): self.send_random_ping,
             (key.P, SHIFT_MODIFIER): self.send_ping_to_self,
-            (key.R, CTRL_MODIFIER): with_args(self.create, Router),
-            (key.M, NO_MODIFIER): self.debugging_printer,
+            (key.R, CTRL_MODIFIER): with_args(self.create_device, Router),
+            (key.M, NO_MODIFIER): self.print_debugging_info,
             (key.W, NO_MODIFIER): self.add_tcp_test,
             (key.SPACE, NO_MODIFIER): self.toggle_pause,
             (key.TAB, NO_MODIFIER): self.tab_through_selected,
             (key.TAB, SHIFT_MODIFIER): with_args(self.tab_through_selected, True),
             (key.ESCAPE, NO_MODIFIER): with_args(self.set_mode, SIMULATION_MODE),
         }
+
+        for device, (_, key_string) in DeviceCreationWindow.DEVICE_TO_IMAGE.items():
+            self.key_to_action[self.key_from_string(key_string)] = with_args(self.create_device, device)
 
         self.action_at_press_by_mode = {
             SIMULATION_MODE: self.view_mode_at_press,
@@ -137,29 +141,21 @@ class UserInterface:
         self.button_arguments = [
             ((*DEFAULT_BUTTON_LOCATION(-1), lambda: None, "MAIN MENU:"), {}),
 
-            ((*DEFAULT_BUTTON_LOCATION(0), with_args(self.create, Computer),
-              "create a computer (n / ^n)"), {"key": (key.N, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(1), with_args(self.create, Switch),
-              "create a switch (s)"), {"key": (key.S, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(2), with_args(self.create, Hub),
-              "create a hub (h)"), {"key": (key.H, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(3), with_args(self.create, Antenna),
-              "create an antenna (shift+r)"), {"key": (key.R, SHIFT_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(4), self.create_router,
-              "create a router (r / ^r)"), {"key": (key.R, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(5), with_args(self.toggle_mode, CONNECTING_MODE),
+            ((*DEFAULT_BUTTON_LOCATION(0), with_args(DeviceCreationWindow, self),
+              "create device (e)"), {"key": (key.E, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(1), with_args(self.toggle_mode, CONNECTING_MODE),
               "connect (c / ^c / Shift+c)"), {"key": (key.C, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(6), with_args(self.toggle_mode, PINGING_MODE),
+            ((*DEFAULT_BUTTON_LOCATION(2), with_args(self.toggle_mode, PINGING_MODE),
               "ping (p / ^p / Shift+p)"), {"key": (key.P, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(7), self.ask_for_dhcp,
-              "ask for DHCP (a)"), {"key": (key.A, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(8), self.start_all_stp,
+            ((*DEFAULT_BUTTON_LOCATION(3), self.ask_for_dhcp,
+              "ask for DHCP (shift+a)"), {"key": (key.A, SHIFT_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(4), self.start_all_stp,
               "start STP (^s)"), {"key": (key.S, CTRL_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(9), self.delete_all_packets,
+            ((*DEFAULT_BUTTON_LOCATION(5), self.delete_all_packets,
               "delete all packets (Shift+d)"), {"key": (key.D, SHIFT_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(10), self.delete_all,
+            ((*DEFAULT_BUTTON_LOCATION(6), self.delete_all,
               "delete all (^d)"), {"key": (key.D, CTRL_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(11), with_args(self.toggle_mode, DELETING_MODE),
+            ((*DEFAULT_BUTTON_LOCATION(7), with_args(self.toggle_mode, DELETING_MODE),
               "delete (d)"), {"key": (key.D, NO_MODIFIER)}),
         ]
         self.buttons = {}
@@ -223,7 +219,7 @@ class UserInterface:
     def start_object_view(self, graphics_object):
         """
         Starts viewing an object on the side window.
-        Creates an `ObjectView` namedtuple which packs together the data required to view an object.
+        Creates an `ObjectView` namedtuple which packs together the ip_layer required to view an object.
         :param graphics_object: A graphics object to view.
         :return: None
         """
@@ -381,11 +377,12 @@ class UserInterface:
         The choosing of a selected and dragged objects should be performed BEFORE this is called!
         :return: None
         """
-        for button in reduce(concat, list(self.buttons.values())):
+        for button in reversed(reduce(concat, list(self.buttons.values()))):
             if not button.is_hidden and button.is_mouse_in():
                 button.action()
-
-        self.action_at_press_by_mode[self.mode]()
+                break
+        else:
+            self.action_at_press_by_mode[self.mode]()
 
     def on_key_pressed(self, symbol, modifiers):
         """
@@ -433,7 +430,7 @@ class UserInterface:
         mouse_x, _ = MainWindow.main_window.get_mouse_location()
         return mouse_x > (WINDOW_WIDTH - self.WIDTH)
 
-    def create(self, object_type):
+    def create_device(self, object_type):
         """
         Creates an object from a given type.
         :param object_type: an object type that will be created (Computer, Switch, Hub, etc...)
@@ -772,7 +769,7 @@ class UserInterface:
             if not isinstance(computer, Switch) and not isinstance(computer, Router) and not computer.has_ip():
                 computer.ask_dhcp()
 
-    def debugging_printer(self):
+    def print_debugging_info(self):
         """
         Prints out lots of useful information for debugging.
         :return: None
@@ -1019,7 +1016,7 @@ class UserInterface:
         :return:
         """
         new_computers = [self.create_computer_with_ip() for _ in range(6)]
-        self.create(Switch)
+        self.create_device(Switch)
         self.smart_connect()
         for i, (x, y) in enumerate(
                 circular_coordinates(MainWindow.main_window.get_mouse_location(), 150, len(new_computers))):
@@ -1071,6 +1068,13 @@ class UserInterface:
             self.popup_windows.remove(window)
         except ValueError:
             raise WrongUsageError("The window is not registered in the UserInterface!!!")
+
+    def open_device_creation_window(self):
+        """
+        Creates the device creation window
+        :return:
+        """
+        DeviceCreationWindow(self)
 
     # @staticmethod
     # def init_logo_animation():

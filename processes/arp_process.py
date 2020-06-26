@@ -1,5 +1,5 @@
 from consts import *
-from processes.process import Process, ReturnedPacket, WaitingForPacketWithTimeout, Timeout
+from processes.process import Process, ReturnedPacket, WaitingForPacketWithTimeout, Timeout, WaitingFor
 
 
 def arp_reply_from(ip_address):
@@ -44,3 +44,32 @@ class ARPProcess(Process):
 
     def __repr__(self):
         return "Address Resolution Process (ARP sending)"
+
+
+class SendPacketWithArpsProcess(Process):
+    """
+    This is a process that starts a complete sending of a packet.
+    It checks the routing table and asks for the address and does whatever is necessary.
+    """
+    def __init__(self, computer, ip_layer):
+        """
+        Initiates the process with the running computer
+        the ip_layer will be wrapped in ethernet
+        """
+        super(SendPacketWithArpsProcess, self).__init__(computer)
+        self.ip_layer = ip_layer
+
+    def code(self):
+        """
+        The code of the process
+        :return:
+        """
+        dst_ip = self.ip_layer.dst_ip
+        ip_for_the_mac, done_searching = self.computer.request_address(dst_ip, self, True)
+        yield WaitingFor(done_searching)
+
+        self.computer.send_with_ethernet(
+            self.computer.arp_cache[ip_for_the_mac],
+            dst_ip,
+            self.ip_layer,
+        )

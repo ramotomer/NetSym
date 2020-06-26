@@ -116,6 +116,22 @@ class Interface:
         """
         self.mac = new_mac
 
+    def set_name(self, name: str):
+        """
+        Sets the name of the interface to be a new name
+        Raises exception if the name is not valid
+        :param name: the new name of the interface
+        :return: None
+        """
+        if name == self.name:
+            raise PopupWindowWithThisError("new computer name is the same as the old one!!!")
+        elif len(name) < 2:
+            raise PopupWindowWithThisError("name too short!!!")
+        elif not any(char.isalpha() for char in name):
+            raise PopupWindowWithThisError("name must contain letters!!!")
+
+        self.name = name
+
     def connect(self, other, is_wireless=False):
         """
         Connects this interface to another interface, return the `Connection` object.
@@ -212,8 +228,8 @@ class Interface:
 
     def ethernet_wrap(self, dst_mac, data):
         """
-        Takes in data (string, a `Protocol` object...) and wraps it as an `Ethernet` packet ready to be sent.
-        :param data: any data to put in the ethernet packet (ARP, IP, str, more Ethernet, whatever you want, only
+        Takes in ip_layer (string, a `Protocol` object...) and wraps it as an `Ethernet` packet ready to be sent.
+        :param data: any ip_layer to put in the ethernet packet (ARP, IP, str, more Ethernet, whatever you want, only
             the receiver computer should know whats coming and how to handle it...)
         :param dst_mac: a `MACAddress` object of the destination of the packet.
         :return: the ready `Packet` object

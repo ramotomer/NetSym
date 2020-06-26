@@ -15,9 +15,9 @@ class PopupError(PopupWindow):
         """
         super(PopupError, self).__init__(
             *TEXTBOX_COORDINATES,
-            text,
-            user_interface,
-            [
+            text=text,
+            user_interface=user_interface,
+            buttons=[
                 Button(
                     *SUBMIT_BUTTON_COORDINATES,
                     text="OK",
@@ -26,8 +26,8 @@ class PopupError(PopupWindow):
                     action=self.delete,
                 ),
             ],
-            RED,
-            "error!",
+            color=RED,
+            title="error!",
         )
 
     def __repr__(self):

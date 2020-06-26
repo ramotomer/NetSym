@@ -11,7 +11,7 @@ class LogicalLinkControl(Protocol):
     the third layer of the packet.)
     """
     def __init__(self, stp_layer):
-        """Initiates the layer with no attributes at all, except for the data of the packet, which is `STP` protocol"""
+        """Initiates the layer with no attributes at all, except for the ip_layer of the packet, which is `STP` protocol"""
         super(LogicalLinkControl, self).__init__(3, stp_layer)
 
     def copy(self):

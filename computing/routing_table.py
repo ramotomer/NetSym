@@ -78,7 +78,7 @@ class RoutingTable:
 
     def route_add(self, destination_ip, gateway_ip, interface_ip):
         """
-        Adds a route from all of the required data to do that
+        Adds a route from all of the required ip_layer to do that
         :param destination_ip: an `IPAddress` of the destination.
         :param gateway_ip: an `IPAddress` of the gateway to send things to.
         :param interface_ip: an `IPAddress` of the interface to send through it things to the gateway.
@@ -123,7 +123,7 @@ class RoutingTable:
         :return: a `RoutingTableItem` object.
         """
         if not isinstance(item, IPAddress):
-            raise InvalidAddressError(f"Key of a routing table must be an IPAddress object!!! not {item}")
+            raise InvalidAddressError(f"Key of a routing table must be an IPAddress object!!! not {type(item)} like {item}")
 
         possible_addresses = list(filter(lambda destination: destination.is_same_subnet(item), self.dictionary))
         most_fitting_destination = max(possible_addresses, key=lambda address: address.subnet_mask)

@@ -78,6 +78,7 @@ class DHCPClient(Process):
         """The string representation of the the process"""
         return "DHCP client process"
 
+
 class DHCPServer(Process):
     """
     This is the process of discovering the DHCP client, receiving an IP address,
@@ -96,7 +97,7 @@ class DHCPServer(Process):
         self.default_gateway = default_gateway  # a `Computer` that is the default gateway of the subnets this server serves.
 
         self.interface_to_dhcp_data = {} # interface : DHCPData
-        # ^ a mapping for each interface of the server to a data that it packs for its clients.
+        # ^ a mapping for each interface of the server to a ip_layer that it packs for its clients.
         self.update_server_data()
 
         self.in_session_with = {}  # {mac : offered_ip}
@@ -172,7 +173,11 @@ class DHCPServer(Process):
         while True:
             received_packets = ReturnedPacket()
             yield WaitingForPacket(lambda p: "DHCP" in p, received_packets)
+
             for packet, interface in received_packets.packets.items():
+                if not interface.has_ip():
+                    self.computer.print("Cannot server DHCP without an IP address!")
+                    continue
                 self.actions.get(packet["DHCP"].opcode, self.unknown_packet)(packet, interface)
 
     def __repr__(self):
