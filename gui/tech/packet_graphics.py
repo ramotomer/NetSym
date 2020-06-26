@@ -98,3 +98,10 @@ class PacketGraphics(ImageGraphics):
 
     def __repr__(self):
         return self.str
+
+    def dict_save(self):
+        """
+        The packets cannot be saved into the file.
+        :return:
+        """
+        return None

@@ -161,3 +161,38 @@ Network Destination             Gateway           Interface
 Default Gateway:        {self.default_gateway.ip_address}
 ===================================================================
 """
+
+    def dict_save(self):
+        """
+        Save the routing table as a dict that can later be reassembled to a routing table
+        :return:
+        """
+        def ip_repr_or_none(item):
+            if item is None:
+                return None
+            return repr(item)
+
+        return {
+            "class": "RoutingTable",
+            "dict": {
+                repr(ip): list(map(ip_repr_or_none, routing_table_item))
+                for ip, routing_table_item in self.dictionary.items()
+            }
+        }
+
+    @classmethod
+    def from_dict_load(cls, dict_):
+        """
+        Load the routing table from a dictionary that was saved to a file
+        :param dict_: the dict
+        :return:
+        """
+        def ip_or_none(item):
+            if item is None:
+                return None
+            return IPAddress(item)
+
+        returned = cls()
+        new_dict = {IPAddress(ip): RoutingTableItem(*map(ip_or_none, item)) for ip, item in dict_["dict"]}
+        returned.dictionary = new_dict
+        return returned

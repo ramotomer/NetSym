@@ -277,3 +277,17 @@ Interface:
     def __repr__(self):
         """The string representation of the Interface"""
         return f"Interface(name={self.name}, mac={self.mac}, ip={self.ip})"
+
+    @classmethod
+    def from_dict_load(cls, dict_):
+        """
+        Loads a new interface from a dict
+        :param dict_:
+        :return:
+        """
+        return cls(
+            dict_["mac"],
+            dict_["ip"],
+            dict_["name"],
+            display_color=dict_["color"],
+        )

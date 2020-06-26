@@ -198,3 +198,28 @@ class ConnectionGraphics(GraphicsObject):
 
     def __repr__(self):
         return "Connection Graphics"
+
+    def dict_save(self):
+        """
+        Save the connection as a dictionary in order to later save it to a file
+        :return:
+        """
+        return {
+            "class": "Connection",
+            "packet_loss": self.connection.packet_loss,
+            "speed": self.connection.speed,
+            "start": {
+                "computer": self.computers.start.computer.name,
+                "interface": get_the_one(
+                                self.computers.start.computer.interfaces,
+                                lambda i: i.is_connected() and i.connection.connection is self.connection
+                            ).name,
+            },
+            "end": {
+                "computer": self.computers.end.computer.name,
+                "interface": get_the_one(
+                                self.computers.end.computer.interfaces,
+                                lambda i: i.is_connected() and i.connection.connection is self.connection
+                            ).name,
+            },
+        }

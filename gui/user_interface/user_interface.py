@@ -1,4 +1,5 @@
 import functools
+import json
 import operator
 import random
 from collections import namedtuple
@@ -148,13 +149,16 @@ class UserInterface:
             ((*DEFAULT_BUTTON_LOCATION(3), self.ask_for_dhcp,
               "ask for DHCP (shift+a)"), {"key": (key.A, SHIFT_MODIFIER)}),
             ((*DEFAULT_BUTTON_LOCATION(4), self.start_all_stp,
-              "start STP (^s)"), {"key": (key.S, CTRL_MODIFIER)}),
+              "start STP (alt+s)"), {"key": (key.S, ALT_MODIFIER)}),
             ((*DEFAULT_BUTTON_LOCATION(5), self.delete_all_packets,
               "delete all packets (Shift+d)"), {"key": (key.D, SHIFT_MODIFIER)}),
             ((*DEFAULT_BUTTON_LOCATION(6), self.delete_all,
               "delete all (^d)"), {"key": (key.D, CTRL_MODIFIER)}),
             ((*DEFAULT_BUTTON_LOCATION(7), with_args(self.toggle_mode, DELETING_MODE),
               "delete (d)"), {"key": (key.D, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(8), self.save_to_file,
+              "save (^s)"), {"key": (key.S, CTRL_MODIFIER)}),
+
         ]
         self.buttons = {}
         # ^ a dictionary in the form, {button_id: [list of `Button` objects]}
@@ -1077,4 +1081,15 @@ class UserInterface:
         later load into an empty simulation, and get all of the computers, interface, and connections.
         :return: None
         """
-        kdfjdkj
+        dict_ = {
+            "computers": [
+                computer.graphics.dict_save() for computer in self.computers
+            ],
+            "connections": [
+                connection_data.connection.graphics.dict_save() for connection_data in self.connection_data
+            ],
+        }
+
+        json.dump(dict_, open(FILES.format("saves/save.json"), "w"))
+
+        PopupError("Saved successfully :)", self, BLUE)

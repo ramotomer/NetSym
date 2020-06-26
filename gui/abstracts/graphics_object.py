@@ -96,21 +96,10 @@ class GraphicsObject(metaclass=ABCMeta):
         return ' '.join([rendered, centered]) + f" GraphicsObject(x={self.x}, y={self.y})"
 
     @abstractmethod
-    def text_save(self):
+    def dict_save(self):
         """
-        Returns a representation of the object as a string.
+        Returns a representation of the object as a dict (that will be converted to string in the end).
         The object should be able to be initiated from the string alone to the exact state that it is in now.
         :return: str
-        """
-        pass
-
-    @classmethod
-    @abstractmethod
-    def from_text_load(cls, text):
-        """
-        Returns an instance of the object from a string.
-        The string should be an output of the `text_save` method.
-        :param text: str
-        :return: GraphicsObject
         """
         pass

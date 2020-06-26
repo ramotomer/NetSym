@@ -45,6 +45,7 @@ class ComputerGraphics(ImageGraphics):
         )
         self.is_computer = True
         self.computer = computer
+        self.class_name = self.computer.__class__.__name__
 
         self.child_graphics_objects = ChildGraphicsObjects(
             Text(self.generate_text(), self.x, self.y, self),
@@ -178,17 +179,23 @@ Name: {self.computer.name}
     def __repr__(self):
         return f"ComputerGraphics of computer '{self.computer}'"
 
-    def text_save(self):
+    def dict_save(self):
         """
         Save the computer object with all of its attributes to tex
         :return: str
         """
-        returned = {
-            "class": "Computer",
+        dict_ = {
+            "class": self.class_name,
             "location": self.location,
             "name": self.computer.name,
             "os": self.computer.os,
-            "interfaces": [interface.graphics.text_save() for interface in self.computer.interfaces],
+            "interfaces": [interface.graphics.dict_save() for interface in self.computer.interfaces],
             "open_tcp_ports": self.computer.open_tcp_ports,
             "open_udp_ports": self.computer.open_udp_ports,
+            "routing_table": self.computer.routing_table.dict_save(),
         }
+
+        if self.class_name == "Router":
+            dict_["is_dhcp_server"] = self.computer.is_dhcp_server
+
+        return dict_

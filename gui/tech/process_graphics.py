@@ -70,6 +70,9 @@ class ProcessGraphicsList(GraphicsObject):
     def __repr__(self):
         return f"Process Graphics List {[pg.port for pg in self.child_graphics_objects]}"
 
+    def dict_save(self):
+        return None
+
 
 class ProcessGraphics(ImageGraphics):
     """
@@ -103,3 +106,6 @@ class ProcessGraphics(ImageGraphics):
 
     def __repr__(self):
         return f"Process Graphics {self.port}"
+
+    def dict_save(self):
+        return None

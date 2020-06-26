@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 from consts import *
-from gui.abstracts.graphics_object import GraphicsObject
+from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_loop import MainLoop
 from gui.shape_drawing import draw_rect
 from gui.user_interface.text_graphics import Text
@@ -9,7 +9,7 @@ from gui.user_interface.text_graphics import Text
 ChildGraphicsObjects = namedtuple("ChildGraphicsObject", "text")
 
 
-class Console(GraphicsObject):
+class Console(UserInterfaceGraphicsObject):
     """
     An object were the computer can write its output.
     This command line is drawn when the computer is viewed in the UserInterface's `VIEW_MODE`
