@@ -1,7 +1,7 @@
 from pyglet.window import key
 
 from consts import *
-from gui.abstracts.graphics_object import GraphicsObject
+from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rect, draw_rect_with_outline
@@ -10,7 +10,7 @@ from gui.user_interface.text_graphics import Text
 from usefuls import with_args
 
 
-class PopupWindow(GraphicsObject):
+class PopupWindow(UserInterfaceGraphicsObject):
     """
     A window that pops up sometime.
     It can contain buttons, text and maybe images?

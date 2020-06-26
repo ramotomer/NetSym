@@ -177,3 +177,18 @@ Name: {self.computer.name}
 
     def __repr__(self):
         return f"ComputerGraphics of computer '{self.computer}'"
+
+    def text_save(self):
+        """
+        Save the computer object with all of its attributes to tex
+        :return: str
+        """
+        returned = {
+            "class": "Computer",
+            "location": self.location,
+            "name": self.computer.name,
+            "os": self.computer.os,
+            "interfaces": [interface.graphics.text_save() for interface in self.computer.interfaces],
+            "open_tcp_ports": self.computer.open_tcp_ports,
+            "open_udp_ports": self.computer.open_udp_ports,
+        }

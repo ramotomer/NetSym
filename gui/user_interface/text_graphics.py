@@ -1,10 +1,10 @@
 import pyglet
 
 from consts import *
-from gui.abstracts.graphics_object import GraphicsObject
+from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 
 
-class Text(GraphicsObject):
+class Text(UserInterfaceGraphicsObject):
     """
     This represents permanent text on the screen.
 

@@ -14,6 +14,7 @@ from computing.router import Router
 from computing.switch import Switch
 from consts import *
 from exceptions import *
+from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_circle
@@ -29,9 +30,6 @@ from gui.user_interface.text_graphics import Text
 from processes.stp_process import STPProcess
 from processes.tcp_process import TCPProcess
 from usefuls import get_the_one, distance, with_args, called_in_order, circular_coordinates
-
-# from gui.animation_graphics import LogoAnimation
-
 
 ObjectView = namedtuple("ObjectView", [
     "sprite",
@@ -776,11 +774,8 @@ class UserInterface:
         """
         # print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
-        goes = [go for go in MainLoop.instance.graphics_objects
-                if not isinstance(go, Button) and not isinstance(go, Text)]
+        goes = filter(lambda go: not isinstance(go, UserInterfaceGraphicsObject), MainLoop.instance.graphics_objects)
         print(f"graphicsObject-s (no buttons or texts): {goes}")
-        print(f"selected object: {self.selected_object}, dragged: {self.dragged_object}")
-        print(f"mouse: {MainWindow.main_window.get_mouse_location()}")
         print(f"""computers, {len(self.computers)}, connections, {len(self.connection_data)},
         packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}""")
         print(f"running processes: ", end='')
@@ -1076,10 +1071,10 @@ class UserInterface:
         """
         DeviceCreationWindow(self)
 
-    # @staticmethod
-    # def init_logo_animation():
-    #     """
-    #     Initiates the logo animation in the start of the simulation
-    #     :return:
-    #     """
-    #     return LogoAnimation((WINDOW_WIDTH / 2) - 30, WINDOW_HEIGHT / 2)
+    def save_to_file(self):
+        """
+        Saves all of the state of the simulation at the moment into a file, that we can
+        later load into an empty simulation, and get all of the computers, interface, and connections.
+        :return: None
+        """
+        kdfjdkj

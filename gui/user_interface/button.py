@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 from consts import *
-from gui.abstracts.graphics_object import GraphicsObject
+from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rect
 from gui.user_interface.text_graphics import Text
@@ -9,7 +9,7 @@ from gui.user_interface.text_graphics import Text
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "text")
 
 
-class Button(GraphicsObject):
+class Button(UserInterfaceGraphicsObject):
     """
     A class of a button which you can press and assign text and an action to.
     """
