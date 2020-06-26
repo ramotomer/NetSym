@@ -80,7 +80,7 @@ class Switch(Computer):
         :return: Computer
         """
         returned = cls(dict_["name"])
-        returned.interfaces = [Interface.from_dict_load(interface_dict) for interface_dict in dict_["interfaces"]],
+        returned.interfaces = [Interface.from_dict_load(interface_dict) for interface_dict in dict_["interfaces"]]
         return returned
 
 

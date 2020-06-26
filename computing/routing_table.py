@@ -189,10 +189,12 @@ Default Gateway:        {self.default_gateway.ip_address}
         """
         def ip_or_none(item):
             if item is None:
-                return None
+                return item
+            if item == f"'{ON_LINK}'":
+                return item
             return IPAddress(item)
 
         returned = cls()
-        new_dict = {IPAddress(ip): RoutingTableItem(*map(ip_or_none, item)) for ip, item in dict_["dict"]}
+        new_dict = {IPAddress(ip): RoutingTableItem(*map(ip_or_none, item)) for ip, item in dict_["dict"].items()}
         returned.dictionary = new_dict
         return returned

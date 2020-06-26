@@ -176,7 +176,7 @@ class Router(Computer):
         """
         returned = cls(
             dict_["name"],
-            tuple(Interface.from_dict_load(interface_dict) for interface_dict in dict_["interfaces"]),
+            [Interface.from_dict_load(interface_dict) for interface_dict in dict_["interfaces"]],
             is_dhcp_server=(dict_["is_dhcp_server"] == "True"),
         )
         returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])

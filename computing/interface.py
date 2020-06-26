@@ -286,8 +286,8 @@ Interface:
         :return:
         """
         return cls(
-            dict_["mac"],
-            dict_["ip"],
-            dict_["name"],
+            mac=dict_["mac"],
+            ip=dict_["ip"],
+            name=dict_["name"],
             display_color=dict_["color"],
         )

@@ -100,3 +100,6 @@ class SwitchingProcess(Process):
             self.send_new_packets_to_destinations(new_packets)
             self.update_switch_table_from_packets(new_packets)
             self.delete_old_switch_table_items()
+
+    def __repr__(self):
+        return "Switching process"

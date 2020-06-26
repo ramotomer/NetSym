@@ -102,11 +102,11 @@ class ComputerGraphics(ImageGraphics):
                 INSERT_INTERFACE_INFO_MSG,
                 with_args(user_interface.add_delete_interface, self)
             ),
-            "open/close port (^o)": with_args(
+            "open/close port (alt+o)": with_args(
                 user_interface.ask_user_for,
                 int,
                 INSERT_PORT_NUMBER,
-                self.computer.open_port
+                self.computer.open_tcp_port
             ),
             "set default gateway (g)": with_args(
                 user_interface.ask_user_for,

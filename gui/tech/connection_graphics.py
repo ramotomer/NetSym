@@ -212,14 +212,16 @@ class ConnectionGraphics(GraphicsObject):
                 "computer": self.computers.start.computer.name,
                 "interface": get_the_one(
                                 self.computers.start.computer.interfaces,
-                                lambda i: i.is_connected() and i.connection.connection is self.connection
+                                lambda i: i.is_connected() and i.connection.connection is self.connection,
+                                ThisCodeShouldNotBeReached,
                             ).name,
             },
             "end": {
                 "computer": self.computers.end.computer.name,
                 "interface": get_the_one(
                                 self.computers.end.computer.interfaces,
-                                lambda i: i.is_connected() and i.connection.connection is self.connection
+                                lambda i: i.is_connected() and i.connection.connection is self.connection,
+                                ThisCodeShouldNotBeReached,
                             ).name,
             },
         }
