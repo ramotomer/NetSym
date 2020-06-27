@@ -190,8 +190,8 @@ Default Gateway:        {self.default_gateway.ip_address}
         def ip_or_none(item):
             if item is None:
                 return item
-            if item == f"'{ON_LINK}'":
-                return item
+            if item == f"'{ON_LINK}'" or item == ON_LINK:
+                return ON_LINK
             return IPAddress(item)
 
         returned = cls()

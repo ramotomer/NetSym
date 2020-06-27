@@ -31,7 +31,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
 
         title_text = Text(title, self.x, self.y, self, ((self.width / 2) + 2, self.height + 22),
                           color=BLACK, align='left', max_width=self.width)
-        information_text = Text(text, self.x, self.y, self, ((self.width / 2), 6 * (self.height / 7)))
+        information_text = Text(text, self.x, self.y, self, ((self.width / 2), 6 * (self.height / 7)), max_width=self.width)
 
         for button in buttons:
             button.set_parent_graphics(self, (button.x - self.x, button.y - self.y))

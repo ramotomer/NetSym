@@ -36,7 +36,7 @@ class ComputerGraphics(ImageGraphics):
         :param image: the name of the image of the computer. (can be changed for different types of computers)
         """
         super(ComputerGraphics, self).__init__(
-            IMAGES.format(image),
+            os.path.join(IMAGES_DIR, image),
             x, y,
             centered=True,
             is_in_background=True,
@@ -72,7 +72,7 @@ class ComputerGraphics(ImageGraphics):
         Updates the image according to the current computer state
         :return:
         """
-        self.image_name = IMAGES.format(SERVER_IMAGE if self.computer.open_tcp_ports else COMPUTER_IMAGE)
+        self.image_name = os.path.join(IMAGES_DIR, SERVER_IMAGE if self.computer.open_tcp_ports else COMPUTER_IMAGE)
         self.load()
         self.child_graphics_objects.process_list.clear()
         for port in self.computer.open_tcp_ports:

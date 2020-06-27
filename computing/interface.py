@@ -169,6 +169,7 @@ class Interface:
         self.accepting = accept
         if self.connection is not None:
             self.connection.mark_as_blocked()
+
         self.graphics.color = BLOCKED_INTERFACE_COLOR
 
     def unblock(self):
@@ -285,9 +286,10 @@ Interface:
         :param dict_:
         :return:
         """
-        return cls(
+        loaded = cls(
             mac=dict_["mac"],
             ip=dict_["ip"],
             name=dict_["name"],
-            display_color=dict_["color"],
         )
+
+        return loaded

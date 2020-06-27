@@ -175,7 +175,7 @@ class ConnectionGraphics(GraphicsObject):
         }
 
         self.buttons_id = user_interface.add_buttons(buttons)
-        copied_sprite = ImageGraphics.get_image_sprite(IMAGES.format(CONNECTION_VIEW_IMAGE))
+        copied_sprite = ImageGraphics.get_image_sprite(os.path.join(IMAGES_DIR, CONNECTION_VIEW_IMAGE))
 
         return copied_sprite, self.generate_view_text(), self.buttons_id
 

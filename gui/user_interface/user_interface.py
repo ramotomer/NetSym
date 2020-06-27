@@ -1,6 +1,7 @@
 import functools
 import json
 import operator
+import os
 import random
 from collections import namedtuple
 from functools import reduce
@@ -27,6 +28,7 @@ from gui.user_interface.popup_windows.device_creation_window import DeviceCreati
 from gui.user_interface.popup_windows.popup_error import PopupError
 from gui.user_interface.popup_windows.popup_text_box import PopupTextBox
 from gui.user_interface.popup_windows.popup_window import PopupWindow
+from gui.user_interface.popup_windows.yes_no_popup_window import YesNoPopupWindow
 from gui.user_interface.text_graphics import Text
 from processes.stp_process import STPProcess
 from processes.tcp_process import TCPProcess
@@ -153,17 +155,18 @@ class UserInterface:
             ((*DEFAULT_BUTTON_LOCATION(3), self.ask_for_dhcp,
               "ask for DHCP (shift+a)"), {"key": (key.A, SHIFT_MODIFIER)}),
             ((*DEFAULT_BUTTON_LOCATION(4), self.start_all_stp,
-              "start STP (alt+s)"), {"key": (key.S, ALT_MODIFIER)}),
+              "start STP (ctrl+shift+s)"), {"key": (key.S, CTRL_MODIFIER | SHIFT_MODIFIER)}),
             ((*DEFAULT_BUTTON_LOCATION(5), self.delete_all_packets,
               "delete all packets (Shift+d)"), {"key": (key.D, SHIFT_MODIFIER)}),
             ((*DEFAULT_BUTTON_LOCATION(6), self.delete_all,
               "delete all (^d)"), {"key": (key.D, CTRL_MODIFIER)}),
             ((*DEFAULT_BUTTON_LOCATION(7), with_args(self.toggle_mode, DELETING_MODE),
               "delete (d)"), {"key": (key.D, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(8), self.save_to_file,
-              "save (^s)"), {"key": (key.S, CTRL_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(9), self.load_from_file,
-              "load file (^o)"), {"key": (key.O, CTRL_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(8), with_args(self.ask_user_for, str, "save file as:",
+                                                     self._save_to_file_with_override_safety),
+              "save to file(^s)"), {"key": (key.S, CTRL_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(9), self._ask_user_for_load_file,
+              "load from file (^o)"), {"key": (key.O, CTRL_MODIFIER)}),
         ]
         self.buttons = {}
         # ^ a dictionary in the form, {button_id: [list of `Button` objects]}
@@ -1108,11 +1111,22 @@ class UserInterface:
         connection.set_pl(connection_packet_loss)
         connection.set_speed(connection_speed)
 
-    def save_to_file(self):
+    def _save_to_file_with_override_safety(self, filename):
         """
         Saves all of the state of the simulation at the moment into a file, that we can
         later load into an empty simulation, and get all of the computers, interface, and connections.
         :return: None
+        """
+        if os.path.isfile(os.path.join(SAVES_DIR, f"{filename}.json")):
+            YesNoPopupWindow("file exists! override?", self, yes_action=with_args(self._save_to_file, filename))
+        else:
+            self._save_to_file(filename)
+
+    def _save_to_file(self, filename):
+        """
+        Save the state of the simulation to a file named filename
+        :param filename:
+        :return:
         """
         dict_to_file = {
             "computers": [
@@ -1123,18 +1137,28 @@ class UserInterface:
             ],
         }
 
-        json.dump(dict_to_file, open(FILES.format("saves/save.json"), "w"), indent=4)
+        json.dump(dict_to_file, open(os.path.join(SAVES_DIR, f"{filename}.json"), "w"), indent=4)
 
-        PopupError("Saved successfully :)", self, BLUE)
-
-    def load_from_file(self):
+    def load_from_file(self, filename):
         """
         Loads the state of the simulation from a file
         :return:
         """
+        try:
+            dict_from_file = json.load(open(os.path.join(SAVES_DIR, f"{filename}.json"), "r"))
+        except FileNotFoundError:
+            raise PopupWindowWithThisError("There is not such file!!!")
+
+        self._create_map_from_file_dict(dict_from_file)
+
+    def _create_map_from_file_dict(self, dict_from_file):
+        """
+        Creates the simulation state from a file
+        :param dict_from_file:
+        :return:
+        """
         self.delete_all()
 
-        dict_from_file = json.load(open(FILES.format("saves/save.json"), "r"))
         for computer_dict in dict_from_file["computers"]:
             class_ = self.saving_file_class_name_to_class[computer_dict["class"]]
             computer = class_.from_dict_load(computer_dict)
@@ -1154,3 +1178,23 @@ class UserInterface:
                 connection_dict["packet_loss"],
                 connection_dict["speed"],
             )
+
+    @staticmethod
+    def _list_saved_files():
+        """
+        Returns a string of all of the files that are saved already
+        :return:
+        """
+        file_list = os.listdir(SAVES_DIR)
+        return ", ".join(map(lambda f: f.split('.')[0], file_list))
+
+    def _ask_user_for_load_file(self):
+        """
+        asks the user for a filename to open, while offering him the names that exist
+        :return:
+        """
+        self.ask_user_for(
+            str,
+            f"insert file name to open: [options: {self._list_saved_files()}]",
+            self.load_from_file
+        )

@@ -85,7 +85,7 @@ class ProcessGraphics(ImageGraphics):
         :param :
         :param :
         """
-        super(ProcessGraphics, self).__init__(IMAGES.format(PORT_NUMBER_TO_IMAGE[port]), *server_graphics.location, True, scale_factor=PROCESS_IMAGE_SCALE_FACTOR)
+        super(ProcessGraphics, self).__init__(os.path.join(IMAGES_DIR, PORT_NUMBER_TO_IMAGE[port]), *server_graphics.location, True, scale_factor=PROCESS_IMAGE_SCALE_FACTOR)
         self.server_graphics = server_graphics
         self.process_index = process_index
         self.port = port

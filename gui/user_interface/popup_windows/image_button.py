@@ -29,7 +29,7 @@ class ImageButton(Button):
         super(ImageButton, self).__init__(x, y, action, text, start_hidden, width, height, key, color, text_color)
 
         self.pad_x, self.pad_y = 10, 10
-        self.image_name = IMAGES.format(image_name)
+        self.image_name = os.path.join(IMAGES_DIR, image_name)
         self.image_sprite = ImageGraphics.get_image_sprite(self.image_name, x + self.pad_x / 2, y + self.pad_y / 2)
 
         scale_x, scale_y = self.image_sprite.scale_x, self.image_sprite.scale_y

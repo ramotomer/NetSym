@@ -107,7 +107,7 @@ class InterfaceGraphics(GraphicsObject):
             "block (^b)": with_args(self.interface.toggle_block, "STP"),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
-        copied_sprite = ImageGraphics.get_image_sprite(IMAGES.format(INTERFACE_VIEW_IMAGE))
+        copied_sprite = ImageGraphics.get_image_sprite(os.path.join(IMAGES_DIR, INTERFACE_VIEW_IMAGE))
         return copied_sprite, self.interface.generate_view_text(), self.buttons_id
 
     def end_viewing(self, user_interface):
@@ -145,6 +145,7 @@ class InterfaceGraphics(GraphicsObject):
             "mac": str(self.interface.mac),
             "ip": str(self.interface.ip) if self.interface.ip is not None else None,
             "color": self.color,
+            "is_blocked": self.interface.is_blocked,
         }
 
 

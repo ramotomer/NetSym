@@ -1,4 +1,3 @@
-import os
 from collections import namedtuple
 
 from pyglet.window import key
@@ -54,8 +53,8 @@ class PopupTextBox(PopupWindow):
         title_text, information_text, exit_button = self.child_graphics_objects[:3]
         self.action = action
 
-        written_text = Text('', information_text.x, information_text.y - 20,
-                            information_text, padding=(0, -20), max_width=TEXTBOX_WIDTH)
+        written_text = Text('', information_text.x, information_text.y - 35,
+                            information_text, padding=(0, -35), max_width=TEXTBOX_WIDTH)
 
         self.child_graphics_objects = ChildGraphicsObjects(
             title_text,

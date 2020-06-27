@@ -65,7 +65,7 @@ class WirelessConnectionGraphics(ConnectionGraphics):
         :return: a tuple of image, display_text, added buttons' id
         """
         _, text, buttons_id = super(WirelessConnectionGraphics, self).start_viewing(user_interface)
-        return ImageGraphics.get_image_sprite(IMAGES.format(WIRELESS_CONNECTION_VIEW_IMAGE)), text, buttons_id
+        return ImageGraphics.get_image_sprite(os.path.join(IMAGES_DIR, WIRELESS_CONNECTION_VIEW_IMAGE)), text, buttons_id
 
     def generate_view_text(self):
         """
