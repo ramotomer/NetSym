@@ -38,7 +38,7 @@ class FTPServerProcess(FTPProcess):
     """
     This is a file transferring process. It is not really like FTP it is just something i made to test the TCP process.
     """
-    def __init__(self, computer, file_location=FILES.format(TRANSFER_FILE)):
+    def __init__(self, computer, file_location=os.path.join(FILES_DIR, TRANSFER_FILE)):
         """
         Initiates the process from a base TCP process.
         :param computer: The computer running the process
@@ -92,14 +92,13 @@ class FTPClientProcess(FTPProcess):
         """
         self.computer.print(f"Downloading file from {self.dst_ip}...")
         yield from self.hello_handshake()
-        self.send(self.create_ftp_layer(FILES.format(TRANSFER_FILE), is_request=True))
+        self.send(self.create_ftp_layer(os.path.join(FILES_DIR, TRANSFER_FILE), is_request=True))
         received_file = ""
         ftp_from_server = []
         while not (ftp_from_server and ftp_from_server[-1] is TCP_DONE_RECEIVING):
             received_file += self.sum_packets_to_string(ftp_from_server)
             ftp_from_server.clear()
             yield from self.handle_tcp_and_receive(ftp_from_server)
-        # debugp(f"the file: {received_file}")
 
     def sum_packets_to_string(self, ftp_list):
         """

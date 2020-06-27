@@ -70,6 +70,9 @@ class ProcessGraphicsList(GraphicsObject):
     def __repr__(self):
         return f"Process Graphics List {[pg.port for pg in self.child_graphics_objects]}"
 
+    def dict_save(self):
+        return None
+
 
 class ProcessGraphics(ImageGraphics):
     """
@@ -82,7 +85,7 @@ class ProcessGraphics(ImageGraphics):
         :param :
         :param :
         """
-        super(ProcessGraphics, self).__init__(IMAGES.format(PORT_NUMBER_TO_IMAGE[port]), *server_graphics.location, True, scale_factor=PROCESS_IMAGE_SCALE_FACTOR)
+        super(ProcessGraphics, self).__init__(os.path.join(IMAGES_DIR, PORT_NUMBER_TO_IMAGE[port]), *server_graphics.location, True, scale_factor=PROCESS_IMAGE_SCALE_FACTOR)
         self.server_graphics = server_graphics
         self.process_index = process_index
         self.port = port
@@ -103,3 +106,6 @@ class ProcessGraphics(ImageGraphics):
 
     def __repr__(self):
         return f"Process Graphics {self.port}"
+
+    def dict_save(self):
+        return None

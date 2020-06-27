@@ -36,7 +36,7 @@ class ComputerGraphics(ImageGraphics):
         :param image: the name of the image of the computer. (can be changed for different types of computers)
         """
         super(ComputerGraphics, self).__init__(
-            IMAGES.format(image),
+            os.path.join(IMAGES_DIR, image),
             x, y,
             centered=True,
             is_in_background=True,
@@ -45,6 +45,7 @@ class ComputerGraphics(ImageGraphics):
         )
         self.is_computer = True
         self.computer = computer
+        self.class_name = self.computer.__class__.__name__
 
         self.child_graphics_objects = ChildGraphicsObjects(
             Text(self.generate_text(), self.x, self.y, self),
@@ -71,7 +72,7 @@ class ComputerGraphics(ImageGraphics):
         Updates the image according to the current computer state
         :return:
         """
-        self.image_name = IMAGES.format(SERVER_IMAGE if self.computer.open_tcp_ports else COMPUTER_IMAGE)
+        self.image_name = os.path.join(IMAGES_DIR, SERVER_IMAGE if self.computer.open_tcp_ports else COMPUTER_IMAGE)
         self.load()
         self.child_graphics_objects.process_list.clear()
         for port in self.computer.open_tcp_ports:
@@ -101,11 +102,11 @@ class ComputerGraphics(ImageGraphics):
                 INSERT_INTERFACE_INFO_MSG,
                 with_args(user_interface.add_delete_interface, self)
             ),
-            "open/close port (^o)": with_args(
+            "open/close port (alt+o)": with_args(
                 user_interface.ask_user_for,
                 int,
                 INSERT_PORT_NUMBER,
-                self.computer.open_port
+                self.computer.open_tcp_port
             ),
             "set default gateway (g)": with_args(
                 user_interface.ask_user_for,
@@ -177,3 +178,24 @@ Name: {self.computer.name}
 
     def __repr__(self):
         return f"ComputerGraphics of computer '{self.computer}'"
+
+    def dict_save(self):
+        """
+        Save the computer object with all of its attributes to tex
+        :return: str
+        """
+        dict_ = {
+            "class": self.class_name,
+            "location": self.location,
+            "name": self.computer.name,
+            "os": self.computer.os,
+            "interfaces": [interface.graphics.dict_save() for interface in self.computer.interfaces],
+            "open_tcp_ports": self.computer.open_tcp_ports,
+            "open_udp_ports": self.computer.open_udp_ports,
+            "routing_table": self.computer.routing_table.dict_save(),
+        }
+
+        if self.class_name == "Router":
+            dict_["is_dhcp_server"] = self.computer.is_dhcp_server
+
+        return dict_

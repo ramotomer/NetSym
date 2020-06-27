@@ -1,4 +1,5 @@
 # this cannot import from anything!!!
+import os
 
 from exceptions import TCPDoneReceiving
 
@@ -141,14 +142,15 @@ INSERT_IP_FOR_PROCESS = "Insert an IP to start your process to:"
 INSERT_PORT_NUMBER = "Insert a port number to open/close:"
 INSERT_COMPUTER_NAME_MSG = "Insert a new name for the computer:"
 
-FILES = "../res/files/{}"
-IMAGES = "../res/sprites/{}"
+IMAGES_DIR = "../res/sprites"
+FILES_DIR = "../res/files"
+SAVES_DIR = "../res/files/saves"
 
-INTERFACE_NAMES = [line.strip() for line in open(FILES.format("interface_names.txt")).readlines()]
-COMPUTER_NAMES = [line.strip() for line in open(FILES.format("computer_names.txt")).readlines()]
+INTERFACE_NAMES = [line.strip() for line in open(os.path.join(FILES_DIR, "interface_names.txt")).readlines()]
+COMPUTER_NAMES = [line.strip() for line in open(os.path.join(FILES_DIR, "computer_names.txt")).readlines()]
 ANY_INTERFACE = None
 TRANSFER_FILE = "transfer_me.txt"
-WINDOW_INPUT_LIST_FILE = FILES.format("window_inputs.txt")
+WINDOW_INPUT_LIST_FILE = os.path.join(FILES_DIR, "window_inputs.txt")
 
 LOGO_ANIMATION_IMAGE = "misc/logo.png"
 
@@ -292,6 +294,7 @@ YELLOW = (200, 200, 0)
 GREEN = (0, 255, 0)
 DARK_GREEN = (0, 100, 0)
 PINK = (255, 170, 170)
+ORANGE = (255, 215, 0)
 
 SIDE_WINDOW_WIDTH = 230
 
@@ -373,6 +376,9 @@ POPUP_WINDOW_TITLE_TEXT_PADDING = 35, TEXTBOX_HEIGHT + 22
 SUBMIT_BUTTON_WIDTH = 100
 SUBMIT_BUTTON_PADDING = (TEXTBOX_WIDTH / 2) - (SUBMIT_BUTTON_WIDTH / 2), 8
 SUBMIT_BUTTON_COORDINATES = tuple(map(sum, zip(TEXTBOX_COORDINATES, SUBMIT_BUTTON_PADDING)))
+
+YES_BUTTON_COORDINATES = tuple(map(sum, zip(SUBMIT_BUTTON_COORDINATES, (-SUBMIT_BUTTON_WIDTH, 0))))
+NO_BUTTON_COORDINATES = tuple(map(sum, zip(SUBMIT_BUTTON_COORDINATES, (SUBMIT_BUTTON_WIDTH, 0))))
 
 NEW_WINDOW_LOCATION_PADDING = 10, -10
 

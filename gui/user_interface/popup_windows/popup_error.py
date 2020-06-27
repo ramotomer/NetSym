@@ -9,7 +9,7 @@ class PopupError(PopupWindow):
     """
     This is a window that pops up when some error occurs and we would like to inform a user about it.
     """
-    def __init__(self, text, user_interface):
+    def __init__(self, text, user_interface, color=RED):
         """
         Initiates the window
         """
@@ -26,7 +26,7 @@ class PopupError(PopupWindow):
                     action=self.delete,
                 ),
             ],
-            color=RED,
+            color=color,
             title="error!",
         )
 

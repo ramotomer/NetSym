@@ -1,5 +1,7 @@
 import functools
+import json
 import operator
+import os
 import random
 from collections import namedtuple
 from functools import reduce
@@ -11,9 +13,10 @@ from address.ip_address import IPAddress
 from computing.computer import Computer
 from computing.interface import Interface
 from computing.router import Router
-from computing.switch import Switch
+from computing.switch import Switch, Hub, Antenna
 from consts import *
 from exceptions import *
+from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_circle
@@ -25,13 +28,11 @@ from gui.user_interface.popup_windows.device_creation_window import DeviceCreati
 from gui.user_interface.popup_windows.popup_error import PopupError
 from gui.user_interface.popup_windows.popup_text_box import PopupTextBox
 from gui.user_interface.popup_windows.popup_window import PopupWindow
+from gui.user_interface.popup_windows.yes_no_popup_window import YesNoPopupWindow
 from gui.user_interface.text_graphics import Text
 from processes.stp_process import STPProcess
 from processes.tcp_process import TCPProcess
 from usefuls import get_the_one, distance, with_args, called_in_order, circular_coordinates
-
-# from gui.animation_graphics import LogoAnimation
-
 
 ObjectView = namedtuple("ObjectView", [
     "sprite",
@@ -114,6 +115,10 @@ class UserInterface:
         }
         # ^ maps what to do when the screen is pressed in each `mode`.
 
+        self.saving_file_class_name_to_class = {
+            class_.__name__: class_ for class_ in (Computer, Switch, Router, Hub, Antenna)
+        }
+
         self.computers = []
         self.connection_data = []
         # ^ a list of `ConnectionData`-s (save information about all existing connections between computers.
@@ -150,13 +155,18 @@ class UserInterface:
             ((*DEFAULT_BUTTON_LOCATION(3), self.ask_for_dhcp,
               "ask for DHCP (shift+a)"), {"key": (key.A, SHIFT_MODIFIER)}),
             ((*DEFAULT_BUTTON_LOCATION(4), self.start_all_stp,
-              "start STP (^s)"), {"key": (key.S, CTRL_MODIFIER)}),
+              "start STP (ctrl+shift+s)"), {"key": (key.S, CTRL_MODIFIER | SHIFT_MODIFIER)}),
             ((*DEFAULT_BUTTON_LOCATION(5), self.delete_all_packets,
               "delete all packets (Shift+d)"), {"key": (key.D, SHIFT_MODIFIER)}),
             ((*DEFAULT_BUTTON_LOCATION(6), self.delete_all,
               "delete all (^d)"), {"key": (key.D, CTRL_MODIFIER)}),
             ((*DEFAULT_BUTTON_LOCATION(7), with_args(self.toggle_mode, DELETING_MODE),
               "delete (d)"), {"key": (key.D, NO_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(8), with_args(self.ask_user_for, str, "save file as:",
+                                                     self._save_to_file_with_override_safety),
+              "save to file(^s)"), {"key": (key.S, CTRL_MODIFIER)}),
+            ((*DEFAULT_BUTTON_LOCATION(9), self._ask_user_for_load_file,
+              "load from file (^o)"), {"key": (key.O, CTRL_MODIFIER)}),
         ]
         self.buttons = {}
         # ^ a dictionary in the form, {button_id: [list of `Button` objects]}
@@ -453,12 +463,12 @@ class UserInterface:
         if self.is_mouse_in_side_window():
             x, y = WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2
 
-        router = Router("Router and DHCP Server", (
+        router = Router("Router and DHCP Server", [
                         Interface.with_ip('192.168.1.1'),
                         Interface.with_ip('10.10.10.1'),
                         Interface.with_ip('172.3.10.1'),
                         Interface.with_ip('1.1.1.1'),
-                        ))
+                        ])
         router.show(x, y)
         self.computers.append(router)
 
@@ -518,6 +528,7 @@ class UserInterface:
         connection = interfaces[0].connect(interfaces[1], is_wireless=is_wireless)
         self.connection_data.append(ConnectionData(connection, *computers))
         connection.show(computers[0].graphics, computers[1].graphics)
+        return connection
 
     @staticmethod
     def send_direct_ping(computer_graphics1, computer_graphics2):
@@ -776,17 +787,15 @@ class UserInterface:
         """
         # print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
-        goes = [go for go in MainLoop.instance.graphics_objects
-                if not isinstance(go, Button) and not isinstance(go, Text)]
+        goes = list(filter(lambda go: not isinstance(go, UserInterfaceGraphicsObject), MainLoop.instance.graphics_objects))
         print(f"graphicsObject-s (no buttons or texts): {goes}")
-        print(f"selected object: {self.selected_object}, dragged: {self.dragged_object}")
-        print(f"mouse: {MainWindow.main_window.get_mouse_location()}")
-        print(f"""computers, {len(self.computers)}, connections, {len(self.connection_data)},
-        packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}""")
+        print(f"computers, {len(self.computers)}, connections, {len(self.connection_data)},"
+              f"packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}")
         print(f"running processes: ", end='')
         for computer in self.computers:
-            processes = [f"{wp.process} of {computer}" for wp in computer.waiting_processes]
-            print(processes if processes else '', end=' ')
+            processes = [f"{waiting_process.process} of {computer}" for waiting_process in computer.waiting_processes]
+            if processes:
+                print(processes, end=' ')
         print()
         if self.selected_object is not None and self.selected_object.is_computer:
             computer = self.selected_object.computer
@@ -1018,13 +1027,12 @@ class UserInterface:
         new_computers = [self.create_computer_with_ip() for _ in range(6)]
         self.create_device(Switch)
         self.smart_connect()
-        for i, (x, y) in enumerate(
+        for i, location in enumerate(
                 circular_coordinates(MainWindow.main_window.get_mouse_location(), 150, len(new_computers))):
-            new_computers[i].graphics.x = x
-            new_computers[i].graphics.y = y
+            new_computers[i].graphics.location = location
 
         self.tab_through_selected()
-        self.selected_object.computer.open_port(21)
+        self.selected_object.computer.open_tcp_port(21)
         self.tab_through_selected()
 
     def register_window(self, window, *buttons):
@@ -1076,10 +1084,117 @@ class UserInterface:
         """
         DeviceCreationWindow(self)
 
-    # @staticmethod
-    # def init_logo_animation():
-    #     """
-    #     Initiates the logo animation in the start of the simulation
-    #     :return:
-    #     """
-    #     return LogoAnimation((WINDOW_WIDTH / 2) - 30, WINDOW_HEIGHT / 2)
+    def _connect_interfaces_by_name(self, start_computer_name,
+                                    end_computer_name,
+                                    start_interface_name,
+                                    end_interface_name,
+                                    connection_packet_loss=0,
+                                    connection_speed=DEFAULT_CONNECTION_SPEED):
+        """
+        Connects two computers' interfaces by names of the computers and the interfaces
+        """
+        computers = [
+            get_the_one(
+                self.computers,
+                lambda c: c.name == name,
+                NoSuchComputerError,
+            ) for name in (start_computer_name, end_computer_name)
+        ]
+        interfaces = [
+            get_the_one(
+                computer.interfaces,
+                lambda i: i.name == name,
+                NoSuchInterfaceError,
+            ) for computer, name in zip(computers, (start_interface_name, end_interface_name))
+        ]
+        connection = self.connect_devices(*interfaces)
+        connection.set_pl(connection_packet_loss)
+        connection.set_speed(connection_speed)
+
+    def _save_to_file_with_override_safety(self, filename):
+        """
+        Saves all of the state of the simulation at the moment into a file, that we can
+        later load into an empty simulation, and get all of the computers, interface, and connections.
+        :return: None
+        """
+        if os.path.isfile(os.path.join(SAVES_DIR, f"{filename}.json")):
+            YesNoPopupWindow("file exists! override?", self, yes_action=with_args(self._save_to_file, filename))
+        else:
+            self._save_to_file(filename)
+
+    def _save_to_file(self, filename):
+        """
+        Save the state of the simulation to a file named filename
+        :param filename:
+        :return:
+        """
+        dict_to_file = {
+            "computers": [
+                computer.graphics.dict_save() for computer in self.computers
+            ],
+            "connections": [
+                connection_data.connection.graphics.dict_save() for connection_data in self.connection_data
+            ],
+        }
+
+        json.dump(dict_to_file, open(os.path.join(SAVES_DIR, f"{filename}.json"), "w"), indent=4)
+
+    def load_from_file(self, filename):
+        """
+        Loads the state of the simulation from a file
+        :return:
+        """
+        try:
+            dict_from_file = json.load(open(os.path.join(SAVES_DIR, f"{filename}.json"), "r"))
+        except FileNotFoundError:
+            raise PopupWindowWithThisError("There is not such file!!!")
+
+        self._create_map_from_file_dict(dict_from_file)
+
+    def _create_map_from_file_dict(self, dict_from_file):
+        """
+        Creates the simulation state from a file
+        :param dict_from_file:
+        :return:
+        """
+        self.delete_all()
+
+        for computer_dict in dict_from_file["computers"]:
+            class_ = self.saving_file_class_name_to_class[computer_dict["class"]]
+            computer = class_.from_dict_load(computer_dict)
+            computer.show(*computer_dict["location"])
+            self.computers.append(computer)
+            for port in computer_dict["open_tcp_ports"]:
+                computer.open_tcp_port(port)
+            for port in computer_dict["open_udp_ports"]:
+                computer.open_udp_port(port)
+
+        for connection_dict in dict_from_file["connections"]:
+            self._connect_interfaces_by_name(
+                connection_dict["start"]["computer"],
+                connection_dict["end"]["computer"],
+                connection_dict["start"]["interface"],
+                connection_dict["end"]["interface"],
+                connection_dict["packet_loss"],
+                connection_dict["speed"],
+            )
+
+    @staticmethod
+    def _list_saved_files():
+        """
+        Returns a string of all of the files that are saved already
+        :return:
+        """
+        file_list = os.listdir(SAVES_DIR)
+        return ", ".join(map(lambda f: f.split('.')[0], file_list))
+
+    def _ask_user_for_load_file(self):
+        """
+        asks the user for a filename to open, while offering him the names that exist
+        :return:
+        """
+        self.ask_user_for(
+            str,
+            f"insert file name to open: [options: {self._list_saved_files()}]",
+            self.load_from_file
+        )

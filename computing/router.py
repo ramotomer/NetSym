@@ -166,3 +166,18 @@ class Router(Computer):
     def __repr__(self):
         """The string representation of the Router"""
         return f"Router(name={self.name}, Interfaces={self.interfaces})"
+
+    @classmethod
+    def from_dict_load(cls, dict_):
+        """
+        Load a computer from the dict that is saved into the files
+        :param dict_:
+        :return: Computer
+        """
+        returned = cls(
+            dict_["name"],
+            [Interface.from_dict_load(interface_dict) for interface_dict in dict_["interfaces"]],
+            is_dhcp_server=dict_["is_dhcp_server"],
+        )
+        returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])
+        return returned

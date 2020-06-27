@@ -94,3 +94,12 @@ class GraphicsObject(metaclass=ABCMeta):
         rendered = 'rendered' if self.do_render else 'non-rendered'
         centered = 'centered' if self.centered else 'non-centered'
         return ' '.join([rendered, centered]) + f" GraphicsObject(x={self.x}, y={self.y})"
+
+    @abstractmethod
+    def dict_save(self):
+        """
+        Returns a representation of the object as a dict (that will be converted to string in the end).
+        The object should be able to be initiated from the string alone to the exact state that it is in now.
+        :return: str
+        """
+        pass

@@ -410,7 +410,7 @@ class Computer:
         self.kill_process(DHCPClient)  # if currently asking for dhcp, stop it
         self.start_process(DHCPClient)
 
-    def open_port(self, port_number):
+    def open_tcp_port(self, port_number):
         """
         Opens a port on the computer. Starts the process that is behind it.
         :param port_number:
@@ -430,6 +430,14 @@ class Computer:
             self.open_tcp_ports.append(port_number)
 
         self.graphics.update_image()
+
+    def open_udp_port(self, port_number):
+        """
+        Opens a UDP port on the computer
+        :param port_number:
+        :return:
+        """
+        raise NotImplementedError()
 
     def update_routing_table(self):
         """updates the routing table according to the interfaces at the moment"""
@@ -999,3 +1007,20 @@ class Computer:
     def __str__(self):
         """a simple string representation of the computer"""
         return f"{self.name}"
+
+    @classmethod
+    def from_dict_load(cls, dict_):
+        """
+        Load a computer from the dict that is saved into the files
+        :param dict_:
+        :return: Computer
+        """
+        interfaces = [Interface.from_dict_load(interface_dict) for interface_dict in dict_["interfaces"]]
+        returned = cls(
+            dict_["name"],
+            dict_["os"],
+            None,
+            *interfaces
+        )
+        returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])
+        return returned

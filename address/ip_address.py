@@ -17,6 +17,8 @@ class IPAddress:
         elif not isinstance(string_ip, str):
             raise InvalidAddressError("The argument to this constructor must be a string or an IPAddress object!!!")
 
+        string_ip = string_ip.replace(' ', '')
+
         ip, subnet_mask = string_ip, DEFAULT_SUBNET_MASK
         if IP_SUBNET_SEPARATOR in string_ip:
             ip, subnet_mask = string_ip.lower().split(IP_SUBNET_SEPARATOR)

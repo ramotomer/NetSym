@@ -169,6 +169,7 @@ class Interface:
         self.accepting = accept
         if self.connection is not None:
             self.connection.mark_as_blocked()
+
         self.graphics.color = BLOCKED_INTERFACE_COLOR
 
     def unblock(self):
@@ -277,3 +278,18 @@ Interface:
     def __repr__(self):
         """The string representation of the Interface"""
         return f"Interface(name={self.name}, mac={self.mac}, ip={self.ip})"
+
+    @classmethod
+    def from_dict_load(cls, dict_):
+        """
+        Loads a new interface from a dict
+        :param dict_:
+        :return:
+        """
+        loaded = cls(
+            mac=dict_["mac"],
+            ip=dict_["ip"],
+            name=dict_["name"],
+        )
+
+        return loaded

@@ -1,7 +1,7 @@
 from pyglet.window import key
 
 from consts import *
-from gui.abstracts.graphics_object import GraphicsObject
+from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rect, draw_rect_with_outline
@@ -10,7 +10,7 @@ from gui.user_interface.text_graphics import Text
 from usefuls import with_args
 
 
-class PopupWindow(GraphicsObject):
+class PopupWindow(UserInterfaceGraphicsObject):
     """
     A window that pops up sometime.
     It can contain buttons, text and maybe images?
@@ -31,7 +31,7 @@ class PopupWindow(GraphicsObject):
 
         title_text = Text(title, self.x, self.y, self, ((self.width / 2) + 2, self.height + 22),
                           color=BLACK, align='left', max_width=self.width)
-        information_text = Text(text, self.x, self.y, self, ((self.width / 2), 6 * (self.height / 7)))
+        information_text = Text(text, self.x, self.y, self, ((self.width / 2), 6 * (self.height / 7)), max_width=self.width)
 
         for button in buttons:
             button.set_parent_graphics(self, (button.x - self.x, button.y - self.y))

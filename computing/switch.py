@@ -1,5 +1,6 @@
 from address.mac_address import MACAddress
 from computing.computer import Computer
+from computing.interface import Interface
 from consts import *
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.stp import STP, LogicalLinkControl
@@ -70,6 +71,17 @@ class Switch(Computer):
             interface.send_with_ethernet(MACAddress.stp_multicast(),
                                          LogicalLinkControl(
                                              STP(sender_bid, root_bid, distance_to_root, root_declaration_time)))
+
+    @classmethod
+    def from_dict_load(cls, dict_):
+        """
+        Load a computer from the dict that is saved into the files
+        :param dict_:
+        :return: Computer
+        """
+        returned = cls(dict_["name"])
+        returned.interfaces = [Interface.from_dict_load(interface_dict) for interface_dict in dict_["interfaces"]]
+        return returned
 
 
 class Hub(Switch):
