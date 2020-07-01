@@ -3,7 +3,7 @@ from collections import namedtuple
 from consts import *
 from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_loop import MainLoop
-from gui.shape_drawing import draw_rect
+from gui.shape_drawing import draw_rectangle
 from gui.user_interface.text_graphics import Text
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObject", "text")
@@ -43,7 +43,7 @@ class Console(UserInterfaceGraphicsObject):
         :return: None
         """
         if not self.is_hidden:
-            draw_rect(self.x, self.y, CONSOLE_WIDTH, CONSOLE_HEIGHT, VERY_LIGHT_GRAY)
+            draw_rectangle(self.x, self.y, CONSOLE_WIDTH, CONSOLE_HEIGHT, color=VERY_LIGHT_GRAY)
 
     def show(self):
         """

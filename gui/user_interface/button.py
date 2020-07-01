@@ -3,7 +3,7 @@ from collections import namedtuple
 from consts import *
 from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_window import MainWindow
-from gui.shape_drawing import draw_rect
+from gui.shape_drawing import draw_rectangle
 from gui.user_interface.text_graphics import Text
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "text")
@@ -93,7 +93,7 @@ class Button(UserInterfaceGraphicsObject):
         :return: None
         """
         if not self.is_hidden:
-            draw_rect(self.x, self.y, self.width, self.height, (self.light_color if self.is_mouse_in() else self.color))
+            draw_rectangle(self.x, self.y, self.width, self.height, color=(self.light_color if self.is_mouse_in() else self.color))
 
     def move(self):
         """

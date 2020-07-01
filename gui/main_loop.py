@@ -171,6 +171,9 @@ class MainLoop:
         if self.main_window.user_interface.selected_object is not None:
             self.main_window.user_interface.selected_object.mark_as_selected()
 
+        for marked_object in self.main_window.user_interface.marked_objects:
+            marked_object.mark_as_selected()
+
     def delete_all_graphics(self):
         """
         Deletes and unregisters all of the graphics objects on the screen. (not buttons)
@@ -186,6 +189,16 @@ class MainLoop:
         :return: a `GraphicsObject` or None.
         """
         return get_the_one(reversed(self.graphics_objects), lambda go: go.is_mouse_in() and not go.is_button)
+
+    def graphics_objects_of_types(self, *types):
+        """
+        Returns a list of graphics objects of the given types
+        :param types:
+        :return:
+        """
+        if not types:
+            return self.graphics_objects
+        return list(filter(lambda go: any(isinstance(go, type_) for type_ in types), self.graphics_objects))
 
     def update_time(self):
         """

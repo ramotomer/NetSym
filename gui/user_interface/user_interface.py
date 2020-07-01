@@ -1,7 +1,6 @@
 import functools
 import json
 import operator
-import os
 import random
 from collections import namedtuple
 from functools import reduce
@@ -20,7 +19,7 @@ from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsOb
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_circle
-from gui.shape_drawing import draw_pause_rectangles, draw_rect
+from gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from gui.tech.computer_graphics import ComputerGraphics
 from gui.tech.interface_graphics import InterfaceGraphics
 from gui.user_interface.button import Button
@@ -29,6 +28,7 @@ from gui.user_interface.popup_windows.popup_error import PopupError
 from gui.user_interface.popup_windows.popup_text_box import PopupTextBox
 from gui.user_interface.popup_windows.popup_window import PopupWindow
 from gui.user_interface.popup_windows.yes_no_popup_window import YesNoPopupWindow
+from gui.user_interface.selecting_square import SelectingSquare
 from gui.user_interface.text_graphics import Text
 from processes.stp_process import STPProcess
 from processes.tcp_process import TCPProcess
@@ -174,6 +174,10 @@ class UserInterface:
         self.scrolled_view = None
         self.debug_counter = 0
 
+        self.selecting_square = None
+
+        self.marked_objects = []
+
     @property
     def active_window(self):
         return self.__active_window
@@ -193,11 +197,10 @@ class UserInterface:
 
     @selected_object.setter
     def selected_object(self, graphics_object):
-        self.__selected_object = graphics_object
-
         if isinstance(graphics_object, PopupWindow):
             self.active_window = graphics_object
         else:
+            self.__selected_object = graphics_object
             self.active_window = None
 
     def show(self):
@@ -205,7 +208,7 @@ class UserInterface:
         This is like the `draw` method of GraphicObject`s.
         :return: None
         """
-        draw_rect(WINDOW_WIDTH - self.WIDTH, 0, self.WIDTH, WINDOW_HEIGHT, MODES_TO_COLORS[self.mode])
+        draw_rectangle(WINDOW_WIDTH - self.WIDTH, 0, self.WIDTH, WINDOW_HEIGHT, color=MODES_TO_COLORS[self.mode])
         # ^ the window rectangle itself
         if MainLoop.instance.is_paused:
             draw_pause_rectangles()
@@ -393,6 +396,22 @@ class UserInterface:
                 break
         else:
             self.action_at_press_by_mode[self.mode]()
+
+        if self.mode == SIMULATION_MODE:
+            self.selecting_square = SelectingSquare(
+                *MainWindow.main_window.get_mouse_location(),
+                MainLoop.instance.graphics_objects_of_types(ComputerGraphics),
+                self,
+            )
+
+    def on_mouse_release(self):
+        """
+        this is called when the mouse is released
+        :return:
+        """
+        if self.selecting_square is not None:
+            MainLoop.instance.unregister_graphics_object(self.selecting_square)
+            self.selecting_square = None
 
     def on_key_pressed(self, symbol, modifiers):
         """
@@ -1118,11 +1137,11 @@ class UserInterface:
         :return: None
         """
         if os.path.isfile(os.path.join(SAVES_DIR, f"{filename}.json")):
-            YesNoPopupWindow("file exists! override?", self, yes_action=with_args(self._save_to_file, filename))
+            YesNoPopupWindow("file exists! override?", self, yes_action=with_args(self.save_to_file, filename))
         else:
-            self._save_to_file(filename)
+            self.save_to_file(filename)
 
-    def _save_to_file(self, filename):
+    def save_to_file(self, filename):
         """
         Save the state of the simulation to a file named filename
         :param filename:

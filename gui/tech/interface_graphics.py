@@ -4,7 +4,7 @@ from exceptions import *
 from gui.abstracts.graphics_object import GraphicsObject
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
-from gui.shape_drawing import draw_rect, draw_rect_no_fill
+from gui.shape_drawing import draw_rectangle
 from usefuls import distance, circular_coordinates, with_args, get_the_one
 
 
@@ -72,10 +72,10 @@ class InterfaceGraphics(GraphicsObject):
         Draw the interface.
         :return:
         """
-        draw_rect(
+        draw_rectangle(
             self.real_x - (self.width/2), self.real_y - (self.height / 2),
             self.width, self.height,
-            self.color,
+            color=self.color,
         )
 
     def start_viewing(self, user_interface):
@@ -125,10 +125,13 @@ class InterfaceGraphics(GraphicsObject):
         :return: None
         """
         x, y = self.x - (self.width / 2), self.y - (self.height / 2)
-        draw_rect_no_fill(x - SELECTED_OBJECT_PADDING,
-                          y - SELECTED_OBJECT_PADDING,
-                          self.width + (2 * SELECTED_OBJECT_PADDING),
-                          self.height + (2 * SELECTED_OBJECT_PADDING))
+        draw_rectangle(
+            x - SELECTED_OBJECT_PADDING,
+            y - SELECTED_OBJECT_PADDING,
+            self.width + (2 * SELECTED_OBJECT_PADDING),
+            self.height + (2 * SELECTED_OBJECT_PADDING),
+            outline_color=TURQUOISE,
+        )
 
     def __repr__(self):
         return f"Interface Graphics ({self.interface.name})"

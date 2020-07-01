@@ -125,6 +125,8 @@ class MainWindow(pyglet.window.Window):
                 mouse_x, mouse_y = self.get_mouse_location()
                 object_x, object_y = object_the_mouse_is_on.location
                 self.user_interface.dragging_point = object_x - mouse_x, object_y - mouse_y
+            else:
+                self.user_interface.marked_objects.clear()
 
     def on_mouse_release(self, x, y, button, modifiers):
         """
@@ -137,6 +139,7 @@ class MainWindow(pyglet.window.Window):
         """
         self.mouse_pressed = False
         self.user_interface.dragged_object = None
+        self.user_interface.on_mouse_release()
 
     def on_key_press(self, symbol, modifiers):
         """
