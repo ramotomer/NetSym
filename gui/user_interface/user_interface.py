@@ -2,7 +2,7 @@ import functools
 import json
 import operator
 import random
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from functools import reduce
 from operator import concat
 
@@ -129,8 +129,6 @@ class UserInterface:
 
         self.dragged_object = None
         # ^ the object that is currently being dragged (by the courser)
-        self.dragging_point = 0, 0
-        # ^ the coordinates the mouse is at relative to the object it drags
 
         self.__selected_object = None
         # ^ the object that is currently dragged
@@ -177,6 +175,7 @@ class UserInterface:
         self.selecting_square = None
 
         self.marked_objects = []
+        self.dragging_points = defaultdict(lambda: (None, None))
 
     @property
     def active_window(self):
@@ -208,26 +207,47 @@ class UserInterface:
         This is like the `draw` method of GraphicObject`s.
         :return: None
         """
-        draw_rectangle(WINDOW_WIDTH - self.WIDTH, 0, self.WIDTH, WINDOW_HEIGHT, color=MODES_TO_COLORS[self.mode])
-        # ^ the window rectangle itself
+        self._draw_side_window()
         if MainLoop.instance.is_paused:
             draw_pause_rectangles()
+        self.drag_objects()
+        self._stop_viewing_dead_packets()
+        self._showcase_running_stp()
 
+    def _stop_viewing_dead_packets(self):
+        """
+        Checks if a packet that is currently viewed has left the screen (reached the destination or dropped) and if so
+        stops viewing it.
+        :return:
+        """
         if self.selected_object is not None and \
                 self.selected_object.is_packet and \
                 self.packet_from_graphics_object(self.selected_object) is None:
             self.set_mode(SIMULATION_MODE)
 
-    def drag_object(self):
+    def _draw_side_window(self):
+        """
+        Draws the side window
+        :return:
+        """
+        draw_rectangle(WINDOW_WIDTH - self.WIDTH, 0, self.WIDTH, WINDOW_HEIGHT, color=MODES_TO_COLORS[self.mode])
+
+    def drag_objects(self):
         """
         Drags the object that should be dragged around the screen.
         Essentially sets the objects coordinates to be the ones of the mouse.
         :return: None
         """
-        if self.dragged_object is not None and not self.dragged_object.is_button:
-            drag_x, drag_y = self.dragging_point
-            mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
-            self.dragged_object.x, self.dragged_object.y = mouse_x + drag_x, mouse_y + drag_y
+        if self.selecting_square is not None:
+            return
+        dragging_objects = self.marked_objects + ([self.dragged_object] if self.dragged_object is not None else [])
+        for object_ in dragging_objects:
+            if not object_.is_button:
+                drag_x, drag_y = self.dragging_points[object_]
+                if drag_x is None:
+                    continue
+                mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
+                object_.location = mouse_x + drag_x, mouse_y + drag_y
 
     def start_object_view(self, graphics_object):
         """
@@ -397,6 +417,13 @@ class UserInterface:
         else:
             self.action_at_press_by_mode[self.mode]()
 
+        self._create_selection_square()
+
+    def _create_selection_square(self):
+        """
+        Creates the selection square when the mouse is pressed and dragged around
+        :return:
+        """
         if self.mode == SIMULATION_MODE:
             self.selecting_square = SelectingSquare(
                 *MainWindow.main_window.get_mouse_location(),
@@ -409,6 +436,7 @@ class UserInterface:
         this is called when the mouse is released
         :return:
         """
+        self.dragging_points.clear()
         if self.selecting_square is not None:
             MainLoop.instance.unregister_graphics_object(self.selecting_square)
             self.selecting_square = None
@@ -914,7 +942,7 @@ class UserInterface:
         computer = self.selected_object.computer
         self.send_direct_ping(computer, computer)
 
-    def showcase_running_stp(self):
+    def _showcase_running_stp(self):
         """
         Displays the roots of all STP processes that are running. (circles the roots with a yellow circle)
         :return: None

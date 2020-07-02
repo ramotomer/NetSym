@@ -26,11 +26,11 @@ class ImageGraphics(GraphicsObject):
 
     @property
     def width(self):
-        return self.sprite.width * self.sprite.scale_x
+        return self.sprite.width
 
     @property
     def height(self):
-        return self.sprite.height * self.sprite.scale_y
+        return self.sprite.height
 
     @property
     def size(self):
@@ -38,10 +38,19 @@ class ImageGraphics(GraphicsObject):
 
     @property
     def corners(self):
-        return {(self.x, self.y),
+        if not self.centered:
+            return {
+                (self.x, self.y),
                 (self.x + self.width, self.y),
                 (self.x, self.y + self.height),
-                (self.x + self.width, self.y + self.height)}
+                (self.x + self.width, self.y + self.height),
+            }
+        return {
+            (self.x - (self.width / 2), self.y - (self.height / 2)),
+            (self.x - (self.width / 2), self.y + (self.height / 2)),
+            (self.x + (self.width / 2), self.y - (self.height / 2)),
+            (self.x + (self.width / 2), self.y + (self.height / 2)),
+        }
 
     @staticmethod
     def get_image_sprite(image_name, x=0, y=0, is_opaque=False, scale_factor=VIEWING_OBJECT_SCALE_FACTOR):

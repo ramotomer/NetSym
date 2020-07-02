@@ -162,7 +162,7 @@ class MainLoop:
         """
         self.is_paused = not self.is_paused
 
-    def select_selected_object(self):
+    def select_selected_and_marked_objects(self):
         """
         Draws a rectangle around the selected object.
         The selected object is the object that was last pressed and is surrounded by a white square.
@@ -237,11 +237,8 @@ class MainLoop:
         self.main_window.clear()
 
         self.update_time()
-        self.select_selected_object()
-        self.main_window.user_interface.drag_object()
+        self.select_selected_and_marked_objects()
         self.main_window.user_interface.show()
-
-        self.main_window.user_interface.showcase_running_stp()
 
         for function, args, kwargs, can_be_paused in self.call_functions:
             if self.is_paused and can_be_paused:
