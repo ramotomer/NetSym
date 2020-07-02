@@ -14,7 +14,7 @@ class DAYTIMEServerProcess(TCPProcess):
         Initiates the process of serving DAYTIME with the computer that run the process
         :param computer: the `Computer` that runs the process
         """
-        super(DAYTIMEServerProcess, self).__init__(computer, src_port=DAYTIME_PORT, is_client=False)
+        super(DAYTIMEServerProcess, self).__init__(computer, src_port=PORTS.DAYTIME, is_client=False)
 
     def code(self):
         """
@@ -45,7 +45,7 @@ class DAYTIMEClientProcess(TCPProcess):
         :param computer:
         :param server_ip:
         """
-        super(DAYTIMEClientProcess, self).__init__(computer, server_ip, DAYTIME_PORT, is_client=True)
+        super(DAYTIMEClientProcess, self).__init__(computer, server_ip, PORTS.DAYTIME, is_client=True)
 
     def code(self):
         """
@@ -58,7 +58,7 @@ class DAYTIMEClientProcess(TCPProcess):
         while not daytime_data:
             yield from self.handle_tcp_and_receive(daytime_data)
         self.computer.print(f"got daytime {daytime_data[0]}!")
-        while not (daytime_data and daytime_data[-1] is TCP_DONE_RECEIVING):
+        while not (daytime_data and daytime_data[-1] is PROTOCOLS.TCP.DONE_RECEIVING):
             yield from self.handle_tcp_and_receive(daytime_data)
 
     def __repr__(self):

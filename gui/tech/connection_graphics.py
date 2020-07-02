@@ -151,11 +151,11 @@ class ConnectionGraphics(GraphicsObject):
         start_x, start_y, end_x, end_y = self.get_coordinates()
         x, y = (start_x + end_x) / 2, (start_y + end_y) / 2
         draw_rectangle(
-            x - 2*SELECTED_OBJECT_PADDING,
-            y - 2*SELECTED_OBJECT_PADDING,
-            (4 * SELECTED_OBJECT_PADDING),
-            (4 * SELECTED_OBJECT_PADDING),
-            outline_color=COLORS.WHITE,
+            x - 2*SELECTED_OBJECT.PADDING,
+            y - 2*SELECTED_OBJECT.PADDING,
+            (4 * SELECTED_OBJECT.PADDING),
+            (4 * SELECTED_OBJECT.PADDING),
+            outline_color=SELECTED_OBJECT.COLOR,
         )
 
     def draw(self):
@@ -163,7 +163,7 @@ class ConnectionGraphics(GraphicsObject):
         Draws the connection (The line) between its end point and its start point.
         :return: None
         """
-        color = self.color if not self.is_mouse_in() else SELECTED_CONNECTIONS.COLOR
+        color = self.color if not self.is_mouse_in() else CONNECTIONS.SELECTED_COLOR
         sx, sy, ex, ey = self.get_coordinates()
         draw_line((sx, sy), (ex, ey), color)
 

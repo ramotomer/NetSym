@@ -1,4 +1,4 @@
-from consts import ADDRESSES, MESSAGES.INVALID_IP_ADDRESS
+from consts import ADDRESSES, MESSAGES
 from exceptions import InvalidAddressError, AddressTooLargeError
 
 

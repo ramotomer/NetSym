@@ -27,8 +27,8 @@ class WirelessConnectionGraphics(ConnectionGraphics):
         self.regular_color = CONNECTIONS.WIRELESS.COLOR if not self.connection.packet_loss else CONNECTIONS.PL_COLOR
         self.color = self.regular_color
 
-        self.amplitude = DEFAULT_SINE_WAVE_AMPLITUDE
-        self.frequency = DEFAULT_SINE_WAVE_FREQUENCY
+        self.amplitude = SHAPES.SINE_WAVE.DEFAULT_AMPLITUDE
+        self.frequency = SHAPES.SINE_WAVE.DEFAULT_FREQUENCY
 
         self.coordinates = None
         self.previous_coordinates = None

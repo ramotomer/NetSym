@@ -71,7 +71,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         self.is_client = is_client  # decides who sends the original SYN packet (the client does)
 
         self.dst_ip = dst_ip
-        self.src_port = random.randint(*USERMODE_USABLE_PORT_RANGE) if self.is_client else src_port
+        self.src_port = random.randint(*PORTS.USERMODE_USABLE_RANGE) if self.is_client else src_port
         self.dst_port = dst_port
         self.dst_mac = None
 

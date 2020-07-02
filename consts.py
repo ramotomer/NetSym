@@ -14,9 +14,14 @@ def debugp(string):
 
 
 SENDING_GRAT_ARPS = False
-ARP_CACHE_FORGET_TIME = 300  # seconds
-SWITCH_TABLE_ITEM_LIFETIME = 60  # seconds
-SELECTED_OBJECT_PADDING = 5
+
+
+class SWITCH_TABLE:
+    ITEM_LIFETIME = 300  # seconds
+
+
+class ARP_CACHE:
+    ITEM_LIFETIME = 300  # seconds
 
 
 class ADDRESSES:
@@ -484,3 +489,8 @@ class SHAPES:
 
 class SELECTION_SQUARE:
     COLOR = COLORS.LIGHT_BLUE
+
+
+class SELECTED_OBJECT:
+    PADDING = 8
+    COLOR = COLORS.TURQUOISE

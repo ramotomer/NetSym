@@ -138,7 +138,7 @@ def sine_wave_coordinates(start_coordinates, end_coordinates, amplitude=10, freq
     relative_angle_of_end = atan((end_y - start_y) / (end_x - start_x)) if (end_x != start_x) else (pi / 2)
     relative_angle_of_end -= pi if start_x > end_x else 0
 
-    x = INITIAL_SINE_WAVE_ANGLE
+    x = SHAPES.SINE_WAVE.INITIAL_ANGLE
     for i in range(count):
         y = amplitude * sin(x * frequency)
         yield rotated_coordinates((x + start_x, y + start_y), start_coordinates, relative_angle_of_end)

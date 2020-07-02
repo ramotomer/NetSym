@@ -14,8 +14,8 @@ class FTPProcess(TCPProcess):
         super(FTPProcess, self).__init__(computer,
                                          is_client=is_client,
                                          dst_ip=server_ip,
-                                         src_port=FTP_PORT if not is_client else None,
-                                         dst_port=FTP_PORT if is_client else None)
+                                         src_port=PORTS.FTP if not is_client else None,
+                                         dst_port=PORTS.FTP if is_client else None)
 
     @staticmethod
     def create_ftp_layer(data, is_request=False):
@@ -95,7 +95,7 @@ class FTPClientProcess(FTPProcess):
         self.send(self.create_ftp_layer(os.path.join(DIRECTORIES.FILES, TRANSFER_FILE), is_request=True))
         received_file = ""
         ftp_from_server = []
-        while not (ftp_from_server and ftp_from_server[-1] is TCP_DONE_RECEIVING):
+        while not (ftp_from_server and ftp_from_server[-1] is PROTOCOLS.TCP.DONE_RECEIVING):
             received_file += self.sum_packets_to_string(ftp_from_server)
             ftp_from_server.clear()
             yield from self.handle_tcp_and_receive(ftp_from_server)

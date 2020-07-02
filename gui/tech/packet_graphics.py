@@ -75,8 +75,8 @@ class PacketGraphics(ImageGraphics):
         """
 
         if hasattr(layer, "opcode"):
-            return PACKETS.TYPE_TO_IMAGE[type(layer).__name__][layer.opcode]
-        return PACKETS.TYPE_TO_IMAGE[type(layer).__name__]
+            return PACKET.TYPE_TO_IMAGE[type(layer).__name__][layer.opcode]
+        return PACKET.TYPE_TO_IMAGE[type(layer).__name__]
 
     def start_viewing(self, user_interface):
         """

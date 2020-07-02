@@ -14,11 +14,11 @@ class Text(UserInterfaceGraphicsObject):
     """
     def __init__(self, text, x, y,
                  parent_graphics=None,
-                 padding=(0, TEXT.FONT.DEFAULT_Y_PADDING),
+                 padding=(0, TEXT.DEFAULT_Y_PADDING),
                  is_button=False,
                  start_hidden=False,
                  max_width=WINDOWS.MAIN.WIDTH,
-                 font_size=TEXT.FONT.DEFAULT_FONT_SIZE,
+                 font_size=TEXT.FONT.DEFAULT_SIZE,
                  align='center',
                  color=COLORS.WHITE):
         """

@@ -148,8 +148,8 @@ def draw_circle(x, y, radius, color=COLORS.WHITE):
 
 
 def draw_sine_wave(start_coordinates, end_coordinates,
-                   amplitude=DEFAULT_SINE_WAVE_AMPLITUDE,
-                   frequency=DEFAULT_SINE_WAVE_FREQUENCY,
+                   amplitude=SHAPES.SINE_WAVE.DEFAULT_AMPLITUDE,
+                   frequency=SHAPES.SINE_WAVE.DEFAULT_FREQUENCY,
                    color=CONNECTIONS.COLOR):
     """
 

@@ -126,11 +126,11 @@ class InterfaceGraphics(GraphicsObject):
         """
         x, y = self.x - (self.width / 2), self.y - (self.height / 2)
         draw_rectangle(
-            x - SELECTED_OBJECT_PADDING,
-            y - SELECTED_OBJECT_PADDING,
-            self.width + (2 * SELECTED_OBJECT_PADDING),
-            self.height + (2 * SELECTED_OBJECT_PADDING),
-            outline_color=COLORS.TURQUOISE,
+            x - SELECTED_OBJECT.PADDING,
+            y - SELECTED_OBJECT.PADDING,
+            self.width + (2 * SELECTED_OBJECT.PADDING),
+            self.height + (2 * SELECTED_OBJECT.PADDING),
+            outline_color=SELECTED_OBJECT.COLOR,
         )
 
     def __repr__(self):

@@ -122,11 +122,11 @@ class ImageGraphics(GraphicsObject):
         if self.centered:
             x, y = self.get_centered_coordinates()
         draw_rectangle(
-            x - SELECTED_OBJECT_PADDING,
-            y - SELECTED_OBJECT_PADDING,
-            self.sprite.width + (2 * SELECTED_OBJECT_PADDING),
-            self.sprite.height + (2 * SELECTED_OBJECT_PADDING),
-            outline_color=COLORS.TURQUOISE,
+            x - SELECTED_OBJECT.PADDING,
+            y - SELECTED_OBJECT.PADDING,
+            self.sprite.width + (2 * SELECTED_OBJECT.PADDING),
+            self.sprite.height + (2 * SELECTED_OBJECT.PADDING),
+            outline_color=SELECTED_OBJECT.COLOR,
         )
 
     def start_viewing(self, user_interface):

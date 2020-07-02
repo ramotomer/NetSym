@@ -16,7 +16,8 @@ class PopupWindow(UserInterfaceGraphicsObject):
     It can contain buttons, text and maybe images?
     """
     def __init__(self, x, y, text, user_interface, buttons,
-                 width=WINDOWS.POPUP.TEXTBOX.WIDTH, height=WINDOWS.POPUP.TEXTBOX.HEIGHT, color=TEXTBOX_OUTLINE_COLOR, title="window!"):
+                 width=WINDOWS.POPUP.TEXTBOX.WIDTH, height=WINDOWS.POPUP.TEXTBOX.HEIGHT,
+                 color=WINDOWS.POPUP.TEXTBOX.OUTLINE_COLOR, title="window!"):
         """
         Initiates the `PopupWindow` object.
         :param x, y: the location of the bottom left corner of the window
@@ -40,13 +41,13 @@ class PopupWindow(UserInterfaceGraphicsObject):
             *WINDOWS.POPUP.SUBMIT_BUTTON.COORDINATES,
             action=self.delete,
             text="X",
-            width=TEXTBOX_UPPER_PART_HEIGHT,
-            height=TEXTBOX_UPPER_PART_HEIGHT,
+            width=WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT,
+            height=WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT,
             color=self.outline_color,
             text_color=COLORS.BLACK,
-            key=(key.ESCAPE, NO_MODIFIER),
+            key=(key.ESCAPE, MODIFIERS.NONE),
         )
-        exit_button.set_parent_graphics(self, (self.width - TEXTBOX_UPPER_PART_HEIGHT, self.height))
+        exit_button.set_parent_graphics(self, (self.width - WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT, self.height))
 
         self.remove_buttons = None
         user_interface.register_window(self, exit_button, *buttons)
@@ -66,7 +67,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         """
         x, y = MainWindow.main_window.get_mouse_location()
         return self.x < x < self.x + self.width and \
-            self.y < y < self.y + WINDOWS.POPUP.TEXTBOX.HEIGHT + TEXTBOX_UPPER_PART_HEIGHT
+            self.y < y < self.y + WINDOWS.POPUP.TEXTBOX.HEIGHT + WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT
 
     def mark_as_selected(self):
         """
@@ -93,14 +94,14 @@ class PopupWindow(UserInterfaceGraphicsObject):
         draw_rectangle(self.x, self.y,
                        self.width,
                        self.height,
-                       TEXTBOX_COLOR,
+                       WINDOWS.POPUP.TEXTBOX.COLOR,
                        self.outline_color,
                        SHAPES.RECT.DEFAULT_OUTLINE_WIDTH - (0 if self.__is_active else 2))
         # TODO: make self.outline_width a thing instead of the const
 
         draw_rectangle(
             self.x - (SHAPES.RECT.DEFAULT_OUTLINE_WIDTH / 2), self.y + self.height,
-            self.width + SHAPES.RECT.DEFAULT_OUTLINE_WIDTH, TEXTBOX_UPPER_PART_HEIGHT,
+            self.width + SHAPES.RECT.DEFAULT_OUTLINE_WIDTH, WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT,
             color=self.outline_color,
         )
 

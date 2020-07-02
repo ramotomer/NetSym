@@ -400,7 +400,7 @@ class Computer:
         :return: None
         """
         for ip, arp_cache_item in list(self.arp_cache.items()):
-            if MainLoop.instance.time_since(arp_cache_item.time) > ARP_CACHE_FORGET_TIME:
+            if MainLoop.instance.time_since(arp_cache_item.time) > ARP_CACHE.ITEM_LIFETIME:
                 del self.arp_cache[ip]
 
     def ask_dhcp(self):
