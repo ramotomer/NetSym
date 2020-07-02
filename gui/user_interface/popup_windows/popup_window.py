@@ -4,7 +4,7 @@ from consts import *
 from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
-from gui.shape_drawing import draw_rect, draw_rect_with_outline
+from gui.shape_drawing import draw_rectangle
 from gui.user_interface.button import Button
 from gui.user_interface.text_graphics import Text
 from usefuls import with_args
@@ -90,15 +90,19 @@ class PopupWindow(UserInterfaceGraphicsObject):
         Basically a rectangle.
         :return: None
         """
-        draw_rect_with_outline(self.x, self.y,
-                               self.width, self.height,
-                               TEXTBOX_COLOR, self.outline_color,
-                               TEXTBOX_OUTLINE_WIDTH - (0 if self.__is_active else 2))
+        draw_rectangle(self.x, self.y,
+                       self.width,
+                       self.height,
+                       TEXTBOX_COLOR,
+                       self.outline_color,
+                       TEXTBOX_OUTLINE_WIDTH - (0 if self.__is_active else 2))
         # TODO: make self.outline_width a thing instead of the const
 
-        draw_rect(self.x - (TEXTBOX_OUTLINE_WIDTH / 2), self.y + self.height,
-                  self.width + TEXTBOX_OUTLINE_WIDTH, TEXTBOX_UPPER_PART_HEIGHT,
-                  self.outline_color)
+        draw_rectangle(
+            self.x - (TEXTBOX_OUTLINE_WIDTH / 2), self.y + self.height,
+            self.width + TEXTBOX_OUTLINE_WIDTH, TEXTBOX_UPPER_PART_HEIGHT,
+            color=self.outline_color,
+        )
 
     def activate(self):
         """

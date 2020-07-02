@@ -1,4 +1,5 @@
 from itertools import chain
+from operator import itemgetter
 
 import pyglet
 
@@ -20,12 +21,38 @@ def draw_line(point_1, point_2, color=WHITE):
     pyglet.graphics.draw(2, pyglet.gl.GL_LINES, (vertex_view, point_1 + point_2), ('c3B', color * 2))
 
 
-def draw_rect_no_fill(x, y, width, height):
+def draw_rectangle(x, y, width, height, color=None, outline_color=None, outline_width=DEFAULT_OUTLINE_WIDTH):
+    """
+    Draws a rectangle.
+    :param x:
+    :param y: bottom left corner coordinates
+    :param width:
+    :param height: size of the square
+    :param color: the fill color, if None, no fill
+    :param outline_color: the outline color, if None, no outline
+    :param outline_width: ...
+    :return:
+    """
+    if color is not None and outline_color is not None:
+        _draw_rect_with_outline(x, y, width, height, color, outline_color, outline_width)
+
+    elif color is not None:
+        _draw_rect_no_outline(x, y, width, height, color)
+
+    elif outline_color is not None:
+        _draw_rect_no_fill(x, y, width, height, outline_color)
+
+    else:
+        _draw_rect_no_outline(x, y, width, height)
+
+
+def _draw_rect_no_fill(x, y, width, height, color=WHITE):
     """
     Draws an unfilled rectangle from the bottom left corner (x,y) with a width of
     `width` and a height of `height`.
     """
     int_x, int_y, int_width, int_height = map(int, (x, y, width, height))
+    color = color + (0,)
     pyglet.graphics.draw(8, pyglet.gl.GL_LINES,
                          ('v2i', (int_x, int_y,
                                   int_x + int_width, int_y,
@@ -35,11 +62,11 @@ def draw_rect_no_fill(x, y, width, height):
                                   int_x, int_y + int_height,
                                   int_x, int_y + int_height,
                                   int_x, int_y)),
-                         ('c4B', (50, 50, 50, 10) * 8)
+                         ('c4B', color * 8)
                          )
 
 
-def draw_rect(x, y, width, height, color=GRAY):
+def _draw_rect_no_outline(x, y, width, height, color=GRAY):
     """
     Draws a filled rectangle from the bottom left corner (x, y) with a width of
     `width` and a height of `height`.
@@ -60,7 +87,7 @@ def draw_rect(x, y, width, height, color=GRAY):
                          )
 
 
-def draw_rect_with_outline(x, y, width, height, color=GRAY, outline_color=WHITE, outline_width=DEFAULT_OUTLINE_WIDTH):
+def _draw_rect_with_outline(x, y, width, height, color=GRAY, outline_color=WHITE, outline_width=DEFAULT_OUTLINE_WIDTH):
     """
     Draws a rectangle with an outline.
     :param x:
@@ -72,9 +99,28 @@ def draw_rect_with_outline(x, y, width, height, color=GRAY, outline_color=WHITE,
     :param outline_width:
     :return:
     """
-    draw_rect(x - outline_width/2, y - outline_width/2,
-              width + outline_width, height + outline_width, color=outline_color)
-    draw_rect(x, y, width, height, color=color)
+    _draw_rect_no_outline(
+        x - outline_width/2, y - outline_width/2,
+        width + outline_width, height + outline_width,
+        color=outline_color
+    )
+    _draw_rect_no_outline(
+        x, y, width, height, color=color
+    )
+
+
+def draw_rect_by_corners(point1, point2, color=None, outline_color=None, outline_width=None):
+    """
+    Receives two points and draws a rect
+    """
+    x1, y1 = point1
+    x2, y2 = point2
+    points = [point1, point2, (x1, y2), (x2, y1)]
+    sorted_points = list(sorted(sorted(points, key=itemgetter(0)), key=itemgetter(1)))
+    (bottom_left_x, bottom_left_y), (upper_right_x, upper_right_y) = sorted_points[0], sorted_points[-1]
+    draw_rectangle(bottom_left_x, bottom_left_y,
+                   (upper_right_x - bottom_left_x), (upper_right_y - bottom_left_y),
+                   color, outline_color, outline_width)
 
 
 def draw_pause_rectangles():
@@ -84,8 +130,8 @@ def draw_pause_rectangles():
     :return: None
     """
     x, y = PAUSE_RECT_COORDINATES
-    draw_rect(x, y, PAUSE_RECT_WIDTH, PAUSE_RECT_HEIGHT, RED)
-    draw_rect(x + 2 * PAUSE_RECT_WIDTH, y, PAUSE_RECT_WIDTH, PAUSE_RECT_HEIGHT, RED)
+    _draw_rect_no_outline(x, y, PAUSE_RECT_WIDTH, PAUSE_RECT_HEIGHT, RED)
+    _draw_rect_no_outline(x + 2 * PAUSE_RECT_WIDTH, y, PAUSE_RECT_WIDTH, PAUSE_RECT_HEIGHT, RED)
 
 
 def draw_circle(x, y, radius, color=WHITE):

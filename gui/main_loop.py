@@ -162,7 +162,7 @@ class MainLoop:
         """
         self.is_paused = not self.is_paused
 
-    def select_selected_object(self):
+    def select_selected_and_marked_objects(self):
         """
         Draws a rectangle around the selected object.
         The selected object is the object that was last pressed and is surrounded by a white square.
@@ -170,6 +170,9 @@ class MainLoop:
         """
         if self.main_window.user_interface.selected_object is not None:
             self.main_window.user_interface.selected_object.mark_as_selected()
+
+        for marked_object in self.main_window.user_interface.marked_objects:
+            marked_object.mark_as_selected()
 
     def delete_all_graphics(self):
         """
@@ -186,6 +189,16 @@ class MainLoop:
         :return: a `GraphicsObject` or None.
         """
         return get_the_one(reversed(self.graphics_objects), lambda go: go.is_mouse_in() and not go.is_button)
+
+    def graphics_objects_of_types(self, *types):
+        """
+        Returns a list of graphics objects of the given types
+        :param types:
+        :return:
+        """
+        if not types:
+            return self.graphics_objects
+        return list(filter(lambda go: any(isinstance(go, type_) for type_ in types), self.graphics_objects))
 
     def update_time(self):
         """
@@ -224,11 +237,8 @@ class MainLoop:
         self.main_window.clear()
 
         self.update_time()
-        self.select_selected_object()
-        self.main_window.user_interface.drag_object()
+        self.select_selected_and_marked_objects()
         self.main_window.user_interface.show()
-
-        self.main_window.user_interface.showcase_running_stp()
 
         for function, args, kwargs, can_be_paused in self.call_functions:
             if self.is_paused and can_be_paused:

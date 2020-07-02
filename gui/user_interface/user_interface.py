@@ -1,9 +1,8 @@
 import functools
 import json
 import operator
-import os
 import random
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from functools import reduce
 from operator import concat
 
@@ -20,7 +19,7 @@ from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsOb
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_circle
-from gui.shape_drawing import draw_pause_rectangles, draw_rect
+from gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from gui.tech.computer_graphics import ComputerGraphics
 from gui.tech.interface_graphics import InterfaceGraphics
 from gui.user_interface.button import Button
@@ -29,6 +28,7 @@ from gui.user_interface.popup_windows.popup_error import PopupError
 from gui.user_interface.popup_windows.popup_text_box import PopupTextBox
 from gui.user_interface.popup_windows.popup_window import PopupWindow
 from gui.user_interface.popup_windows.yes_no_popup_window import YesNoPopupWindow
+from gui.user_interface.selecting_square import SelectingSquare
 from gui.user_interface.text_graphics import Text
 from processes.stp_process import STPProcess
 from processes.tcp_process import TCPProcess
@@ -129,8 +129,6 @@ class UserInterface:
 
         self.dragged_object = None
         # ^ the object that is currently being dragged (by the courser)
-        self.dragging_point = 0, 0
-        # ^ the coordinates the mouse is at relative to the object it drags
 
         self.__selected_object = None
         # ^ the object that is currently dragged
@@ -174,6 +172,11 @@ class UserInterface:
         self.scrolled_view = None
         self.debug_counter = 0
 
+        self.selecting_square = None
+
+        self.marked_objects = []
+        self.dragging_points = defaultdict(lambda: (None, None))
+
     @property
     def active_window(self):
         return self.__active_window
@@ -193,11 +196,10 @@ class UserInterface:
 
     @selected_object.setter
     def selected_object(self, graphics_object):
-        self.__selected_object = graphics_object
-
         if isinstance(graphics_object, PopupWindow):
             self.active_window = graphics_object
         else:
+            self.__selected_object = graphics_object
             self.active_window = None
 
     def show(self):
@@ -205,26 +207,47 @@ class UserInterface:
         This is like the `draw` method of GraphicObject`s.
         :return: None
         """
-        draw_rect(WINDOW_WIDTH - self.WIDTH, 0, self.WIDTH, WINDOW_HEIGHT, MODES_TO_COLORS[self.mode])
-        # ^ the window rectangle itself
+        self._draw_side_window()
         if MainLoop.instance.is_paused:
             draw_pause_rectangles()
+        self.drag_objects()
+        self._stop_viewing_dead_packets()
+        self._showcase_running_stp()
 
+    def _stop_viewing_dead_packets(self):
+        """
+        Checks if a packet that is currently viewed has left the screen (reached the destination or dropped) and if so
+        stops viewing it.
+        :return:
+        """
         if self.selected_object is not None and \
                 self.selected_object.is_packet and \
                 self.packet_from_graphics_object(self.selected_object) is None:
             self.set_mode(SIMULATION_MODE)
 
-    def drag_object(self):
+    def _draw_side_window(self):
+        """
+        Draws the side window
+        :return:
+        """
+        draw_rectangle(WINDOW_WIDTH - self.WIDTH, 0, self.WIDTH, WINDOW_HEIGHT, color=MODES_TO_COLORS[self.mode])
+
+    def drag_objects(self):
         """
         Drags the object that should be dragged around the screen.
         Essentially sets the objects coordinates to be the ones of the mouse.
         :return: None
         """
-        if self.dragged_object is not None and not self.dragged_object.is_button:
-            drag_x, drag_y = self.dragging_point
-            mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
-            self.dragged_object.x, self.dragged_object.y = mouse_x + drag_x, mouse_y + drag_y
+        if self.selecting_square is not None:
+            return
+        dragging_objects = self.marked_objects + ([self.dragged_object] if self.dragged_object is not None else [])
+        for object_ in dragging_objects:
+            if not object_.is_button:
+                drag_x, drag_y = self.dragging_points[object_]
+                if drag_x is None:
+                    continue
+                mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
+                object_.location = mouse_x + drag_x, mouse_y + drag_y
 
     def start_object_view(self, graphics_object):
         """
@@ -393,6 +416,30 @@ class UserInterface:
                 break
         else:
             self.action_at_press_by_mode[self.mode]()
+
+        self._create_selection_square()
+
+    def _create_selection_square(self):
+        """
+        Creates the selection square when the mouse is pressed and dragged around
+        :return:
+        """
+        if self.mode == SIMULATION_MODE:
+            self.selecting_square = SelectingSquare(
+                *MainWindow.main_window.get_mouse_location(),
+                MainLoop.instance.graphics_objects_of_types(ComputerGraphics),
+                self,
+            )
+
+    def on_mouse_release(self):
+        """
+        this is called when the mouse is released
+        :return:
+        """
+        self.dragging_points.clear()
+        if self.selecting_square is not None:
+            MainLoop.instance.unregister_graphics_object(self.selecting_square)
+            self.selecting_square = None
 
     def on_key_pressed(self, symbol, modifiers):
         """
@@ -895,7 +942,7 @@ class UserInterface:
         computer = self.selected_object.computer
         self.send_direct_ping(computer, computer)
 
-    def showcase_running_stp(self):
+    def _showcase_running_stp(self):
         """
         Displays the roots of all STP processes that are running. (circles the roots with a yellow circle)
         :return: None
@@ -1118,11 +1165,11 @@ class UserInterface:
         :return: None
         """
         if os.path.isfile(os.path.join(SAVES_DIR, f"{filename}.json")):
-            YesNoPopupWindow("file exists! override?", self, yes_action=with_args(self._save_to_file, filename))
+            YesNoPopupWindow("file exists! override?", self, yes_action=with_args(self.save_to_file, filename))
         else:
-            self._save_to_file(filename)
+            self.save_to_file(filename)
 
-    def _save_to_file(self, filename):
+    def save_to_file(self, filename):
         """
         Save the state of the simulation to a file named filename
         :param filename:

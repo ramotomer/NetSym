@@ -4,7 +4,7 @@ from consts import *
 from gui.abstracts.graphics_object import GraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
-from gui.shape_drawing import draw_rect_no_fill
+from gui.shape_drawing import draw_rectangle
 
 
 class ImageGraphics(GraphicsObject):
@@ -23,6 +23,34 @@ class ImageGraphics(GraphicsObject):
         self.is_image = True
 
         MainLoop.instance.register_graphics_object(self, is_in_background)
+
+    @property
+    def width(self):
+        return self.sprite.width
+
+    @property
+    def height(self):
+        return self.sprite.height
+
+    @property
+    def size(self):
+        return self.width, self.height
+
+    @property
+    def corners(self):
+        if not self.centered:
+            return {
+                (self.x, self.y),
+                (self.x + self.width, self.y),
+                (self.x, self.y + self.height),
+                (self.x + self.width, self.y + self.height),
+            }
+        return {
+            (self.x - (self.width / 2), self.y - (self.height / 2)),
+            (self.x - (self.width / 2), self.y + (self.height / 2)),
+            (self.x + (self.width / 2), self.y - (self.height / 2)),
+            (self.x + (self.width / 2), self.y + (self.height / 2)),
+        }
 
     @staticmethod
     def get_image_sprite(image_name, x=0, y=0, is_opaque=False, scale_factor=VIEWING_OBJECT_SCALE_FACTOR):
@@ -93,7 +121,13 @@ class ImageGraphics(GraphicsObject):
         x, y = self.x, self.y
         if self.centered:
             x, y = self.get_centered_coordinates()
-        draw_rect_no_fill(x - SELECTED_OBJECT_PADDING, y - SELECTED_OBJECT_PADDING, self.sprite.width + (2 * SELECTED_OBJECT_PADDING), self.sprite.height + (2 * SELECTED_OBJECT_PADDING))
+        draw_rectangle(
+            x - SELECTED_OBJECT_PADDING,
+            y - SELECTED_OBJECT_PADDING,
+            self.sprite.width + (2 * SELECTED_OBJECT_PADDING),
+            self.sprite.height + (2 * SELECTED_OBJECT_PADDING),
+            outline_color=TURQUOISE,
+        )
 
     def start_viewing(self, user_interface):
         """

@@ -123,8 +123,11 @@ class MainWindow(pyglet.window.Window):
 
             if object_the_mouse_is_on is not None:
                 mouse_x, mouse_y = self.get_mouse_location()
-                object_x, object_y = object_the_mouse_is_on.location
-                self.user_interface.dragging_point = object_x - mouse_x, object_y - mouse_y
+                for object_ in self.user_interface.marked_objects + [object_the_mouse_is_on]:
+                    object_x, object_y = object_.location
+                    self.user_interface.dragging_points[object_] = object_x - mouse_x, object_y - mouse_y
+            else:
+                self.user_interface.marked_objects.clear()
 
     def on_mouse_release(self, x, y, button, modifiers):
         """
@@ -135,6 +138,7 @@ class MainWindow(pyglet.window.Window):
         :param modifiers:
         :return:
         """
+        self.user_interface.on_mouse_release()
         self.mouse_pressed = False
         self.user_interface.dragged_object = None
 

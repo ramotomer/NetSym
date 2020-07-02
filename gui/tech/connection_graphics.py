@@ -7,7 +7,7 @@ from gui.abstracts.graphics_object import GraphicsObject
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_line
-from gui.shape_drawing import draw_rect_no_fill
+from gui.shape_drawing import draw_rectangle
 from usefuls import distance
 from usefuls import with_args, get_the_one
 
@@ -150,8 +150,13 @@ class ConnectionGraphics(GraphicsObject):
         """
         start_x, start_y, end_x, end_y = self.get_coordinates()
         x, y = (start_x + end_x) / 2, (start_y + end_y) / 2
-        draw_rect_no_fill(x - 2*SELECTED_OBJECT_PADDING, y - 2*SELECTED_OBJECT_PADDING,
-                          (4 * SELECTED_OBJECT_PADDING), (4 * SELECTED_OBJECT_PADDING))
+        draw_rectangle(
+            x - 2*SELECTED_OBJECT_PADDING,
+            y - 2*SELECTED_OBJECT_PADDING,
+            (4 * SELECTED_OBJECT_PADDING),
+            (4 * SELECTED_OBJECT_PADDING),
+            outline_color=WHITE,
+        )
 
     def draw(self):
         """
