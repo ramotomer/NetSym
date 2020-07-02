@@ -22,6 +22,7 @@ from gui.shape_drawing import draw_circle
 from gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from gui.tech.computer_graphics import ComputerGraphics
 from gui.tech.interface_graphics import InterfaceGraphics
+from gui.tech.packet_graphics import PacketGraphics
 from gui.user_interface.button import Button
 from gui.user_interface.popup_windows.device_creation_window import DeviceCreationWindow
 from gui.user_interface.popup_windows.popup_error import PopupError
@@ -427,7 +428,7 @@ class UserInterface:
         if self.mode == MODES.SIMULATION:
             self.selecting_square = SelectingSquare(
                 *MainWindow.main_window.get_mouse_location(),
-                MainLoop.instance.graphics_objects_of_types(ComputerGraphics),
+                MainLoop.instance.graphics_objects_of_types(ComputerGraphics, PacketGraphics),
                 self,
             )
 
