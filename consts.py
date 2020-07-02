@@ -221,29 +221,22 @@ class WINDOWS:
         STACKING_PADDING = 10, -10
 
         class TEXTBOX:
-            global MAIN
+            global MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT
 
             WIDTH = 400
             HEIGHT = 170
-            COORDINATES = (MAIN.WIDTH / 2) - (WIDTH / 2), (MAIN.HEIGHT / 2) - (HEIGHT / 2)
+            COORDINATES = (437.5, 215.0)
             UPPER_PART_HEIGHT = 30
             COLOR = COLORS.GRAY
             OUTLINE_COLOR = COLORS.LIGHT_BLUE
 
         class SUBMIT_BUTTON:
-            global TEXTBOX
-
             WIDTH = 100
-            PADDING = (TEXTBOX.WIDTH / 2) - (WIDTH / 2), 8
-            COORDINATES = tuple(map(sum, zip(TEXTBOX.COORDINATES, PADDING)))
+            PADDING = 200 - (WIDTH / 2), 8
+            COORDINATES = tuple(map(sum, zip((437.5, 215.0), PADDING)))
 
-        class YES_BUTTON:
-            global SUBMIT_BUTTON
-            COORDINATES = tuple(map(sum, zip(SUBMIT_BUTTON.COORDINATES, (-SUBMIT_BUTTON.WIDTH, 0))))
-
-        class NO_BUTTON:
-            global SUBMIT_BUTTON
-            COORDINATES = tuple(map(sum, zip(SUBMIT_BUTTON.COORDINATES, (SUBMIT_BUTTON.WIDTH, 0))))
+        YES_BUTTON_COORDINATES = tuple(map(sum, zip(SUBMIT_BUTTON.COORDINATES, (-SUBMIT_BUTTON.WIDTH, 0))))
+        NO_BUTTON_COORDINATES = tuple(map(sum, zip(SUBMIT_BUTTON.COORDINATES, (SUBMIT_BUTTON.WIDTH, 0))))
 
         class DEVICE_CREATION:
             BUTTON_SIZE = 80
@@ -313,19 +306,9 @@ class IMAGES:
         INTERNET = "computers/cloud.png"
 
     class VIEW:
-        global SIZE, SCALE_FACTORS
-
         CONNECTION = "viewing_items/connection_view.png"
         WIRELESS_CONNECTION = "viewing_items/wireless_connection_view.png"
         INTERFACE = "viewing_items/interface_view.png"
-
-        IMAGE_COORDINATES = \
-            ((WINDOWS.MAIN.WIDTH - (WINDOWS.SIDE.WIDTH / 2)) - (SIZE * SCALE_FACTORS.VIEWING_OBJECTS / 2)), \
-            WINDOWS.MAIN.HEIGHT - ((SIZE * SCALE_FACTORS.VIEWING_OBJECTS) + 15)
-
-        TEXT_COORDINATES = (WINDOWS.MAIN.WIDTH - (WINDOWS.SIDE.WIDTH / 2)), IMAGE_COORDINATES[1] + 40
-
-        PIXELS_PER_SCROLL = 20
 
     class PROCESSES:
         PADDING = 20, -15
@@ -335,6 +318,15 @@ class IMAGES:
         HIGH = 35
         MEDIUM = 100
         LOW = 255
+
+
+class VIEW:
+    IMAGE_COORDINATES = \
+        ((WINDOWS.MAIN.WIDTH - (WINDOWS.SIDE.WIDTH / 2)) - (IMAGES.SIZE * IMAGES.SCALE_FACTORS.VIEWING_OBJECTS / 2)), \
+        WINDOWS.MAIN.HEIGHT - ((IMAGES.SIZE * IMAGES.SCALE_FACTORS.VIEWING_OBJECTS) + 15)
+
+    TEXT_COORDINATES = (WINDOWS.MAIN.WIDTH - (WINDOWS.SIDE.WIDTH / 2)), IMAGE_COORDINATES[1] + 40
+    PIXELS_PER_SCROLL = 20
 
 
 class ANIMATIONS:
@@ -461,7 +453,7 @@ class MODES:
 
 
 class CONSOLE:
-    X, Y = IMAGES.VIEW.TEXT_COORDINATES[0] - 105, 10
+    X, Y = VIEW.TEXT_COORDINATES[0] - 105, 10
     WIDTH = WINDOWS.SIDE.WIDTH - 20
     HEIGHT = 3 * (WIDTH / 4)
     FONT_SIZE = 8

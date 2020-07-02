@@ -18,14 +18,14 @@ class YesNoPopupWindow(PopupWindow):
         """
         buttons = [
             Button(
-                *WINDOWS.POPUP.YES_BUTTON.COORDINATES,
+                *WINDOWS.POPUP.YES_BUTTON_COORDINATES,
                 called_in_order(yes_action, self.delete),
                 "yes",
                 width=WINDOWS.POPUP.SUBMIT_BUTTON.WIDTH,
                 key=(key.ENTER, MODIFIERS.NONE),
             ),
             Button(
-                *WINDOWS.POPUP.NO_BUTTON.COORDINATES,
+                *WINDOWS.POPUP.NO_BUTTON_COORDINATES,
                 called_in_order(no_action, self.delete),
                 "no",
                 width=WINDOWS.POPUP.SUBMIT_BUTTON.WIDTH,

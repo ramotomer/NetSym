@@ -168,7 +168,7 @@ class UserInterface:
         ]
         self.buttons = {}
         # ^ a dictionary in the form, {button_id: [list of `Button` objects]}
-        self.showing_buttons_id = MAIN_BUTTONS_ID
+        self.showing_buttons_id = BUTTONS.MAIN_MENU.ID
         self.scrolled_view = None
         self.debug_counter = 0
 
@@ -260,13 +260,13 @@ class UserInterface:
 
         sprite, text, buttons_id = graphics_object.start_viewing(self)
         if sprite is not None:
-            sprite.update(*IMAGES.VIEW.IMAGE_COORDINATES)
+            sprite.update(*VIEW.IMAGE_COORDINATES)
             MainLoop.instance.insert_to_loop(sprite.draw)
 
             if graphics_object.is_packet:
                 text = self.packet_from_graphics_object(graphics_object).multiline_repr()
 
-        x, y = IMAGES.VIEW.TEXT_COORDINATES
+        x, y = VIEW.TEXT_COORDINATES
         self.object_view = ObjectView(sprite, Text(text, x, y, max_width=WINDOWS.SIDE.WIDTH), graphics_object)
         self.adjust_viewed_text_to_buttons(buttons_id + 1)
 
@@ -280,7 +280,7 @@ class UserInterface:
             raise WrongUsageError("Only call this in VIEW MODE")
 
         try:
-            self.object_view.text.y = IMAGES.VIEW.TEXT_COORDINATES[1] - ((len(self.buttons[buttons_id]) + 0.5) *
+            self.object_view.text.y = VIEW.TEXT_COORDINATES[1] - ((len(self.buttons[buttons_id]) + 0.5) *
                                                                      BUTTONS.DEFAULT_HEIGHT) - self.scrolled_view
         except KeyError:
             pass
@@ -314,10 +314,10 @@ class UserInterface:
             )
 
         sprite, text_graphics, viewed_object = self.object_view
-        if scroll_count < 0 or self.scrolled_view <= -scroll_count * IMAGES.VIEW.PIXELS_PER_SCROLL:
-            self.scrolled_view += scroll_count * IMAGES.VIEW.PIXELS_PER_SCROLL
+        if scroll_count < 0 or self.scrolled_view <= -scroll_count * VIEW.PIXELS_PER_SCROLL:
+            self.scrolled_view += scroll_count * VIEW.PIXELS_PER_SCROLL
 
-            sprite.y = IMAGES.VIEW.IMAGE_COORDINATES[1] - self.scrolled_view
+            sprite.y = VIEW.IMAGE_COORDINATES[1] - self.scrolled_view
             self.adjust_viewed_text_to_buttons(self.showing_buttons_id)
 
             for buttons_id in self.buttons:
@@ -354,7 +354,7 @@ class UserInterface:
         `MainWindow.main_window` is still uninitiated so it cannot register the graphics objects of the buttons.
         :return: None
         """
-        self.buttons[MAIN_BUTTONS_ID] = [Button(*args, **kwargs) for args, kwargs in self.button_arguments]
+        self.buttons[BUTTONS.MAIN_MENU.ID] = [Button(*args, **kwargs) for args, kwargs in self.button_arguments]
 
     def set_mode(self, new_mode):
         """
@@ -369,7 +369,7 @@ class UserInterface:
         if new_mode == MODES.VIEW:
             self.end_object_view()
             self.mode = new_mode
-            self.hide_buttons(MAIN_BUTTONS_ID)
+            self.hide_buttons(BUTTONS.MAIN_MENU.ID)
             if not self.selected_object.can_be_viewed:
                 raise WrongUsageError(
                     "The new_mode should not be switched to view new_mode when the selected object cannot be viewed"
@@ -380,7 +380,7 @@ class UserInterface:
             self.mode = new_mode
             self.end_object_view()
             self.selected_object = None
-            self.show_buttons(MAIN_BUTTONS_ID)
+            self.show_buttons(BUTTONS.MAIN_MENU.ID)
 
     def toggle_mode(self, mode):
         """
