@@ -34,10 +34,6 @@ class InterfaceGraphics(GraphicsObject):
         self.buttons_id = None
 
     @property
-    def location(self):
-        return self.real_x, self.real_y
-
-    @property
     def computer_location(self):
         return self.computer_graphics.location
 

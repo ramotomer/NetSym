@@ -394,7 +394,7 @@ class BUTTONS:
         return (WINDOWS.MAIN.WIDTH - WINDOWS.SIDE.WIDTH + 20), \
                (WINDOWS.MAIN.HEIGHT - 90 - (button_index * BUTTONS.DEFAULT_HEIGHT))
 
-    class ON_POPUP_WINDOW:
+    class ON_POPUP_WINDOWS:
         ID = -1
 
     class MAIN_MENU:
