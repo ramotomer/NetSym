@@ -1,7 +1,7 @@
 from address.mac_address import MACAddress
 from computing.computer import Computer
 from computing.interface import Interface
-from consts import *
+from consts import OS, PROTOCOLS, IMAGES
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.stp import STP, LogicalLinkControl
 from processes.stp_process import STPProcess
@@ -17,14 +17,14 @@ class Switch(Computer):
     The switch has a table that helps it learn which MAC address sits behind which leg and so it knows where to send
     the packet (frame) it receives, this table is called the `switching_table`.
     """
-    def __init__(self, name=None, priority=DEFAULT_SWITCH_PRIORITY):
+    def __init__(self, name=None, priority=PROTOCOLS.STP.DEFAULT_SWITCH_PRIORITY):
         """
         Initiates the Switch with a given name.
         A switch has a variable `self.is_hub` that allows any switch to become a hub.
 
         :param name: a string that will be the name of the switch. If `None`, it is randomized.
         """
-        super(Switch, self).__init__(name, OS_LINUX, None)
+        super(Switch, self).__init__(name, OS.LINUX, None)
 
         self.is_hub = False
 
@@ -39,7 +39,7 @@ class Switch(Computer):
         :param y: coordinates of the computer image.
         :return: None
         """
-        self.graphics = ComputerGraphics(x, y, self, SWITCH_IMAGE)
+        self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.SWITCH)
 
     def is_for_me(self, packet):
         """
@@ -102,7 +102,7 @@ class Hub(Switch):
         :param y:  coordinates that the image will have.
         :return: None
         """
-        self.graphics = ComputerGraphics(x, y, self, HUB_IMAGE)
+        self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.HUB)
 
 
 class Antenna(Switch):
@@ -121,4 +121,4 @@ class Antenna(Switch):
         :param y:  coordinates that the image will have.
         :return: None
         """
-        self.graphics = ComputerGraphics(x, y, self, ANTENNA_IMAGE)
+        self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.ANTENNA)

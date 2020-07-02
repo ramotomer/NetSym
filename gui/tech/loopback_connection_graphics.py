@@ -29,7 +29,7 @@ class LoopbackConnectionGraphics(ConnectionGraphics):
     def is_mouse_in(self):
         return False
 
-    def get_coordinates(self, direction=PACKET_GOING_RIGHT):
+    def get_coordinates(self, direction=PACKET.DIRECTION.RIGHT):
         """Returns the start and end coordinates of the connection (both are self.computer_graphics.location)"""
         return (*self.computer_graphics.location, *self.computer_graphics.location)
 

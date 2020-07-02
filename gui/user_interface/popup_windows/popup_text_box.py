@@ -36,14 +36,14 @@ class PopupTextBox(PopupWindow):
             It should be a function that receives one string argument (the inserted string) and returns None.
         """
         submit_button = Button(
-            *SUBMIT_BUTTON_COORDINATES,
+            *WINDOWS.POPUP.SUBMIT_BUTTON.COORDINATES,
             self.submit,
             "SUBMIT",
-            width=SUBMIT_BUTTON_WIDTH,
+            width=WINDOWS.POPUP.SUBMIT_BUTTON.WIDTH,
             key=(key.ENTER, NO_MODIFIER),
         )
 
-        super(PopupTextBox, self).__init__(*TEXTBOX_COORDINATES,
+        super(PopupTextBox, self).__init__(*WINDOWS.POPUP.TEXTBOX.COORDINATES,
                                            text=text,
                                            user_interface=user_interface,
                                            buttons=[submit_button],
@@ -54,7 +54,7 @@ class PopupTextBox(PopupWindow):
         self.action = action
 
         written_text = Text('', information_text.x, information_text.y - 35,
-                            information_text, padding=(0, -35), max_width=TEXTBOX_WIDTH)
+                            information_text, padding=(0, -35), max_width=WINDOWS.POPUP.TEXTBOX.WIDTH)
 
         self.child_graphics_objects = ChildGraphicsObjects(
             title_text,

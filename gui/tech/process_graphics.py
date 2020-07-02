@@ -85,7 +85,7 @@ class ProcessGraphics(ImageGraphics):
         :param :
         :param :
         """
-        super(ProcessGraphics, self).__init__(os.path.join(IMAGES_DIR, PORT_NUMBER_TO_IMAGE[port]), *server_graphics.location, True, scale_factor=PROCESS_IMAGE_SCALE_FACTOR)
+        super(ProcessGraphics, self).__init__(os.path.join(DIRECTORIES.IMAGES, PORTS.TO_IMAGES[port]), *server_graphics.location, True, scale_factor=IMAGES.SCALE_FACTORS.PROCESSES)
         self.server_graphics = server_graphics
         self.process_index = process_index
         self.port = port
@@ -99,9 +99,9 @@ class ProcessGraphics(ImageGraphics):
         Moves the process according to the location of the server it runs on.
         :return: None
         """
-        pad_x, pad_y = PROCESS_IMAGE_PADDING
+        pad_x, pad_y = IMAGES.PROCESSES.PADDING
         self.x = self.server_graphics.x + pad_x
-        self.y = self.server_graphics.y + pad_y + (self.process_index * PROCESS_IMAGE_GAP)
+        self.y = self.server_graphics.y + pad_y + (self.process_index * IMAGES.PROCESSES.GAP)
         super(ProcessGraphics, self).move()
 
     def __repr__(self):

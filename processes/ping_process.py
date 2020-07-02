@@ -1,4 +1,4 @@
-from consts import *
+from consts import OPCODES
 from exceptions import NoIPAddressError
 from processes.process import Process, WaitingForPacket, ReturnedPacket, WaitingFor
 
@@ -7,7 +7,7 @@ class SendPing(Process):
     """
     This is a process for sending a ping request to another computer and receiving the reply.
     """
-    def __init__(self, computer, ip_address, opcode=ICMP_REQUEST):
+    def __init__(self, computer, ip_address, opcode=OPCODES.ICMP.REQUEST):
         super(SendPing, self).__init__(computer)
         self.dst_ip = ip_address
         self.ping_opcode = opcode
@@ -33,12 +33,12 @@ class SendPing(Process):
         """
         def tester(packet):
             if "ICMP" in packet:
-                if packet["ICMP"].opcode == ICMP_REPLY:
+                if packet["ICMP"].opcode == OPCODES.ICMP.REPLY:
                     if packet["IP"].src_ip == ip_address:
                         return True
                     if self.computer.has_this_ip(self.dst_ip) and packet["IP"].src_ip == self.computer.loopback.ip:
                         return True
-                if packet["ICMP"].opcode == ICMP_UNREACHABLE:
+                if packet["ICMP"].opcode == OPCODES.ICMP.UNREACHABLE:
                     return True
             return False
         return tester
@@ -48,7 +48,7 @@ class SendPing(Process):
         Receives the `ReturnedOutput` object that was received and prints out to the `Console` an appropriate message
         """
         packet = returned_packet.packet
-        if packet["ICMP"].opcode == ICMP_UNREACHABLE:
+        if packet["ICMP"].opcode == OPCODES.ICMP.UNREACHABLE:
             self.computer.print("destination unreachable :(")
         else:
             self.computer.print("ping reply!")
@@ -59,7 +59,7 @@ class SendPing(Process):
         If the address is unknown, first it sends an ARP and waits for a reply.
         :return: a generator of `WaitingForPacket` namedtuple-s.
         """
-        if self.ping_opcode == ICMP_REQUEST:
+        if self.ping_opcode == OPCODES.ICMP.REQUEST:
             self.computer.print(f"pinging {self.dst_ip} with some bytes")
 
         ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip, self)
@@ -67,7 +67,7 @@ class SendPing(Process):
 
         self._send_the_ping(ip_for_the_mac)
 
-        if self.ping_opcode == ICMP_REQUEST:
+        if self.ping_opcode == OPCODES.ICMP.REQUEST:
             returned_packet = ReturnedPacket()
             yield WaitingForPacket(self.ping_reply_from(self.dst_ip), returned_packet)
             self._print_output(returned_packet)

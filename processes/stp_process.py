@@ -48,7 +48,7 @@ class STPProcess(Process):
         self.last_sending_time = MainLoop.instance.time()
         self.last_port_blocking_time = MainLoop.instance.time()
 
-        self.sending_interval = STP_NORMAL_SENDING_INTERVAL
+        self.sending_interval = PROTOCOLS.STP.NORMAL_SENDING_INTERVAL
         self.tree_stable = False
 
     @property
@@ -100,7 +100,7 @@ class STPProcess(Process):
         :param receiving_port: The `Interface` that received the STP packet.
         :return: None
         """
-        if MainLoop.instance.time_since(root_declaration_time) > ROOT_MAX_DISAPPEARING_TIME:
+        if MainLoop.instance.time_since(root_declaration_time) > PROTOCOLS.STP.ROOT_MAX_DISAPPEARING_TIME:
             return
 
         self.root_bid = new_root_bid
@@ -138,22 +138,22 @@ class STPProcess(Process):
         :param interface: an `Interface` object of the switch.
         :return: None
         """
-        self.stp_ports[interface] = STPPort(interface, NO_STATE, 0, MainLoop.instance.time())
+        self.stp_ports[interface] = STPPort(interface, PROTOCOLS.STP.NO_STATE, 0, MainLoop.instance.time())
 
     def _set_state(self, port, state):
         """
         Sets the state of an stp interface. They can be ROOT_PORT, DESIGNATED_PORT or BLOCKED_PORT.
-        :param other_port: the `Interface` object
+        :param port: the `Interface` object
         :param state: the new state that is should have. (ROOT_PORT, DESIGNATED_PORT or BLOCKED_PORT.)
         :return: None
         """
         if port not in self.stp_ports:
             raise NoSuchInterfaceError("The other_port is not an STP other_port!!!!")
 
-        if state == ROOT_PORT:
+        if state == PROTOCOLS.STP.ROOT_PORT:
             for other_port in self.stp_ports:
-                if self.stp_ports[other_port].state == ROOT_PORT:
-                    self.stp_ports[other_port].state = NO_STATE                    # there can only be one ROOT_PORT at a time!
+                if self.stp_ports[other_port].state == PROTOCOLS.STP.ROOT_PORT:
+                    self.stp_ports[other_port].state = PROTOCOLS.STP.NO_STATE                    # there can only be one ROOT_PORT at a time!
 
         self.stp_ports[port].state = state
 
@@ -181,13 +181,13 @@ class STPProcess(Process):
         """Sets the states of the ports of the switch (ROOT, DESIGNATED or BLOCKED)"""
         for port in self.stp_ports:
             if self._is_root_port(port):
-                self._set_state(port, ROOT_PORT)
+                self._set_state(port, PROTOCOLS.STP.ROOT_PORT)
 
             elif self._is_designated(port):
-                self._set_state(port, DESIGNATED_PORT)
+                self._set_state(port, PROTOCOLS.STP.DESIGNATED_PORT)
 
             else:  # the port will be blocked, since it has no state!
-                self._set_state(port, BLOCKED_PORT)
+                self._set_state(port, PROTOCOLS.STP.BLOCKED_PORT)
 
     def get_info(self):
         """For debugging, returns some information about the state of the STP process on the switch."""
@@ -210,7 +210,7 @@ class STPProcess(Process):
 
     def _root_disappeared(self):
         """Returns whether or not the root has disappeared and did not report for a long time"""
-        return MainLoop.instance.time_since(self.root_declaration_time) > ROOT_MAX_DISAPPEARING_TIME
+        return MainLoop.instance.time_since(self.root_declaration_time) > PROTOCOLS.STP.ROOT_MAX_DISAPPEARING_TIME
 
     def _port_disappeared(self, port):
         """
@@ -218,18 +218,18 @@ class STPProcess(Process):
         If it has not, it should be removed from the STP interfaces list.
         :param port: a key in the `self.stp_ports` dictionary.
         """
-        return MainLoop.instance.time_since(self.stp_ports[port].last_time_got_packet) > MAX_CONNECTION_DISAPPEARED_TIME
+        return MainLoop.instance.time_since(self.stp_ports[port].last_time_got_packet) > PROTOCOLS.STP.MAX_CONNECTION_DISAPPEARED_TIME
 
     def _block_blocked_ports(self):
         """Blocks the `BLOCKED_PORT`-s and unblocks the other ones."""
-        if MainLoop.instance.time_since(self.last_port_blocking_time) < BLOCKED_INTERFACE_UPDATE_INTERVAL:
+        if MainLoop.instance.time_since(self.last_port_blocking_time) < PROTOCOLS.STP.BLOCKED_INTERFACE_UPDATE_INTERVAL:
             return
 
         self.last_port_blocking_time = MainLoop.instance.time()
         for port in self.stp_ports:
-            if self.stp_ports[port].state == BLOCKED_PORT and not port.is_blocked:
+            if self.stp_ports[port].state == PROTOCOLS.STP.BLOCKED_PORT and not port.is_blocked:
                 port.block(accept="STP")
-            if self.stp_ports[port].state != BLOCKED_PORT and port.is_blocked:
+            if self.stp_ports[port].state != PROTOCOLS.STP.BLOCKED_PORT and port.is_blocked:
                 port.unblock()
 
     def _tree_is_probably_stable(self):
@@ -238,7 +238,7 @@ class STPProcess(Process):
         It decreases the sending rate, and moves to hello packets
         """
         if not self.tree_stable:
-            self.sending_interval = STP_STABLE_SENDING_INTERVAL
+            self.sending_interval = PROTOCOLS.STP.STABLE_SENDING_INTERVAL
             self.tree_stable = True
             self.computer.print("STP Tree stable!")
 
@@ -250,7 +250,7 @@ class STPProcess(Process):
         """
         self.computer.print("STP Tree unstable!")
         self.tree_stable = False
-        self.sending_interval = STP_NORMAL_SENDING_INTERVAL
+        self.sending_interval = PROTOCOLS.STP.NORMAL_SENDING_INTERVAL
 
     def _recalculate_root(self):
         """Restarts the root calculation process with itself as the new root"""
@@ -315,7 +315,7 @@ class STPProcess(Process):
 
             self._set_interface_states()
 
-            if self._root_not_updated_for(seconds=TREE_STABLIZING_MAX_TIME):
+            if self._root_not_updated_for(seconds=PROTOCOLS.STP.TREE_STABLIZING_MAX_TIME):
                 self._block_blocked_ports()
                 self._tree_is_probably_stable()
 

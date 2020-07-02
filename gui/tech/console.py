@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from consts import *
+from consts import CONSOLE, COLORS
 from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_loop import MainLoop
 from gui.shape_drawing import draw_rectangle
@@ -28,12 +28,12 @@ class Console(UserInterfaceGraphicsObject):
         self.child_graphics_objects = ChildGraphicsObjects(
             Text(
                 self._text, x, y, self,
-                padding=((CONSOLE_WIDTH / 2) + 2, CONSOLE_HEIGHT),
+                padding=((CONSOLE.WIDTH / 2) + 2, CONSOLE.HEIGHT),
                 start_hidden=True,
-                font_size=CONSOLE_FONT_SIZE,
-                max_width=CONSOLE_WIDTH,
+                font_size=CONSOLE.FONT_SIZE,
+                max_width=CONSOLE.WIDTH,
                 align='left',
-                color=GRAY,
+                color=COLORS.GRAY,
             )
         )
 
@@ -43,7 +43,7 @@ class Console(UserInterfaceGraphicsObject):
         :return: None
         """
         if not self.is_hidden:
-            draw_rectangle(self.x, self.y, CONSOLE_WIDTH, CONSOLE_HEIGHT, color=VERY_LIGHT_GRAY)
+            draw_rectangle(self.x, self.y, CONSOLE.WIDTH, CONSOLE.HEIGHT, color=COLORS.VERY_LIGHT_GRAY)
 
     def show(self):
         """
@@ -81,14 +81,14 @@ class Console(UserInterfaceGraphicsObject):
         :param text: a string
         :return: None
         """
-        return ((len(text) * CONSOLE_CHAR_WIDTH) // CONSOLE_WIDTH) + 1
+        return ((len(text) * CONSOLE.CHAR_WIDTH) // CONSOLE.WIDTH) + 1
 
     def is_full(self):
         """
         Returns whether or not the console is full (and should go down a line)
         """
-        text_height = sum([self.num_lines(line) for line in self._text.split('\n')]) * CONSOLE_LINE_HEIGHT
-        return text_height > CONSOLE_HEIGHT
+        text_height = sum([self.num_lines(line) for line in self._text.split('\n')]) * CONSOLE.LINE_HEIGHT
+        return text_height > CONSOLE.HEIGHT
 
     def write(self, text):
         """

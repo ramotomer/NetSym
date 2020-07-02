@@ -1,5 +1,5 @@
 from address.ip_address import IPAddress
-from consts import *
+from consts import OPCODES
 from exceptions import *
 from packets.dhcp import DHCPData
 from processes.process import Process, WaitingForPacket, ReturnedPacket
@@ -102,7 +102,7 @@ class DHCPServer(Process):
 
         self.in_session_with = {}  # {mac : offered_ip}
 
-        self.actions = {DHCP_DISCOVER: self.send_offer, DHCP_REQUEST: self.send_pack}
+        self.actions = {OPCODES.DHCP.DISCOVER: self.send_offer, OPCODES.DHCP.REQUEST: self.send_pack}
         # ^ a dictionary of what to do with any packet that is received to this process.
 
     def update_server_data(self):

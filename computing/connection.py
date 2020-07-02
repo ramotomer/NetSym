@@ -31,7 +31,7 @@ class Connection:
     The `Connection` object keeps references to its two `ConnectionSide` objects. These are nice interfaces for
         the `Interface` object to talk to its connection.
     """
-    def __init__(self, length=DEFAULT_CONNECTION_LENGTH, speed=DEFAULT_CONNECTION_SPEED, packet_loss=0, is_wireless=False):
+    def __init__(self, length=CONNECTIONS.DEFAULT_LENGTH, speed=CONNECTIONS.DEFAULT_SPEED, packet_loss=0, is_wireless=False):
         """
         Initiates a Connection object.
 
@@ -107,7 +107,7 @@ class Connection:
         :return: None
         """
         if any(side.is_blocked for side in self.get_sides()):
-            self.graphics.color = BLOCKED_CONNECTION_COLOR
+            self.graphics.color = CONNECTIONS.BLOCKED_COLOR
             self.is_blocked = True
 
     def mark_as_unblocked(self):
@@ -125,7 +125,7 @@ class Connection:
         Add a packet that was sent on one of the `ConnectionSide`-s to the `self.sent_packets` list.
         This method starts the motion of the packet through the connection.
         :param packet: a `Packet` object
-        :param direction: the direction the packet is going to (PACKET_GOING_RIGHT or PACKET_GOING_LEFT)
+        :param direction: the direction the packet is going to (PACKET.DIRECTION.RIGHT or PACKET.DIRECTION.LEFT)
         :return: None
         """
         is_dropped = (random.random() < self.packet_loss)
@@ -142,9 +142,9 @@ class Connection:
         """
         packet, _, direction, _ = sent_packet
         MainLoop.instance.unregister_graphics_object(packet.graphics)
-        if direction == PACKET_GOING_RIGHT:
+        if direction == PACKET.DIRECTION.RIGHT:
             self.right_side.packets_to_receive.append(packet)
-        elif direction == PACKET_GOING_LEFT:
+        elif direction == PACKET.DIRECTION.LEFT:
             self.left_side.packets_to_receive.append(packet)
         else:
             raise WrongUsageError('The packet can only go left or right!')
@@ -160,7 +160,7 @@ class Connection:
         if side not in self.get_sides():
             raise NoSuchConnectionSideError()
 
-        direction = PACKET_GOING_LEFT if side is self.right_side else PACKET_GOING_RIGHT
+        direction = PACKET.DIRECTION.LEFT if side is self.right_side else PACKET.DIRECTION.RIGHT
         if side.is_sending():
             for packet in side.packets_to_send:
                 self.add_packet(packet, direction)

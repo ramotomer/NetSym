@@ -1,6 +1,6 @@
 import random
 
-from consts import *
+from consts import ADDRESSES
 from exceptions import *
 from usefuls import is_hex
 
@@ -21,11 +21,11 @@ class MACAddress:
             raise InvalidAddressError(f"This address is not a valid MAC address: {string_mac}")
         self.string_mac = string_mac
         self.__class__.generated_addresses.append(string_mac)
-        self.vendor = MAC_ADDRESS_SEPARATOR.join(string_mac.split(MAC_ADDRESS_SEPARATOR)[0:3])
+        self.vendor = ADDRESSES.MAC.SEPARATOR.join(string_mac.split(ADDRESSES.MAC.SEPARATOR)[0:3])
 
     def is_broadcast(self):
         """Returns if a MAC address is the broadcast MAC or not"""
-        return self.string_mac == BROADCAST_MAC
+        return self.string_mac == ADDRESSES.MAC.BROADCAST
 
     @classmethod
     def broadcast(cls):
@@ -33,7 +33,7 @@ class MACAddress:
         This is constructor that returns a broadcast MAC address object.
         :return: a MACAddress with the broadcast MAC.
         """
-        return cls(BROADCAST_MAC)
+        return cls(ADDRESSES.MAC.BROADCAST)
 
     @classmethod
     def randomac(cls):
@@ -42,7 +42,7 @@ class MACAddress:
         Returns a different one each time.
         :return: A random string MAC address.
         """
-        randomized_string = MAC_ADDRESS_SEPARATOR.join([hex(random.randint(0, 255))[2:].zfill(2) for _ in range(6)])
+        randomized_string = ADDRESSES.MAC.SEPARATOR.join([hex(random.randint(0, 255))[2:].zfill(2) for _ in range(6)])
         if randomized_string in cls.generated_addresses:
             return cls.randomac()
         cls.generated_addresses.append(randomized_string)
@@ -55,7 +55,7 @@ class MACAddress:
         The STP multicast address.
         :return: `MACAddress` object
         """
-        return cls(STP_MULTICAST_MAC)
+        return cls(ADDRESSES.MAC.STP_MULTICAST)
 
     @classmethod
     def no_mac(cls):
@@ -83,7 +83,7 @@ class MACAddress:
         :param address: The string address
         :return: Whether or not it is valid.
         """
-        splitted_address = address.split(MAC_ADDRESS_SEPARATOR)
+        splitted_address = address.split(ADDRESSES.MAC.SEPARATOR)
         return len(splitted_address) == 6 and all([is_hex(part) and len(part) == 2 for part in splitted_address])
 
     @staticmethod
@@ -93,7 +93,7 @@ class MACAddress:
         :param address: A MACAddress object.
         :return: a `bytes` object which is the representation of the mac address.
         """
-        address_as_numbers = [int(hex_num, 16) for hex_num in address.string_mac.split(MAC_ADDRESS_SEPARATOR)]
+        address_as_numbers = [int(hex_num, 16) for hex_num in address.string_mac.split(ADDRESSES.MAC.SEPARATOR)]
         return bytes(address_as_numbers)
 
     def as_number(self):
@@ -101,7 +101,7 @@ class MACAddress:
         Returns the MAC address as one number (00:11:22:33:44:55:66 -> 0x112233445566)
         :return: an integer which is the MAC address
         """
-        return int(''.join(hex_part for hex_part in self.string_mac.split(MAC_ADDRESS_SEPARATOR)), base=16)
+        return int(''.join(hex_part for hex_part in self.string_mac.split(ADDRESSES.MAC.SEPARATOR)), base=16)
 
     def __eq__(self, other):
         """Determines whether two MAC addresses are equal or not"""

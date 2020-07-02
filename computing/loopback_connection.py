@@ -9,12 +9,12 @@ class LoopbackConnection(Connection):
     This class represents a connection of a loopback interface to itself. It enables its graphical is_showing.
     It only has a left_side, no right_side.
     """
-    def __init__(self, radius=LOOPBACK_CONNECTION_RADIUS):
+    def __init__(self, radius=CONNECTIONS.LOOPBACK.RADIUS):
         """
         Initiates the circular connection
         :param radius: the radius of circle.
         """
-        super(LoopbackConnection, self).__init__(length=DEFAULT_CONNECTION_LENGTH, speed=LOOPBACK_CONNECTION_SPEED)
+        super(LoopbackConnection, self).__init__(length=CONNECTIONS.DEFAULT_LENGTH, speed=CONNECTIONS.LOOPBACK.SPEED)
         self.radius = radius
 
     def get_side(self):

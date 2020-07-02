@@ -1,4 +1,4 @@
-from consts import FTP_REQUEST_PACKET, FTP_DATA_PACKET
+from consts import OPCODES
 from packets.protocol import Protocol
 
 
@@ -21,8 +21,8 @@ class FTP(Protocol):
         :return:
         """
         if self.is_request:
-            return FTP_REQUEST_PACKET
-        return FTP_DATA_PACKET
+            return OPCODES.FTP.REQUEST_PACKET
+        return OPCODES.FTP.DATA_PACKET
 
     def copy(self):
         """

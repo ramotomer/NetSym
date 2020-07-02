@@ -7,9 +7,9 @@ from gui.user_interface.user_interface import UserInterface
 
 if __name__ == '__main__':
     user_interface = UserInterface()
-    main_window = MainWindow(user_interface, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME, resizable=False)
+    main_window = MainWindow(user_interface, WINDOWS.MAIN.WIDTH, WINDOWS.MAIN.HEIGHT, WINDOWS.MAIN.NAME, resizable=False)
     main_loop = MainLoop(main_window)
-    pyglet.clock.schedule_interval(main_window.update, FRAME_RATE)
+    pyglet.clock.schedule_interval(main_window.update, WINDOWS.MAIN.FRAME_RATE)
     pyglet.app.run()
 
     # TODO: make sure no two computers or interfaces have the same name!

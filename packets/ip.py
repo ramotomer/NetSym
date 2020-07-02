@@ -1,5 +1,5 @@
 from address.ip_address import IPAddress
-from consts import *
+from consts import TTL, OS
 from packets.protocol import Protocol
 
 
@@ -7,7 +7,7 @@ class IP(Protocol):
     """
     This class represents the IP layer of a packet.
     """
-    def __init__(self, src_ip, dst_ip, ttl=TTLS[OS_WINDOWS], data=None):
+    def __init__(self, src_ip, dst_ip, ttl=TTL.BY_OS[OS.WINDOWS], data=None):
         """
         Constructs a new IP layer with a given source and destination IP addresses.
         :param src_ip:

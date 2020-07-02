@@ -13,8 +13,9 @@ class Button(UserInterfaceGraphicsObject):
     """
     A class of a button which you can press and assign text and an action to.
     """
-    def __init__(self, x, y, action=lambda: None, text=DEFAULT_BUTTON_TEXT, start_hidden=False,
-                 width=DEFAULT_BUTTON_WIDTH, height=DEFAULT_BUTTON_HEIGHT, key=None, color=GRAY, text_color=PINK):
+    def __init__(self, x, y, action=lambda: None, text=BUTTONS.DEFAULT_TEXT, start_hidden=False,
+                 width=BUTTONS.DEFAULT_WIDTH, height=BUTTONS.DEFAULT_HEIGHT, key=None,
+                 color=COLORS.GRAY, text_color=COLORS.PINK):
         """
         Initiates the button.
         :param x:
@@ -34,10 +35,10 @@ class Button(UserInterfaceGraphicsObject):
         self.width, self.height = width, height
         self.action = action
         self.child_graphics_objects = ChildGraphicsObjects(
-            Text(text, x, y, self, (self.width / 2, self.height / 2 + BUTTON_TEXT_PADDING),
+            Text(text, x, y, self, (self.width / 2, self.height / 2 + BUTTONS.TEXT_PADDING),
                  is_button=True,
                  start_hidden=start_hidden,
-                 max_width=SIDE_WINDOW_WIDTH,
+                 max_width=WINDOWS.SIDE.WIDTH,
                  color=text_color),
         )
         self.key = key
@@ -46,7 +47,7 @@ class Button(UserInterfaceGraphicsObject):
         self.padding = None
 
         self.color = color
-        self.light_color = tuple(rgb + LIGHT_COLOR_DIFF for rgb in color)
+        self.light_color = tuple(rgb + COLORS.LIGHT_COLOR_DIFF for rgb in color)
 
     def set_parent_graphics(self, parent, padding=(0, 0)):
         """

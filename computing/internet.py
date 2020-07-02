@@ -20,4 +20,4 @@
 #         :param y:
 #         :return: None
 #         """
-#         self.graphics = ComputerGraphics(x, y, self, INTERNET_IMAGE, scale_factor=INTERNET_SCALE_FACTOR)
+#         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.INTERNET, scale_factor=IMAGES.SCALE_FACTORS.INTERNET)

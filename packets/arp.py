@@ -1,6 +1,6 @@
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
-from consts import *
+from consts import OPCODES
 from packets.protocol import Protocol
 
 
@@ -25,9 +25,9 @@ class ARP(Protocol):
         self.dst_mac = dst_mac if dst_ip is not None else MACAddress.broadcast()
 
         self.string = f"Who has {dst_ip}? tell {src_ip}!"
-        if self.opcode == ARP_REPLY:
+        if self.opcode == OPCODES.ARP.REPLY:
             self.string = f"{src_ip} is at {src_mac}!"
-        elif self.opcode == ARP_GRAT:
+        elif self.opcode == OPCODES.ARP.GRAT:
             self.string = f"Gratuitous arp at {src_ip}"
 
     @classmethod
@@ -36,7 +36,7 @@ class ARP(Protocol):
         This is a constructor for an 'ARP probe'
         :return: an ARP probe instance
         """
-        return cls(ARP_REQUEST, IPAddress('0.0.0.0/0'), dst_ip, src_mac)
+        return cls(OPCODES.ARP.REQUEST, IPAddress('0.0.0.0/0'), dst_ip, src_mac)
 
     @classmethod
     def create_reply(cls, arp_request, my_mac):
@@ -47,7 +47,7 @@ class ARP(Protocol):
         :param my_mac: My MAC address to insert in the reply object.
         :return: The ARP reply object
         """
-        return cls(ARP_REPLY, arp_request.dst_mac, my_mac, arp_request.dst_ip, arp_request.src_ip)
+        return cls(OPCODES.ARP.REPLY, arp_request.dst_mac, my_mac, arp_request.dst_ip, arp_request.src_ip)
 
     def copy(self):
         """

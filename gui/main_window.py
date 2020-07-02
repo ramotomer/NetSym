@@ -28,7 +28,7 @@ class MainWindow(pyglet.window.Window):
         self.set_location(*INITIAL_WINDOW_LOCATION)
         # ^ window initial location on the screen
 
-        self.mouse_x, self.mouse_y = WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2
+        self.mouse_x, self.mouse_y = WINDOWS.MAIN.WIDTH / 2, WINDOWS.MAIN.HEIGHT / 2
         self.mouse_pressed = False
 
         self.user_interface = user_interface
@@ -82,7 +82,7 @@ class MainWindow(pyglet.window.Window):
         :param scroll_y:  The amount of scrolls in each direction
         :return: None
         """
-        if self.user_interface.is_mouse_in_side_window() and self.user_interface.mode == VIEW_MODE:
+        if self.user_interface.is_mouse_in_side_window() and self.user_interface.mode == MODES.VIEW:
             self.user_interface.scroll_view(scroll_y)
 
     def on_mouse_press(self, x, y, button, modifiers):

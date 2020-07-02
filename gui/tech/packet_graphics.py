@@ -24,11 +24,11 @@ class PacketGraphics(ImageGraphics):
         from the `Connection` class that sent the packet. It updates it in the `Connection.move_packets` method.
         """
         super(PacketGraphics, self).__init__(
-            os.path.join(IMAGES_DIR, self.image_from_packet(deepest_layer)),
+            os.path.join(DIRECTORIES.IMAGES, self.image_from_packet(deepest_layer)),
             connection_graphics.get_computer_coordinates(direction)[0],
             connection_graphics.get_computer_coordinates(direction)[1],
             centered=True,
-            scale_factor=PACKET_SCALE_FACTOR,
+            scale_factor=IMAGES.SCALE_FACTORS.PACKETS,
             is_opaque=is_opaque,
             is_pressable=True,
         )
@@ -63,7 +63,7 @@ class PacketGraphics(ImageGraphics):
         :return: None
         """
         MainLoop.instance.unregister_graphics_object(self)
-        AnimationGraphics(EXPLOSION_ANIMATION, self.x, self.y)
+        AnimationGraphics(ANIMATIONS.EXPLOSION, self.x, self.y)
 
     @staticmethod
     def image_from_packet(layer):
@@ -75,8 +75,8 @@ class PacketGraphics(ImageGraphics):
         """
 
         if hasattr(layer, "opcode"):
-            return PACKET_TYPE_TO_IMAGE[type(layer).__name__][layer.opcode]
-        return PACKET_TYPE_TO_IMAGE[type(layer).__name__]
+            return PACKETS.TYPE_TO_IMAGE[type(layer).__name__][layer.opcode]
+        return PACKETS.TYPE_TO_IMAGE[type(layer).__name__]
 
     def start_viewing(self, user_interface):
         """
@@ -88,7 +88,7 @@ class PacketGraphics(ImageGraphics):
             "Drop (alt+d)": with_args(user_interface.drop_packet, self),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
-        return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), '', self.buttons_id
+        return self.copy_sprite(self.sprite, IMAGES.SCALE_FACTORS.VIEWING_OBJECTS), '', self.buttons_id
 
     def end_viewing(self, user_interface):
         """

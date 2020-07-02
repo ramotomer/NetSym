@@ -12,7 +12,7 @@ class ImageGraphics(GraphicsObject):
     This class is a superclass of any `GraphicsObject` subclass which uses an image in its `draw` method.
     Put simply, it is a graphics object with a picture.
     """
-    def __init__(self, image_name, x, y, centered=False, is_in_background=False, scale_factor=SPRITE_SCALE_FACTOR,
+    def __init__(self, image_name, x, y, centered=False, is_in_background=False, scale_factor=IMAGES.SCALE_FACTORS.SPRITES,
                  is_opaque=False, is_pressable=False):
         super(ImageGraphics, self).__init__(x, y, False, centered, is_in_background, is_pressable=is_pressable)
         self.image_name = image_name
@@ -53,7 +53,7 @@ class ImageGraphics(GraphicsObject):
         }
 
     @staticmethod
-    def get_image_sprite(image_name, x=0, y=0, is_opaque=False, scale_factor=VIEWING_OBJECT_SCALE_FACTOR):
+    def get_image_sprite(image_name, x=0, y=0, is_opaque=False, scale_factor=IMAGES.SCALE_FACTORS.VIEWING_OBJECTS):
         """
         Receives an image_name and x and y coordinates and returns a `pyglet.sprite.Sprite`
         object that can be displayed on the screen.
@@ -64,7 +64,7 @@ class ImageGraphics(GraphicsObject):
         :return: `pyglet.sprite.Sprite` object
         """
         returned = pyglet.sprite.Sprite(pyglet.image.load(image_name), x=x, y=y)
-        returned.opacity = OPAQUE if is_opaque else NOT_OPAQUE
+        returned.opacity = IMAGES.TRANSPARENCY.HICH if is_opaque else IMAGES.TRANSPARENCY.LOW
         returned.update(scale_x=scale_factor, scale_y=scale_factor)
         return returned
 
@@ -83,7 +83,7 @@ class ImageGraphics(GraphicsObject):
 
     def toggle_opacity(self):
         """toggles whether or not the image is opaque"""
-        self.sprite.opacity = A_LITTLE_OPAQUE if self.sprite.opacity == NOT_OPAQUE else NOT_OPAQUE
+        self.sprite.opacity = IMAGES.TRANSPARENCY.MEDIUM if self.sprite.opacity == IMAGES.TRANSPARENCY.LOW else IMAGES.TRANSPARENCY.LOW
 
     def is_mouse_in(self):
         """
@@ -126,7 +126,7 @@ class ImageGraphics(GraphicsObject):
             y - SELECTED_OBJECT_PADDING,
             self.sprite.width + (2 * SELECTED_OBJECT_PADDING),
             self.sprite.height + (2 * SELECTED_OBJECT_PADDING),
-            outline_color=TURQUOISE,
+            outline_color=COLORS.TURQUOISE,
         )
 
     def start_viewing(self, user_interface):
@@ -135,7 +135,7 @@ class ImageGraphics(GraphicsObject):
         when this object is pressed. also returns the added button id in the returned tuple.
         :return:
         """
-        return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), self.generate_view_text(), None
+        return self.copy_sprite(self.sprite, IMAGES.SCALE_FACTORS.VIEWING_OBJECTS), self.generate_view_text(), None
 
     def generate_view_text(self):
         """

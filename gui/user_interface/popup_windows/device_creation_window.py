@@ -13,27 +13,28 @@ class DeviceCreationWindow(PopupWindow):
     """
     This is a popup window that allows you to create a device in your network.
     """
+    # TODO: fix bug, cannot move window!!!
 
     DEVICE_TO_IMAGE = {
-        Computer: (COMPUTER_IMAGE, "(n)"),
-        Switch: (SWITCH_IMAGE, "(s)"),
-        Router: (ROUTER_IMAGE, "(r)"),
-        Hub: (HUB_IMAGE, "(h)"),
-        Antenna: (ANTENNA_IMAGE, "(a)"),
-        # NAT: (NAT_IMAGE, "(alt+n)"),
-        # Internet: (INTERNET_IMAGE, "(alt+i)"),
+        Computer: (IMAGES.COMPUTERS.COMPUTER, "(n)"),
+        Switch: (IMAGES.COMPUTERS.SWITCH, "(s)"),
+        Router: (IMAGES.COMPUTERS.ROUTER, "(r)"),
+        Hub: (IMAGES.COMPUTERS.HUB, "(h)"),
+        Antenna: (IMAGES.COMPUTERS.ANTENNA, "(a)"),
+        # NAT: (IMAGES.COMPUTERS.NAT, "(alt+n)"),
+        # Internet: (IMAGES.COMPUTERS.INTERNET, "(alt+i)"),
     }
 
     def __init__(self, user_interface):
         """
         Initiates the window.
         """
-        width = len(self.DEVICE_TO_IMAGE) * (DEVICE_CREATION_BUTTON_SIZE + DEVICE_CREATION_BUTTON_GAP) - DEVICE_CREATION_BUTTON_GAP
-        height = TEXTBOX_HEIGHT
-        x, y = WINDOW_WIDTH / 2 - width / 2, WINDOW_HEIGHT / 2 - height / 2
+        width = len(self.DEVICE_TO_IMAGE) * (WINDOWS.POPUP.DEVICE_CREATION.BUTTON_SIZE + WINDOWS.POPUP.DEVICE_CREATION.BUTTON_GAP) - WINDOWS.POPUP.DEVICE_CREATION.BUTTON_GAP
+        height = WINDOWS.POPUP.TEXTBOX.HEIGHT
+        x, y = WINDOWS.MAIN.WIDTH / 2 - width / 2, WINDOWS.MAIN.HEIGHT / 2 - height / 2
         buttons = [
             ImageButton(
-                x + i * (DEVICE_CREATION_BUTTON_SIZE + DEVICE_CREATION_BUTTON_GAP),
+                x + i * (WINDOWS.POPUP.DEVICE_CREATION.BUTTON_SIZE + WINDOWS.POPUP.DEVICE_CREATION.BUTTON_GAP),
                 y,
                 called_in_order(
                     with_args(user_interface.create_device, device),
@@ -41,7 +42,7 @@ class DeviceCreationWindow(PopupWindow):
                 ),
                 self.DEVICE_TO_IMAGE[device][0],
                 f"{device.__name__} {self.DEVICE_TO_IMAGE[device][1]}",
-                width=DEVICE_CREATION_BUTTON_SIZE, height=DEVICE_CREATION_BUTTON_SIZE,
+                width=WINDOWS.POPUP.DEVICE_CREATION.BUTTON_SIZE, height=WINDOWS.POPUP.DEVICE_CREATION.BUTTON_SIZE,
                 key=user_interface.key_from_string(self.DEVICE_TO_IMAGE[device][1]),
             ) for i, device in enumerate(self.DEVICE_TO_IMAGE)
         ]
@@ -52,6 +53,6 @@ class DeviceCreationWindow(PopupWindow):
             user_interface,
             buttons,
             width, height,
-            color=PINK,
+            color=COLORS.PINK,
             title="create a device!",
         )
