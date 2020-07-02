@@ -41,7 +41,7 @@ class ConnectionGraphics(GraphicsObject):
         """
         super(ConnectionGraphics, self).__init__(is_in_background=True, is_pressable=True)
         self.computers = Computers(computer_graphics_start, computer_graphics_end)
-        self.regular_color = CONNECTION_COLOR if not packet_loss else PL_CONNECTION_COLOR
+        self.regular_color = CONNECTIONS.COLOR if not packet_loss else CONNECTIONS.PL_COLOR
         self.color = self.regular_color
         self.marked_as_blocked = False
         self.is_connection = True
@@ -72,7 +72,7 @@ class ConnectionGraphics(GraphicsObject):
 
     def update_color_by_pl(self, packet_loss):
         """Updates the color of the connection according to the pl of the connection"""
-        self.regular_color = CONNECTION_COLOR if not packet_loss else PL_CONNECTION_COLOR
+        self.regular_color = CONNECTIONS.COLOR if not packet_loss else CONNECTIONS.PL_COLOR
         self.color = self.regular_color
 
     def is_mouse_in(self):
@@ -96,33 +96,33 @@ class ConnectionGraphics(GraphicsObject):
         except ValueError:
             pass
         mouse_distance_to_connection = a * sin(beta)
-        return mouse_distance_to_connection <= MOUSE_IN_CONNECTION_LENGTH
+        return mouse_distance_to_connection <= CONNECTIONS.MOUSE_TOUCH_SENSITIVITY
 
-    def get_coordinates(self, direction=PACKET_GOING_RIGHT):
+    def get_coordinates(self, direction=PACKET.DIRECTION.RIGHT):
         """
         Return a tuple of the coordinates at the start and the end of the connection.
         Receives a `direction` that the we look at the connection from (to know which is the end and which is the start)
         If the connection is opposite the coordinates will also be flipped.
-        :param direction: `PACKET_GOING_RIGHT` or `PACKET_GOING_LEFT`.
+        :param direction: `PACKET.DIRECTION.RIGHT` or `PACKET.DIRECTION.LEFT`.
         :return: (self.computers.start.x, self.computers.start.y, self.computers.end.x, self.computers.end.y)
         """
-        if direction == PACKET_GOING_RIGHT:
+        if direction == PACKET.DIRECTION.RIGHT:
             return self.interfaces.start.x, self.interfaces.start.y, self.interfaces.end.x, self.interfaces.end.y
-        elif direction == PACKET_GOING_LEFT:
+        elif direction == PACKET.DIRECTION.LEFT:
             return self.interfaces.end.x, self.interfaces.end.y, self.interfaces.start.x, self.interfaces.start.y
         raise WrongUsageError("a packet can only go left or right!")
 
-    def get_computer_coordinates(self, direction=PACKET_GOING_RIGHT):
+    def get_computer_coordinates(self, direction=PACKET.DIRECTION.RIGHT):
         """
         Return a tuple of the coordinates at the start and the end of the connection.
         Receives a `direction` that the we look at the connection from (to know which is the end and which is the start)
         If the connection is opposite the coordinates will also be flipped.
-        :param direction: `PACKET_GOING_RIGHT` or `PACKET_GOING_LEFT`.
+        :param direction: `PACKET.DIRECTION.RIGHT` or `PACKET.DIRECTION.LEFT`.
         :return: (self.computers.start.x, self.computers.start.y, self.computers.end.x, self.computers.end.y)
         """
-        if direction == PACKET_GOING_RIGHT:
+        if direction == PACKET.DIRECTION.RIGHT:
             return self.computers.start.x, self.computers.start.y, self.computers.end.x, self.computers.end.y
-        elif direction == PACKET_GOING_LEFT:
+        elif direction == PACKET.DIRECTION.LEFT:
             return self.computers.end.x, self.computers.end.y, self.computers.start.x, self.computers.start.y
         raise WrongUsageError("a packet can only go left or right!")
 
@@ -151,11 +151,11 @@ class ConnectionGraphics(GraphicsObject):
         start_x, start_y, end_x, end_y = self.get_coordinates()
         x, y = (start_x + end_x) / 2, (start_y + end_y) / 2
         draw_rectangle(
-            x - 2*SELECTED_OBJECT_PADDING,
-            y - 2*SELECTED_OBJECT_PADDING,
-            (4 * SELECTED_OBJECT_PADDING),
-            (4 * SELECTED_OBJECT_PADDING),
-            outline_color=WHITE,
+            x - 2*SELECTED_OBJECT.PADDING,
+            y - 2*SELECTED_OBJECT.PADDING,
+            (4 * SELECTED_OBJECT.PADDING),
+            (4 * SELECTED_OBJECT.PADDING),
+            outline_color=SELECTED_OBJECT.COLOR,
         )
 
     def draw(self):
@@ -163,7 +163,7 @@ class ConnectionGraphics(GraphicsObject):
         Draws the connection (The line) between its end point and its start point.
         :return: None
         """
-        color = self.color if not self.is_mouse_in() else SELECTED_CONNECTION_COLOR
+        color = self.color if not self.is_mouse_in() else CONNECTIONS.SELECTED_COLOR
         sx, sy, ex, ey = self.get_coordinates()
         draw_line((sx, sy), (ex, ey), color)
 
@@ -173,14 +173,14 @@ class ConnectionGraphics(GraphicsObject):
         :return: None
         """
         buttons = {
-            "set PL amount (alt+p)": with_args(user_interface.ask_user_for, float, INSERT_PL_MSG,
+            "set PL amount (alt+p)": with_args(user_interface.ask_user_for, float, MESSAGES.INSERT.PL,
                                                self.connection.set_pl),
-            "set speed (alt+s)": with_args(user_interface.ask_user_for, float, INSERT_SPEED_MSG,
+            "set speed (alt+s)": with_args(user_interface.ask_user_for, float, MESSAGES.INSERT.SPEED,
                                            self.connection.set_speed),
         }
 
         self.buttons_id = user_interface.add_buttons(buttons)
-        copied_sprite = ImageGraphics.get_image_sprite(os.path.join(IMAGES_DIR, CONNECTION_VIEW_IMAGE))
+        copied_sprite = ImageGraphics.get_image_sprite(os.path.join(DIRECTORIES.IMAGES, IMAGES.VIEW.CONNECTION))
 
         return copied_sprite, self.generate_view_text(), self.buttons_id
 

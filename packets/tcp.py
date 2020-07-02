@@ -15,8 +15,8 @@ class TCP(Protocol):
     The window size is also specified.
     """
     def __init__(self, src_port, dst_port, sequence_number,
-                 flags: set = None, ack_number=None, window_size=TCP_MAX_WINDOW_SIZE,
-                 data='', options=None, mss=TCP_MAX_MSS, is_retransmission=False):
+                 flags: set = None, ack_number=None, window_size=PROTOCOLS.TCP.MAX_WINDOW_SIZE,
+                 data='', options=None, mss=PROTOCOLS.TCP.MAX_MSS, is_retransmission=False):
         """
         Creates a TCP packet! With all of its parameters!
         :param src_port:
@@ -32,16 +32,16 @@ class TCP(Protocol):
         self.src_port, self.dst_port = src_port, dst_port
         self.flags = flags
         self.sequence_number = sequence_number
-        self.ack_number = ack_number if TCP_ACK in self.flags else None
+        self.ack_number = ack_number if OPCODES.TCP.ACK in self.flags else None
         self.window_size = window_size
 
         self.options = options
         if options is None:
             self.options = {
-                TCP_MSS_OPTION: mss,
-                TCP_WINDOW_SCALE_OPTION: None,
-                TCP_SACK_OPTION: None,
-                TCP_TIMESTAMPS_OPTION: None,
+                PROTOCOLS.TCP.OPTIONS.MSS: mss,
+                PROTOCOLS.TCP.OPTIONS.WINDOW_SCALE: None,
+                PROTOCOLS.TCP.OPTIONS.SACK: None,
+                PROTOCOLS.TCP.OPTIONS.TIMESTAMPS: None,
             }
 
         self.is_retransmission = is_retransmission
@@ -52,10 +52,10 @@ class TCP(Protocol):
         This is used to determine which packet drawing will be displayed for this packet (prioritizing the flags)
         :return: one of the TCP flags.
         """
-        for flag in TCP_FLAGS_DISPLAY_PRIORITY:
+        for flag in OPCODES.TCP.FLAGS_DISPLAY_PRIORITY:
             if flag in self.flags:
-                return flag if not self.is_retransmission else flag + TCP_RETRANSMISSION
-        return NO_TCP_FLAGS
+                return flag if not self.is_retransmission else flag + OPCODES.TCP.RETRANSMISSION
+        return OPCODES.NO_.CP_FLAGS
 
     @property
     def true_flags_string(self):
@@ -71,7 +71,7 @@ class TCP(Protocol):
         The length of the ip_layer of the packet
         :return: int
         """
-        if {TCP_SYN, TCP_FIN} & self.flags:
+        if {OPCODES.TCP.SYN, OPCODES.TCP.FIN} & self.flags:
             return 1
         return len(self.data)
 
@@ -89,7 +89,7 @@ class TCP(Protocol):
             self.window_size,
             self.data.copy() if hasattr(self.data, "copy") else self.data,
             copy.deepcopy(self.options),
-            self.options[TCP_MSS_OPTION],
+            self.options[PROTOCOLS.TCP.OPTIONS.MSS],
             is_retransmission=self.is_retransmission,
         )
 

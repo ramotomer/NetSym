@@ -36,25 +36,25 @@ class PopupTextBox(PopupWindow):
             It should be a function that receives one string argument (the inserted string) and returns None.
         """
         submit_button = Button(
-            *SUBMIT_BUTTON_COORDINATES,
+            *WINDOWS.POPUP.SUBMIT_BUTTON.COORDINATES,
             self.submit,
             "SUBMIT",
-            width=SUBMIT_BUTTON_WIDTH,
-            key=(key.ENTER, NO_MODIFIER),
+            width=WINDOWS.POPUP.SUBMIT_BUTTON.WIDTH,
+            key=(key.ENTER, MODIFIERS.NONE),
         )
 
-        super(PopupTextBox, self).__init__(*TEXTBOX_COORDINATES,
+        super(PopupTextBox, self).__init__(*WINDOWS.POPUP.TEXTBOX.COORDINATES,
                                            text=text,
                                            user_interface=user_interface,
                                            buttons=[submit_button],
-                                           color=TEXTBOX_OUTLINE_COLOR,
+                                           color=WINDOWS.POPUP.TEXTBOX.OUTLINE_COLOR,
                                            title="input text")
 
         title_text, information_text, exit_button = self.child_graphics_objects[:3]
         self.action = action
 
         written_text = Text('', information_text.x, information_text.y - 35,
-                            information_text, padding=(0, -35), max_width=TEXTBOX_WIDTH)
+                            information_text, padding=(0, -35), max_width=WINDOWS.POPUP.TEXTBOX.WIDTH)
 
         self.child_graphics_objects = ChildGraphicsObjects(
             title_text,
@@ -110,7 +110,7 @@ class PopupTextBox(PopupWindow):
 
         elif self._is_printable(symbol):
             char = chr(symbol).lower()
-            if (modifiers & SHIFT_MODIFIER) ^ (modifiers & CAPS_MODIFIER):
+            if (modifiers & MODIFIERS.SHIFT) ^ (modifiers & MODIFIERS.CAPS):
                 char = char.upper()
                 char = self.TO_UPPERCASE.get(char, char)
             self.child_graphics_objects.written_text.set_text(self.child_graphics_objects.written_text.text + char)

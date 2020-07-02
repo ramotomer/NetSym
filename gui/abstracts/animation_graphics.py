@@ -11,11 +11,11 @@ class AnimationGraphics(ImageGraphics):
     """
     A GraphicsObject of an animation. An image that is made out of little images and the animation if looped through them.
     """
-    def __init__(self, image_name, x, y, is_looping=False, x_count=ANIMATION_X_COUNT, y_count=ANIMATION_Y_COUNT,
-                 image_width=IMAGES_SIZE, image_height=IMAGES_SIZE, frame_rate=ANIMATION_FRAME_RATE, scale=1.0):
+    def __init__(self, image_name, x, y, is_looping=False, x_count=ANIMATIONS.X_COUNT, y_count=ANIMATIONS.Y_COUNT,
+                 image_width=IMAGES.SIZE, image_height=IMAGES.SIZE, frame_rate=ANIMATIONS.FRAME_RATE, scale=1.0):
         """
         Initiates the animation graphics
-        :param image_name: the name of the image (no need for os.path.join(IMAGES_DIR... )
+        :param image_name: the name of the image (no need for os.path.join(DIRECTORIES.IMAGES... )
         :param x: the x coordinate of the animation
         :param y: the y coordinate of the animation
         :param is_looping: whether or not the animation loops
@@ -43,11 +43,11 @@ class AnimationGraphics(ImageGraphics):
         """
         return not self.is_looping and (time.time() - self.start_time) > self.run_time
 
-    def get_animation_sprite(self, image_name, x, y, x_count=ANIMATION_X_COUNT, y_count=ANIMATION_Y_COUNT):
+    def get_animation_sprite(self, image_name, x, y, x_count=ANIMATIONS.X_COUNT, y_count=ANIMATIONS.Y_COUNT):
         """
         Returns a pyglet.sprite.Sprite object of the animation
         """
-        image = pyglet.image.load(os.path.join(IMAGES_DIR, image_name))
+        image = pyglet.image.load(os.path.join(DIRECTORIES.IMAGES, image_name))
         sequence = pyglet.image.ImageGrid(image, x_count, y_count,
                                           item_width=self.item_width, item_height=self.item_height)
         textures = pyglet.image.TextureGrid(sequence)

@@ -18,25 +18,25 @@ class YesNoPopupWindow(PopupWindow):
         """
         buttons = [
             Button(
-                *YES_BUTTON_COORDINATES,
+                *WINDOWS.POPUP.YES_BUTTON_COORDINATES,
                 called_in_order(yes_action, self.delete),
                 "yes",
-                width=SUBMIT_BUTTON_WIDTH,
-                key=(key.ENTER, NO_MODIFIER),
+                width=WINDOWS.POPUP.SUBMIT_BUTTON.WIDTH,
+                key=(key.ENTER, MODIFIERS.NONE),
             ),
             Button(
-                *NO_BUTTON_COORDINATES,
+                *WINDOWS.POPUP.NO_BUTTON_COORDINATES,
                 called_in_order(no_action, self.delete),
                 "no",
-                width=SUBMIT_BUTTON_WIDTH,
+                width=WINDOWS.POPUP.SUBMIT_BUTTON.WIDTH,
             ),
         ]
 
         super(YesNoPopupWindow, self).__init__(
-            *TEXTBOX_COORDINATES,
+            *WINDOWS.POPUP.TEXTBOX.COORDINATES,
             text=text,
             user_interface=user_interface,
             buttons=buttons,
-            color=ORANGE,
+            color=COLORS.ORANGE,
             title="yes or no",
         )

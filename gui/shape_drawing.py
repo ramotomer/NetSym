@@ -7,7 +7,7 @@ from consts import *
 from usefuls import circular_coordinates, sine_wave_coordinates
 
 
-def draw_line(point_1, point_2, color=WHITE):
+def draw_line(point_1, point_2, color=COLORS.WHITE):
     """
     Draws a line between two points on the screen.
     :param point_1: a tuple of (x, y) of the first point.
@@ -21,7 +21,7 @@ def draw_line(point_1, point_2, color=WHITE):
     pyglet.graphics.draw(2, pyglet.gl.GL_LINES, (vertex_view, point_1 + point_2), ('c3B', color * 2))
 
 
-def draw_rectangle(x, y, width, height, color=None, outline_color=None, outline_width=DEFAULT_OUTLINE_WIDTH):
+def draw_rectangle(x, y, width, height, color=None, outline_color=None, outline_width=SHAPES.RECT.DEFAULT_OUTLINE_WIDTH):
     """
     Draws a rectangle.
     :param x:
@@ -46,7 +46,7 @@ def draw_rectangle(x, y, width, height, color=None, outline_color=None, outline_
         _draw_rect_no_outline(x, y, width, height)
 
 
-def _draw_rect_no_fill(x, y, width, height, color=WHITE):
+def _draw_rect_no_fill(x, y, width, height, color=COLORS.WHITE):
     """
     Draws an unfilled rectangle from the bottom left corner (x,y) with a width of
     `width` and a height of `height`.
@@ -66,7 +66,7 @@ def _draw_rect_no_fill(x, y, width, height, color=WHITE):
                          )
 
 
-def _draw_rect_no_outline(x, y, width, height, color=GRAY):
+def _draw_rect_no_outline(x, y, width, height, color=COLORS.GRAY):
     """
     Draws a filled rectangle from the bottom left corner (x, y) with a width of
     `width` and a height of `height`.
@@ -87,7 +87,7 @@ def _draw_rect_no_outline(x, y, width, height, color=GRAY):
                          )
 
 
-def _draw_rect_with_outline(x, y, width, height, color=GRAY, outline_color=WHITE, outline_width=DEFAULT_OUTLINE_WIDTH):
+def _draw_rect_with_outline(x, y, width, height, color=COLORS.GRAY, outline_color=COLORS.WHITE, outline_width=SHAPES.RECT.DEFAULT_OUTLINE_WIDTH):
     """
     Draws a rectangle with an outline.
     :param x:
@@ -129,28 +129,28 @@ def draw_pause_rectangles():
     This is called when the program is paused.
     :return: None
     """
-    x, y = PAUSE_RECT_COORDINATES
-    _draw_rect_no_outline(x, y, PAUSE_RECT_WIDTH, PAUSE_RECT_HEIGHT, RED)
-    _draw_rect_no_outline(x + 2 * PAUSE_RECT_WIDTH, y, PAUSE_RECT_WIDTH, PAUSE_RECT_HEIGHT, RED)
+    x, y = SHAPES.PAUSE_RECT.COORDINATES
+    _draw_rect_no_outline(x, y, SHAPES.PAUSE_RECT.WIDTH, SHAPES.PAUSE_RECT.HEIGHT, COLORS.RED)
+    _draw_rect_no_outline(x + 2 * SHAPES.PAUSE_RECT.WIDTH, y, SHAPES.PAUSE_RECT.WIDTH, SHAPES.PAUSE_RECT.HEIGHT, COLORS.RED)
 
 
-def draw_circle(x, y, radius, color=WHITE):
+def draw_circle(x, y, radius, color=COLORS.WHITE):
     """
     Draws a circle with a given center location and a radius and a color.
     :return:
     """
-    vertices = list(chain(*circular_coordinates((x, y), radius, CIRCLE_SEGMENT_COUNT)))
+    vertices = list(chain(*circular_coordinates((x, y), radius, SHAPES.CIRCLE.SEGMENT_COUNT)))
 
-    pyglet.graphics.draw(CIRCLE_SEGMENT_COUNT, pyglet.gl.GL_LINE_LOOP,
+    pyglet.graphics.draw(SHAPES.CIRCLE.SEGMENT_COUNT, pyglet.gl.GL_LINE_LOOP,
                          ('v2f', tuple(vertices)),
-                         ('c3B', color * CIRCLE_SEGMENT_COUNT),
+                         ('c3B', color * SHAPES.CIRCLE.SEGMENT_COUNT),
                          )
 
 
 def draw_sine_wave(start_coordinates, end_coordinates,
-                   amplitude=DEFAULT_SINE_WAVE_AMPLITUDE,
-                   frequency=DEFAULT_SINE_WAVE_FREQUENCY,
-                   color=CONNECTION_COLOR):
+                   amplitude=SHAPES.SINE_WAVE.DEFAULT_AMPLITUDE,
+                   frequency=SHAPES.SINE_WAVE.DEFAULT_FREQUENCY,
+                   color=CONNECTIONS.COLOR):
     """
 
     :param start_coordinates:

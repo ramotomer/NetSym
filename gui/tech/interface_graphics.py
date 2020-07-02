@@ -25,17 +25,13 @@ class InterfaceGraphics(GraphicsObject):
         super(InterfaceGraphics, self).__init__(x, y, centered=True, is_in_background=True, is_pressable=True)
         self.color = interface.display_color
         self.real_x, self.real_y = x, y
-        self.width, self.height = INTERFACE_WIDTH, INTERFACE_HEIGHT
+        self.width, self.height = INTERFACES.WIDTH, INTERFACES.HEIGHT
         self.computer_graphics = computer_graphics
 
         self.interface = interface
         interface.graphics = self
 
         self.buttons_id = None
-
-    @property
-    def location(self):
-        return self.real_x, self.real_y
 
     @property
     def computer_location(self):
@@ -107,7 +103,7 @@ class InterfaceGraphics(GraphicsObject):
             "block (^b)": with_args(self.interface.toggle_block, "STP"),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
-        copied_sprite = ImageGraphics.get_image_sprite(os.path.join(IMAGES_DIR, INTERFACE_VIEW_IMAGE))
+        copied_sprite = ImageGraphics.get_image_sprite(os.path.join(DIRECTORIES.IMAGES, IMAGES.VIEW.INTERFACE))
         return copied_sprite, self.interface.generate_view_text(), self.buttons_id
 
     def end_viewing(self, user_interface):
@@ -126,11 +122,11 @@ class InterfaceGraphics(GraphicsObject):
         """
         x, y = self.x - (self.width / 2), self.y - (self.height / 2)
         draw_rectangle(
-            x - SELECTED_OBJECT_PADDING,
-            y - SELECTED_OBJECT_PADDING,
-            self.width + (2 * SELECTED_OBJECT_PADDING),
-            self.height + (2 * SELECTED_OBJECT_PADDING),
-            outline_color=TURQUOISE,
+            x - SELECTED_OBJECT.PADDING,
+            y - SELECTED_OBJECT.PADDING,
+            self.width + (2 * SELECTED_OBJECT.PADDING),
+            self.height + (2 * SELECTED_OBJECT.PADDING),
+            outline_color=SELECTED_OBJECT.COLOR,
         )
 
     def __repr__(self):

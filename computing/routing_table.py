@@ -2,7 +2,7 @@ from collections import namedtuple
 from os import linesep
 
 from address.ip_address import IPAddress
-from consts import *
+from consts import ADDRESSES
 from exceptions import *
 
 RoutingTableItem = namedtuple("RoutingTableItem", "ip_address interface_ip")
@@ -28,7 +28,7 @@ class RoutingTable:
         dictionary = {
             IPAddress("0.0.0.0/0"): RoutingTableItem(None, None),
             IPAddress("255.255.255.255/32"): RoutingTableItem(None, None),
-            IPAddress("127.0.0.0/8"): RoutingTableItem(ON_LINK, IPAddress.loopback()),
+            IPAddress("127.0.0.0/8"): RoutingTableItem(ADDRESSES.IP.ON_LINK, IPAddress.loopback()),
         }
 
         self.dictionary = dictionary
@@ -69,7 +69,7 @@ class RoutingTable:
 
         for interface in computer.interfaces:
             if interface.has_ip():
-                returned.route_add(interface.ip.subnet(), ON_LINK, IPAddress.copy(interface.ip))
+                returned.route_add(interface.ip.subnet(), ADDRESSES.IP.ON_LINK, IPAddress.copy(interface.ip))
                 returned.route_add(IPAddress(interface.ip.string_ip + "/32"),
                                    IPAddress.copy(computer.loopback.ip),
                                    IPAddress.copy(computer.loopback.ip))
@@ -85,7 +85,7 @@ class RoutingTable:
         :return: None
         """
         arguments = (destination_ip, gateway_ip, interface_ip)
-        if any(not isinstance(address, IPAddress) for address in arguments) and gateway_ip is not ON_LINK:
+        if any(not isinstance(address, IPAddress) for address in arguments) and gateway_ip is not ADDRESSES.IP.ON_LINK:
             raise NoIPAddressError(
                 f"One of the arguments to this function is not an IPAddress object!!!!! ({arguments})")
 
@@ -110,7 +110,7 @@ class RoutingTable:
         """
         send_to = self.default_gateway.ip_address
         if send_to is None or send_to.is_same_subnet(interface_ip):
-            send_to = ON_LINK
+            send_to = ADDRESSES.IP.ON_LINK
 
         self.route_add(interface_ip.subnet(), send_to, interface_ip)
         self.route_add(IPAddress(interface_ip.string_ip + "/32"), IPAddress.loopback(), IPAddress.loopback())
@@ -129,7 +129,7 @@ class RoutingTable:
         most_fitting_destination = max(possible_addresses, key=lambda address: address.subnet_mask)
 
         result = self.dictionary[most_fitting_destination]
-        if result.ip_address is ON_LINK:
+        if result.ip_address is ADDRESSES.IP.ON_LINK:
             return RoutingTableItem(item, result.interface_ip)
         return result
 
@@ -190,8 +190,8 @@ Default Gateway:        {self.default_gateway.ip_address}
         def ip_or_none(item):
             if item is None:
                 return item
-            if item == f"'{ON_LINK}'" or item == ON_LINK:
-                return ON_LINK
+            if item == f"'{ADDRESSES.IP.ON_LINK}'" or item == ADDRESSES.IP.ON_LINK:
+                return ADDRESSES.IP.ON_LINK
             return IPAddress(item)
 
         returned = cls()

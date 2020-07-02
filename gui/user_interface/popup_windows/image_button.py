@@ -2,9 +2,6 @@ from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.user_interface.button import Button
 
-if True:
-    pass  # Roni is a developer
-
 
 class ImageButton(Button):
     """
@@ -12,8 +9,8 @@ class ImageButton(Button):
     """
     def __init__(self, x, y, action=lambda: None, image_name=None, text="",
                  start_hidden=False,
-                 width=IMAGES_SIZE, height=IMAGES_SIZE,
-                 key=None, color=GRAY, text_color=PINK):
+                 width=IMAGES.SIZE, height=IMAGES.SIZE,
+                 key=None, color=COLORS.GRAY, text_color=COLORS.PINK):
         """
         Initiates the button with an image name and the rest of the button's arguments
         :param x, y: location of the bottom left corner
@@ -29,7 +26,7 @@ class ImageButton(Button):
         super(ImageButton, self).__init__(x, y, action, text, start_hidden, width, height, key, color, text_color)
 
         self.pad_x, self.pad_y = 10, 10
-        self.image_name = os.path.join(IMAGES_DIR, image_name)
+        self.image_name = os.path.join(DIRECTORIES.IMAGES, image_name)
         self.image_sprite = ImageGraphics.get_image_sprite(self.image_name, x + self.pad_x / 2, y + self.pad_y / 2)
 
         scale_x, scale_y = self.image_sprite.scale_x, self.image_sprite.scale_y

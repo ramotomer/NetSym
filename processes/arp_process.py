@@ -1,11 +1,11 @@
-from consts import *
+from consts import OPCODES, PROTOCOLS
 from processes.process import Process, ReturnedPacket, WaitingForPacketWithTimeout, Timeout, WaitingFor
 
 
 def arp_reply_from(ip_address):
     """Returns a function that tests if the packet given to it is an ARP reply for the `ip_address`"""
     def tester(packet):
-        return ("ARP" in packet) and (packet["ARP"].opcode == ARP_REPLY) and (packet["ARP"].src_ip == ip_address)
+        return ("ARP" in packet) and (packet["ARP"].opcode == OPCODES.ARP.REPLY) and (packet["ARP"].src_ip == ip_address)
     return tester
 
 
@@ -32,9 +32,9 @@ class ARPProcess(Process):
             return
 
         returned_packets = ReturnedPacket()
-        for _ in range(ARP_RESEND_COUNT):
+        for _ in range(PROTOCOLS.ARP.RESEND_COUNT):
             self.computer.send_arp_to(self.address)
-            yield WaitingForPacketWithTimeout(arp_reply_from(self.address), returned_packets, Timeout(ARP_RESEND_TIME))
+            yield WaitingForPacketWithTimeout(arp_reply_from(self.address), returned_packets, Timeout(PROTOCOLS.ARP.RESEND_TIME))
             if returned_packets.has_packets():  # if this was not timed-out, so we got an arp reply.
                 return
         self.computer.print("Destination unreachable :(")

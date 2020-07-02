@@ -20,7 +20,7 @@ class Interface:
     down the connection further.
     """
     def __init__(self, mac=None, ip=None, name=None, connection=None,
-                 display_color=REGULAR_INTERFACE_COLOR):
+                 display_color=INTERFACES.COLOR):
         """
         Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
         :param mac: a string MAC address ('aa:bb:cc:11:22:76' for example)
@@ -170,7 +170,7 @@ class Interface:
         if self.connection is not None:
             self.connection.mark_as_blocked()
 
-        self.graphics.color = BLOCKED_INTERFACE_COLOR
+        self.graphics.color = INTERFACES.BLOCKED_COLOR
 
     def unblock(self):
         """
@@ -181,7 +181,7 @@ class Interface:
         self.accepting = None
         if self.connection is not None:
             self.connection.mark_as_unblocked()
-        self.graphics.color = REGULAR_INTERFACE_COLOR
+        self.graphics.color = INTERFACES.COLOR
 
     def toggle_block(self, accept=None):
         """

@@ -33,7 +33,7 @@
 #         :param y: the location
 #         :return: None
 #         """
-#         self.graphics = ComputerGraphics(x, y, self, NAT_IMAGE)
+#         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.NAT)
 #
 #
 # NATTableKey = namedtuple("NATTableKey", [

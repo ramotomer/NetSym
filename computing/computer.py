@@ -47,16 +47,16 @@ class Computer:
     """
 
     TCP_PORTS_TO_PROCESSES = {
-        DAYTIME_PORT: DAYTIMEServerProcess,
-        FTP_PORT: FTPServerProcess,
-        SSH_PORT: None,
-        HTTP_PORT: None,
-        HTTPS_PORT: None,
+        PORTS.DAYTIME: DAYTIMEServerProcess,
+        PORTS.FTP: FTPServerProcess,
+        PORTS.SSH: None,
+        PORTS.HTTP: None,
+        PORTS.HTTPS: None,
     }
 
     UDP_PORTS_TO_PROCESSES = {}
 
-    def __init__(self, name=None, os=OS_WINDOWS, gateway=None, *interfaces):
+    def __init__(self, name=None, os=OS.WINDOWS, gateway=None, *interfaces):
         """
         Initiates a Computer object.
         :param name: the name of the computer which will be displayed next to it.
@@ -129,7 +129,7 @@ class Computer:
         :param name: a name that the computer will have.
         :return: a `Computer` object
         """
-        computer = cls(name, OS_WINDOWS, None, Interface(MACAddress.randomac(), IPAddress(ip_address)))
+        computer = cls(name, OS.WINDOWS, None, Interface(MACAddress.randomac(), IPAddress(ip_address)))
         return computer
 
     @staticmethod
@@ -149,7 +149,7 @@ class Computer:
         :param y: Coordinates to initiate the `GraphicsObject` at.
         :return: None
         """
-        self.graphics = ComputerGraphics(x, y, self, COMPUTER_IMAGE if not self.open_tcp_ports else SERVER_IMAGE)
+        self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.COMPUTER if not self.open_tcp_ports else IMAGES.COMPUTERS.SERVER)
         self.loopback.connection.connection.show(self.graphics)
 
     def print(self, string):
@@ -278,7 +278,9 @@ class Computer:
 
     def is_arp_for_me(self, packet):
         """Returns whether or not the packet is an ARP request for one of your IP addresses"""
-        return "ARP" in packet and packet["ARP"].opcode == ARP_REQUEST and self.has_this_ip(packet["ARP"].dst_ip)
+        return "ARP" in packet and \
+               packet["ARP"].opcode == OPCODES.ARP.REQUEST and \
+               self.has_this_ip(packet["ARP"].dst_ip)
 
     def get_interface_with_ip(self, ip_address=None):
         """
@@ -309,7 +311,7 @@ class Computer:
 
         self.arp_cache[arp.src_ip] = ARPCacheItem(arp.src_mac, MainLoop.instance.time())  # learn from the ARP
 
-        if arp.opcode == ARP_REQUEST and interface.has_this_ip(arp.dst_ip):
+        if arp.opcode == OPCODES.ARP.REQUEST and interface.has_this_ip(arp.dst_ip):
             self.send_arp_reply(packet)                     # Answer if request
 
     def _handle_ping(self, packet, interface):
@@ -320,10 +322,10 @@ class Computer:
         :param interface: The `Interface` the packet was received on.
         :return: None
         """
-        if (packet["ICMP"].opcode == ICMP_REQUEST) and (self.is_for_me(packet)):
+        if (packet["ICMP"].opcode == OPCODES.ICMP.REQUEST) and (self.is_for_me(packet)):
             if interface.has_this_ip(packet["IP"].dst_ip) or (interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):  # only if the packet is for me also on the third layer!
                 dst_ip = packet["IP"].src_ip
-                self.start_ping_process(dst_ip, ICMP_REPLY)
+                self.start_ping_process(dst_ip, OPCODES.ICMP.REPLY)
 
     def _handle_tcp(self, packet, interface):
         """
@@ -336,11 +338,11 @@ class Computer:
         if not self.has_ip() or not self.has_this_ip(packet["IP"].dst_ip):
             return
 
-        if {TCP_SYN} == packet["TCP"].flags:
+        if {OPCODES.TCP.SYN} == packet["TCP"].flags:
             dst_port = packet["TCP"].dst_port
             if dst_port not in self.open_tcp_ports:
                 self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip,
-                             TCP(packet["TCP"].dst_port, packet["TCP"].src_port, 0, {TCP_RST}))
+                             TCP(packet["TCP"].dst_port, packet["TCP"].src_port, 0, {OPCODES.TCP.RST}))
 
     def _handle_udp(self, packet, interface):
         """
@@ -352,7 +354,7 @@ class Computer:
             return
 
         if packet["UDP"].dst_port not in self.open_udp_ports:
-            self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip, ICMP(ICMP_PORT_UNREACHABLE))
+            self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip, ICMP(OPCODES.ICMP.PORT_UNREACHABLE))
 
     def _handle_special_packet(self, packet, receiving_interface):
         """
@@ -366,7 +368,7 @@ class Computer:
             if packet_type in packet:
                 self.packet_types_and_handlers[packet_type](packet, receiving_interface)
 
-    def start_ping_process(self, ip_address, opcode=ICMP_REQUEST):
+    def start_ping_process(self, ip_address, opcode=OPCODES.ICMP.REQUEST):
         """
         Starts sending a ping to another computer.
         :param ip_address: an `IPAddress` object to ping.
@@ -398,7 +400,7 @@ class Computer:
         :return: None
         """
         for ip, arp_cache_item in list(self.arp_cache.items()):
-            if MainLoop.instance.time_since(arp_cache_item.time) > ARP_CACHE_FORGET_TIME:
+            if MainLoop.instance.time_since(arp_cache_item.time) > ARP_CACHE.ITEM_LIFETIME:
                 del self.arp_cache[ip]
 
     def ask_dhcp(self):
@@ -492,7 +494,7 @@ class Computer:
         self.name = name
         self.graphics.update_text()
 
-    def toggle_sniff(self, interface_name=ANY_INTERFACE, is_promisc=False):
+    def toggle_sniff(self, interface_name=INTERFACES.ANY_INTERFACE, is_promisc=False):
         """
         Starts sniffing on the interface with the given name.
         If no such interface exists, raises NoSuchInterfaceError.
@@ -501,7 +503,7 @@ class Computer:
         :param is_promisc: whether or not the interface should be in promisc while sniffing.
         :return: None
         """
-        if interface_name == ANY_INTERFACE:
+        if interface_name == INTERFACES.ANY_INTERFACE:
             for name in [interface.name for interface in self.interfaces]:
                 self.toggle_sniff(name, is_promisc)
             return
@@ -557,7 +559,7 @@ class Computer:
                            IP(
                                self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip),
                                dst_ip,
-                               TTLS[self.os],
+                               TTL.BY_OS[self.os],
                                data,
                            ))
 
@@ -596,7 +598,7 @@ class Computer:
         :return: a valid `Packet` object.
         """
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
-        return interface.ethernet_wrap(dst_mac, IP(interface.ip, dst_ip, TTLS[self.os], protocol))
+        return interface.ethernet_wrap(dst_mac, IP(interface.ip, dst_ip, TTL.BY_OS[self.os], protocol))
 
     def send_arp_to(self, ip_address):
         """
@@ -608,7 +610,7 @@ class Computer:
         if self.name == "test":
             pass
         interface = self.get_interface_with_ip(interface_ip)
-        arp = ARP(ARP_REQUEST, interface.ip, ip_address, interface.mac)
+        arp = ARP(OPCODES.ARP.REQUEST, interface.ip, ip_address, interface.mac)
         if interface.ip is None:
             arp = ARP.create_probe(ip_address, interface.mac)
         self.send(interface.ethernet_wrap(MACAddress.broadcast(), arp), interface)
@@ -631,7 +633,7 @@ class Computer:
             raise WrongUsageError("Do not call this method if the ARP is not for me!!!")
 
         interface = self.get_interface_with_ip(requested_ip)
-        arp = ARP(ARP_REPLY, request["ARP"].dst_ip, sender_ip, interface.mac, request["ARP"].src_mac)
+        arp = ARP(OPCODES.ARP.REPLY, request["ARP"].dst_ip, sender_ip, interface.mac, request["ARP"].src_mac)
         self.send(interface.ethernet_wrap(request["ARP"].src_mac, arp), interface)
 
     def arp_grat(self, interface):
@@ -645,11 +647,11 @@ class Computer:
             if interface.has_ip():
                 self.send(
                     interface.ethernet_wrap(MACAddress.broadcast(),
-                                            ARP(ARP_GRAT, interface.ip, interface.ip, interface.mac)),
+                                            ARP(OPCODES.ARP.GRAT, interface.ip, interface.ip, interface.mac)),
                     interface
                 )
 
-    def send_ping_to(self, mac_address, ip_address, opcode=ICMP_REQUEST, data=''):
+    def send_ping_to(self, mac_address, ip_address, opcode=OPCODES.ICMP.REQUEST, data=''):
         """
         Send an ICMP packet to the a given ip address.
         :param ip_address: The destination `IPAddress` object of the ICMP packet
@@ -668,8 +670,8 @@ class Computer:
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
         self.send(
             interface.ethernet_wrap(dst_mac,
-                                    IP(interface.ip, dst_ip, MAX_TTL,
-                                       ICMP(ICMP_TIME_EXCEEDED, data))),
+                                    IP(interface.ip, dst_ip, TTL.MAX,
+                                       ICMP(OPCODES.ICMP.TIME_EXCEEDED, data))),
             interface
         )
 
@@ -680,9 +682,9 @@ class Computer:
         for interface in self.interfaces:
             self.send(
                 interface.ethernet_wrap(MACAddress.broadcast(),
-                                        IP(src_ip, dst_ip, TTLS[self.os],
-                                           UDP(DHCP_CLIENT_PORT, DHCP_SERVER_PORT,
-                                               DHCP(DHCP_DISCOVER, DHCPData(None, None, None))))),
+                                        IP(src_ip, dst_ip, TTL.BY_OS[self.os],
+                                           UDP(PORTS.DHCP_CLIENT, PORTS.DHCP_SERVER,
+                                               DHCP(OPCODES.DHCP.DISCOVER, DHCPData(None, None, None))))),
                 interface
             )
 
@@ -697,9 +699,9 @@ class Computer:
         dst_ip = offer_ip
         self.send(
             session_interface.ethernet_wrap(client_mac,
-                                                 IP(session_interface.ip, dst_ip, TTLS[self.os],
-                                                    UDP(DHCP_SERVER_PORT, DHCP_CLIENT_PORT,
-                                                        DHCP(DHCP_OFFER, DHCPData(offer_ip, None, None))))),
+                                                 IP(session_interface.ip, dst_ip, TTL.BY_OS[self.os],
+                                                    UDP(PORTS.DHCP_SERVER, PORTS.DHCP_CLIENT,
+                                                        DHCP(OPCODES.DHCP.OFFER, DHCPData(offer_ip, None, None))))),
             session_interface
         )
 
@@ -715,9 +717,9 @@ class Computer:
         src_ip = IPAddress.no_address()
         self.send(
             session_interface.ethernet_wrap(server_mac,
-                                            IP(src_ip, dst_ip, TTLS[self.os],
-                                               UDP(DHCP_CLIENT_PORT, DHCP_SERVER_PORT,
-                                                   DHCP(DHCP_REQUEST, DHCPData(None, None, None))))),
+                                            IP(src_ip, dst_ip, TTL.BY_OS[self.os],
+                                               UDP(PORTS.DHCP_CLIENT, PORTS.DHCP_SERVER,
+                                                   DHCP(OPCODES.DHCP.REQUEST, DHCPData(None, None, None))))),
             session_interface
         )
 
@@ -732,9 +734,9 @@ class Computer:
         dst_ip = dhcp_data.given_ip
         self.send(
             session_interface.ethernet_wrap(client_mac,
-                                                 IP(session_interface.ip, dst_ip, TTLS[self.os],
-                                                    UDP(DHCP_SERVER_PORT, DHCP_CLIENT_PORT,
-                                                        DHCP(DHCP_PACK, dhcp_data)))),
+                                            IP(session_interface.ip, dst_ip, TTL.BY_OS[self.os],
+                                               UDP(PORTS.DHCP_SERVER, PORTS.DHCP_CLIENT,
+                                                   DHCP(OPCODES.DHCP.PACK, dhcp_data)))),
             session_interface
         )
 

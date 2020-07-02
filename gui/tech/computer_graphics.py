@@ -27,7 +27,7 @@ class ComputerGraphics(ImageGraphics):
     It inherits from `ImageGraphics` because there is an image of the computer that should just be drawn.
     This class adds to it the text that exists under a computer.
     """
-    def __init__(self, x, y, computer, image=COMPUTER_IMAGE, scale_factor=SPRITE_SCALE_FACTOR):
+    def __init__(self, x, y, computer, image=IMAGES.COMPUTERS.COMPUTER, scale_factor=IMAGES.SCALE_FACTORS.SPRITES):
         """
         The graphics objects of computers.
         :param x:
@@ -36,7 +36,7 @@ class ComputerGraphics(ImageGraphics):
         :param image: the name of the image of the computer. (can be changed for different types of computers)
         """
         super(ComputerGraphics, self).__init__(
-            os.path.join(IMAGES_DIR, image),
+            os.path.join(DIRECTORIES.IMAGES, image),
             x, y,
             centered=True,
             is_in_background=True,
@@ -49,7 +49,7 @@ class ComputerGraphics(ImageGraphics):
 
         self.child_graphics_objects = ChildGraphicsObjects(
             Text(self.generate_text(), self.x, self.y, self),
-            Console(CONSOLE_X, CONSOLE_Y),
+            Console(CONSOLE.X, CONSOLE.Y),
             ProcessGraphicsList(self),
             InterfaceGraphicsList(self),
         )
@@ -72,7 +72,7 @@ class ComputerGraphics(ImageGraphics):
         Updates the image according to the current computer state
         :return:
         """
-        self.image_name = os.path.join(IMAGES_DIR, SERVER_IMAGE if self.computer.open_tcp_ports else COMPUTER_IMAGE)
+        self.image_name = os.path.join(DIRECTORIES.IMAGES, IMAGES.COMPUTERS.SERVER if self.computer.open_tcp_ports else IMAGES.COMPUTERS.COMPUTER)
         self.load()
         self.child_graphics_objects.process_list.clear()
         for port in self.computer.open_tcp_ports:
@@ -91,7 +91,7 @@ class ComputerGraphics(ImageGraphics):
             "change name (shift+n)": with_args(
                 user_interface.ask_user_for,
                 str,
-                INSERT_COMPUTER_NAME_MSG,
+                MESSAGES.INSERT.COMPUTER_NAME,
                 self.computer.set_name,
             ),
             "power on/off (o)": self.computer.power,
@@ -99,31 +99,31 @@ class ComputerGraphics(ImageGraphics):
             "add/delete interface (^i)": with_args(
                 user_interface.ask_user_for,
                 str,
-                INSERT_INTERFACE_INFO_MSG,
+                MESSAGES.INSERT.INTERFACE_INFO,
                 with_args(user_interface.add_delete_interface, self)
             ),
             "open/close port (alt+o)": with_args(
                 user_interface.ask_user_for,
                 int,
-                INSERT_PORT_NUMBER,
+                MESSAGES.INSERT.PORT_NUMBER,
                 self.computer.open_tcp_port
             ),
             "set default gateway (g)": with_args(
                 user_interface.ask_user_for,
                 IPAddress,
-                INSERT_GATEWAY_MSG,
+                MESSAGES.INSERT.GATEWAY,
                 self.computer.set_default_gateway
             ),
             "ask daytime (ctrl+a)": with_args(
                 user_interface.ask_user_for,
                 IPAddress,
-                INSERT_IP_FOR_PROCESS,
+                MESSAGES.INSERT.IP_FOR_PROCESS,
                 with_args(self.computer.start_process, DAYTIMEClientProcess)
             ),
             "download file (alt+a)": with_args(
                 user_interface.ask_user_for,
                 IPAddress,
-                INSERT_IP_FOR_PROCESS,
+                MESSAGES.INSERT.IP_FOR_PROCESS,
                 with_args(self.computer.start_process, FTPClientProcess)
             ),
             "start DDOS process (ctrl+w)": with_args(
@@ -134,7 +134,7 @@ class ComputerGraphics(ImageGraphics):
             ),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
-        return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), self.generate_view_text(), self.buttons_id
+        return self.copy_sprite(self.sprite, IMAGES.SCALE_FACTORS.VIEWING_OBJECTS), self.generate_view_text(), self.buttons_id
 
     def end_viewing(self, user_interface):
         """Ends the viewing of the object in the side window"""
@@ -171,7 +171,7 @@ Name: {self.computer.name}
         Calculates the distance that the interface should be away from the computer.
         :return:
         """
-        return (IMAGES_SIZE * self.sprite.scale_x) - INTERFACE_DISTANCE_PADDING
+        return (IMAGES.SIZE * self.sprite.scale_x) - INTERFACES.COMPUTER_DISTANCE
 
     def __str__(self):
         return "ComputerGraphics"

@@ -1,4 +1,4 @@
-from consts import *
+from consts import ADDRESSES, MESSAGES
 from exceptions import InvalidAddressError, AddressTooLargeError
 
 
@@ -19,12 +19,12 @@ class IPAddress:
 
         string_ip = string_ip.replace(' ', '')
 
-        ip, subnet_mask = string_ip, DEFAULT_SUBNET_MASK
-        if IP_SUBNET_SEPARATOR in string_ip:
-            ip, subnet_mask = string_ip.lower().split(IP_SUBNET_SEPARATOR)
+        ip, subnet_mask = string_ip, ADDRESSES.IP.DEFAULT_SUBNET_MASK
+        if ADDRESSES.IP.SUBNET_SEPARATOR in string_ip:
+            ip, subnet_mask = string_ip.lower().split(ADDRESSES.IP.SUBNET_SEPARATOR)
 
         if not self.is_valid(ip) or not self.is_valid_subnet_mask(subnet_mask):
-            raise InvalidAddressError(INVALID_IP_ADDRESS + ' ' + str(string_ip))
+            raise InvalidAddressError(MESSAGES.INVALID_IP_ADDRESS + ' ' + str(string_ip))
 
         self.string_ip = ip
         self.subnet_mask = int(subnet_mask)
@@ -62,7 +62,7 @@ class IPAddress:
         Returns if the IP address is a broadcast address or not.
         :return:
         """
-        _, _, _, last_byte = self.string_ip.split(IP_ADDRESS_SEPARATOR)
+        _, _, _, last_byte = self.string_ip.split(ADDRESSES.IP.SEPARATOR)
         return int(last_byte) == 255  # I had some thinking if to put in constant, decided not to...
 
     def is_private_address(self):
@@ -95,7 +95,7 @@ class IPAddress:
         :return: a different object which the increased IP address.
         """
         bit_address = int(cls.as_bits(address.string_ip), base=2)
-        increased = cls.from_bits('0b' + bin(bit_address + 1)[2:].zfill(IP_ADDRESS_BIT_LENGTH), int(address.subnet_mask))
+        increased = cls.from_bits('0b' + bin(bit_address + 1)[2:].zfill(ADDRESSES.IP.BIT_LENGTH), int(address.subnet_mask))
         if not address.is_same_subnet(increased):
             raise AddressTooLargeError(f"Cannot increase {address!r} since it is the maximum address for its subnet.")
         return increased
@@ -110,9 +110,9 @@ class IPAddress:
         Returns the expected IP address of this subnet (for example if this IP is 192.168.1.5/24 it will return 192.168.1.1)
         :return: an `IPAddress` object.
         """
-        splitted = self.string_ip.split(IP_ADDRESS_SEPARATOR)
+        splitted = self.string_ip.split(ADDRESSES.IP.SEPARATOR)
         splitted[3] = '1'
-        return self.__class__(IP_ADDRESS_SEPARATOR.join(splitted) + '/' + str(self.subnet_mask))
+        return self.__class__(ADDRESSES.IP.SEPARATOR.join(splitted) + '/' + str(self.subnet_mask))
 
     def subnet(self):
         """
@@ -121,7 +121,7 @@ class IPAddress:
         """
         mask = int(self.as_bits(self.mask_from_number(self.subnet_mask)), 2)
         masked_address = int(self.as_bits(self.string_ip), 2) & mask
-        masked_address_bin = '0b' + bin(masked_address)[2:].zfill(IP_ADDRESS_BIT_LENGTH)
+        masked_address_bin = '0b' + bin(masked_address)[2:].zfill(ADDRESSES.IP.BIT_LENGTH)
         return self.from_bits(masked_address_bin, int(self.subnet_mask))
 
     @staticmethod
@@ -131,7 +131,7 @@ class IPAddress:
         :param address: The string address
         :return: a `bytearray` object which is the representation of the ip address.
         """
-        address_as_numbers = [int(part) for part in address.split(IP_ADDRESS_SEPARATOR)]
+        address_as_numbers = [int(part) for part in address.split(ADDRESSES.IP.SEPARATOR)]
         return bytearray(address_as_numbers)
 
     @staticmethod
@@ -144,7 +144,7 @@ class IPAddress:
         """
         if not isinstance(address, str):
             return False
-        splitted_address = address.split(IP_ADDRESS_SEPARATOR)
+        splitted_address = address.split(ADDRESSES.IP.SEPARATOR)
         return len(splitted_address) == 4 and \
             all([part.isdigit() and 0 <= int(part) < 256 for part in splitted_address])
 
@@ -156,7 +156,7 @@ class IPAddress:
         :param subnet_mask: A ip_layer that should be a numerical form of a mask
         :return: whether it is valid
         """
-        return isinstance(subnet_mask, str) and subnet_mask.isdigit() and 0 <= int(subnet_mask) <= IP_ADDRESS_BIT_LENGTH
+        return isinstance(subnet_mask, str) and subnet_mask.isdigit() and 0 <= int(subnet_mask) <= ADDRESSES.IP.BIT_LENGTH
 
     @staticmethod
     def mask_from_number(number):
@@ -166,9 +166,9 @@ class IPAddress:
         :param number: An integer with the numeral form.
         :return: a string of the subnet mask with the 'mask' form. ('255.255.255.0')
         """
-        bits = ''.join(reversed(('1' * number).zfill(IP_ADDRESS_BIT_LENGTH)))
-        grouped_as_bytes = [''.join(bits[i:i+8]) for i in range(0, IP_ADDRESS_BIT_LENGTH, 8)]
-        return IP_ADDRESS_SEPARATOR.join([str(int(byte, 2)) for byte in grouped_as_bytes])
+        bits = ''.join(reversed(('1' * number).zfill(ADDRESSES.IP.BIT_LENGTH)))
+        grouped_as_bytes = [''.join(bits[i:i+8]) for i in range(0, ADDRESSES.IP.BIT_LENGTH, 8)]
+        return ADDRESSES.IP.SEPARATOR.join([str(int(byte, 2)) for byte in grouped_as_bytes])
 
     @classmethod
     def as_bits(cls, address):
@@ -201,7 +201,7 @@ class IPAddress:
         :param other: IPAddress object
         :return: another different but identical IPAddress object.
         """
-        return cls(other.string_ip + IP_SUBNET_SEPARATOR + str(other.subnet_mask))
+        return cls(other.string_ip + ADDRESSES.IP.SUBNET_SEPARATOR + str(other.subnet_mask))
 
     def __eq__(self, other):
         """Test whether two ip addresses are equal or not (does no include subnet mask)"""

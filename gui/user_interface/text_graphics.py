@@ -14,13 +14,13 @@ class Text(UserInterfaceGraphicsObject):
     """
     def __init__(self, text, x, y,
                  parent_graphics=None,
-                 padding=(0, DEFAULT_TEXT_Y_PADDING),
+                 padding=(0, TEXT.DEFAULT_Y_PADDING),
                  is_button=False,
                  start_hidden=False,
-                 max_width=WINDOW_WIDTH,
-                 font_size=DEFAULT_FONT_SIZE,
+                 max_width=WINDOWS.MAIN.WIDTH,
+                 font_size=TEXT.FONT.DEFAULT_SIZE,
                  align='center',
-                 color=WHITE):
+                 color=COLORS.WHITE):
         """
         Initiates a new `Text` object.
         A `Text` object can have a parent `GraphicsObject` which it will set its coordinates according to it. (if it
@@ -67,7 +67,7 @@ class Text(UserInterfaceGraphicsObject):
         """
         self._text = text
         self.label = pyglet.text.Label(self._text,
-                                       font_name=DEFAULT_FONT,
+                                       font_name=TEXT.FONT.DEFAULT,
                                        font_size=self.font_size,
                                        x=self.x + self.x_padding, y=(self.y + self.y_padding),
                                        color=self.color + (255,),

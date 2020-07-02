@@ -24,11 +24,11 @@ class WirelessConnectionGraphics(ConnectionGraphics):
         super(WirelessConnectionGraphics, self).__init__(connection,
                                                          computer_graphics_start, computer_graphics_end,
                                                          packet_loss)
-        self.regular_color = WIRELESS_CONNECTION_COLOR if not self.connection.packet_loss else PL_CONNECTION_COLOR
+        self.regular_color = CONNECTIONS.WIRELESS.COLOR if not self.connection.packet_loss else CONNECTIONS.PL_COLOR
         self.color = self.regular_color
 
-        self.amplitude = DEFAULT_SINE_WAVE_AMPLITUDE
-        self.frequency = DEFAULT_SINE_WAVE_FREQUENCY
+        self.amplitude = SHAPES.SINE_WAVE.DEFAULT_AMPLITUDE
+        self.frequency = SHAPES.SINE_WAVE.DEFAULT_FREQUENCY
 
         self.coordinates = None
         self.previous_coordinates = None
@@ -54,7 +54,7 @@ class WirelessConnectionGraphics(ConnectionGraphics):
                 frequency=self.frequency,
             ))
 
-        sign = 1 if direction is PACKET_GOING_RIGHT else -1
+        sign = 1 if direction is PACKET.DIRECTION.RIGHT else -1
 
         return self.coordinates[sign * int(len(self.coordinates) * progress)]
         
@@ -65,7 +65,7 @@ class WirelessConnectionGraphics(ConnectionGraphics):
         :return: a tuple of image, display_text, added buttons' id
         """
         _, text, buttons_id = super(WirelessConnectionGraphics, self).start_viewing(user_interface)
-        return ImageGraphics.get_image_sprite(os.path.join(IMAGES_DIR, WIRELESS_CONNECTION_VIEW_IMAGE)), text, buttons_id
+        return ImageGraphics.get_image_sprite(os.path.join(DIRECTORIES.IMAGES, IMAGES.VIEW.WIRELESS_CONNECTION)), text, buttons_id
 
     def generate_view_text(self):
         """
@@ -79,7 +79,7 @@ class WirelessConnectionGraphics(ConnectionGraphics):
         Draws the connection as a wavy sine function between the two computers.
         :return: None
         """
-        color = self.color if not self.is_mouse_in() else SELECTED_CONNECTION_COLOR
+        color = self.color if not self.is_mouse_in() else CONNECTIONS.SELECTED_COLOR
         draw_sine_wave(self.computers.start.location,
                        self.computers.end.location,
                        amplitude=self.amplitude,

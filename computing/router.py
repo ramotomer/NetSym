@@ -75,7 +75,7 @@ class RoutePacket(Process):
 
         self.computer.send_ping_to(self.computer.arp_cache[sender_ip].mac,
                                    self.packet["IP"].src_ip,
-                                   ICMP_UNREACHABLE,
+                                   OPCODES.ICMP.UNREACHABLE,
                                    f"Unreachable: {dst_ip}")
 
     def code(self):
@@ -124,7 +124,7 @@ class Router(Computer):
         if interfaces is None:
             interfaces = [Interface(ip='1.1.1.1')]
 
-        super(Router, self).__init__(name, OS_SOLARIS, None, *interfaces)
+        super(Router, self).__init__(name, OS.SOLARIS, None, *interfaces)
         self.routing_table = RoutingTable.create_default(self, False)
 
         self.last_route_check = MainLoop.instance.time()
@@ -139,7 +139,7 @@ class Router(Computer):
         :param y:
         :return: None
         """
-        self.graphics = ComputerGraphics(x, y, self, ROUTER_IMAGE)
+        self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.ROUTER)
 
     def route_new_packets(self):
         """
