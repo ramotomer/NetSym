@@ -441,14 +441,12 @@ class MODES:
     CONNECTING = 1  # The mode when we are connecting two computers (white on the edges)
     VIEW = 2  # the mode when an object is pressed and we see it in the side window view
     PINGING = 3  # the mode where we choose where a ping will be sent
-    DELETING = 4  # the mode where we choose what computer will be deleted
 
     TO_COLORS = {
         SIMULATION: COLORS.GRAY,
         CONNECTING: COLORS.WHITE,
         VIEW: COLORS.GRAY,
         PINGING: COLORS.PURPLE,
-        DELETING: COLORS.BROWN,
     }
 
 

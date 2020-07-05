@@ -102,6 +102,7 @@ class UserInterface:
             (key.TAB, MODIFIERS.NONE): self.tab_through_selected,
             (key.TAB, MODIFIERS.SHIFT): with_args(self.tab_through_selected, True),
             (key.ESCAPE, MODIFIERS.NONE): with_args(self.set_mode, MODES.SIMULATION),
+            (key.DELETE, MODIFIERS.NONE): self.delete_selected_and_marked,
         }
 
         for device, (_, key_string) in DeviceCreationWindow.DEVICE_TO_IMAGE.items():
@@ -112,7 +113,6 @@ class UserInterface:
             MODES.CONNECTING: with_args(self.two_pressed_objects, self.connect_devices, [InterfaceGraphics]),
             MODES.VIEW: self.view_mode_at_press,
             MODES.PINGING: with_args(self.two_pressed_objects, self.send_direct_ping),
-            MODES.DELETING: self.deleting_mode_at_press,
         }
         # ^ maps what to do when the screen is pressed in each `mode`.
 
@@ -159,12 +159,10 @@ class UserInterface:
               "delete all packets (Shift+d)"), {"key": (key.D, MODIFIERS.SHIFT)}),
             ((*BUTTONS.DEFAULT_LOCATION(6), self.delete_all,
               "delete all (^d)"), {"key": (key.D, MODIFIERS.CTRL)}),
-            ((*BUTTONS.DEFAULT_LOCATION(7), with_args(self.toggle_mode, MODES.DELETING),
-              "delete (d)"), {"key": (key.D, MODIFIERS.NONE)}),
-            ((*BUTTONS.DEFAULT_LOCATION(8), with_args(self.ask_user_for, str, "save file as:",
+            ((*BUTTONS.DEFAULT_LOCATION(7), with_args(self.ask_user_for, str, "save file as:",
                                                      self._save_to_file_with_override_safety),
               "save to file(^s)"), {"key": (key.S, MODIFIERS.CTRL)}),
-            ((*BUTTONS.DEFAULT_LOCATION(9), self._ask_user_for_load_file,
+            ((*BUTTONS.DEFAULT_LOCATION(8), self._ask_user_for_load_file,
               "load from file (^o)"), {"key": (key.O, MODIFIERS.CTRL)}),
         ]
         self.buttons = {}
@@ -517,6 +515,7 @@ class UserInterface:
                         Interface.with_ip('172.3.10.1'),
                         Interface.with_ip('1.1.1.1'),
                         ])
+        # TODO: find out why this warning exists and fix it (if there is no warning here, delete this comment)
         router.show(x, y)
         self.computers.append(router)
 
@@ -644,6 +643,7 @@ class UserInterface:
         self.selected_object = None
         self.dragged_object = None
 
+        # TODO: get rid of all this `is_computer` and replace with isinstance please
         if graphics_object.is_computer:
             self.computers.remove(graphics_object.computer)
             self._delete_connections_to(graphics_object.computer)
@@ -1246,3 +1246,18 @@ class UserInterface:
             f"insert file name to open: [options: {self._list_saved_files()}]",
             self.load_from_file
         )
+
+    def delete_selected_and_marked(self):
+        """
+        Deletes the selected and marked objects
+        This is called when one presses the delete button
+        :return:
+        """
+        if self.selected_object is not None:
+            self.delete(self.selected_object)
+            self.selected_object = None
+            self.set_mode(MODES.SIMULATION)
+
+        for object_ in self.marked_objects:
+            self.delete(object_)
+        self.marked_objects.clear()
