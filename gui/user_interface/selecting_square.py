@@ -58,7 +58,7 @@ class SelectingSquare(GraphicsObject):
             return bottom_left_x < x < upper_right_x and bottom_left_y < y < upper_right_y
         elif isinstance(item, ImageGraphics):
             return any(corner in self for corner in item.corners)
-        raise WrongUsageError()
+        raise WrongUsageError("Receives a tuple or a graphics object only!")
 
     def move(self):
         self.select_objects()

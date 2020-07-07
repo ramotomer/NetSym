@@ -103,6 +103,10 @@ class UserInterface:
             (key.TAB, MODIFIERS.SHIFT): with_args(self.tab_through_selected, True),
             (key.ESCAPE, MODIFIERS.NONE): with_args(self.set_mode, MODES.SIMULATION),
             (key.DELETE, MODIFIERS.NONE): self.delete_selected_and_marked,
+            (key.UP, MODIFIERS.NONE): with_args(self.move_selected, key.UP),
+            (key.RIGHT, MODIFIERS.NONE): with_args(self.move_selected, key.RIGHT),
+            (key.LEFT, MODIFIERS.NONE): with_args(self.move_selected, key.LEFT),
+            (key.DOWN, MODIFIERS.NONE): with_args(self.move_selected, key.DOWN),
         }
 
         for device, (_, key_string) in DeviceCreationWindow.DEVICE_TO_IMAGE.items():
@@ -1261,3 +1265,26 @@ class UserInterface:
         for object_ in self.marked_objects:
             self.delete(object_)
         self.marked_objects.clear()
+
+    def move_selected(self, direction):
+        """
+
+        :param direction:
+        :return:
+        """
+        if self.selected_object is None:
+            return
+        closest_computer = {
+            key.RIGHT: (lambda c: c.graphics.x - self.selected_object.x),
+            key.LEFT: (lambda c: self.selected_object.x - c.graphics.x),
+            key.UP: (lambda c: c.graphics.y - self.selected_object.y),
+            key.DOWN: (lambda c: self.selected_object.y - c.graphics.y),
+        }[direction]
+
+        optional_computers = list(filter(lambda c: closest_computer(c) > 0, self.computers))
+        if not optional_computers:
+            return
+        new_selected = min(optional_computers, key=closest_computer)
+        self.set_mode(MODES.SIMULATION)
+        self.selected_object = new_selected.graphics
+        self.set_mode(MODES.VIEW)
