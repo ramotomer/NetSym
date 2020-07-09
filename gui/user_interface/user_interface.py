@@ -128,9 +128,9 @@ class UserInterface:
 
         self.action_at_press_by_mode = {
             MODES.NORMAL: self.view_mode_at_press,
-            MODES.CONNECTING: self.start_device_connecting, # with_args(self.two_pressed_objects, self.connect_devices, [InterfaceGraphics]),
             MODES.VIEW: self.view_mode_at_press,
-            MODES.PINGING: with_args(self.two_pressed_objects, self.send_direct_ping),
+            MODES.CONNECTING: self.start_device_visual_connecting,
+            MODES.PINGING: self.start_device_visual_connecting,
         }
         # ^ maps what to do when the screen is pressed in each `mode`.
 
@@ -143,7 +143,7 @@ class UserInterface:
         # ^ a list of `ConnectionData`-s (save information about all existing connections between computers.
 
         self.mode = MODES.NORMAL
-        self.source_of_connecting_drag = None
+        self.source_of_line_drag = None
         # ^ used if two items are selected one after the other for some purpose (connecting mode, pinging mode etc)
 
         self.dragged_object = None
@@ -222,19 +222,21 @@ class UserInterface:
         self._showcase_running_stp()
 
         if self.mode == MODES.CONNECTING:
-            self._draw_connection_to_mouse()
+            self._draw_connection_to_mouse(CONNECTIONS.COLOR)
+        elif self.mode == MODES.PINGING:
+            self._draw_connection_to_mouse(COLORS.PURPLE)
 
-    def _draw_connection_to_mouse(self):
+    def _draw_connection_to_mouse(self, color):
         """
         This draws the connection while connecting two computers in connecting mode.
         (when they are not connected yet...)
         :return:
         """
-        if self.source_of_connecting_drag is None:
+        if self.source_of_line_drag is None:
             return
 
-        draw_line(self.source_of_connecting_drag.location, MainWindow.main_window.get_mouse_location())
-        self.source_of_connecting_drag.mark_as_selected()
+        draw_line(self.source_of_line_drag.location, MainWindow.main_window.get_mouse_location(), color=color)
+        self.source_of_line_drag.mark_as_selected()
 
         destination = MainLoop.instance.get_object_the_mouse_is_on()
         if destination is not None:
@@ -390,7 +392,7 @@ class UserInterface:
         :return: None
         """
         if self.mode == MODES.CONNECTING and new_mode != MODES.CONNECTING:
-            self.source_of_connecting_drag = None
+            self.source_of_line_drag = None
 
         if new_mode == MODES.VIEW:
             self.end_object_view()
@@ -403,6 +405,7 @@ class UserInterface:
             self.start_object_view(self.selected_object)
 
         else:
+            self.source_of_line_drag = None
             self.mode = new_mode
             self.end_object_view()
             if self.selected_object is not None:
@@ -471,15 +474,10 @@ class UserInterface:
             self.selecting_square = None
 
         elif self.mode == MODES.CONNECTING:
-            connected = MainLoop.instance.get_object_the_mouse_is_on()
-            if self.is_mouse_in_side_window() or connected is None:
-                self.set_mode(MODES.NORMAL)
-                return
-            try:
-                self.connect_devices(connected, self.source_of_connecting_drag)
-            except DeviceAlreadyConnectedError:
-                PopupError("That interface is already connected :(", self)
-            self.set_mode(MODES.NORMAL)
+            self.end_device_visual_connecting(self.connect_devices)
+
+        elif self.mode == MODES.PINGING:
+            self.end_device_visual_connecting(self.send_direct_ping)
 
     def on_key_pressed(self, symbol, modifiers):
         """
@@ -565,26 +563,39 @@ class UserInterface:
         """
         pressable_types = [ComputerGraphics] + ([] if more_pressable_types is None else more_pressable_types)
         if self.selected_object is not None and type(self.selected_object) in pressable_types:
-            if self.source_of_connecting_drag is None:
-                self.source_of_connecting_drag = self.selected_object
+            if self.source_of_line_drag is None:
+                self.source_of_line_drag = self.selected_object
             else:  # there is another computer to connect with that was already pressed.
-                action(self.source_of_connecting_drag, self.selected_object)
+                action(self.source_of_line_drag, self.selected_object)
 
-                self.source_of_connecting_drag = None
+                self.source_of_line_drag = None
                 self.set_mode(MODES.NORMAL)
 
         elif not self.is_mouse_in_side_window() and self.selected_object is None:  # pressing the background
-            self.source_of_connecting_drag = None
+            self.source_of_line_drag = None
             self.set_mode(MODES.NORMAL)
 
-    def start_device_connecting(self):
+    def start_device_visual_connecting(self):
         """
         This is called when we start to drag the connection from computer to the next in connecting mode
         :return:
         """
-        self.source_of_connecting_drag = MainLoop.instance.get_object_the_mouse_is_on()
-        if self.source_of_connecting_drag is None or self.is_mouse_in_side_window():
+        self.source_of_line_drag = MainLoop.instance.get_object_the_mouse_is_on()
+        if self.source_of_line_drag is None or self.is_mouse_in_side_window():
             self.set_mode(MODES.NORMAL)
+
+    def end_device_visual_connecting(self, action):
+        """
+        This is called when the the line was dragged between the two devices and now the action can be performed.
+        :param action: a function that is called with the two devices.
+        :return:
+        """
+        connected = MainLoop.instance.get_object_the_mouse_is_on()
+        if self.is_mouse_in_side_window() or connected is None:
+            self.set_mode(MODES.NORMAL)
+            return
+        action(self.source_of_line_drag, connected)
+        self.set_mode(MODES.NORMAL)
 
     def connect_devices(self, device1, device2):
         """
