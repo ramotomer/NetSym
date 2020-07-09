@@ -4,6 +4,7 @@ import operator
 import random
 from collections import namedtuple, defaultdict
 from functools import reduce
+from math import sqrt
 from operator import concat
 
 from pyglet.window import key
@@ -109,10 +110,10 @@ class UserInterface:
             (key.LEFT, MODIFIERS.NONE): with_args(self.move_selected_mark, key.LEFT),
             (key.DOWN, MODIFIERS.NONE): with_args(self.move_selected_mark, key.DOWN),
 
-            (key.UP, MODIFIERS.CTRL): with_args(self.move_selected_computer, key.UP),
-            (key.RIGHT, MODIFIERS.CTRL): with_args(self.move_selected_computer, key.RIGHT),
-            (key.LEFT, MODIFIERS.CTRL): with_args(self.move_selected_computer, key.LEFT),
-            (key.DOWN, MODIFIERS.CTRL): with_args(self.move_selected_computer, key.DOWN),
+            (key.UP, MODIFIERS.CTRL): with_args(self.move_selected_object, key.UP),
+            (key.RIGHT, MODIFIERS.CTRL): with_args(self.move_selected_object, key.RIGHT),
+            (key.LEFT, MODIFIERS.CTRL): with_args(self.move_selected_object, key.LEFT),
+            (key.DOWN, MODIFIERS.CTRL): with_args(self.move_selected_object, key.DOWN),
         }
 
         for device, (_, key_string) in DeviceCreationWindow.DEVICE_TO_IMAGE.items():
@@ -140,9 +141,6 @@ class UserInterface:
 
         self.dragged_object = None
         # ^ the object that is currently being dragged (by the courser)
-
-        self.__selected_object = None
-        # ^ the object that is currently dragged
 
         self.object_view = None
         # ^ the `ObjectView` object that is currently is_showing in the side window.
@@ -186,6 +184,9 @@ class UserInterface:
         self.marked_objects = []
         self.dragging_points = defaultdict(lambda: (None, None))
 
+        self.__selected_object = None
+        # ^ the object that is currently dragged
+
     @property
     def active_window(self):
         return self.__active_window
@@ -210,6 +211,9 @@ class UserInterface:
         else:
             self.__selected_object = graphics_object
             self.active_window = None
+
+        if self.__selected_object is not None:
+            self.set_mode(MODES.VIEW)
 
     def show(self):
         """
@@ -633,6 +637,7 @@ class UserInterface:
 
         self.computers.clear()
         self.connection_data.clear()
+        self.set_mode(MODES.SIMULATION)
 
     def delete_all_packets(self):
         """
@@ -1282,7 +1287,7 @@ class UserInterface:
         if self.selected_object is None:
             return
         try:
-            closest_computer = {
+            computer_distance_in_direction = {
                 key.RIGHT: (lambda c: c.graphics.x - self.selected_object.x),
                 key.LEFT: (lambda c: self.selected_object.x - c.graphics.x),
                 key.UP: (lambda c: c.graphics.y - self.selected_object.y),
@@ -1291,23 +1296,28 @@ class UserInterface:
         except KeyError:
             raise WrongUsageError("direction must be one of {key.UP, key.DOWN, key.RIGHT, key.LEFT}")
 
-        optional_computers = list(filter(lambda c: closest_computer(c) > 0, self.computers))
+        optional_computers = list(filter(lambda c: computer_distance_in_direction(c) > 0, self.computers))
         if not optional_computers:
             return
-        new_selected = min(optional_computers, key=closest_computer)
-        self.set_mode(MODES.SIMULATION)
-        self.selected_object = new_selected.graphics
-        self.set_mode(MODES.VIEW)
 
-    def move_selected_computer(self, direction, step_size=SELECTED_OBJECT.STEP_SIZE):
+        def weighted_distance(computer):
+            x, y = computer.graphics.location
+            sx, sy = self.selected_object.location
+
+            if direction in {key.UP, key.DOWN}:
+                return sqrt((x - sx) ** 100 + (y - sy) ** 2)
+            return sqrt((x - sx) ** 2 + (y - sy) ** 100)
+
+        new_selected = min(optional_computers, key=weighted_distance)
+        self.selected_object = new_selected.graphics
+
+    def move_selected_object(self, direction, step_size=SELECTED_OBJECT.STEP_SIZE):
         """
         Moves the computer that is selected a little bit in the direction given.
         :param direction:
+        :param step_size: how many pixels the object will move in each step
         :return:
         """
-        if self.selected_object is None and not self.marked_objects:
-            return
-
         try:
             step = scale_tuple(step_size, {
                 key.UP: (0, 1),
