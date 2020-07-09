@@ -221,8 +221,6 @@ class WINDOWS:
         STACKING_PADDING = 10, -10
 
         class TEXTBOX:
-            global MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT
-
             WIDTH = 400
             HEIGHT = 170
             COORDINATES = (437.5, 215.0)
@@ -241,6 +239,13 @@ class WINDOWS:
         class DEVICE_CREATION:
             BUTTON_SIZE = 80
             BUTTON_GAP = 5
+
+        class HELP:
+            WIDTH = 900
+            HEIGHT = 500
+            COORDINATES = 0, 0
+            PADDING = 200 - (WIDTH / 2), 8
+            OK_BUTTON_COORDINATES = tuple(map(sum, zip((100, 100), PADDING)))
 
 
 class IMAGES:
@@ -437,13 +442,13 @@ class CONNECTIONS:
 
 
 class MODES:
-    SIMULATION = 0  # the normal mode of the simulation
+    NORMAL = 0  # the normal mode of the simulation
     CONNECTING = 1  # The mode when we are connecting two computers (white on the edges)
     VIEW = 2  # the mode when an object is pressed and we see it in the side window view
     PINGING = 3  # the mode where we choose where a ping will be sent
 
     TO_COLORS = {
-        SIMULATION: COLORS.GRAY,
+        NORMAL: COLORS.GRAY,
         CONNECTING: COLORS.WHITE,
         VIEW: COLORS.GRAY,
         PINGING: COLORS.PURPLE,

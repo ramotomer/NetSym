@@ -13,8 +13,6 @@ class DeviceCreationWindow(PopupWindow):
     """
     This is a popup window that allows you to create a device in your network.
     """
-    # TODO: fix bug, cannot move window!!!
-
     DEVICE_TO_IMAGE = {
         Computer: (IMAGES.COMPUTERS.COMPUTER, "(n)"),
         Switch: (IMAGES.COMPUTERS.SWITCH, "(s)"),
