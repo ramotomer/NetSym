@@ -96,38 +96,8 @@ class MainWindow(pyglet.window.Window):
         :param modifiers:
         :return:
         """
-        try: # this try and except is done becauese for some reason it is done automatically in pyglet and it is very annoying!!!!!!
-
-            self.mouse_pressed = True
-            self._set_mouse_pressed_objects()
-
-            if self.user_interface.selected_object is None and self.user_interface.is_asking_for_string:  # if pressed outside a text-box.
-                self.user_interface.end_string_request()
-
-            self.user_interface.on_mouse_press()  # this should will be last!
-
-        except (TypeError, AttributeError) as err:
-            print(f"error in `on_mouse_press` {err}")
-            raise err
-
-    def _set_mouse_pressed_objects(self):
-        """
-        Sets the `selected_object` and `dragged_object` according to the mouse's press.
-        :return: None
-        """
-        if not self.user_interface.is_mouse_in_side_window():
-            object_the_mouse_is_on = MainLoop.instance.get_object_the_mouse_is_on()
-
-            self.user_interface.dragged_object = object_the_mouse_is_on
-            self.user_interface.selected_object = object_the_mouse_is_on
-
-            if object_the_mouse_is_on is not None:
-                mouse_x, mouse_y = self.get_mouse_location()
-                for object_ in self.user_interface.marked_objects + [object_the_mouse_is_on]:
-                    object_x, object_y = object_.location
-                    self.user_interface.dragging_points[object_] = object_x - mouse_x, object_y - mouse_y
-            else:
-                self.user_interface.marked_objects.clear()
+        self.mouse_pressed = True
+        self.user_interface.on_mouse_press()  # this should will be last!
 
     def on_mouse_release(self, x, y, button, modifiers):
         """
