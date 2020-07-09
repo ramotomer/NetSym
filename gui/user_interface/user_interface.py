@@ -5,7 +5,7 @@ import random
 from collections import namedtuple, defaultdict
 from functools import reduce
 from math import sqrt
-from operator import concat
+from operator import concat, attrgetter
 
 import pyglet
 from pyglet.window import key
@@ -101,6 +101,7 @@ class UserInterface:
             (key.M, MODIFIERS.NONE): self.print_debugging_info,
             (key.W, MODIFIERS.NONE): self.add_tcp_test,
             (key.Q, MODIFIERS.CTRL): self.exit,
+            (key.A, MODIFIERS.CTRL): self.select_all,
             (key.SPACE, MODIFIERS.NONE): self.toggle_pause,
             (key.TAB, MODIFIERS.NONE): self.tab_through_selected,
             (key.TAB, MODIFIERS.SHIFT): with_args(self.tab_through_selected, True),
@@ -193,6 +194,7 @@ class UserInterface:
 
         self.__selected_object = None
         # ^ the object that is currently dragged
+        self.selected_object = None
 
     @property
     def active_window(self):
@@ -1345,3 +1347,12 @@ class UserInterface:
         :return:
         """
         YesNoPopupWindow("Are you sure you want to exit?", self, yes_action=pyglet.app.exit)
+
+    def select_all(self):
+        """
+        Mark all of the computers on the screen.
+        :return:
+        """
+        self.marked_objects.clear()
+        self.selected_object = None
+        self.marked_objects += list(map(attrgetter("graphics"), self.computers))
