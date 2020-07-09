@@ -33,7 +33,7 @@ from gui.user_interface.selecting_square import SelectingSquare
 from gui.user_interface.text_graphics import Text
 from processes.stp_process import STPProcess
 from processes.tcp_process import TCPProcess
-from usefuls import get_the_one, distance, with_args, called_in_order, circular_coordinates
+from usefuls import get_the_one, distance, with_args, called_in_order, circular_coordinates, sum_tuples, scale_tuple
 
 ObjectView = namedtuple("ObjectView", [
     "sprite",
@@ -103,10 +103,16 @@ class UserInterface:
             (key.TAB, MODIFIERS.SHIFT): with_args(self.tab_through_selected, True),
             (key.ESCAPE, MODIFIERS.NONE): with_args(self.set_mode, MODES.SIMULATION),
             (key.DELETE, MODIFIERS.NONE): self.delete_selected_and_marked,
-            (key.UP, MODIFIERS.NONE): with_args(self.move_selected, key.UP),
-            (key.RIGHT, MODIFIERS.NONE): with_args(self.move_selected, key.RIGHT),
-            (key.LEFT, MODIFIERS.NONE): with_args(self.move_selected, key.LEFT),
-            (key.DOWN, MODIFIERS.NONE): with_args(self.move_selected, key.DOWN),
+
+            (key.UP, MODIFIERS.NONE): with_args(self.move_selected_mark, key.UP),
+            (key.RIGHT, MODIFIERS.NONE): with_args(self.move_selected_mark, key.RIGHT),
+            (key.LEFT, MODIFIERS.NONE): with_args(self.move_selected_mark, key.LEFT),
+            (key.DOWN, MODIFIERS.NONE): with_args(self.move_selected_mark, key.DOWN),
+
+            (key.UP, MODIFIERS.CTRL): with_args(self.move_selected_computer, key.UP),
+            (key.RIGHT, MODIFIERS.CTRL): with_args(self.move_selected_computer, key.RIGHT),
+            (key.LEFT, MODIFIERS.CTRL): with_args(self.move_selected_computer, key.LEFT),
+            (key.DOWN, MODIFIERS.CTRL): with_args(self.move_selected_computer, key.DOWN),
         }
 
         for device, (_, key_string) in DeviceCreationWindow.DEVICE_TO_IMAGE.items():
@@ -1266,20 +1272,24 @@ class UserInterface:
             self.delete(object_)
         self.marked_objects.clear()
 
-    def move_selected(self, direction):
+    def move_selected_mark(self, direction):
         """
-
-        :param direction:
+        Moves the square that marks the selected computer to a given direction.
+        (pressing an arrow key calls this)
+        :param direction: one of {key.UP, key.DOWN, key.RIGHT, key.LEFT}
         :return:
         """
         if self.selected_object is None:
             return
-        closest_computer = {
-            key.RIGHT: (lambda c: c.graphics.x - self.selected_object.x),
-            key.LEFT: (lambda c: self.selected_object.x - c.graphics.x),
-            key.UP: (lambda c: c.graphics.y - self.selected_object.y),
-            key.DOWN: (lambda c: self.selected_object.y - c.graphics.y),
-        }[direction]
+        try:
+            closest_computer = {
+                key.RIGHT: (lambda c: c.graphics.x - self.selected_object.x),
+                key.LEFT: (lambda c: self.selected_object.x - c.graphics.x),
+                key.UP: (lambda c: c.graphics.y - self.selected_object.y),
+                key.DOWN: (lambda c: self.selected_object.y - c.graphics.y),
+            }[direction]
+        except KeyError:
+            raise WrongUsageError("direction must be one of {key.UP, key.DOWN, key.RIGHT, key.LEFT}")
 
         optional_computers = list(filter(lambda c: closest_computer(c) > 0, self.computers))
         if not optional_computers:
@@ -1288,3 +1298,26 @@ class UserInterface:
         self.set_mode(MODES.SIMULATION)
         self.selected_object = new_selected.graphics
         self.set_mode(MODES.VIEW)
+
+    def move_selected_computer(self, direction, step_size=SELECTED_OBJECT.STEP_SIZE):
+        """
+        Moves the computer that is selected a little bit in the direction given.
+        :param direction:
+        :return:
+        """
+        if self.selected_object is None and not self.marked_objects:
+            return
+
+        try:
+            step = scale_tuple(step_size, {
+                key.UP: (0, 1),
+                key.DOWN: (0, -1),
+                key.RIGHT: (1, 0),
+                key.LEFT: (-1, 0),
+            }[direction])
+        except KeyError:
+            raise WrongUsageError("direction must be one of {key.UP, key.DOWN, key.RIGHT, key.LEFT}")
+
+        moved_objects = self.marked_objects + ([] if self.selected_object is None else [self.selected_object])
+        for object_ in moved_objects:
+            object_.location = sum_tuples(object_.location, step)

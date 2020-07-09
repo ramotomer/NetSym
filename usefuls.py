@@ -1,5 +1,7 @@
 import cmath
+from functools import reduce
 from math import sqrt, sin, cos, pi, atan
+from operator import mul
 
 from consts import *
 
@@ -159,3 +161,22 @@ def rotated_coordinates(coordinates, center, angle):
     x, y = (x - cx), (y - cy)
     rotated = (x + y*1j) * cmath.rect(1, angle)
     return rotated.real + cx, rotated.imag + cy
+
+
+def sum_tuples(*tuples):
+    """
+    sums each item of the tuples. returns the new tuple.
+    :param tuples: many arguments of tuples.
+    :return:
+    """
+    return tuple(map(sum, zip(*tuples)))
+
+
+def scale_tuple(scalar, tup):
+    """
+    Multiplies every item of the tuple with a number.
+    :param scalar: number
+    :param tup: tuple
+    :return:
+    """
+    return tuple(map(lambda t: reduce(mul, t), zip(([scalar] * len(tup)), tup)))
