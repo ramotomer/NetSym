@@ -16,7 +16,7 @@ class Button(UserInterfaceGraphicsObject):
     """
     def __init__(self, x, y, action=lambda: None, text=BUTTONS.DEFAULT_TEXT, start_hidden=False,
                  width=BUTTONS.DEFAULT_WIDTH, height=BUTTONS.DEFAULT_HEIGHT, key=None,
-                 color=COLORS.GRAY, text_color=COLORS.PINK):
+                 color=BUTTONS.COLOR, text_color=BUTTONS.TEXT_COLOR):
         """
         Initiates the button.
         :param x:

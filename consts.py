@@ -187,7 +187,7 @@ class COLORS:
     DARK_GRAY = (20, 20, 20)
     GRAY = (10, 10, 10)
     LIGHT_GRAY = (150, 150, 150)
-    VERY_LIGHT_GRAY = (180, 180, 180)
+    VERY_LIGHT_GRAY = (200, 200, 200)
     BLACK = (0, 0, 0)
     WHITE = (255, 255, 255)
     BLUE = (0, 0, 255)
@@ -213,9 +213,11 @@ class WINDOWS:
         HEIGHT = 600
         INITIAL_LOCATION = 4, 50
         FRAME_RATE = 1 / 60.0
+        BACKGROUND = COLORS.VERY_LIGHT_GRAY
 
     class SIDE:
         WIDTH = 230
+        COLOR = COLORS.LIGHT_GRAY
 
     class POPUP:
         STACKING_PADDING = 10, -10
@@ -225,7 +227,7 @@ class WINDOWS:
             HEIGHT = 170
             COORDINATES = (437.5, 215.0)
             UPPER_PART_HEIGHT = 30
-            COLOR = COLORS.GRAY
+            COLOR = COLORS.VERY_LIGHT_GRAY
             OUTLINE_COLOR = COLORS.LIGHT_BLUE
 
         class SUBMIT_BUTTON:
@@ -249,13 +251,13 @@ class WINDOWS:
 
 
 class IMAGES:
-    SIZE = 16
+    SIZE = 100
 
     class SCALE_FACTORS:
-        SPRITES = 3
+        SPRITES = 0.5
         INTERNET = 8
         PACKETS = 1.2
-        VIEWING_OBJECTS = 5
+        VIEWING_OBJECTS = 5 * SPRITES / 3
         PROCESSES = 1.3
 
     class PACKETS:
@@ -392,7 +394,9 @@ class BUTTONS:
     DEFAULT_TEXT = "buTTon"
     DEFAULT_WIDTH = WINDOWS.SIDE.WIDTH - 40
     DEFAULT_HEIGHT = 35
+    TEXT_COLOR = COLORS.RED
     TEXT_PADDING = 8
+    COLOR = WINDOWS.SIDE.COLOR
 
     class ON_POPUP_WINDOWS:
         ID = -1
@@ -403,7 +407,7 @@ class BUTTONS:
 
 class INTERFACES:
     COMPUTER_DISTANCE = 20
-    COLOR = COLORS.WHITE
+    COLOR = COLORS.DARK_GRAY
     BLOCKED_COLOR = COLORS.RED
     WIDTH, HEIGHT = 10, 10
     ANY_INTERFACE = None
@@ -411,6 +415,7 @@ class INTERFACES:
 
 class TEXT:
     DEFAULT_Y_PADDING = -30
+    COLOR = COLORS.BLACK
 
     class FONT:
         DEFAULT = "Arial"
@@ -443,9 +448,9 @@ class MODES:
     PINGING = 3  # the mode where we choose where a ping will be sent
 
     TO_COLORS = {
-        NORMAL: COLORS.GRAY,
+        NORMAL: WINDOWS.SIDE.COLOR,
         CONNECTING: COLORS.WHITE,
-        VIEW: COLORS.GRAY,
+        VIEW: WINDOWS.SIDE.COLOR,
         PINGING: COLORS.PURPLE,
     }
 
@@ -466,8 +471,8 @@ class SHAPES:
     class SINE_WAVE:
         MINIMAL_POINT_DISTANCE = 5
         INITIAL_ANGLE = 0
-        DEFAULT_AMPLITUDE = 10
-        DEFAULT_FREQUENCY = 10
+        DEFAULT_AMPLITUDE = 20
+        DEFAULT_FREQUENCY = 20
 
     class RECT:
         DEFAULT_OUTLINE_WIDTH = 5
@@ -483,7 +488,7 @@ class SELECTION_SQUARE:
 
 class SELECTED_OBJECT:
     PADDING = 8
-    COLOR = COLORS.TURQUOISE
+    COLOR = COLORS.BLUE
     STEP_SIZE = 30
     SMALL_STEP_SIZE = 5
     BIG_STEP_SIZE = 80

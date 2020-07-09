@@ -263,7 +263,8 @@ class UserInterface:
         Draws the side window
         :return:
         """
-        draw_rectangle(MainWindow.main_window.width - self.WIDTH, 0, self.WIDTH, MainWindow.main_window.height, color=MODES.TO_COLORS[self.mode])
+        draw_rectangle(MainWindow.main_window.width - self.WIDTH, 0, self.WIDTH, MainWindow.main_window.height,
+                       color=MODES.TO_COLORS[self.mode])
 
     def drag_objects(self):
         """
