@@ -20,7 +20,7 @@ from exceptions import *
 from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
-from gui.shape_drawing import draw_circle
+from gui.shape_drawing import draw_circle, draw_line
 from gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from gui.tech.computer_graphics import ComputerGraphics
 from gui.tech.interface_graphics import InterfaceGraphics
@@ -89,8 +89,6 @@ class UserInterface:
         `button_arguments` is a list of arguments for `Button` objects that will be created after
         the `MainWindow` is initiated.
 
-        `is_asking_for_string` tells whether or not a popup window is currently up and asking the user for input
-        `popup_window` is that window.
         """
         self.key_to_action = {
             (key.N, MODIFIERS.CTRL): self.create_computer_with_ip,
@@ -130,7 +128,7 @@ class UserInterface:
 
         self.action_at_press_by_mode = {
             MODES.NORMAL: self.view_mode_at_press,
-            MODES.CONNECTING: with_args(self.two_pressed_objects, self.connect_devices, [InterfaceGraphics]),
+            MODES.CONNECTING: self.start_device_connecting, # with_args(self.two_pressed_objects, self.connect_devices, [InterfaceGraphics]),
             MODES.VIEW: self.view_mode_at_press,
             MODES.PINGING: with_args(self.two_pressed_objects, self.send_direct_ping),
         }
@@ -145,7 +143,7 @@ class UserInterface:
         # ^ a list of `ConnectionData`-s (save information about all existing connections between computers.
 
         self.mode = MODES.NORMAL
-        self.other_selected_object = None
+        self.source_of_connecting_drag = None
         # ^ used if two items are selected one after the other for some purpose (connecting mode, pinging mode etc)
 
         self.dragged_object = None
@@ -154,8 +152,6 @@ class UserInterface:
         self.object_view = None
         # ^ the `ObjectView` object that is currently is_showing in the side window.
 
-        self.is_asking_for_string = False
-        # ^ whether or not a popup window is currently open on the screen
         self.popup_windows = []
         self.__active_window = None
 
@@ -213,9 +209,6 @@ class UserInterface:
             self.__selected_object = graphics_object
             self.active_window = None
 
-        if self.__selected_object is not None:
-            self.set_mode(MODES.VIEW)
-
     def show(self):
         """
         This is like the `draw` method of GraphicObject`s.
@@ -227,6 +220,25 @@ class UserInterface:
         self.drag_objects()
         self._stop_viewing_dead_packets()
         self._showcase_running_stp()
+
+        if self.mode == MODES.CONNECTING:
+            self._draw_connection_to_mouse()
+
+    def _draw_connection_to_mouse(self):
+        """
+        This draws the connection while connecting two computers in connecting mode.
+        (when they are not connected yet...)
+        :return:
+        """
+        if self.source_of_connecting_drag is None:
+            return
+
+        draw_line(self.source_of_connecting_drag.location, MainWindow.main_window.get_mouse_location())
+        self.source_of_connecting_drag.mark_as_selected()
+
+        destination = MainLoop.instance.get_object_the_mouse_is_on()
+        if destination is not None:
+            destination.mark_as_selected()
 
     def _stop_viewing_dead_packets(self):
         """
@@ -378,7 +390,7 @@ class UserInterface:
         :return: None
         """
         if self.mode == MODES.CONNECTING and new_mode != MODES.CONNECTING:
-            self.other_selected_object = None
+            self.source_of_connecting_drag = None
 
         if new_mode == MODES.VIEW:
             self.end_object_view()
@@ -458,6 +470,17 @@ class UserInterface:
             MainLoop.instance.unregister_graphics_object(self.selecting_square)
             self.selecting_square = None
 
+        elif self.mode == MODES.CONNECTING:
+            connected = MainLoop.instance.get_object_the_mouse_is_on()
+            if self.is_mouse_in_side_window() or connected is None:
+                self.set_mode(MODES.NORMAL)
+                return
+            try:
+                self.connect_devices(connected, self.source_of_connecting_drag)
+            except DeviceAlreadyConnectedError:
+                PopupError("That interface is already connected :(", self)
+            self.set_mode(MODES.NORMAL)
+
     def on_key_pressed(self, symbol, modifiers):
         """
         Called when a key is pressed
@@ -481,6 +504,8 @@ class UserInterface:
         Happens when we are in viewing mode (or simulation mode) and we press our mouse.
         decides whether to start viewing a new graphics object or finish a previous one.
         """
+        self.set_mouse_pressed_objects()
+
         if not self.is_mouse_in_side_window():
             if self.selected_object is not None and self.selected_object.can_be_viewed:
                 self.set_mode(MODES.VIEW)
@@ -488,16 +513,6 @@ class UserInterface:
                 self.set_mode(MODES.NORMAL)
             else:  # if an an object that cannot be viewed is pressed
                 pass
-
-    def deleting_mode_at_press(self):
-        """
-        Happens when we press the screen in DELETING_MODE.
-        Decides if to step out of the mode or to delete an object.
-        :return: None
-        """
-        if self.selected_object is not None:
-            self.delete(self.selected_object)
-        self.set_mode(MODES.NORMAL)
 
     def is_mouse_in_side_window(self):
         """Return whether or not the mouse is currently in the side window."""
@@ -550,16 +565,25 @@ class UserInterface:
         """
         pressable_types = [ComputerGraphics] + ([] if more_pressable_types is None else more_pressable_types)
         if self.selected_object is not None and type(self.selected_object) in pressable_types:
-            if self.other_selected_object is None:
-                self.other_selected_object = self.selected_object
+            if self.source_of_connecting_drag is None:
+                self.source_of_connecting_drag = self.selected_object
             else:  # there is another computer to connect with that was already pressed.
-                action(self.other_selected_object, self.selected_object)
+                action(self.source_of_connecting_drag, self.selected_object)
 
-                self.other_selected_object = None
+                self.source_of_connecting_drag = None
                 self.set_mode(MODES.NORMAL)
 
         elif not self.is_mouse_in_side_window() and self.selected_object is None:  # pressing the background
-            self.other_selected_object = None
+            self.source_of_connecting_drag = None
+            self.set_mode(MODES.NORMAL)
+
+    def start_device_connecting(self):
+        """
+        This is called when we start to drag the connection from computer to the next in connecting mode
+        :return:
+        """
+        self.source_of_connecting_drag = MainLoop.instance.get_object_the_mouse_is_on()
+        if self.source_of_connecting_drag is None or self.is_mouse_in_side_window():
             self.set_mode(MODES.NORMAL)
 
     def connect_devices(self, device1, device2):
@@ -587,7 +611,7 @@ class UserInterface:
                 computers[i] = device
                 interfaces[i] = device.available_interface()
             else:
-                raise WrongUsageError("Only supply this function with computers or interfaces!!!!")
+                raise WrongUsageError(f"Only supply this function with computers or interfaces!!! ({device1, device2})")
 
         is_wireless = all(computer.is_supporting_wireless_connections for computer in computers)
         connection = interfaces[0].connect(interfaces[1], is_wireless=is_wireless)
@@ -629,9 +653,6 @@ class UserInterface:
         MainLoop.instance.delete_all_graphics()
         self.selected_object = None
         self.dragged_object = None
-
-        if self.is_asking_for_string:
-            self.end_string_request()
 
         for connection, _, _ in self.connection_data:
             MainLoop.instance.remove_from_loop(connection.move_packets)
@@ -793,15 +814,6 @@ class UserInterface:
                               MESSAGES.INSERT.IP,
                               with_args(computer.set_ip, interface),
                               "Invalid IP Address!!!")
-
-    def end_string_request(self):
-        """
-        If the `UserInterface` Object currently is asking for user input (via the popup window), end that request,
-        unregister the asking `PopupTextBox` popup window and set all variables accordingly.
-        :return: None
-        """
-        self.is_asking_for_string = False
-        self.active_window = None
 
     def smart_connect(self):
         """
@@ -989,7 +1001,6 @@ class UserInterface:
             try:
                 user_input_object = type_(string)
             except (ValueError, InvalidAddressError):
-                self.end_string_request()
                 PopupError(error_msg, self)
                 return
 
@@ -999,7 +1010,6 @@ class UserInterface:
                 PopupError(str(err), self)
                 return
 
-        self.is_asking_for_string = True
         PopupTextBox(window_text, self, try_casting_with_action)
 
     @staticmethod
@@ -1315,6 +1325,7 @@ class UserInterface:
 
         new_selected = min(optional_computers, key=weighted_distance)
         self.selected_object = new_selected.graphics
+        self.set_mode(MODES.VIEW)
 
     def move_selected_object(self, direction, step_size=SELECTED_OBJECT.STEP_SIZE):
         """
@@ -1359,3 +1370,22 @@ class UserInterface:
         :return:
         """
         PopupHelp(self)
+
+    def set_mouse_pressed_objects(self):
+        """
+        Sets the `selected_object` and `dragged_object` according to the mouse's press.
+        :return: None
+        """
+        if not self.is_mouse_in_side_window():
+            object_the_mouse_is_on = MainLoop.instance.get_object_the_mouse_is_on()
+
+            self.dragged_object = object_the_mouse_is_on
+            self.selected_object = object_the_mouse_is_on
+
+            if object_the_mouse_is_on is not None:  # this block is in charge of dragging the marked objects
+                mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
+                for object_ in self.marked_objects + [object_the_mouse_is_on]:
+                    object_x, object_y = object_.location
+                    self.dragging_points[object_] = object_x - mouse_x, object_y - mouse_y
+            else:
+                self.marked_objects.clear()
