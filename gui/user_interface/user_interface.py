@@ -7,6 +7,7 @@ from functools import reduce
 from math import sqrt
 from operator import concat
 
+import pyglet
 from pyglet.window import key
 
 from address.ip_address import IPAddress
@@ -99,22 +100,28 @@ class UserInterface:
             (key.R, MODIFIERS.CTRL): with_args(self.create_device, Router),
             (key.M, MODIFIERS.NONE): self.print_debugging_info,
             (key.W, MODIFIERS.NONE): self.add_tcp_test,
+            (key.Q, MODIFIERS.CTRL): self.exit,
             (key.SPACE, MODIFIERS.NONE): self.toggle_pause,
             (key.TAB, MODIFIERS.NONE): self.tab_through_selected,
             (key.TAB, MODIFIERS.SHIFT): with_args(self.tab_through_selected, True),
             (key.ESCAPE, MODIFIERS.NONE): with_args(self.set_mode, MODES.SIMULATION),
             (key.DELETE, MODIFIERS.NONE): self.delete_selected_and_marked,
-
-            (key.UP, MODIFIERS.NONE): with_args(self.move_selected_mark, key.UP),
-            (key.RIGHT, MODIFIERS.NONE): with_args(self.move_selected_mark, key.RIGHT),
-            (key.LEFT, MODIFIERS.NONE): with_args(self.move_selected_mark, key.LEFT),
-            (key.DOWN, MODIFIERS.NONE): with_args(self.move_selected_mark, key.DOWN),
-
-            (key.UP, MODIFIERS.CTRL): with_args(self.move_selected_object, key.UP),
-            (key.RIGHT, MODIFIERS.CTRL): with_args(self.move_selected_object, key.RIGHT),
-            (key.LEFT, MODIFIERS.CTRL): with_args(self.move_selected_object, key.LEFT),
-            (key.DOWN, MODIFIERS.CTRL): with_args(self.move_selected_object, key.DOWN),
         }
+
+        for direction in {key.UP, key.RIGHT, key.LEFT, key.DOWN}:
+            self.key_to_action[(direction, MODIFIERS.NONE)] = with_args(
+                self.move_selected_mark,
+                direction,
+            )
+            self.key_to_action[(direction, MODIFIERS.CTRL)] = with_args(
+                self.move_selected_object,
+                direction,
+            )
+            self.key_to_action[(direction, MODIFIERS.CTRL | MODIFIERS.SHIFT)] = with_args(
+                self.move_selected_object,
+                direction,
+                SELECTED_OBJECT.SMALL_STEP_SIZE,
+            )
 
         for device, (_, key_string) in DeviceCreationWindow.DEVICE_TO_IMAGE.items():
             self.key_to_action[self.key_from_string(key_string)] = with_args(self.create_device, device)
@@ -1331,3 +1338,10 @@ class UserInterface:
         moved_objects = self.marked_objects + ([] if self.selected_object is None else [self.selected_object])
         for object_ in moved_objects:
             object_.location = sum_tuples(object_.location, step)
+
+    def exit(self):
+        """
+        Closes the simulation
+        :return:
+        """
+        YesNoPopupWindow("Are you sure you want to exit?", self, yes_action=pyglet.app.exit)
