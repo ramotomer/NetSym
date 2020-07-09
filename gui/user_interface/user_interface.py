@@ -171,7 +171,7 @@ class UserInterface:
             ((self.delete_all, "delete all (^d)"), {"key": (key.D, MODIFIERS.CTRL)}),
             ((with_args(self.ask_user_for, str, "save file as:", self._save_to_file_with_override_safety), "save to file(^s)"), {"key": (key.S, MODIFIERS.CTRL)}),
             ((self._ask_user_for_load_file, "load from file (^o)"), {"key": (key.O, MODIFIERS.CTRL)}),
-            ((self.open_help, "help (?)"), {"key": (key.SLASH, MODIFIERS.SHIFT)}),
+            ((self.open_help, "help (shift+/)"), {"key": (key.SLASH, MODIFIERS.SHIFT)}),
         ]
         self.buttons = {}
         # ^ a dictionary in the form, {button_id: [list of `Button` objects]}
@@ -396,6 +396,7 @@ class UserInterface:
             if self.selected_object is not None:
                 self.selected_object = None
             self.show_buttons(BUTTONS.MAIN_MENU.ID)
+            self.marked_objects.clear()
 
     def toggle_mode(self, mode):
         """
@@ -852,6 +853,7 @@ class UserInterface:
         :return: None
         """
         # print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
+        print(MainWindow.main_window.get_mouse_location())
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
         goes = list(filter(lambda go: not isinstance(go, UserInterfaceGraphicsObject), MainLoop.instance.graphics_objects))
         print(f"graphicsObject-s (no buttons or texts): {goes}")

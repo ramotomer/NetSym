@@ -243,9 +243,9 @@ class WINDOWS:
         class HELP:
             WIDTH = 900
             HEIGHT = 500
-            COORDINATES = 0, 0
-            PADDING = 200 - (WIDTH / 2), 8
-            OK_BUTTON_COORDINATES = tuple(map(sum, zip((100, 100), PADDING)))
+            COORDINATES = 90, 40
+            PADDING = 200 + (WIDTH / 2), 8
+            OK_BUTTON_COORDINATES = tuple(map(sum, zip((90, 40), PADDING)))
 
 
 class IMAGES:
