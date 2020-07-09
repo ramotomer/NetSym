@@ -114,7 +114,7 @@ class ComputerGraphics(ImageGraphics):
                 MESSAGES.INSERT.GATEWAY,
                 self.computer.set_default_gateway
             ),
-            "ask daytime (ctrl+a)": with_args(
+            "ask daytime (ctrl+alt+a)": with_args(
                 user_interface.ask_user_for,
                 IPAddress,
                 MESSAGES.INSERT.IP_FOR_PROCESS,

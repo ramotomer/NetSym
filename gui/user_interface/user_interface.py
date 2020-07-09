@@ -5,7 +5,7 @@ import random
 from collections import namedtuple, defaultdict
 from functools import reduce
 from math import sqrt
-from operator import concat
+from operator import concat, attrgetter
 
 import pyglet
 from pyglet.window import key
@@ -28,6 +28,7 @@ from gui.tech.packet_graphics import PacketGraphics
 from gui.user_interface.button import Button
 from gui.user_interface.popup_windows.device_creation_window import DeviceCreationWindow
 from gui.user_interface.popup_windows.popup_error import PopupError
+from gui.user_interface.popup_windows.popup_help import PopupHelp
 from gui.user_interface.popup_windows.popup_text_box import PopupTextBox
 from gui.user_interface.popup_windows.popup_window import PopupWindow
 from gui.user_interface.popup_windows.yes_no_popup_window import YesNoPopupWindow
@@ -71,7 +72,7 @@ class UserInterface:
     also save in this class.
 
     The `self.mode` variable determines in what mode the user interface is currently in.
-    if the mode is `MODES.SIMULATION`, the regular menu is presented.
+    if the mode is `MODES.NORMAL`, the regular menu is presented.
     if the mode is `MODES.CONNECTING` than the two next computers the user will press will become connected.
     the `VIEW_MODE` is when a computer's details are currently is_showing in the side window nicely.
     the `PINGING_MODE` is when we choose two computer to send a ping between.  (purple side window)
@@ -101,10 +102,11 @@ class UserInterface:
             (key.M, MODIFIERS.NONE): self.print_debugging_info,
             (key.W, MODIFIERS.NONE): self.add_tcp_test,
             (key.Q, MODIFIERS.CTRL): self.exit,
+            (key.A, MODIFIERS.CTRL): self.select_all,
             (key.SPACE, MODIFIERS.NONE): self.toggle_pause,
             (key.TAB, MODIFIERS.NONE): self.tab_through_selected,
             (key.TAB, MODIFIERS.SHIFT): with_args(self.tab_through_selected, True),
-            (key.ESCAPE, MODIFIERS.NONE): with_args(self.set_mode, MODES.SIMULATION),
+            (key.ESCAPE, MODIFIERS.NONE): with_args(self.set_mode, MODES.NORMAL),
             (key.DELETE, MODIFIERS.NONE): self.delete_selected_and_marked,
         }
 
@@ -127,7 +129,7 @@ class UserInterface:
             self.key_to_action[self.key_from_string(key_string)] = with_args(self.create_device, device)
 
         self.action_at_press_by_mode = {
-            MODES.SIMULATION: self.view_mode_at_press,
+            MODES.NORMAL: self.view_mode_at_press,
             MODES.CONNECTING: with_args(self.two_pressed_objects, self.connect_devices, [InterfaceGraphics]),
             MODES.VIEW: self.view_mode_at_press,
             MODES.PINGING: with_args(self.two_pressed_objects, self.send_direct_ping),
@@ -142,7 +144,7 @@ class UserInterface:
         self.connection_data = []
         # ^ a list of `ConnectionData`-s (save information about all existing connections between computers.
 
-        self.mode = MODES.SIMULATION
+        self.mode = MODES.NORMAL
         self.other_selected_object = None
         # ^ used if two items are selected one after the other for some purpose (connecting mode, pinging mode etc)
 
@@ -158,27 +160,18 @@ class UserInterface:
         self.__active_window = None
 
         self.button_arguments = [
-            ((*BUTTONS.DEFAULT_LOCATION(-1), lambda: None, "MAIN MENU:"), {}),
+            ((lambda: None, "MAIN MENU:"), {}),
 
-            ((*BUTTONS.DEFAULT_LOCATION(0), with_args(DeviceCreationWindow, self),
-              "create device (e)"), {"key": (key.E, MODIFIERS.NONE)}),
-            ((*BUTTONS.DEFAULT_LOCATION(1), with_args(self.toggle_mode, MODES.CONNECTING),
-              "connect (c / ^c / Shift+c)"), {"key": (key.C, MODIFIERS.NONE)}),
-            ((*BUTTONS.DEFAULT_LOCATION(2), with_args(self.toggle_mode, MODES.PINGING),
-              "ping (p / ^p / Shift+p)"), {"key": (key.P, MODIFIERS.NONE)}),
-            ((*BUTTONS.DEFAULT_LOCATION(3), self.ask_for_dhcp,
-              "ask for DHCP (shift+a)"), {"key": (key.A, MODIFIERS.SHIFT)}),
-            ((*BUTTONS.DEFAULT_LOCATION(4), self.start_all_stp,
-              "start STP (ctrl+shift+s)"), {"key": (key.S, MODIFIERS.CTRL | MODIFIERS.SHIFT)}),
-            ((*BUTTONS.DEFAULT_LOCATION(5), self.delete_all_packets,
-              "delete all packets (Shift+d)"), {"key": (key.D, MODIFIERS.SHIFT)}),
-            ((*BUTTONS.DEFAULT_LOCATION(6), self.delete_all,
-              "delete all (^d)"), {"key": (key.D, MODIFIERS.CTRL)}),
-            ((*BUTTONS.DEFAULT_LOCATION(7), with_args(self.ask_user_for, str, "save file as:",
-                                                     self._save_to_file_with_override_safety),
-              "save to file(^s)"), {"key": (key.S, MODIFIERS.CTRL)}),
-            ((*BUTTONS.DEFAULT_LOCATION(8), self._ask_user_for_load_file,
-              "load from file (^o)"), {"key": (key.O, MODIFIERS.CTRL)}),
+            ((with_args(DeviceCreationWindow, self), "create device (e)"), {"key": (key.E, MODIFIERS.NONE)}),
+            ((with_args(self.toggle_mode, MODES.CONNECTING), "connect (c / ^c / Shift+c)"), {"key": (key.C, MODIFIERS.NONE)}),
+            ((with_args(self.toggle_mode, MODES.PINGING), "ping (p / ^p / Shift+p)"), {"key": (key.P, MODIFIERS.NONE)}),
+            ((self.ask_for_dhcp, "ask for DHCP (shift+a)"), {"key": (key.A, MODIFIERS.SHIFT)}),
+            ((self.start_all_stp, "start STP (ctrl+shift+s)"), {"key": (key.S, MODIFIERS.CTRL | MODIFIERS.SHIFT)}),
+            ((self.delete_all_packets, "delete all packets (Shift+d)"), {"key": (key.D, MODIFIERS.SHIFT)}),
+            ((self.delete_all, "delete all (^d)"), {"key": (key.D, MODIFIERS.CTRL)}),
+            ((with_args(self.ask_user_for, str, "save file as:", self._save_to_file_with_override_safety), "save to file(^s)"), {"key": (key.S, MODIFIERS.CTRL)}),
+            ((self._ask_user_for_load_file, "load from file (^o)"), {"key": (key.O, MODIFIERS.CTRL)}),
+            ((self.open_help, "help (shift+/)"), {"key": (key.SLASH, MODIFIERS.SHIFT)}),
         ]
         self.buttons = {}
         # ^ a dictionary in the form, {button_id: [list of `Button` objects]}
@@ -193,6 +186,7 @@ class UserInterface:
 
         self.__selected_object = None
         # ^ the object that is currently dragged
+        self.selected_object = None
 
     @property
     def active_window(self):
@@ -243,7 +237,7 @@ class UserInterface:
         if self.selected_object is not None and \
                 self.selected_object.is_packet and \
                 self.packet_from_graphics_object(self.selected_object) is None:
-            self.set_mode(MODES.SIMULATION)
+            self.set_mode(MODES.NORMAL)
 
     def _draw_side_window(self):
         """
@@ -374,7 +368,7 @@ class UserInterface:
         `MainWindow.main_window` is still uninitiated so it cannot register the graphics objects of the buttons.
         :return: None
         """
-        self.buttons[BUTTONS.MAIN_MENU.ID] = [Button(*args, **kwargs) for args, kwargs in self.button_arguments]
+        self.buttons[BUTTONS.MAIN_MENU.ID] = [Button(*BUTTONS.DEFAULT_LOCATION(i - 1), *args, **kwargs) for i, (args, kwargs) in enumerate(self.button_arguments)]
 
     def set_mode(self, new_mode):
         """
@@ -399,18 +393,20 @@ class UserInterface:
         else:
             self.mode = new_mode
             self.end_object_view()
-            self.selected_object = None
+            if self.selected_object is not None:
+                self.selected_object = None
             self.show_buttons(BUTTONS.MAIN_MENU.ID)
+            self.marked_objects.clear()
 
     def toggle_mode(self, mode):
         """
         Toggles to and from a mode!
-        If the mode is already the `mode` given, switch to `MODES.SIMULATION`.
-        :param mode: a mode to toggle to and from (MODES.SIMULATION, MODES.CONNECTING, etc...)
+        If the mode is already the `mode` given, switch to `MODES.NORMAL`.
+        :param mode: a mode to toggle to and from (MODES.NORMAL, MODES.CONNECTING, etc...)
         :return: None
         """
         if self.mode == mode:
-            self.set_mode(MODES.SIMULATION)
+            self.set_mode(MODES.NORMAL)
         else:
             self.set_mode(mode)
 
@@ -437,14 +433,15 @@ class UserInterface:
         else:
             self.action_at_press_by_mode[self.mode]()
 
-        self._create_selection_square()
+        if self.active_window is None:
+            self._create_selection_square()
 
     def _create_selection_square(self):
         """
         Creates the selection square when the mouse is pressed and dragged around
         :return:
         """
-        if self.mode == MODES.SIMULATION:
+        if self.mode == MODES.NORMAL:
             self.selecting_square = SelectingSquare(
                 *MainWindow.main_window.get_mouse_location(),
                 MainLoop.instance.graphics_objects_of_types(ComputerGraphics, PacketGraphics),
@@ -488,7 +485,7 @@ class UserInterface:
             if self.selected_object is not None and self.selected_object.can_be_viewed:
                 self.set_mode(MODES.VIEW)
             elif self.selected_object is None:
-                self.set_mode(MODES.SIMULATION)
+                self.set_mode(MODES.NORMAL)
             else:  # if an an object that cannot be viewed is pressed
                 pass
 
@@ -500,7 +497,7 @@ class UserInterface:
         """
         if self.selected_object is not None:
             self.delete(self.selected_object)
-        self.set_mode(MODES.SIMULATION)
+        self.set_mode(MODES.NORMAL)
 
     def is_mouse_in_side_window(self):
         """Return whether or not the mouse is currently in the side window."""
@@ -559,11 +556,11 @@ class UserInterface:
                 action(self.other_selected_object, self.selected_object)
 
                 self.other_selected_object = None
-                self.set_mode(MODES.SIMULATION)
+                self.set_mode(MODES.NORMAL)
 
         elif not self.is_mouse_in_side_window() and self.selected_object is None:  # pressing the background
             self.other_selected_object = None
-            self.set_mode(MODES.SIMULATION)
+            self.set_mode(MODES.NORMAL)
 
     def connect_devices(self, device1, device2):
         """
@@ -644,7 +641,7 @@ class UserInterface:
 
         self.computers.clear()
         self.connection_data.clear()
-        self.set_mode(MODES.SIMULATION)
+        self.set_mode(MODES.NORMAL)
 
     def delete_all_packets(self):
         """
@@ -769,7 +766,7 @@ class UserInterface:
             for sent_packet in connection.sent_packets[:]:
                 if sent_packet.packet.graphics is packet_graphics:
                     self.selected_object = None
-                    self.set_mode(MODES.SIMULATION)
+                    self.set_mode(MODES.NORMAL)
                     connection.sent_packets.remove(sent_packet)
                     packet_graphics.drop()
                     return
@@ -856,6 +853,7 @@ class UserInterface:
         :return: None
         """
         # print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
+        print(MainWindow.main_window.get_mouse_location())
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
         goes = list(filter(lambda go: not isinstance(go, UserInterfaceGraphicsObject), MainLoop.instance.graphics_objects))
         print(f"graphicsObject-s (no buttons or texts): {goes}")
@@ -1278,7 +1276,7 @@ class UserInterface:
         if self.selected_object is not None:
             self.delete(self.selected_object)
             self.selected_object = None
-            self.set_mode(MODES.SIMULATION)
+            self.set_mode(MODES.NORMAL)
 
         for object_ in self.marked_objects:
             self.delete(object_)
@@ -1345,3 +1343,19 @@ class UserInterface:
         :return:
         """
         YesNoPopupWindow("Are you sure you want to exit?", self, yes_action=pyglet.app.exit)
+
+    def select_all(self):
+        """
+        Mark all of the computers on the screen.
+        :return:
+        """
+        self.marked_objects.clear()
+        self.selected_object = None
+        self.marked_objects += list(map(attrgetter("graphics"), self.computers))
+
+    def open_help(self):
+        """
+        Opens the help window.
+        :return:
+        """
+        PopupHelp(self)

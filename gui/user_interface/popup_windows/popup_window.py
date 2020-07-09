@@ -32,7 +32,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
 
         title_text = Text(title, self.x, self.y, self, ((self.width / 2) + 2, self.height + 22),
                           color=COLORS.BLACK, align='left', max_width=self.width)
-        information_text = Text(text, self.x, self.y, self, ((self.width / 2), 6 * (self.height / 7)), max_width=self.width)
+        information_text = Text(text, self.x, self.y, self, ((self.width / 2), self.height - 25), max_width=self.width)
 
         for button in buttons:
             button.set_parent_graphics(self, (button.x - self.x, button.y - self.y))
@@ -67,7 +67,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         """
         x, y = MainWindow.main_window.get_mouse_location()
         return self.x < x < self.x + self.width and \
-            self.y < y < self.y + WINDOWS.POPUP.TEXTBOX.HEIGHT + WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT
+            self.y < y < self.y + self.height + WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT
 
     def mark_as_selected(self):
         """
