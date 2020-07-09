@@ -5,6 +5,7 @@ from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsOb
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rectangle
 from gui.user_interface.text_graphics import Text
+from usefuls import sum_tuples
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "text")
 
@@ -102,10 +103,10 @@ class Button(UserInterfaceGraphicsObject):
         :return: None
         """
         if self.parent_graphics is not None:
-            self.x, self.y = map(sum, zip(self.parent_graphics.location, self.padding))
+            self.x, self.y = sum_tuples(self.parent_graphics.location, self.padding)
 
     def __str__(self):
-        state = "HIDDEN" if self.is_hidden else "SHOWING"
+        state = "[HIDDEN]" if self.is_hidden else "[SHOWING]"
         return f"{state} '{self.child_graphics_objects.text.text}'"
 
     def __repr__(self):

@@ -33,9 +33,24 @@ class MainWindow(pyglet.window.Window):
 
         self.user_interface = user_interface
 
+        self.previous_width = self.width
+        self.previous_height = self.height
+
+    @property
+    def location(self):
+        return self.width, self.height
+
     def get_mouse_location(self):
         """Return the mouse's location as a tuple"""
         return self.mouse_x, self.mouse_y
+
+    def button_location_by_index(self, button_index):
+        """
+        Decides the location of the buttons by the index of the button in the button list.
+        :param button_index: `int`
+        :return:
+        """
+        return (self.width - WINDOWS.SIDE.WIDTH + 20), (self.height - 90 - (button_index * BUTTONS.DEFAULT_HEIGHT))
 
     def on_mouse_motion(self, x, y, dx, dy):
         """
@@ -121,19 +136,25 @@ class MainWindow(pyglet.window.Window):
         """
         self.user_interface.on_key_pressed(symbol, modifiers)
 
+    def _on_resize(self):
+        """
+        The original on_resize does not work, so i wrote one of my own...
+        :return:
+        """
+        self.user_interface.set_mode(MODES.NORMAL)
+        self.previous_width = self.width
+        self.previous_height = self.height
+
     def on_draw(self):
         """
         This method is called every tick of the clock and it is what really calls the main loop.
         The try and except here are because pyglet likes catching certain exceptions and it makes debugging practically
         impossible.
         """
-        try:
+        MainLoop.instance.main_loop()
 
-            MainLoop.instance.main_loop()
-
-        except (TypeError, AttributeError) as err:
-            print(f"exception in on_draw: {err}")
-            raise err
+        if self.width != self.previous_width or self.height != self.previous_height:
+            self._on_resize()  # `on_resize` does not work, I wrote `_on_resize` instead.
 
     def update(self, time_interval):
         """

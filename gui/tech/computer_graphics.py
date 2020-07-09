@@ -4,6 +4,7 @@ from os import linesep
 from address.ip_address import IPAddress
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
+from gui.main_window import MainWindow
 from gui.tech.console import Console
 from gui.tech.interface_graphics import InterfaceGraphicsList
 from gui.tech.process_graphics import ProcessGraphicsList
@@ -49,12 +50,16 @@ class ComputerGraphics(ImageGraphics):
 
         self.child_graphics_objects = ChildGraphicsObjects(
             Text(self.generate_text(), self.x, self.y, self),
-            Console(CONSOLE.X, CONSOLE.Y),
+            Console(*self.console_location),
             ProcessGraphicsList(self),
             InterfaceGraphicsList(self),
         )
 
         self.buttons_id = None
+
+    @property
+    def console_location(self):
+        return MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2) - CONSOLE.X, CONSOLE.Y
 
     def generate_text(self):
         """
@@ -84,6 +89,7 @@ class ComputerGraphics(ImageGraphics):
         :param user_interface: the `UserInterface` object we can use the methods of it.
         :return: a tuple <display sprite>, <display text>, <new button count>
         """
+        self.child_graphics_objects.console.location = self.console_location
         self.child_graphics_objects.console.show()
 
         buttons = {

@@ -64,7 +64,7 @@ class ImageGraphics(GraphicsObject):
         :return: `pyglet.sprite.Sprite` object
         """
         returned = pyglet.sprite.Sprite(pyglet.image.load(image_name), x=x, y=y)
-        returned.opacity = IMAGES.TRANSPARENCY.HICH if is_opaque else IMAGES.TRANSPARENCY.LOW
+        returned.opacity = IMAGES.TRANSPARENCY.HIGH if is_opaque else IMAGES.TRANSPARENCY.LOW
         returned.update(scale_x=scale_factor, scale_y=scale_factor)
         return returned
 

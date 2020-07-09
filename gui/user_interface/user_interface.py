@@ -122,6 +122,11 @@ class UserInterface:
                 direction,
                 SELECTED_OBJECT.SMALL_STEP_SIZE,
             )
+            self.key_to_action[(direction, MODIFIERS.CTRL | MODIFIERS.ALT)] = with_args(
+                self.move_selected_object,
+                direction,
+                SELECTED_OBJECT.BIG_STEP_SIZE,
+            )
 
         for device, (_, key_string) in DeviceCreationWindow.DEVICE_TO_IMAGE.items():
             self.key_to_action[self.key_from_string(key_string)] = with_args(self.create_device, device)
@@ -258,7 +263,7 @@ class UserInterface:
         Draws the side window
         :return:
         """
-        draw_rectangle(WINDOWS.MAIN.WIDTH - self.WIDTH, 0, self.WIDTH, WINDOWS.MAIN.HEIGHT, color=MODES.TO_COLORS[self.mode])
+        draw_rectangle(MainWindow.main_window.width - self.WIDTH, 0, self.WIDTH, MainWindow.main_window.height, color=MODES.TO_COLORS[self.mode])
 
     def drag_objects(self):
         """
@@ -277,6 +282,17 @@ class UserInterface:
                 mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
                 object_.location = mouse_x + drag_x, mouse_y + drag_y
 
+    @property
+    def viewing_image_location(self):
+        x = (MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2)) - (IMAGES.SIZE * IMAGES.SCALE_FACTORS.VIEWING_OBJECTS / 2)
+        y = MainWindow.main_window.height - ((IMAGES.SIZE * IMAGES.SCALE_FACTORS.VIEWING_OBJECTS) + 15)
+        return x, y
+    
+    @property
+    def viewing_text_location(self):
+        return (MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2)), \
+               self.viewing_image_location[1] + VIEW.TEXT_PADDING
+
     def start_object_view(self, graphics_object):
         """
         Starts viewing an object on the side window.
@@ -288,13 +304,13 @@ class UserInterface:
 
         sprite, text, buttons_id = graphics_object.start_viewing(self)
         if sprite is not None:
-            sprite.update(*VIEW.IMAGE_COORDINATES)
+            sprite.update(*self.viewing_image_location)
             MainLoop.instance.insert_to_loop(sprite.draw)
 
             if graphics_object.is_packet:
                 text = self.packet_from_graphics_object(graphics_object).multiline_repr()
 
-        x, y = VIEW.TEXT_COORDINATES
+        x, y = self.viewing_text_location
         self.object_view = ObjectView(sprite, Text(text, x, y, max_width=WINDOWS.SIDE.WIDTH), graphics_object)
         self.adjust_viewed_text_to_buttons(buttons_id + 1)
 
@@ -308,8 +324,8 @@ class UserInterface:
             raise WrongUsageError("Only call this in VIEW MODE")
 
         try:
-            self.object_view.text.y = VIEW.TEXT_COORDINATES[1] - ((len(self.buttons[buttons_id]) + 0.5) *
-                                                                     BUTTONS.DEFAULT_HEIGHT) - self.scrolled_view
+            self.object_view.text.y = self.viewing_text_location[1] - ((len(self.buttons[buttons_id]) + 0.5) *
+                                                                       BUTTONS.DEFAULT_HEIGHT) - self.scrolled_view
         except KeyError:
             pass
 
@@ -345,7 +361,7 @@ class UserInterface:
         if scroll_count < 0 or self.scrolled_view <= -scroll_count * VIEW.PIXELS_PER_SCROLL:
             self.scrolled_view += scroll_count * VIEW.PIXELS_PER_SCROLL
 
-            sprite.y = VIEW.IMAGE_COORDINATES[1] - self.scrolled_view
+            sprite.y = self.viewing_image_location[1] - self.scrolled_view
             self.adjust_viewed_text_to_buttons(self.showing_buttons_id)
 
             for buttons_id in self.buttons:
@@ -382,7 +398,18 @@ class UserInterface:
         `MainWindow.main_window` is still uninitiated so it cannot register the graphics objects of the buttons.
         :return: None
         """
-        self.buttons[BUTTONS.MAIN_MENU.ID] = [Button(*BUTTONS.DEFAULT_LOCATION(i - 1), *args, **kwargs) for i, (args, kwargs) in enumerate(self.button_arguments)]
+        self.buttons[BUTTONS.MAIN_MENU.ID] = [
+            Button(
+                *MainWindow.main_window.button_location_by_index(i - 1),
+                *args,
+                **kwargs,
+            ) for i, (args, kwargs) in enumerate(self.button_arguments)
+        ]
+
+        for i, button in enumerate(self.buttons[BUTTONS.MAIN_MENU.ID]):
+            x, y = MainWindow.main_window.button_location_by_index(i - 1)
+            padding = x - WINDOWS.MAIN.WIDTH, y - WINDOWS.MAIN.HEIGHT
+            button.set_parent_graphics(MainWindow.main_window, padding)
 
     def set_mode(self, new_mode):
         """
@@ -515,7 +542,7 @@ class UserInterface:
     def is_mouse_in_side_window(self):
         """Return whether or not the mouse is currently in the side window."""
         mouse_x, _ = MainWindow.main_window.get_mouse_location()
-        return mouse_x > (WINDOWS.MAIN.WIDTH - self.WIDTH)
+        return mouse_x > (MainWindow.main_window.width - self.WIDTH)
 
     def create_device(self, object_type):
         """
@@ -606,8 +633,8 @@ class UserInterface:
         :return: None
         """
         devices = device1, device2
-        computers = [device1, device2]  # Computer-s
-        interfaces = [device1, device2]  # Interface-s
+        computers = [device1, device2]  # `Computer`-s
+        interfaces = [device1, device2]  # `Interface`-s
 
         for i, device in enumerate(devices):
             if isinstance(device, InterfaceGraphics):
@@ -622,10 +649,19 @@ class UserInterface:
                 computers[i] = device
                 interfaces[i] = device.available_interface()
             else:
-                raise WrongUsageError(f"Only supply this function with computers or interfaces!!! ({device1, device2})")
+                # raise WrongUsageError(f"Only supply this function with computers or interfaces!!! ({device1, device2})")
+                return
+
+        if computers[0] == computers[1]:
+            return
 
         is_wireless = all(computer.is_supporting_wireless_connections for computer in computers)
-        connection = interfaces[0].connect(interfaces[1], is_wireless=is_wireless)
+
+        try:
+            connection = interfaces[0].connect(interfaces[1], is_wireless=is_wireless)
+        except DeviceAlreadyConnectedError:
+            PopupError("That interface is already connected :(", self)
+            return
         self.connection_data.append(ConnectionData(connection, *computers))
         connection.show(computers[0].graphics, computers[1].graphics)
         return connection
@@ -900,6 +936,10 @@ class UserInterface:
                 process = computer.get_running_process(TCPProcess)
                 print(f"window (of {process}): {process.sending_window}")
 
+        for buttons in self.buttons.values():
+            for button in buttons:
+                print(button, button.location)
+
     def create_computer_with_ip(self):
         """
         Creates a computer with an IP fitting to the computers around it.
@@ -1059,7 +1099,7 @@ class UserInterface:
         buttons_id = 0 if not self.buttons else max(self.buttons.keys()) + 1
         self.buttons[buttons_id] = [
             Button(
-                *BUTTONS.DEFAULT_LOCATION(len(dictionary) + 1),
+                *MainWindow.main_window.button_location_by_index(len(dictionary) + 1),
                 called_in_order(
                     with_args(self.hide_buttons, buttons_id),
                     with_args(self.show_buttons, buttons_id + 1),
@@ -1072,7 +1112,7 @@ class UserInterface:
 
             *[
                 Button(
-                    *BUTTONS.DEFAULT_LOCATION(i+1),
+                    *MainWindow.main_window.button_location_by_index(i + 1),
                     action,
                     string,
                     key=self.key_from_string(string),
@@ -1084,7 +1124,7 @@ class UserInterface:
 
         self.buttons[buttons_id + 1] = [
             Button(
-                *BUTTONS.DEFAULT_LOCATION(1),
+                *MainWindow.main_window.button_location_by_index(1),
                 called_in_order(
                     with_args(self.hide_buttons, buttons_id + 1),
                     with_args(self.show_buttons, buttons_id),
@@ -1311,7 +1351,9 @@ class UserInterface:
         :return:
         """
         if self.selected_object is None:
+            self.tab_through_selected()
             return
+
         try:
             computer_distance_in_direction = {
                 key.RIGHT: (lambda c: c.graphics.x - self.selected_object.x),
@@ -1331,8 +1373,8 @@ class UserInterface:
             sx, sy = self.selected_object.location
 
             if direction in {key.UP, key.DOWN}:
-                return sqrt((x - sx) ** 100 + (y - sy) ** 2)
-            return sqrt((x - sx) ** 2 + (y - sy) ** 100)
+                return sqrt((x - sx) ** 50 + (y - sy) ** 2)
+            return sqrt((x - sx) ** 2 + (y - sy) ** 50)
 
         new_selected = min(optional_computers, key=weighted_distance)
         self.selected_object = new_selected.graphics
