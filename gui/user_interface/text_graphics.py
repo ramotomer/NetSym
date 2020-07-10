@@ -20,7 +20,7 @@ class Text(UserInterfaceGraphicsObject):
                  max_width=WINDOWS.MAIN.WIDTH,
                  font_size=TEXT.FONT.DEFAULT_SIZE,
                  align='center',
-                 color=COLORS.WHITE):
+                 color=TEXT.COLOR):
         """
         Initiates a new `Text` object.
         A `Text` object can have a parent `GraphicsObject` which it will set its coordinates according to it. (if it

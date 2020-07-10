@@ -14,8 +14,4 @@ if __name__ == '__main__':
 
     # TODO: make sure no two computers or interfaces have the same name!
     # TODO: there are errors with removing connections and the routing table
-    # TODO: resizable window - fix the buttons maybe so they will work
     # TODO: cannot add routes to a router. - fix this.
-    # TODO: maybe some-day add a `receiving_time` and a `receiving_interface` attributes to a `Packet` object. -
-    #  you will have a big refactoring to do but the code will be *much* cleaner!
-    # TODO: add lost packets handling for DHCP and non-existent DHCP server

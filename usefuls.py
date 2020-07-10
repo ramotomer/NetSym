@@ -4,6 +4,7 @@ from math import sqrt, sin, cos, pi, atan
 from operator import mul
 
 from consts import *
+from exceptions import WrongUsageError
 
 
 def get_the_one(iterable, condition, raises=None):
@@ -169,7 +170,10 @@ def sum_tuples(*tuples):
     :param tuples: many arguments of tuples.
     :return:
     """
-    return tuple(map(sum, zip(*tuples)))
+    try:
+        return tuple(map(sum, zip(*tuples)))
+    except TypeError:
+        raise WrongUsageError(f"problem with the arguments {list(tuples)}")
 
 
 def scale_tuple(scalar, tup):
@@ -180,3 +184,22 @@ def scale_tuple(scalar, tup):
     :return:
     """
     return tuple(map(lambda t: reduce(mul, t), zip(([scalar] * len(tup)), tup)))
+
+
+def normal_color_to_weird_gl_color(color):
+    """
+    Some open GL functions require some different weird format of colors
+    :param color:
+    :return:
+    """
+    r, g, b = color
+    return r / 255, g / 255, b / 255, 1.0
+
+
+def lighten_color(color, diff=COLORS.COLOR_DIFF):
+    r, g, b = color
+    return max(min(r + diff, 255), 0), max(min(g + diff, 255), 0), max(min(b + diff, 255), 0)
+
+
+def darken_color(color, diff=COLORS.COLOR_DIFF):
+    return lighten_color(color, -diff)

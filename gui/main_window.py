@@ -2,6 +2,7 @@ import pyglet
 
 from consts import *
 from gui.main_loop import MainLoop
+from usefuls import normal_color_to_weird_gl_color
 
 
 class MainWindow(pyglet.window.Window):
@@ -36,6 +37,8 @@ class MainWindow(pyglet.window.Window):
         self.previous_width = self.width
         self.previous_height = self.height
 
+        pyglet.gl.glClearColor(*normal_color_to_weird_gl_color(WINDOWS.MAIN.BACKGROUND))
+
     @property
     def location(self):
         return self.width, self.height
@@ -50,7 +53,8 @@ class MainWindow(pyglet.window.Window):
         :param button_index: `int`
         :return:
         """
-        return (self.width - WINDOWS.SIDE.WIDTH + 20), (self.height - 90 - (button_index * BUTTONS.DEFAULT_HEIGHT))
+        return (self.width - WINDOWS.SIDE.WIDTH + 20), \
+               (self.height - 90 - (button_index * (BUTTONS.DEFAULT_HEIGHT + BUTTONS.Y_GAP)))
 
     def on_mouse_motion(self, x, y, dx, dy):
         """
