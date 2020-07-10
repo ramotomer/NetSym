@@ -91,38 +91,38 @@ class UserInterface:
 
         """
         self.key_to_action = {
-            (key.N, MODIFIERS.CTRL): self.create_computer_with_ip,
-            (key.C, MODIFIERS.CTRL): self.smart_connect,
-            (key.C, MODIFIERS.SHIFT): self.connect_all_to_all,
-            (key.P, MODIFIERS.CTRL): self.send_random_ping,
-            (key.P, MODIFIERS.SHIFT): self.send_ping_to_self,
-            (key.R, MODIFIERS.CTRL): with_args(self.create_device, Router),
-            (key.M, MODIFIERS.NONE): self.print_debugging_info,
-            (key.W, MODIFIERS.NONE): self.add_tcp_test,
-            (key.Q, MODIFIERS.CTRL): self.exit,
-            (key.A, MODIFIERS.CTRL): self.select_all,
-            (key.SPACE, MODIFIERS.NONE): self.toggle_pause,
-            (key.TAB, MODIFIERS.NONE): self.tab_through_selected,
-            (key.TAB, MODIFIERS.SHIFT): with_args(self.tab_through_selected, True),
-            (key.ESCAPE, MODIFIERS.NONE): with_args(self.set_mode, MODES.NORMAL),
-            (key.DELETE, MODIFIERS.NONE): self.delete_selected_and_marked,
+            (key.N, KEYBOARD.MODIFIERS.CTRL): self.create_computer_with_ip,
+            (key.C, KEYBOARD.MODIFIERS.CTRL): self.smart_connect,
+            (key.C, KEYBOARD.MODIFIERS.SHIFT): self.connect_all_to_all,
+            (key.P, KEYBOARD.MODIFIERS.CTRL): self.send_random_ping,
+            (key.P, KEYBOARD.MODIFIERS.SHIFT): self.send_ping_to_self,
+            (key.R, KEYBOARD.MODIFIERS.CTRL): with_args(self.create_device, Router),
+            (key.M, KEYBOARD.MODIFIERS.NONE): self.print_debugging_info,
+            (key.W, KEYBOARD.MODIFIERS.NONE): self.add_tcp_test,
+            (key.Q, KEYBOARD.MODIFIERS.CTRL): self.exit,
+            (key.A, KEYBOARD.MODIFIERS.CTRL): self.select_all,
+            (key.SPACE, KEYBOARD.MODIFIERS.NONE): self.toggle_pause,
+            (key.TAB, KEYBOARD.MODIFIERS.NONE): self.tab_through_selected,
+            (key.TAB, KEYBOARD.MODIFIERS.SHIFT): with_args(self.tab_through_selected, True),
+            (key.ESCAPE, KEYBOARD.MODIFIERS.NONE): with_args(self.set_mode, MODES.NORMAL),
+            (key.DELETE, KEYBOARD.MODIFIERS.NONE): self.delete_selected_and_marked,
         }
 
         for direction in {key.UP, key.RIGHT, key.LEFT, key.DOWN}:
-            self.key_to_action[(direction, MODIFIERS.NONE)] = with_args(
+            self.key_to_action[(direction, KEYBOARD.MODIFIERS.NONE)] = with_args(
                 self.move_selected_mark,
                 direction,
             )
-            self.key_to_action[(direction, MODIFIERS.CTRL)] = with_args(
+            self.key_to_action[(direction, KEYBOARD.MODIFIERS.CTRL)] = with_args(
                 self.move_selected_object,
                 direction,
             )
-            self.key_to_action[(direction, MODIFIERS.CTRL | MODIFIERS.SHIFT)] = with_args(
+            self.key_to_action[(direction, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT)] = with_args(
                 self.move_selected_object,
                 direction,
                 SELECTED_OBJECT.SMALL_STEP_SIZE,
             )
-            self.key_to_action[(direction, MODIFIERS.CTRL | MODIFIERS.ALT)] = with_args(
+            self.key_to_action[(direction, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.ALT)] = with_args(
                 self.move_selected_object,
                 direction,
                 SELECTED_OBJECT.BIG_STEP_SIZE,
@@ -161,16 +161,16 @@ class UserInterface:
         self.__active_window = None
 
         self.button_arguments = [
-            ((with_args(DeviceCreationWindow, self), "create device (e)"), {"key": (key.E, MODIFIERS.NONE)}),
-            ((with_args(self.toggle_mode, MODES.CONNECTING), "connect (c / ^c / Shift+c)"), {"key": (key.C, MODIFIERS.NONE)}),
-            ((with_args(self.toggle_mode, MODES.PINGING), "ping (p / ^p / Shift+p)"), {"key": (key.P, MODIFIERS.NONE)}),
-            ((self.ask_for_dhcp, "ask for DHCP (shift+a)"), {"key": (key.A, MODIFIERS.SHIFT)}),
-            ((self.start_all_stp, "start STP (ctrl+shift+s)"), {"key": (key.S, MODIFIERS.CTRL | MODIFIERS.SHIFT)}),
-            ((self.delete_all_packets, "delete all packets (Shift+d)"), {"key": (key.D, MODIFIERS.SHIFT)}),
-            ((self.delete_all, "delete all (^d)"), {"key": (key.D, MODIFIERS.CTRL)}),
-            ((with_args(self.ask_user_for, str, "save file as:", self._save_to_file_with_override_safety), "save to file(^s)"), {"key": (key.S, MODIFIERS.CTRL)}),
-            ((self._ask_user_for_load_file, "load from file (^o)"), {"key": (key.O, MODIFIERS.CTRL)}),
-            ((self.open_help, "help (shift+/)"), {"key": (key.SLASH, MODIFIERS.SHIFT)}),
+            ((with_args(DeviceCreationWindow, self), "create device (e)"), {"key": (key.E, KEYBOARD.MODIFIERS.NONE)}),
+            ((with_args(self.toggle_mode, MODES.CONNECTING), "connect (c / ^c / Shift+c)"), {"key": (key.C, KEYBOARD.MODIFIERS.NONE)}),
+            ((with_args(self.toggle_mode, MODES.PINGING), "ping (p / ^p / Shift+p)"), {"key": (key.P, KEYBOARD.MODIFIERS.NONE)}),
+            ((self.ask_for_dhcp, "ask for DHCP (shift+a)"), {"key": (key.A, KEYBOARD.MODIFIERS.SHIFT)}),
+            ((self.start_all_stp, "start STP (ctrl+shift+s)"), {"key": (key.S, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT)}),
+            ((self.delete_all_packets, "delete all packets (Shift+d)"), {"key": (key.D, KEYBOARD.MODIFIERS.SHIFT)}),
+            ((self.delete_all, "delete all (^d)"), {"key": (key.D, KEYBOARD.MODIFIERS.CTRL)}),
+            ((with_args(self.ask_user_for, str, "save file as:", self._save_to_file_with_override_safety), "save to file(^s)"), {"key": (key.S, KEYBOARD.MODIFIERS.CTRL)}),
+            ((self._ask_user_for_load_file, "load from file (^o)"), {"key": (key.O, KEYBOARD.MODIFIERS.CTRL)}),
+            ((self.open_help, "help (shift+/)"), {"key": (key.SLASH, KEYBOARD.MODIFIERS.SHIFT)}),
         ]
         self.buttons = {}
         # ^ a dictionary in the form, {button_id: [list of `Button` objects]}
@@ -514,7 +514,7 @@ class UserInterface:
         :return:
         """
         if isinstance(self.active_window, PopupTextBox):
-            self.active_window.pressed(symbol, modifiers)
+            self.active_window.key_writer.pressed(symbol, modifiers)
         else:
             modified_key = (symbol, int(bin(modifiers)[2:][-4:], base=2))
             for button_id in sorted(list(self.buttons)):
@@ -1068,7 +1068,7 @@ class UserInterface:
         """
         Receives a button-string and returns the key that should be pressed to activate that button
         for example:
-         'connect all (^c)' -> `key_from_string` -> `(key.C, MODIFIERS.CTRL)`
+         'connect all (^c)' -> `key_from_string` -> `(key.C, KEYBOARD.MODIFIERS.CTRL)`
         :param string:
         :return:
         """
@@ -1078,15 +1078,15 @@ class UserInterface:
         _, modified_key = string.lower().split('(')
         modified_key, _ = modified_key.split(')')
         if modified_key.startswith('^'):
-            return ord(modified_key[-1]), MODIFIERS.CTRL
+            return ord(modified_key[-1]), KEYBOARD.MODIFIERS.CTRL
 
-        modifiers = MODIFIERS.NONE
+        modifiers = KEYBOARD.MODIFIERS.NONE
         if 'ctrl' in modified_key.split('+'):
-            modifiers |= MODIFIERS.CTRL
+            modifiers |= KEYBOARD.MODIFIERS.CTRL
         if 'shift' in modified_key.split('+'):
-            modifiers |= MODIFIERS.SHIFT
+            modifiers |= KEYBOARD.MODIFIERS.SHIFT
         if 'alt' in modified_key.split('+'):
-            modifiers |= MODIFIERS.ALT
+            modifiers |= KEYBOARD.MODIFIERS.ALT
         return ord(modified_key[-1]), modifiers
 
     def add_buttons(self, dictionary):
@@ -1106,7 +1106,7 @@ class UserInterface:
                     with_args(self.adjust_viewed_text_to_buttons, buttons_id + 1),
                 ),
                 "back (backspace)",
-                key=(key.BACKSPACE, MODIFIERS.NONE),
+                key=(key.BACKSPACE, KEYBOARD.MODIFIERS.NONE),
                 start_hidden=True,
             ),
 
@@ -1131,7 +1131,7 @@ class UserInterface:
                     with_args(self.adjust_viewed_text_to_buttons, buttons_id),
                 ),
                 "options (enter)",
-                key=(key.ENTER, MODIFIERS.NONE),
+                key=(key.ENTER, KEYBOARD.MODIFIERS.NONE),
             ),
         ]
         self.showing_buttons_id = buttons_id + 1

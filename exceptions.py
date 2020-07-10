@@ -254,3 +254,23 @@ class NoSuchConnectionError(ConnectionsError):
     """
     Occurs when a connection that does not exist is requested or used.
     """
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class UserInterfaceError(NetworkSimulationError):
+    """
+    a problem with something that is related to an action that the user has performed.
+    """
+
+
+class KeyboardError(UserInterfaceError):
+    """
+    problem related to the keyboard.
+    """
+
+
+class KeyActionAlreadyExistsError(KeyboardError):
+    """
+    Trying to assign an action to a key that an action is already assigned to it...
+    """

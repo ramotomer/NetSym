@@ -145,15 +145,16 @@ class PORTS:
     }
 
 
-class MODIFIERS:
-    """
-    key modifiers, you can `|` them together to get the different combinations.
-    """
-    NONE = 0
-    SHIFT = 1
-    CTRL = 2
-    ALT = 4
-    CAPS = 8
+class KEYBOARD:
+    class MODIFIERS:
+        """
+        key modifiers, you can `|` them together to get the different combinations.
+        """
+        NONE = 0
+        SHIFT = 1
+        CTRL = 2
+        ALT = 4
+        CAPS = 8
 
 
 class MESSAGES:
