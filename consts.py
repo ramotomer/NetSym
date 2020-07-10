@@ -202,8 +202,10 @@ class COLORS:
     PINK = (255, 170, 170)
     ORANGE = (255, 215, 0)
     TURQUOISE = (10, 255, 255)
+    DARK_RED = (100, 0, 0)
 
-    LIGHT_COLOR_DIFF = 10
+    COLOR_DIFF = 20
+    LARGE_COLOR_DIFF = 70
 
 
 class WINDOWS:
@@ -227,7 +229,7 @@ class WINDOWS:
             HEIGHT = 170
             COORDINATES = (437.5, 215.0)
             UPPER_PART_HEIGHT = 30
-            COLOR = COLORS.VERY_LIGHT_GRAY
+            COLOR = COLORS.LIGHT_GRAY
             OUTLINE_COLOR = COLORS.LIGHT_BLUE
 
         class SUBMIT_BUTTON:
@@ -394,9 +396,13 @@ class BUTTONS:
     DEFAULT_TEXT = "buTTon"
     DEFAULT_WIDTH = WINDOWS.SIDE.WIDTH - 40
     DEFAULT_HEIGHT = 35
-    TEXT_COLOR = COLORS.RED
+    TEXT_COLOR = COLORS.DARK_RED
     TEXT_PADDING = 8
     COLOR = WINDOWS.SIDE.COLOR
+    SHADOW_WIDTH = 3
+    OUTLINE_COLOR = COLORS.BLACK
+    OUTLINE_WIDTH = 1
+    Y_GAP = 5
 
     class ON_POPUP_WINDOWS:
         ID = -1
@@ -423,7 +429,7 @@ class TEXT:
 
 
 class CONNECTIONS:
-    DEFAULT_SPEED = 200  # pixels / second
+    DEFAULT_SPEED = 150  # pixels / second
     DEFAULT_LENGTH = 100  # pixels
     DEFAULT_PL = 0.5  # the point in the connection where packets are dropped
     MOUSE_TOUCH_SENSITIVITY = 5  # pixels

@@ -53,7 +53,8 @@ class MainWindow(pyglet.window.Window):
         :param button_index: `int`
         :return:
         """
-        return (self.width - WINDOWS.SIDE.WIDTH + 20), (self.height - 90 - (button_index * BUTTONS.DEFAULT_HEIGHT))
+        return (self.width - WINDOWS.SIDE.WIDTH + 20), \
+               (self.height - 90 - (button_index * (BUTTONS.DEFAULT_HEIGHT + BUTTONS.Y_GAP)))
 
     def on_mouse_motion(self, x, y, dx, dy):
         """

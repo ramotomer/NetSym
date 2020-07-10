@@ -3,7 +3,7 @@ from collections import namedtuple
 from consts import *
 from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_window import MainWindow
-from gui.shape_drawing import draw_rectangle
+from gui.shape_drawing import draw_button
 from gui.user_interface.text_graphics import Text
 from usefuls import sum_tuples
 
@@ -48,7 +48,7 @@ class Button(UserInterfaceGraphicsObject):
         self.padding = None
 
         self.color = color
-        self.light_color = tuple(rgb + COLORS.LIGHT_COLOR_DIFF for rgb in color)
+        self.light_color = tuple(rgb + COLORS.COLOR_DIFF for rgb in color)
 
     def set_parent_graphics(self, parent, padding=(0, 0)):
         """
@@ -95,7 +95,8 @@ class Button(UserInterfaceGraphicsObject):
         :return: None
         """
         if not self.is_hidden:
-            draw_rectangle(self.x, self.y, self.width, self.height, color=(self.light_color if self.is_mouse_in() else self.color))
+            draw_button(self.x, self.y, self.width, self.height,
+                        color=(self.light_color if self.is_mouse_in() else self.color))
 
     def move(self):
         """

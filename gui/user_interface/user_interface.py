@@ -161,8 +161,6 @@ class UserInterface:
         self.__active_window = None
 
         self.button_arguments = [
-            ((lambda: None, "MAIN MENU:"), {}),
-
             ((with_args(DeviceCreationWindow, self), "create device (e)"), {"key": (key.E, MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.CONNECTING), "connect (c / ^c / Shift+c)"), {"key": (key.C, MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.PINGING), "ping (p / ^p / Shift+p)"), {"key": (key.P, MODIFIERS.NONE)}),
@@ -325,8 +323,9 @@ class UserInterface:
             raise WrongUsageError("Only call this in VIEW MODE")
 
         try:
-            self.object_view.text.y = self.viewing_text_location[1] - ((len(self.buttons[buttons_id]) + 0.5) *
-                                                                       BUTTONS.DEFAULT_HEIGHT) - self.scrolled_view
+            self.object_view.text.y = self.viewing_text_location[1] - \
+                                      ((len(self.buttons[buttons_id]) + 0.5) *
+                                       (BUTTONS.DEFAULT_HEIGHT + BUTTONS.Y_GAP)) - self.scrolled_view
         except KeyError:
             pass
 
