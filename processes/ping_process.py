@@ -45,7 +45,7 @@ class SendPing(Process):
 
     def _print_output(self, returned_packet):
         """
-        Receives the `ReturnedOutput` object that was received and prints out to the `Console` an appropriate message
+        Receives the `ReturnedOutput` object that was received and prints out to the `OutputConsole` an appropriate message
         """
         packet = returned_packet.packet
         if packet["ICMP"].opcode == OPCODES.ICMP.UNREACHABLE:

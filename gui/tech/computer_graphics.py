@@ -5,8 +5,8 @@ from address.ip_address import IPAddress
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
-from gui.tech.console import Console
 from gui.tech.interface_graphics import InterfaceGraphicsList
+from gui.tech.output_console import OutputConsole
 from gui.tech.process_graphics import ProcessGraphicsList
 from gui.user_interface.popup_windows.popup_console import PopupConsole
 from gui.user_interface.text_graphics import Text
@@ -51,7 +51,7 @@ class ComputerGraphics(ImageGraphics):
 
         self.child_graphics_objects = ChildGraphicsObjects(
             Text(self.generate_text(), self.x, self.y, self),
-            Console(*self.console_location),
+            OutputConsole(*self.console_location),
             ProcessGraphicsList(self),
             InterfaceGraphicsList(self),
         )
@@ -142,7 +142,7 @@ class ComputerGraphics(ImageGraphics):
             "open command line (shift+i)": with_args(
                 PopupConsole,
                 user_interface,
-                console=self.child_graphics_objects.console,
+                self.computer,
             ),
         }
         self.buttons_id = user_interface.add_buttons(buttons)

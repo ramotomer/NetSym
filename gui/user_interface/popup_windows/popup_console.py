@@ -1,38 +1,49 @@
+from collections import namedtuple
+
 from consts import COLORS, CONSOLE
 from gui.main_loop import MainLoop
-from gui.main_window import MainWindow
-from gui.tech.console import Console
+from gui.tech.shell import Shell
 from gui.user_interface.popup_windows.popup_window import PopupWindow
+
+ChildrenGraphicsObjects = namedtuple("ChildrenGraphicsObjects", [
+    'title_text',
+    'exit_button',
+    'shell',
+])
 
 
 class PopupConsole(PopupWindow):
     """
     A console in a popup window that you can also write in.
     """
-    def __init__(self, user_interface, console=None):
+    def __init__(self, user_interface, computer):
         super(PopupConsole, self).__init__(
-            *MainWindow.main_window.center,
+            *CONSOLE.SHELL.START_LOCATION,
             '',
             user_interface,
             [],
             color=COLORS.PINK,
             title='console',
-            width=CONSOLE.WIDTH,
-            height=CONSOLE.HEIGHT,
+            width=CONSOLE.SHELL.WIDTH,
+            height=CONSOLE.SHELL.HEIGHT,
         )
 
-        title_text, _, exit_button = self.child_graphics_objects[:3]
+        title_text, info_text, exit_button = self.child_graphics_objects[:3]
+        MainLoop.instance.unregister_graphics_object(info_text)
 
-        if console is None:
-            console = Console(*self.location, initial_text=">")
+        shell = Shell(*self.location, '', computer)
+        shell.width, shell.height = self.width, self.height
+        shell.set_parent_graphics(self)
+        shell.show()
+        MainLoop.instance.move_to_front(shell)
 
-        console.width, console.height = self.width, self.height
-        console.set_parent_graphics(self)
-        MainLoop.instance.move_to_front(console)
-        console.show()
-        self.console = console
-
-        self.child_graphics_objects = [
+        self.child_graphics_objects = ChildrenGraphicsObjects(
             title_text,
             exit_button,
-        ]
+            shell,
+        )
+        MainLoop.instance.move_to_front(shell.child_graphics_objects.input_line)
+
+    @property
+    def shell(self):
+        return self.child_graphics_objects.shell

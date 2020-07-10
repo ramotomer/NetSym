@@ -146,6 +146,8 @@ class PORTS:
 
 
 class KEYBOARD:
+    PRINTABLE_RANGE = range(0x20, 0x80)
+
     class MODIFIERS:
         """
         key modifiers, you can `|` them together to get the different combinations.
@@ -424,6 +426,11 @@ class TEXT:
     DEFAULT_Y_PADDING = -30
     COLOR = COLORS.BLACK
 
+    class ALIGN:
+        CENTER = 'center'
+        LEFT = 'left'
+        RIGHT = 'right'
+
     class FONT:
         DEFAULT = "Arial"
         DEFAULT_SIZE = 10
@@ -471,6 +478,12 @@ class CONSOLE:
     CHAR_WIDTH = 8
     COLOR = COLORS.BLACK
     TEXT_COLOR = COLORS.WHITE
+
+    class SHELL:
+        WIDTH = 400
+        HEIGHT = 400
+        PREFIX = '> '
+        START_LOCATION = 270, 140
 
 
 class SHAPES:

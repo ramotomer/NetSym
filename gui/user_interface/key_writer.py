@@ -54,34 +54,25 @@ class KeyWriter:
 
         self.key_dict[symbol] = action
 
-    @staticmethod
-    def _is_printable(symbol):
-        """Receives an order of a character and returns whether or not that character is printable or not"""
-        return 0x1f < symbol < 0x7f
-
-    def _is_numpad(self, symbol):
-        """whether or not the key that was pressed is on the num-pad"""
-        return symbol in self.NUMPAD_KEYS
-
     def pressed(self, symbol, modifiers):
         """
         This is called when the user is typing the string into the `PopupTextBox`.
         :param symbol: a string of the key that was pressed.
         :param modifiers: a bitwise representation of what other button were also pressed
-        (CTRL_MODIFIER, SHIFT_MODIFIER, etc...)
+        (KEYBOARD.MODIFIERS.SHIFT, etc...)
         :return: None
         """
         if symbol in self.key_dict:
             self.key_dict[symbol]()
 
-        elif self._is_printable(symbol):
+        elif symbol in KEYBOARD.PRINTABLE_RANGE:
             char = chr(symbol).lower()
             if (modifiers & KEYBOARD.MODIFIERS.SHIFT) ^ (modifiers & KEYBOARD.MODIFIERS.CAPS):
                 char = char.upper()
                 char = self.TO_UPPERCASE.get(char, char)
             self.write(char)
 
-        elif self._is_numpad(symbol):
+        elif symbol in self.NUMPAD_KEYS:
             self.write(self.NUMPAD_KEYS[symbol])
 
         else:

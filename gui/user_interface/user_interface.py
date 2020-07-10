@@ -27,6 +27,7 @@ from gui.tech.interface_graphics import InterfaceGraphics
 from gui.tech.packet_graphics import PacketGraphics
 from gui.user_interface.button import Button
 from gui.user_interface.popup_windows.device_creation_window import DeviceCreationWindow
+from gui.user_interface.popup_windows.popup_console import PopupConsole
 from gui.user_interface.popup_windows.popup_error import PopupError
 from gui.user_interface.popup_windows.popup_help import PopupHelp
 from gui.user_interface.popup_windows.popup_text_box import PopupTextBox
@@ -515,6 +516,10 @@ class UserInterface:
         """
         if isinstance(self.active_window, PopupTextBox):
             self.active_window.key_writer.pressed(symbol, modifiers)
+
+        elif isinstance(self.active_window, PopupConsole):
+            self.active_window.shell.key_writer.pressed(symbol, modifiers)
+
         else:
             modified_key = (symbol, int(bin(modifiers)[2:][-4:], base=2))
             for button_id in sorted(list(self.buttons)):
@@ -935,10 +940,6 @@ class UserInterface:
             if computer.is_process_running(TCPProcess):
                 process = computer.get_running_process(TCPProcess)
                 print(f"window (of {process}): {process.sending_window}")
-
-        for buttons in self.buttons.values():
-            for button in buttons:
-                print(button, button.location)
 
     def create_computer_with_ip(self):
         """

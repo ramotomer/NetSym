@@ -9,18 +9,19 @@ from gui.user_interface.text_graphics import Text
 ChildGraphicsObjects = namedtuple("ChildGraphicsObject", "text")
 
 
-class Console(UserInterfaceGraphicsObject):
+class OutputConsole(UserInterfaceGraphicsObject):
     """
     An object were the computer can write its output.
     This command line is drawn when the computer is viewed in the UserInterface's `VIEW_MODE`
 
     It views errors, ping replies and requests, dhcp requests and more.
     """
-    def __init__(self, x, y, initial_text='Console:\n', width=CONSOLE.WIDTH, height=CONSOLE.HEIGHT):
+    def __init__(self, x, y, initial_text='OutputConsole:\n',
+                 width=CONSOLE.WIDTH, height=CONSOLE.HEIGHT, font_size=CONSOLE.FONT_SIZE):
         """
         Initiates the object with its location and initial text.
         """
-        super(Console, self).__init__(x, y)
+        super(OutputConsole, self).__init__(x, y)
 
         self.is_hidden = True
 
@@ -30,7 +31,7 @@ class Console(UserInterfaceGraphicsObject):
                 self._text, x, y, self,
                 padding=((width / 2) + 2, height),
                 start_hidden=True,
-                font_size=CONSOLE.FONT_SIZE,
+                font_size=font_size,
                 max_width=width,
                 align='left',
                 color=CONSOLE.TEXT_COLOR,
@@ -41,7 +42,7 @@ class Console(UserInterfaceGraphicsObject):
 
     def draw(self):
         """
-        Draws the graphics object - The Console.
+        Draws the graphics object - The OutputConsole.
         :return: None
         """
         if not self.is_hidden:
@@ -104,4 +105,4 @@ class Console(UserInterfaceGraphicsObject):
         self.child_graphics_objects.text.set_text(self._text)
 
     def __repr__(self):
-        return "Console"
+        return "OutputConsole"

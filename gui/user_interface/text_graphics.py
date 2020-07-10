@@ -19,7 +19,7 @@ class Text(UserInterfaceGraphicsObject):
                  start_hidden=False,
                  max_width=WINDOWS.MAIN.WIDTH,
                  font_size=TEXT.FONT.DEFAULT_SIZE,
-                 align='center',
+                 align=TEXT.ALIGN.CENTER,
                  color=TEXT.COLOR):
         """
         Initiates a new `Text` object.
@@ -78,6 +78,14 @@ class Text(UserInterfaceGraphicsObject):
         self.label.multiline = True
         self.x, self.y = self.label.x, self.label.y
         self.move()
+
+    def append_text(self, text):
+        """
+        appends a string to the end of the text of the `Text` object.
+        :param text:
+        :return:
+        """
+        self.set_text(self.text + text)
 
     def draw(self):
         """
