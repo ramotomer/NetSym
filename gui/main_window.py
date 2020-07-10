@@ -43,6 +43,10 @@ class MainWindow(pyglet.window.Window):
     def location(self):
         return self.width, self.height
 
+    @property
+    def center(self):
+        return self.width / 2 - WINDOWS.SIDE.WIDTH, self.height / 2
+
     def get_mouse_location(self):
         """Return the mouse's location as a tuple"""
         return self.mouse_x, self.mouse_y

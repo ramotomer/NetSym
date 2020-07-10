@@ -462,12 +462,14 @@ class MODES:
 
 
 class CONSOLE:
-    X, Y = 105, 10
     WIDTH = WINDOWS.SIDE.WIDTH - 20
+    Y = 10
     HEIGHT = 3 * (WIDTH / 4)
     FONT_SIZE = 8
     LINE_HEIGHT = 14
     CHAR_WIDTH = 8
+    COLOR = COLORS.BLACK
+    TEXT_COLOR = COLORS.WHITE
 
 
 class SHAPES:

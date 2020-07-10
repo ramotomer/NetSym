@@ -120,4 +120,4 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.__is_active = False
 
     def __str__(self):
-        return "A popup window"
+        return f"PopupWindow(title='{self.child_graphics_objects[0].text}')"

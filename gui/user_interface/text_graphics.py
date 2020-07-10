@@ -25,7 +25,8 @@ class Text(UserInterfaceGraphicsObject):
         Initiates a new `Text` object.
         A `Text` object can have a parent `GraphicsObject` which it will set its coordinates according to it. (if it
             moves, the text moves with it)
-        At all times, the coordinates of the `Text` object will be the ones of the `parent_graphics` object plus the padding.
+        At all times, the coordinates of the `Text` object will be the ones of the `parent_graphics` object plus the
+        padding.
 
         The coordinates `x` and `y` of the `Text` object are in the middle of
         the first line that is drawn on the screen.
@@ -42,8 +43,6 @@ class Text(UserInterfaceGraphicsObject):
         """
         super(Text, self).__init__(x, y, centered=True)
         self._text = text
-        self.parent_graphics = parent_graphics
-        self.x_padding, self.y_padding = padding
         self.is_button = is_button  # whether or not it is on a text on a button
         self.is_hidden = start_hidden
         self.max_width = max_width
@@ -52,6 +51,7 @@ class Text(UserInterfaceGraphicsObject):
         self.color = color
 
         self.label = None
+        self.set_parent_graphics(parent_graphics, padding)
         self.set_text(text)
 
     @property
@@ -69,7 +69,7 @@ class Text(UserInterfaceGraphicsObject):
         self.label = pyglet.text.Label(self._text,
                                        font_name=TEXT.FONT.DEFAULT,
                                        font_size=self.font_size,
-                                       x=self.x + self.x_padding, y=(self.y + self.y_padding),
+                                       x=self.x + self.padding[0], y=(self.y + self.padding[1]),
                                        color=self.color + (255,),
                                        anchor_x='center', anchor_y='top',
                                        align=self.align)
@@ -109,7 +109,7 @@ class Text(UserInterfaceGraphicsObject):
         if self.parent_graphics is None:
             self.label.x, self.label.y = self.x, self.y
             return
-        self.x, self.y = self.parent_graphics.x + self.x_padding, (self.parent_graphics.y + self.y_padding)
+        super(Text, self).move()
         self.label.x, self.label.y = self.x, self.y
 
     def __str__(self):

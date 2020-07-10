@@ -44,22 +44,8 @@ class Button(UserInterfaceGraphicsObject):
         )
         self.key = key
 
-        self.parent_graphics = None  # see 'text_graphics.py' for documentation
-        self.padding = None
-
         self.color = color
         self.light_color = tuple(rgb + COLORS.COLOR_DIFF for rgb in color)
-
-    def set_parent_graphics(self, parent, padding=(0, 0)):
-        """
-        Sets the parent graphics object of the button
-        :param parent: a `GraphicsObject` to follow
-        :param padding: a tuple of integers
-        :return: None
-        """
-        self.parent_graphics = parent
-        self.padding = padding
-        self.move()
 
     def is_mouse_in(self):
         """Returns whether or not the mouse is located inside of the button."""

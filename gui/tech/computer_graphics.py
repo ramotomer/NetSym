@@ -8,6 +8,7 @@ from gui.main_window import MainWindow
 from gui.tech.console import Console
 from gui.tech.interface_graphics import InterfaceGraphicsList
 from gui.tech.process_graphics import ProcessGraphicsList
+from gui.user_interface.popup_windows.popup_console import PopupConsole
 from gui.user_interface.text_graphics import Text
 from processes.daytime_process import DAYTIMEClientProcess
 from processes.ddos_process import DDOSProcess
@@ -59,7 +60,7 @@ class ComputerGraphics(ImageGraphics):
 
     @property
     def console_location(self):
-        return MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2) - CONSOLE.X, CONSOLE.Y
+        return MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2) - (CONSOLE.WIDTH / 2), CONSOLE.Y
 
     def generate_text(self):
         """
@@ -137,6 +138,11 @@ class ComputerGraphics(ImageGraphics):
                 DDOSProcess,
                 1000,
                 0.1
+            ),
+            "open command line (shift+i)": with_args(
+                PopupConsole,
+                user_interface,
+                console=self.child_graphics_objects.console,
             ),
         }
         self.buttons_id = user_interface.add_buttons(buttons)

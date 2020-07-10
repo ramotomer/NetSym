@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from consts import CONSOLE, COLORS
+from consts import CONSOLE
 from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_loop import MainLoop
 from gui.shape_drawing import draw_rectangle
@@ -16,7 +16,7 @@ class Console(UserInterfaceGraphicsObject):
 
     It views errors, ping replies and requests, dhcp requests and more.
     """
-    def __init__(self, x, y, initial_text='Console:\n'):
+    def __init__(self, x, y, initial_text='Console:\n', width=CONSOLE.WIDTH, height=CONSOLE.HEIGHT):
         """
         Initiates the object with its location and initial text.
         """
@@ -28,14 +28,16 @@ class Console(UserInterfaceGraphicsObject):
         self.child_graphics_objects = ChildGraphicsObjects(
             Text(
                 self._text, x, y, self,
-                padding=((CONSOLE.WIDTH / 2) + 2, CONSOLE.HEIGHT),
+                padding=((width / 2) + 2, height),
                 start_hidden=True,
                 font_size=CONSOLE.FONT_SIZE,
-                max_width=CONSOLE.WIDTH,
+                max_width=width,
                 align='left',
-                color=COLORS.GRAY,
+                color=CONSOLE.TEXT_COLOR,
             )
         )
+
+        self.width, self.height = width, height
 
     def draw(self):
         """
@@ -43,7 +45,7 @@ class Console(UserInterfaceGraphicsObject):
         :return: None
         """
         if not self.is_hidden:
-            draw_rectangle(self.x, self.y, CONSOLE.WIDTH, CONSOLE.HEIGHT, color=COLORS.VERY_LIGHT_GRAY)
+            draw_rectangle(self.x, self.y, self.width, self.height, color=CONSOLE.COLOR)
 
     def show(self):
         """
@@ -73,22 +75,21 @@ class Console(UserInterfaceGraphicsObject):
         else:
             self.hide()
 
-    @staticmethod
-    def num_lines(text):
+    def num_lines(self, text):
         """
         The number of lines that some text would be split into in the console.
         This is somewhat of an approximation.
         :param text: a string
         :return: None
         """
-        return ((len(text) * CONSOLE.CHAR_WIDTH) // CONSOLE.WIDTH) + 1
+        return ((len(text) * CONSOLE.CHAR_WIDTH) // self.width) + 1
 
     def is_full(self):
         """
         Returns whether or not the console is full (and should go down a line)
         """
         text_height = sum([self.num_lines(line) for line in self._text.split('\n')]) * CONSOLE.LINE_HEIGHT
-        return text_height > CONSOLE.HEIGHT
+        return text_height > self.height
 
     def write(self, text):
         """
