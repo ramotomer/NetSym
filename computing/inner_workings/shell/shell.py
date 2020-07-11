@@ -6,7 +6,9 @@ from computing.inner_workings.shell.commands.echo import Echo
 from computing.inner_workings.shell.commands.ls import Ls
 from computing.inner_workings.shell.commands.mkdir import Mkdir
 from computing.inner_workings.shell.commands.pwd import Pwd
+from computing.inner_workings.shell.commands.rm import Rm
 from computing.inner_workings.shell.commands.touch import Touch
+from computing.inner_workings.shell.commands.uname import Uname
 from consts import CONSOLE
 
 
@@ -31,6 +33,8 @@ class Shell:
             Touch(computer, self),
             Cat(computer, self),
             Mkdir(computer, self),
+            Rm(computer, self),
+            Uname(computer, self),
         ]
         self.parser_commands = {
             'clear': self.shell_graphics.clear_screen,

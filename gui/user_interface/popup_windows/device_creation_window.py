@@ -42,6 +42,8 @@ class DeviceCreationWindow(PopupWindow):
                 f"{device.__name__} {self.DEVICE_TO_IMAGE[device][1]}",
                 width=WINDOWS.POPUP.DEVICE_CREATION.BUTTON_SIZE, height=WINDOWS.POPUP.DEVICE_CREATION.BUTTON_SIZE,
                 key=user_interface.key_from_string(self.DEVICE_TO_IMAGE[device][1]),
+                color=BUTTONS.COLOR,
+                is_outlined=False,
             ) for i, device in enumerate(self.DEVICE_TO_IMAGE)
         ]
 

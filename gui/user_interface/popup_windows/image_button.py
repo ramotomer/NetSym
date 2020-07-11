@@ -10,7 +10,7 @@ class ImageButton(Button):
     def __init__(self, x, y, action=lambda: None, image_name=None, text="",
                  start_hidden=False,
                  width=IMAGES.SIZE, height=IMAGES.SIZE,
-                 key=None, color=COLORS.GRAY, text_color=COLORS.PINK):
+                 key=None, color=BUTTONS.COLOR, text_color=BUTTONS.TEXT_COLOR, is_outlined=False):
         """
         Initiates the button with an image name and the rest of the button's arguments
         :param x, y: location of the bottom left corner
@@ -23,7 +23,8 @@ class ImageButton(Button):
         :param color: the color of the button
         :param text_color: the color of the text on the button
         """
-        super(ImageButton, self).__init__(x, y, action, text, start_hidden, width, height, key, color, text_color)
+        super(ImageButton, self).__init__(x, y, action, text, start_hidden, width, height,
+                                          key, color, text_color, is_outlined)
 
         self.pad_x, self.pad_y = 10, 10
         self.image_name = os.path.join(DIRECTORIES.IMAGES, image_name)
@@ -34,7 +35,8 @@ class ImageButton(Button):
         scale_y = ((self.height - 2 * self.pad_y) / self.image_sprite.height) * scale_y
         self.image_sprite.update(scale_x=scale_x, scale_y=scale_y)
 
-        self.child_graphics_objects.text.y_padding = self.height
+        pad_x, pad_y = self.child_graphics_objects.text.padding
+        self.child_graphics_objects.text.padding = pad_x, self.height
 
     def draw(self):
         """
