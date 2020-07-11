@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from computing.inner_workings.shell.command_parser import CommandParser
+from computing.inner_workings.shell.shell import Shell
 from consts import CONSOLE, TEXT
 from gui.tech.output_console import OutputConsole
 from gui.user_interface.key_writer import KeyWriter
@@ -34,7 +34,7 @@ class ShellGraphics(OutputConsole):
             ),
         )
 
-        self.command_parser = CommandParser(computer, self)
+        self.command_parser = Shell(computer, self)
 
     def write_to_line(self, string):
         """

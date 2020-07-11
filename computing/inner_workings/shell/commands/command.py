@@ -17,14 +17,15 @@ class Command(metaclass=ABCMeta):
     """
     A command in the shell
     """
-    def __init__(self, name, description, computer):
+    def __init__(self, name, description, computer, shell):
         """
         Initiates the command with the computer that ran it.
         :param computer: `Computer`
         """
         self.computer = computer
         self.name = name
-        self.parser = argparse.ArgumentParser(description=description)
+        self.shell = shell
+        self.parser = argparse.ArgumentParser(prog=name, description=description)
 
     @abstractmethod
     def action(self, parsed_args) -> CommandOutput:

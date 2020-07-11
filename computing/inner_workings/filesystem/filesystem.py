@@ -29,13 +29,22 @@ class Filesystem:
         filesystem.make_dir('/bin')
         return filesystem
 
+    @staticmethod
+    def is_absolute_path(path):
+        """
+        returns the answer to the damn question in the title of the method!!! hell, why do i even document....
+        :param path:
+        :return:
+        """
+        return path.startswith(FILESYSTEM.ROOT)
+
     def at_absolute_path(self, path):
         """
         Receives an absolute path and returns the file or directory at that location.
         :param path:
         :return:
         """
-        if not path.startswith(self.root_path):
+        if not self.is_absolute_path(path):
             raise PathError(f"path is not valid! '{path}'")
 
         return self.root.at_relative_path(FILESYSTEM.CWD + path)

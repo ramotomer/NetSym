@@ -307,3 +307,24 @@ class DirectoryExistsError(FilesystemError):
     """
     Directory to be created already exists in dest location.
     """
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class ShellError(NetworkSimulationError):
+    """
+    An error in a shell
+    """
+
+
+class CommandParsingError(ShellError):
+    """
+    Error in parsing a command in the shell
+    """
+
+
+class WrongArgumentsError(CommandParsingError):
+    """
+    Arguments that were given to the parsed command were not correct.
+    """
