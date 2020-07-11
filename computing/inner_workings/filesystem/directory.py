@@ -92,7 +92,10 @@ class Directory:
         :return:
         """
         self.files.clear()
-        self.directories.clear()
+        self.directories = {
+            FILESYSTEM.CWD: self.directories[FILESYSTEM.CWD],
+            FILESYSTEM.PARENT_DIRECTORY: self.directories[FILESYSTEM.PARENT_DIRECTORY],
+        }
 
     def __repr__(self):
         return f"Directory({self.name})"

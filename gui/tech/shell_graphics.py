@@ -19,7 +19,8 @@ class ShellGraphics(OutputConsole):
     Like an `OutputConsole` only you can write things into it!
     """
     def __init__(self, x, y, initial_text, computer, carrying_window, width=CONSOLE.SHELL.WIDTH, height=CONSOLE.SHELL.HEIGHT):
-        super(ShellGraphics, self).__init__(x, y, initial_text, width, height, font_size=CONSOLE.SHELL.FONT_SIZE)
+        super(ShellGraphics, self).__init__(x, y, initial_text, width, height,
+                                            font_size=CONSOLE.SHELL.FONT_SIZE, font='Courier New')
         self.computer = computer
         self.carrying_window = carrying_window
 
@@ -51,7 +52,6 @@ class ShellGraphics(OutputConsole):
         :return:
         """
         self.child_graphics_objects.input_line.append_text(string)
-
         # TODO: fix it when the line it too long
 
     def delete_last_char(self):

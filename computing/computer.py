@@ -1046,3 +1046,10 @@ class Computer:
         )
         returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])
         return returned
+
+    def arp_cache_display(self):
+        """
+        Returns a string that displays the arp cahe nicely
+        :return:
+        """
+        # TODO: implement

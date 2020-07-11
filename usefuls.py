@@ -203,3 +203,8 @@ def lighten_color(color, diff=COLORS.COLOR_DIFF):
 
 def darken_color(color, diff=COLORS.COLOR_DIFF):
     return lighten_color(color, -diff)
+
+
+def bindigits(n, bits):
+    s = bin(n & int("1"*bits, 2))[2:]
+    return ("{0:0>%s}" % bits).format(s)

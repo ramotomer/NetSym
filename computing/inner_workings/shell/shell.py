@@ -1,13 +1,15 @@
 import os
 
-from computing.inner_workings.shell.commands.cat import Cat
-from computing.inner_workings.shell.commands.cd import Cd
 from computing.inner_workings.shell.commands.echo import Echo
-from computing.inner_workings.shell.commands.ls import Ls
-from computing.inner_workings.shell.commands.mkdir import Mkdir
-from computing.inner_workings.shell.commands.pwd import Pwd
-from computing.inner_workings.shell.commands.rm import Rm
-from computing.inner_workings.shell.commands.touch import Touch
+from computing.inner_workings.shell.commands.filesystem.cat import Cat
+from computing.inner_workings.shell.commands.filesystem.cd import Cd
+from computing.inner_workings.shell.commands.filesystem.ls import Ls
+from computing.inner_workings.shell.commands.filesystem.mkdir import Mkdir
+from computing.inner_workings.shell.commands.filesystem.pwd import Pwd
+from computing.inner_workings.shell.commands.filesystem.rm import Rm
+from computing.inner_workings.shell.commands.filesystem.touch import Touch
+from computing.inner_workings.shell.commands.net.arp import Arp
+from computing.inner_workings.shell.commands.net.ip import Ip
 from computing.inner_workings.shell.commands.uname import Uname
 from consts import CONSOLE
 
@@ -35,6 +37,8 @@ class Shell:
             Mkdir(computer, self),
             Rm(computer, self),
             Uname(computer, self),
+            Ip(computer, self),
+            Arp(computer, self),
         ]
         self.parser_commands = {
             'clear': self.shell_graphics.clear_screen,

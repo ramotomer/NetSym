@@ -113,4 +113,4 @@ class MACAddress:
 
     def __repr__(self):
         """The ip_layer representation of the MAC address"""
-        return self.string_mac
+        return self.string_mac.upper()

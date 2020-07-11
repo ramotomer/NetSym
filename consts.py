@@ -478,12 +478,13 @@ class CONSOLE:
     CHAR_WIDTH = 8
     COLOR = COLORS.BLACK
     TEXT_COLOR = COLORS.WHITE
+    FONT = 'Courier New'
 
     class SHELL:
-        WIDTH = 400
-        HEIGHT = 400
+        WIDTH = 700
+        HEIGHT = 500
         PREFIX = '> '
-        START_LOCATION = 270, 140
+        START_LOCATION = 170, 40
         FONT_SIZE = TEXT.FONT.DEFAULT_SIZE
         REDIRECTION = '>'
 

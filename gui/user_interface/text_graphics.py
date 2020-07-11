@@ -20,7 +20,8 @@ class Text(UserInterfaceGraphicsObject):
                  max_width=WINDOWS.MAIN.WIDTH,
                  font_size=TEXT.FONT.DEFAULT_SIZE,
                  align=TEXT.ALIGN.CENTER,
-                 color=TEXT.COLOR):
+                 color=TEXT.COLOR,
+                 font=TEXT.FONT.DEFAULT):
         """
         Initiates a new `Text` object.
         A `Text` object can have a parent `GraphicsObject` which it will set its coordinates according to it. (if it
@@ -49,6 +50,7 @@ class Text(UserInterfaceGraphicsObject):
         self.font_size = font_size
         self.align = align
         self.color = color
+        self.font = font
 
         self.label = None
         self.set_parent_graphics(parent_graphics, padding)
@@ -67,7 +69,7 @@ class Text(UserInterfaceGraphicsObject):
         """
         self._text = text
         self.label = pyglet.text.Label(self._text,
-                                       font_name=TEXT.FONT.DEFAULT,
+                                       font_name=self.font,
                                        font_size=self.font_size,
                                        x=self.x + self.padding[0], y=(self.y + self.padding[1]),
                                        color=self.color + (255,),

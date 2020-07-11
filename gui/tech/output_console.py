@@ -17,7 +17,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
     It views errors, ping replies and requests, dhcp requests and more.
     """
     def __init__(self, x, y, initial_text='OutputConsole:\n',
-                 width=CONSOLE.WIDTH, height=CONSOLE.HEIGHT, font_size=CONSOLE.FONT_SIZE):
+                 width=CONSOLE.WIDTH, height=CONSOLE.HEIGHT, font_size=CONSOLE.FONT_SIZE, font=CONSOLE.FONT):
         """
         Initiates the object with its location and initial text.
         """
@@ -35,6 +35,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
                 max_width=width,
                 align='left',
                 color=CONSOLE.TEXT_COLOR,
+                font=font,
             )
         )
 
@@ -84,7 +85,11 @@ class OutputConsole(UserInterfaceGraphicsObject):
         :param text: a string
         :return: None
         """
-        return (((len(text) * CONSOLE.CHAR_WIDTH) + (text.count('\t') * CONSOLE.CHAR_WIDTH * 3)) // self.width) + 1
+        return (((len(text) * CONSOLE.CHAR_WIDTH) +
+                 (text.count('\t') * CONSOLE.CHAR_WIDTH * 3) -
+                 (text.count(':') * CONSOLE.CHAR_WIDTH // 2) -
+                 (text.count('.') * 2 * CONSOLE.CHAR_WIDTH // 3)) // self.width) + 1
+        # TODO: this method is totally shit...
 
     @property
     def line_height(self):
