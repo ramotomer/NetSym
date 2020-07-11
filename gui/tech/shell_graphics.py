@@ -1,7 +1,9 @@
 from collections import namedtuple
 
+from pyglet.window import key
+
 from computing.inner_workings.shell.shell import Shell
-from consts import CONSOLE, TEXT
+from consts import CONSOLE, TEXT, KEYBOARD
 from gui.tech.output_console import OutputConsole
 from gui.user_interface.key_writer import KeyWriter
 from gui.user_interface.text_graphics import Text
@@ -21,8 +23,6 @@ class ShellGraphics(OutputConsole):
         self.computer = computer
         self.carrying_window = carrying_window
 
-        self.key_writer = KeyWriter(self.write_to_line, self.delete_last_char, self.submit_line)
-
         self.child_graphics_objects = ChildrenGraphicsObjects(
             self.child_graphics_objects.text,
             Text(
@@ -36,6 +36,13 @@ class ShellGraphics(OutputConsole):
         )
 
         self.command_parser = Shell(computer, self)
+
+        self.key_writer = KeyWriter(self.write_to_line, self.delete_last_char, self.submit_line)
+        self.key_writer.add_key_combination(key.C, KEYBOARD.MODIFIERS.CTRL, self.clear_line)
+        self.key_writer.add_key_combination(key.L, KEYBOARD.MODIFIERS.CTRL, self.clear_screen)
+        self.key_writer.add_key_combination(key.Q, KEYBOARD.MODIFIERS.CTRL, self.exit)
+        self.key_writer.add_key_mapping(key.UP, self.command_parser.scroll_up_history)
+        self.key_writer.add_key_mapping(key.DOWN, self.command_parser.scroll_down_history)
 
     def write_to_line(self, string):
         """
@@ -63,9 +70,16 @@ class ShellGraphics(OutputConsole):
         """
         command_and_args = self.child_graphics_objects.input_line.text[len(CONSOLE.SHELL.PREFIX):]
         self.write(CONSOLE.SHELL.PREFIX + command_and_args)
-        self.child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX)
+        self.clear_line()
 
         self.command_parser.execute(command_and_args)
+
+    def clear_line(self):
+        """
+        Clears the input line.
+        :return:
+        """
+        self.child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX)
 
     def clear_screen(self):
         """

@@ -16,4 +16,4 @@ class Pwd(Command):
         """
         prints out the cwd.
         """
-        return CommandOutput(f"CWD: {self.shell.cwd_path}", '')
+        return CommandOutput(f"{self.shell.cwd_path}", '')

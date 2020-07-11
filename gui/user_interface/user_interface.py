@@ -514,6 +514,8 @@ class UserInterface:
         :param modifiers:
         :return:
         """
+        modifiers = int(bin(modifiers)[2:][-4:], base=2)
+
         if isinstance(self.active_window, PopupTextBox):
             self.active_window.key_writer.pressed(symbol, modifiers)
 
@@ -521,7 +523,7 @@ class UserInterface:
             self.active_window.shell.key_writer.pressed(symbol, modifiers)
 
         else:
-            modified_key = (symbol, int(bin(modifiers)[2:][-4:], base=2))
+            modified_key = (symbol, modifiers)
             for button_id in sorted(list(self.buttons)):
                 for button in self.buttons[button_id]:
                     if button.key == modified_key:

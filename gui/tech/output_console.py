@@ -80,10 +80,11 @@ class OutputConsole(UserInterfaceGraphicsObject):
         """
         The number of lines that some text would be split into in the console.
         This is somewhat of an approximation.
+        Tabs are 4 times the width of normal characters.
         :param text: a string
         :return: None
         """
-        return ((len(text) * CONSOLE.CHAR_WIDTH) // self.width) + 1
+        return (((len(text) * CONSOLE.CHAR_WIDTH) + (text.count('\t') * CONSOLE.CHAR_WIDTH * 3)) // self.width) + 1
 
     @property
     def line_height(self):

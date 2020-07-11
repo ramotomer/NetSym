@@ -1,7 +1,7 @@
 from computing.inner_workings.filesystem.directory import Directory
 from computing.inner_workings.filesystem.file import File
 from consts import FILESYSTEM
-from exceptions import PathError, WrongUsageError, NoSuchItemError
+from exceptions import PathError, NoSuchItemError
 
 
 class Filesystem:
@@ -43,15 +43,24 @@ class Filesystem:
 
     def absolute_from_relative(self, parent: Directory, path: str):
         """
-        receives relative path and prent dir and return absolute path
+        receives relative path and prent dir and return absolute path.
+        If already absolute, returns the path.
         :param parent:
         :param path:
         :return:
         """
         if self.is_absolute_path(path):
-            raise WrongUsageError(f"path is absolute! '{path}'")
+            return path
 
-        return parent.at_relative_path(path).full_path
+        returned = parent.full_path
+        for name in path.split(FILESYSTEM.SEPARATOR):
+            if name == FILESYSTEM.CWD:
+                continue
+            elif name == FILESYSTEM.PARENT_DIRECTORY:
+                returned = FILESYSTEM.SEPARATOR.join(returned.split(FILESYSTEM.SEPARATOR)[:-1])
+            else:
+                returned += FILESYSTEM.SEPARATOR + name
+        return returned
 
     def at_absolute_path(self, path):
         """
@@ -60,7 +69,7 @@ class Filesystem:
         :return:
         """
         if not self.is_absolute_path(path):
-            raise PathError(f"path is not valid! '{path}'")
+            raise PathError(f"path is not absolute! '{path}'")
 
         return self.root.at_relative_path(FILESYSTEM.CWD + path)
 
@@ -92,8 +101,7 @@ class Filesystem:
 
         return isinstance(item, File)
 
-    @staticmethod
-    def separate_base(path):
+    def separate_base(self, path):
         """
         Receives a path and returns a tuple of the name of the item and the name of the directory it resides in.
         for example:
@@ -107,17 +115,19 @@ class Filesystem:
         filename = path.split(FILESYSTEM.SEPARATOR)[-1]
         if FILESYSTEM.SEPARATOR not in path:
             base_dir_path = FILESYSTEM.CWD
+        elif base_dir_path == '':
+            base_dir_path = self.root_path
         return base_dir_path, filename
 
-    def make_dir(self, full_path, mount=FILESYSTEM.TYPE.EXT4):
+    def make_dir(self, absolute_path, mount=FILESYSTEM.TYPE.EXT4):
         """
         Creates a directory in a given path.
-        :param full_path: absolute path to the new directory.
+        :param absolute_path: absolute path to the new directory.
         :param mount: the mount of the directory, the file-system type that it is mounted on.
         :return:
         """
-        parent_path, dirname = full_path.split(FILESYSTEM.SEPARATOR)[1:-1], full_path.split(FILESYSTEM.SEPARATOR)[-1]
-        parent_dir = self.at_absolute_path(self.root_path + FILESYSTEM.SEPARATOR.join(parent_path))
+        parent_path, dirname = self.separate_base(absolute_path)
+        parent_dir = self.at_absolute_path(parent_path)
         parent_dir.make_sub_dir(dirname, mount=mount)
 
     def wipe_temporary_directories(self, root_dir=None):
@@ -131,3 +141,26 @@ class Filesystem:
             if directory.mount == FILESYSTEM.TYPE.TMPFS:
                 directory.wipe()
             self.wipe_temporary_directories(root_dir=directory)
+
+    def output_to_file(self, data, path, cwd: Directory = None, append=False):
+        """
+        Create the file if it does not exist.
+        Can receive both relative or absolute paths.
+        :param data:
+        :param path:
+        :param cwd:
+        :param append:
+        :return:
+        """
+        base_dir_path, filename = self.separate_base(path)
+        base_dir = self.at_path(cwd, base_dir_path)
+
+        if not self.is_file(path, cwd):
+            base_dir.make_empty_file(filename)
+
+        file = base_dir.files[filename]
+        with file:
+            if append:
+                file.append(data)
+            else:
+                file.write(data)

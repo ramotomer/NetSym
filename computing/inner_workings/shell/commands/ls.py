@@ -1,4 +1,5 @@
 from computing.inner_workings.shell.commands.command import Command, CommandOutput
+from exceptions import NoSuchFileError
 
 
 class Ls(Command):
@@ -21,12 +22,15 @@ class Ls(Command):
         :return:
         """
         if self.computer.filesystem.is_absolute_path(path):
-            return '\n'.join(self.computer.filesystem.at_absolute_path(path).items)
-        return '\n'.join(self.shell.cwd.at_relative_path(path).items)
+            return '\t'.join(self.computer.filesystem.at_absolute_path(path).items)
+        return '\t'.join(self.shell.cwd.at_relative_path(path).items)
 
     def action(self, parsed_args):
         """
         prints out the arguments.
         """
-        listed = self._list_dir(parsed_args.dirname if parsed_args.dirname else self.shell.cwd_path)
+        try:
+            listed = self._list_dir(parsed_args.dirname if parsed_args.dirname else self.shell.cwd_path)
+        except NoSuchFileError:
+            return CommandOutput('', "No Such file or directory! :(")
         return CommandOutput(listed, '')

@@ -49,6 +49,14 @@ class File:
         else:
             raise FileNotOpenError("Cannot write to closed file for writing!")
 
+    def append(self, data):
+        """
+        Append data to the end of a file.
+        :param data:
+        :return:
+        """
+        self.write(self.read() + data)
+
     def close(self):
         """
         Close the file

@@ -1,6 +1,6 @@
 from computing.inner_workings.shell.commands.command import Command, CommandOutput
 from consts import FILESYSTEM
-from exceptions import NoSuchDirectoryError, NoSuchFileError
+from exceptions import NoSuchItemError
 
 
 class Cd(Command):
@@ -35,8 +35,9 @@ class Cd(Command):
         """
 
         try:
-            new_dir = self._change_dir(parsed_args.new_dir if parsed_args.new_dir else FILESYSTEM.HOME_DIR)
-        except (NoSuchDirectoryError, NoSuchFileError):
+            new_dir = parsed_args.new_dir if parsed_args.new_dir else FILESYSTEM.HOME_DIR
+            self.shell.cwd = self.computer.filesystem.at_path(self.shell.cwd, new_dir)
+        except NoSuchItemError:
             return CommandOutput('', f"Cannot switch to directory '{parsed_args.new_dir}'")
 
-        return CommandOutput(f"Switched to '{new_dir}'", '')
+        return CommandOutput(f"Switched to '{self.shell.cwd_path}'", '')

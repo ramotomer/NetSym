@@ -485,6 +485,7 @@ class CONSOLE:
         PREFIX = '> '
         START_LOCATION = 270, 140
         FONT_SIZE = TEXT.FONT.DEFAULT_SIZE
+        REDIRECTION = '>'
 
 
 class SHAPES:

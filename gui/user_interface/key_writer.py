@@ -42,6 +42,8 @@ class KeyWriter:
             key.BACKSPACE: self.delete,
         }
 
+        self.key_combination_dict = {}  # {(key, modifiers): action}
+
     def add_key_mapping(self, symbol, action):
         """
         Adds a new action to occur when a given key is pressed.
@@ -54,6 +56,20 @@ class KeyWriter:
 
         self.key_dict[symbol] = action
 
+    def add_key_combination(self, symbol, modifiers, action):
+        """
+        Adds a combination of key and modifiers to the mapping.
+        This is checked first!
+        :param symbol:
+        :param modifiers:
+        :param action:
+        :return:
+        """
+        if (symbol, modifiers) in self.key_dict:
+            raise KeyActionAlreadyExistsError("you are overriding and action in the key dict!!!")
+
+        self.key_combination_dict[(symbol, modifiers)] = action
+
     def pressed(self, symbol, modifiers):
         """
         This is called when the user is typing the string into the `PopupTextBox`.
@@ -62,7 +78,10 @@ class KeyWriter:
         (KEYBOARD.MODIFIERS.SHIFT, etc...)
         :return: None
         """
-        if symbol in self.key_dict:
+        if (symbol, modifiers) in self.key_combination_dict:
+            self.key_combination_dict[(symbol, modifiers)]()
+
+        elif symbol in self.key_dict:
             self.key_dict[symbol]()
 
         elif symbol in KEYBOARD.PRINTABLE_RANGE:
@@ -74,6 +93,3 @@ class KeyWriter:
 
         elif symbol in self.NUMPAD_KEYS:
             self.write(self.NUMPAD_KEYS[symbol])
-
-        else:
-            print(f"unknown key: {symbol}")
