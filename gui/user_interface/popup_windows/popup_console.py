@@ -2,7 +2,7 @@ from collections import namedtuple
 
 from consts import COLORS, CONSOLE
 from gui.main_loop import MainLoop
-from gui.tech.shell import Shell
+from gui.tech.shell_graphics import ShellGraphics
 from gui.user_interface.popup_windows.popup_window import PopupWindow
 
 ChildrenGraphicsObjects = namedtuple("ChildrenGraphicsObjects", [
@@ -31,7 +31,7 @@ class PopupConsole(PopupWindow):
         title_text, info_text, exit_button = self.child_graphics_objects[:3]
         MainLoop.instance.unregister_graphics_object(info_text)
 
-        shell = Shell(*self.location, '', computer)
+        shell = ShellGraphics(*self.location, '', computer)
         shell.width, shell.height = self.width, self.height
         shell.set_parent_graphics(self)
         shell.show()

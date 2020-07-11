@@ -3,8 +3,8 @@ from collections import namedtuple
 
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
+from computing.inner_workings.routing_table import RoutingTable, RoutingTableItem
 from computing.interface import Interface
-from computing.routing_table import RoutingTable, RoutingTableItem
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop

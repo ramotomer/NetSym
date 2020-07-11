@@ -1,5 +1,6 @@
 from collections import namedtuple
 
+from computing.inner_workings.shell.command_parser import CommandParser
 from consts import CONSOLE, TEXT
 from gui.tech.output_console import OutputConsole
 from gui.user_interface.key_writer import KeyWriter
@@ -11,12 +12,12 @@ ChildrenGraphicsObjects = namedtuple("ChildGraphicsObject", [
     ])
 
 
-class Shell(OutputConsole):
+class ShellGraphics(OutputConsole):
     """
     Like an `OutputConsole` only you can write things into it!
     """
     def __init__(self, x, y, initial_text, computer, width=CONSOLE.SHELL.WIDTH, height=CONSOLE.SHELL.HEIGHT):
-        super(Shell, self).__init__(x, y, initial_text, width, height, font_size=TEXT.FONT.DEFAULT_SIZE)
+        super(ShellGraphics, self).__init__(x, y, initial_text, width, height, font_size=TEXT.FONT.DEFAULT_SIZE)
         self.computer = computer
 
         self.key_writer = KeyWriter(self.write_to_line, self.delete, self.submit_line)
@@ -32,6 +33,8 @@ class Shell(OutputConsole):
                 color=CONSOLE.TEXT_COLOR,
             ),
         )
+
+        self.command_parser = CommandParser(computer, self)
 
     def write_to_line(self, string):
         """
@@ -59,8 +62,8 @@ class Shell(OutputConsole):
         Press enter in the input line basically.
         :return:
         """
-        command = self.child_graphics_objects.input_line.text[len(CONSOLE.SHELL.PREFIX):]
-        self.write(CONSOLE.SHELL.PREFIX + command)
+        command_and_args = self.child_graphics_objects.input_line.text[len(CONSOLE.SHELL.PREFIX):]
+        self.write(CONSOLE.SHELL.PREFIX + command_and_args)
         self.child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX)
 
-        # self.execute_command(command)
+        self.command_parser.execute(command_and_args)
