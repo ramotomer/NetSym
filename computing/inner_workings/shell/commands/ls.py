@@ -1,5 +1,4 @@
-from computing.inner_workings.shell.commands.command import Command, CommandOutput, ParsedCommand
-from exceptions import WrongUsageError, WrongArgumentsError
+from computing.inner_workings.shell.commands.command import Command, CommandOutput
 
 
 class Ls(Command):
@@ -23,32 +22,11 @@ class Ls(Command):
         """
         if self.computer.filesystem.is_absolute_path(path):
             return '\n'.join(self.computer.filesystem.at_absolute_path(path).items)
-
-        cwd = self.computer.filesystem.at_absolute_path(self.shell.cwd)
-        return '\n'.join(cwd.at_relative_path(path).items)
+        return '\n'.join(self.shell.cwd.at_relative_path(path).items)
 
     def action(self, parsed_args):
         """
         prints out the arguments.
         """
-        listed = self._list_dir(parsed_args.dirname if parsed_args.dirname else self.shell.cwd)
+        listed = self._list_dir(parsed_args.dirname if parsed_args.dirname else self.shell.cwd_path)
         return CommandOutput(listed, '')
-
-    def parse(self, string):
-        """
-        all arguments should be printed out.
-        :param string:
-        :return:
-        """
-        command = string.split()[0]
-        args = string.split()[1:]
-
-        if len(args) > 1:
-            raise WrongArgumentsError("ls takes one arguments at max!")
-
-        parsed_args = self.parser.parse_args(args)
-
-        if command != self.name:
-            raise WrongUsageError(f"wrong command given to parse! '{command}' should be '{self.name}'")
-
-        return ParsedCommand(self, parsed_args)

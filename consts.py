@@ -4,13 +4,13 @@ import os
 from exceptions import TCPDoneReceiving
 
 
-def debugp(string):
+def debugp(*strings):
     """
     A print i use for debugging so i know where to delete it afterwards.
     :param string:
     :return:
     """
-    print(f"DEBUG: {string}")
+    print(f"DEBUG:", *strings)
 
 
 SENDING_GRAT_ARPS = False
@@ -484,6 +484,7 @@ class CONSOLE:
         HEIGHT = 400
         PREFIX = '> '
         START_LOCATION = 270, 140
+        FONT_SIZE = TEXT.FONT.DEFAULT_SIZE
 
 
 class SHAPES:
@@ -521,3 +522,4 @@ class FILESYSTEM:
     PARENT_DIRECTORY = '..'
     SEPARATOR = '/'
     ROOT = '/'
+    HOME_DIR = '/home'

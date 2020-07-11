@@ -1,6 +1,6 @@
 from computing.inner_workings.filesystem.directory import Directory
 from consts import FILESYSTEM
-from exceptions import PathError
+from exceptions import PathError, WrongUsageError
 
 
 class Filesystem:
@@ -27,6 +27,7 @@ class Filesystem:
         filesystem.make_dir('/var')
         filesystem.make_dir('/boot')
         filesystem.make_dir('/bin')
+        filesystem.make_dir(FILESYSTEM.HOME_DIR)
         return filesystem
 
     @staticmethod
@@ -37,6 +38,18 @@ class Filesystem:
         :return:
         """
         return path.startswith(FILESYSTEM.ROOT)
+
+    def absolute_from_relative(self, parent: Directory, path: str):
+        """
+        receives relative path and prent dir and return absolute path
+        :param parent:
+        :param path:
+        :return:
+        """
+        if self.is_absolute_path(path):
+            raise WrongUsageError(f"path is absolute! '{path}'")
+
+        return parent.at_relative_path(path).full_path
 
     def at_absolute_path(self, path):
         """

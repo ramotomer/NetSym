@@ -31,7 +31,7 @@ class PopupConsole(PopupWindow):
         title_text, info_text, exit_button = self.child_graphics_objects[:3]
         MainLoop.instance.unregister_graphics_object(info_text)
 
-        shell = ShellGraphics(*self.location, '', computer)
+        shell = ShellGraphics(*self.location, '', computer, self)
         shell.width, shell.height = self.width, self.height
         shell.set_parent_graphics(self)
         shell.show()

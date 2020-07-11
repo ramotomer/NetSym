@@ -137,9 +137,9 @@ class ComputerGraphics(ImageGraphics):
                 self.computer.start_process,
                 DDOSProcess,
                 1000,
-                0.1
+                0.8
             ),
-            "open command line (shift+i)": with_args(
+            "open console (shift+i)": with_args(
                 PopupConsole,
                 user_interface,
                 self.computer,

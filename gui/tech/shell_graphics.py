@@ -16,11 +16,12 @@ class ShellGraphics(OutputConsole):
     """
     Like an `OutputConsole` only you can write things into it!
     """
-    def __init__(self, x, y, initial_text, computer, width=CONSOLE.SHELL.WIDTH, height=CONSOLE.SHELL.HEIGHT):
-        super(ShellGraphics, self).__init__(x, y, initial_text, width, height, font_size=TEXT.FONT.DEFAULT_SIZE)
+    def __init__(self, x, y, initial_text, computer, carrying_window, width=CONSOLE.SHELL.WIDTH, height=CONSOLE.SHELL.HEIGHT):
+        super(ShellGraphics, self).__init__(x, y, initial_text, width, height, font_size=CONSOLE.SHELL.FONT_SIZE)
         self.computer = computer
+        self.carrying_window = carrying_window
 
-        self.key_writer = KeyWriter(self.write_to_line, self.delete, self.submit_line)
+        self.key_writer = KeyWriter(self.write_to_line, self.delete_last_char, self.submit_line)
 
         self.child_graphics_objects = ChildrenGraphicsObjects(
             self.child_graphics_objects.text,
@@ -45,10 +46,8 @@ class ShellGraphics(OutputConsole):
         self.child_graphics_objects.input_line.append_text(string)
 
         # TODO: fix it when the line it too long
-        # TODO: fix it when the shell fills up
-        # TODO: make it so that you can actually run the commands you print in...
 
-    def delete(self):
+    def delete_last_char(self):
         """
         Delete one char off the input line of the shell.
         :return:
@@ -67,3 +66,18 @@ class ShellGraphics(OutputConsole):
         self.child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX)
 
         self.command_parser.execute(command_and_args)
+
+    def clear_screen(self):
+        """
+        Clears the shell screen.
+        :return:
+        """
+        self._text = ''
+        self.child_graphics_objects.text.set_text('')
+
+    def exit(self):
+        """
+        Closes the shell and the window that carries it.
+        :return:
+        """
+        self.carrying_window.delete()

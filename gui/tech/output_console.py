@@ -85,12 +85,16 @@ class OutputConsole(UserInterfaceGraphicsObject):
         """
         return ((len(text) * CONSOLE.CHAR_WIDTH) // self.width) + 1
 
+    @property
+    def line_height(self):
+        return (7 * self.child_graphics_objects.text.label.font_size) / 4
+
     def is_full(self):
         """
         Returns whether or not the console is full (and should go down a line)
         """
-        text_height = sum([self.num_lines(line) for line in self._text.split('\n')]) * CONSOLE.LINE_HEIGHT
-        return text_height > self.height
+        text_height = sum([self.num_lines(line) for line in self._text.split('\n')]) * self.line_height
+        return text_height >= self.height
 
     def write(self, text):
         """
@@ -98,6 +102,10 @@ class OutputConsole(UserInterfaceGraphicsObject):
         :param text: a string to write.
         :return: None
         """
+        if '\n' in text:
+            for line in text.split('\n'):
+                self.write(line)
+            return
         if self.is_full():
             self._text = '\n'.join(self._text.split('\n')[self.num_lines(text):])
             # remove the up most lines if we are out of space.

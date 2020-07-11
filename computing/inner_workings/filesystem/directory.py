@@ -66,6 +66,8 @@ class Directory:
     def full_path(self):
         if self.parent is self:
             return self.name
+        if self.parent.parent is self.parent:
+            return self.parent.name + self.name
         return f"{self.parent.full_path}{FILESYSTEM.SEPARATOR}{self.name}"
 
     def __repr__(self):

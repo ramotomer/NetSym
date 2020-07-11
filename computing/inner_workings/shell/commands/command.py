@@ -2,6 +2,8 @@ import argparse
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 
+from exceptions import WrongUsageError
+
 CommandOutput = namedtuple("CommandOutput", [
     "stdout",
     "stderr",
@@ -33,11 +35,16 @@ class Command(metaclass=ABCMeta):
         The action that this command activates when called.
         """
 
-    @abstractmethod
     def parse(self, string):
         """
-        Parse yourself the string that might be your command, That way, an argparse will be defined differently for each
-        command class.
+        parses the command string!!!
         :param string:
         :return:
         """
+        command = string.split()[0]
+        args = string.split()[1:]
+        parsed_args = self.parser.parse_args(args)
+
+        if command != self.name:
+            raise WrongUsageError(f"wrong command given to parse! '{command}' should be '{self.name}'")
+        return ParsedCommand(self, parsed_args)
