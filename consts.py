@@ -514,3 +514,10 @@ class SELECTED_OBJECT:
     STEP_SIZE = 30
     SMALL_STEP_SIZE = 5
     BIG_STEP_SIZE = 80
+
+
+class FILESYSTEM:
+    CWD = '.'
+    PARENT_DIRECTORY = '..'
+    SEPARATOR = '/'
+    ROOT = '/'

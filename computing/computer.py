@@ -3,6 +3,7 @@ from collections import namedtuple
 
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
+from computing.inner_workings.filesystem.filesystem import Filesystem
 from computing.inner_workings.routing_table import RoutingTable, RoutingTableItem
 from computing.interface import Interface
 from consts import *
@@ -102,6 +103,8 @@ class Computer:
         self.is_supporting_wireless_connections = False
 
         self.on_startup = []
+
+        self.filesystem = Filesystem.with_default_dirs()
 
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ method does not run when program is paused

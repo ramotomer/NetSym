@@ -274,3 +274,36 @@ class KeyActionAlreadyExistsError(KeyboardError):
     """
     Trying to assign an action to a key that an action is already assigned to it...
     """
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class FilesystemError(ComputerError):
+    """
+    An error with the filesystem of a computer.
+    """
+
+
+class NoSuchFileError(FilesystemError):
+    """
+    When a file that is accessed does not exist.
+    """
+
+
+class NoSuchDirectoryError(FilesystemError):
+    """
+    when dir no exist this happen
+    """
+
+
+class PathError(FilesystemError):
+    """
+    A problem with a path.
+    """
+
+
+class DirectoryExistsError(FilesystemError):
+    """
+    Directory to be created already exists in dest location.
+    """
