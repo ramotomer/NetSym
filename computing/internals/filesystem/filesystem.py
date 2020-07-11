@@ -1,5 +1,5 @@
-from computing.inner_workings.filesystem.directory import Directory
-from computing.inner_workings.filesystem.file import File
+from computing.internals.filesystem.directory import Directory
+from computing.internals.filesystem.file import File
 from consts import FILESYSTEM
 from exceptions import PathError, NoSuchItemError
 
@@ -14,6 +14,7 @@ class Filesystem:
         """
         self.root_path = FILESYSTEM.ROOT
         self.root = Directory(name=self.root_path, parent=None)
+    # TODO: when saving computer to file, his filesystem does not save!!! work on that
 
     @classmethod
     def with_default_dirs(cls):
@@ -31,6 +32,7 @@ class Filesystem:
         filesystem.make_dir('/tmp', mount=FILESYSTEM.TYPE.TMPFS)
         filesystem.make_dir(FILESYSTEM.HOME_DIR)
         return filesystem
+
 
     @staticmethod
     def is_absolute_path(path):

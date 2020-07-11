@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from consts import CONSOLE
+from consts import CONSOLE, TEXT
 from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_loop import MainLoop
 from gui.shape_drawing import draw_rectangle
@@ -17,7 +17,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
     It views errors, ping replies and requests, dhcp requests and more.
     """
     def __init__(self, x, y, initial_text='OutputConsole:\n',
-                 width=CONSOLE.WIDTH, height=CONSOLE.HEIGHT, font_size=CONSOLE.FONT_SIZE, font=CONSOLE.FONT):
+                 width=CONSOLE.WIDTH, height=CONSOLE.HEIGHT, font_size=CONSOLE.FONT_SIZE, font=TEXT.FONT.DEFAULT):
         """
         Initiates the object with its location and initial text.
         """

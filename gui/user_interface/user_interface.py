@@ -1445,3 +1445,12 @@ class UserInterface:
                     self.dragging_points[object_] = object_x - mouse_x, object_y - mouse_y
             else:
                 self.marked_objects.clear()
+
+    def set_all_connection_speeds(self, new_speed):
+        """
+        Sets the speed of all of the connections
+        :param new_speed:
+        :return:
+        """
+        for connection, _, _ in self.connection_data:
+            connection.set_speed(new_speed)

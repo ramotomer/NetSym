@@ -1,7 +1,7 @@
-from computing.inner_workings.shell.commands.command import Command, CommandOutput
-from computing.inner_workings.shell.commands.net.ip_address import IpAddressCommand
-from computing.inner_workings.shell.commands.net.ip_link import IpLinkCommand
-from computing.inner_workings.shell.commands.net.ip_route import IpRouteCommand
+from computing.internals.shell.commands.command import Command, CommandOutput
+from computing.internals.shell.commands.net.ip_address import IpAddressCommand
+from computing.internals.shell.commands.net.ip_link import IpLinkCommand
+from computing.internals.shell.commands.net.ip_route import IpRouteCommand
 
 
 class Ip(Command):

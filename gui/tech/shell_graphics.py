@@ -2,7 +2,7 @@ from collections import namedtuple
 
 from pyglet.window import key
 
-from computing.inner_workings.shell.shell import Shell
+from computing.internals.shell.shell import Shell
 from consts import CONSOLE, TEXT, KEYBOARD
 from gui.tech.output_console import OutputConsole
 from gui.user_interface.key_writer import KeyWriter
@@ -52,7 +52,7 @@ class ShellGraphics(OutputConsole):
         :return:
         """
         self.child_graphics_objects.input_line.append_text(string)
-        # TODO: fix it when the line it too long
+        # TODO: fix it when the line that is inserted is too long
 
     def delete_last_char(self):
         """

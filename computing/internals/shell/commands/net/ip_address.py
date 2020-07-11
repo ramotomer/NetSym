@@ -1,6 +1,6 @@
 from address.mac_address import MACAddress
-from computing.inner_workings.shell.commands.command import Command, CommandOutput
-from gui.tech.loopback_connection_graphics import LoopbackConnectionGraphics
+from computing.internals.shell.commands.command import Command, CommandOutput
+from computing.loopback_connection import LoopbackConnection
 
 
 class IpAddressCommand(Command):
@@ -21,9 +21,9 @@ class IpAddressCommand(Command):
         :param interface:
         :return:
         """
-        type_ = 'LOOPBACK' if isinstance(interface.graphics, LoopbackConnectionGraphics) else 'BROADCAST'
-
-        # TODO: this ^ does not work AT ALL!!!
+        type_ = 'LOOPBACK' \
+            if interface.is_connected() and isinstance(interface.connection.connection, LoopbackConnection) \
+            else 'BROADCAST'
 
         is_up = 'UP' if interface.is_powered_on else 'DOWN'
         type_2 = 'loopback' if type_ == 'LOOPBACK' else 'ether'

@@ -1,4 +1,4 @@
-from computing.inner_workings.filesystem.file import File
+from computing.internals.filesystem.file import File
 from consts import FILESYSTEM
 from exceptions import NoSuchDirectoryError, NoSuchFileError, DirectoryAlreadyExistsError
 

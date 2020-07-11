@@ -3,9 +3,9 @@ from collections import namedtuple
 
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
-from computing.inner_workings.filesystem.filesystem import Filesystem
-from computing.inner_workings.routing_table import RoutingTable, RoutingTableItem
 from computing.interface import Interface
+from computing.internals.filesystem.filesystem import Filesystem
+from computing.internals.routing_table import RoutingTable, RoutingTableItem
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
@@ -490,10 +490,16 @@ class Computer:
         """
         if interface is None:
             raise PopupWindowWithThisError("The computer does not have interfaces!!!")
+
+        if interface.has_ip():
+            self.routing_table.delete_interface(interface.ip)
+
         interface.ip = IPAddress(string_ip)
+
         if self.is_process_running(DHCPServer):
             dhcp_server_process = self.get_running_process(DHCPServer)
             dhcp_server_process.update_server_data()
+
         self.routing_table.add_interface(interface.ip)
         self.graphics.update_text()
 

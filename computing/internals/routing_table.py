@@ -116,6 +116,16 @@ class RoutingTable:
         self.route_add(IPAddress(interface_ip.string_ip + "/32"), IPAddress.loopback(), IPAddress.loopback())
         # TODO: BUG: when a computer doesn't have an IP and we give it one after it is created it cant send itself pings
 
+    def delete_interface(self, interface_ip):
+        """
+        Removes an interface from the routing table.
+        (This is also used when changing an interface's ip address)
+        :param interface_ip:
+        :return:
+        """
+        self.route_delete(interface_ip.subnet())
+        self.route_delete(IPAddress(interface_ip.string_ip + "/32"))
+
     def __getitem__(self, item):
         """
         allows the dictionary notation of dict[key].

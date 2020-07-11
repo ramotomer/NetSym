@@ -1,5 +1,5 @@
-from computing.inner_workings.filesystem.directory import Directory
-from computing.inner_workings.shell.commands.command import Command, CommandOutput
+from computing.internals.filesystem.directory import Directory
+from computing.internals.shell.commands.command import Command, CommandOutput
 from exceptions import NoSuchItemError
 
 

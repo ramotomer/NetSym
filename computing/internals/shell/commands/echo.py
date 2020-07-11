@@ -1,4 +1,4 @@
-from computing.inner_workings.shell.commands.command import Command, CommandOutput
+from computing.internals.shell.commands.command import Command, CommandOutput
 
 
 class Echo(Command):
@@ -8,7 +8,7 @@ class Echo(Command):
     def __init__(self, computer, shell):
         """
         initiates the command.
-        :param computer: 
+        :param computer:
         """
         super(Echo, self).__init__('echo', 'print out arguments', computer, shell)
 

@@ -1,4 +1,4 @@
-from computing.inner_workings.shell.commands.command import Command, CommandOutput
+from computing.internals.shell.commands.command import Command, CommandOutput
 from consts import FILESYSTEM
 from exceptions import NoSuchItemError
 
