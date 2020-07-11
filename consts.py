@@ -523,3 +523,10 @@ class FILESYSTEM:
     SEPARATOR = '/'
     ROOT = '/'
     HOME_DIR = '/home'
+
+    class TYPE:
+        NTFS = 'ntfs'
+        EXT3 = 'ext3'
+        EXT4 = 'ext4'
+        FAT = 'fat'
+        TMPFS = 'tmp'

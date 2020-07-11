@@ -26,18 +26,17 @@ class Cd(Command):
         """
         if self.computer.filesystem.is_absolute_path(new_dir_path):
             self.shell.cwd = self.computer.filesystem.at_absolute_path(new_dir_path)
-        else:
-            self._change_dir(self.computer.filesystem.absolute_from_relative(self.shell.cwd, new_dir_path))
+            return new_dir_path
+        return self._change_dir(self.computer.filesystem.absolute_from_relative(self.shell.cwd, new_dir_path))
 
     def action(self, parsed_args):
         """
         prints out the arguments.
         """
-        new_dir = parsed_args.new_dir if parsed_args.new_dir else FILESYSTEM.HOME_DIR
 
         try:
-            self._change_dir(new_dir)
+            new_dir = self._change_dir(parsed_args.new_dir if parsed_args.new_dir else FILESYSTEM.HOME_DIR)
         except (NoSuchDirectoryError, NoSuchFileError):
-            return CommandOutput('', f"Cannot switch to directory '{new_dir}'")
+            return CommandOutput('', f"Cannot switch to directory '{parsed_args.new_dir}'")
 
         return CommandOutput(f"Switched to '{new_dir}'", '')

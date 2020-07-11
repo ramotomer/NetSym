@@ -4,6 +4,7 @@ from computing.inner_workings.shell.commands.cd import Cd
 from computing.inner_workings.shell.commands.echo import Echo
 from computing.inner_workings.shell.commands.ls import Ls
 from computing.inner_workings.shell.commands.pwd import Pwd
+from computing.inner_workings.shell.commands.touch import Touch
 from exceptions import WrongArgumentsError
 
 
@@ -25,6 +26,7 @@ class Shell:
             Ls(computer, self),
             Cd(computer, self),
             Pwd(computer, self),
+            Touch(computer, self),
         ]
         self.string_to_command = {command.name: command for command in self.commands}
 

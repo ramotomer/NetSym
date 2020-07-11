@@ -285,13 +285,19 @@ class FilesystemError(ComputerError):
     """
 
 
-class NoSuchFileError(FilesystemError):
+class NoSuchItemError(FilesystemError):
+    """
+    When a filesystem item is requested but does not exist!
+    """
+
+
+class NoSuchFileError(NoSuchItemError):
     """
     When a file that is accessed does not exist.
     """
 
 
-class NoSuchDirectoryError(FilesystemError):
+class NoSuchDirectoryError(NoSuchItemError):
     """
     when dir no exist this happen
     """
@@ -303,9 +309,15 @@ class PathError(FilesystemError):
     """
 
 
-class DirectoryExistsError(FilesystemError):
+class DirectoryAlreadyExistsError(FilesystemError):
     """
     Directory to be created already exists in dest location.
+    """
+
+
+class FileNotOpenError(FilesystemError):
+    """
+    Reading from a closed file.
     """
 
 

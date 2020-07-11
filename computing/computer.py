@@ -102,7 +102,7 @@ class Computer:
 
         self.is_supporting_wireless_connections = False
 
-        self.on_startup = []
+        self.startup_processes = []
 
         self.filesystem = Filesystem.with_default_dirs()
 
@@ -167,16 +167,33 @@ class Computer:
         """
         Powers the computer on or off.
         """
-        self.waiting_processes.clear()
-
         self.is_powered_on = not self.is_powered_on
+
         for interface in self.all_interfaces:
             interface.is_powered_on = self.is_powered_on
         self.graphics.toggle_opacity()
 
         if self.is_powered_on:
-            for process, args in self.on_startup:
-                self.start_process(process, *args)
+            self.on_startup()
+        else:
+            self.on_shutdown()
+
+    def on_shutdown(self):
+        """
+        Things the computer should perform as it is shut down.
+        :return:
+        """
+        self.waiting_processes.clear()
+        self.filesystem.wipe_temporary_directories()
+
+    def on_startup(self):
+        """
+        Things the computer should do when it is turned on
+        :return:
+        """
+        self.waiting_processes.clear()
+        for process, args in self.startup_processes:
+            self.start_process(process, *args)
 
     def add_interface(self, name=None):
         """
@@ -785,28 +802,28 @@ class Computer:
 
     def add_startup_process(self, process_type, *args):
         """
-        This function adds a process to the `on_startup` list, These processes are run right after the computer is
+        This function adds a process to the `startup_processes` list, These processes are run right after the computer is
         turned on.
         :param process_type: The process that one wishes to run
         :param args: its arguments
         :return:
         """
-        self.on_startup.append((process_type, args))
+        self.startup_processes.append((process_type, args))
 
         if not self.is_process_running(process_type):
             self.start_process(process_type, *args)
 
     def remove_startup_process(self, process_type):
         """
-        Removes a process from from the on_startup list.
+        Removes a process from from the startup_processes list.
         :param process_type: a process class that will be removed
         :return: None
         """
         removed = get_the_one(
-            self.on_startup,
+            self.startup_processes,
             lambda t: t[0] is process_type,
             NoSuchProcessError)
-        self.on_startup.remove(removed)
+        self.startup_processes.remove(removed)
 
     @staticmethod
     def run_process(process):
