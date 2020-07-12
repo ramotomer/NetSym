@@ -1,6 +1,6 @@
+from computing.internals.processes.tcp_process import TCPProcess
 from consts import *
 from packets.ftp import FTP
-from processes.tcp_process import TCPProcess
 
 
 class FTPProcess(TCPProcess):
@@ -47,6 +47,8 @@ class FTPServerProcess(FTPProcess):
         super(FTPServerProcess, self).__init__(computer, is_client=False)
         self.file_location = file_location
         self.file_content = open(self.file_location, 'r').read()
+
+        # TODO: after computer filesystems were implemented, make it so the file is actually from the server!
 
     def code(self):
         """

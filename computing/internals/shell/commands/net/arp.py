@@ -20,7 +20,7 @@ class Arp(Command):
         prints out the arguments.
         """
         if parsed_args.is_all:
-            return CommandOutput(self.computer.arp_cache_display(), '')
+            return CommandOutput(self.computer.arp_cache_repr(), '')
 
         if parsed_args.is_delete:
             self.computer.wipe_arp_cache()

@@ -1,9 +1,9 @@
 from collections import namedtuple
 
+from computing.internals.processes.process import Process, WaitingForPacket, ReturnedPacket
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
-from processes.process import Process, WaitingForPacket, ReturnedPacket
 
 SwitchTableItem = namedtuple("SwitchTableItem", [
     "leg",

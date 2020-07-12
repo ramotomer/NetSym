@@ -1,7 +1,7 @@
 import datetime
 
+from computing.internals.processes.tcp_process import TCPProcess
 from consts import *
-from processes.tcp_process import TCPProcess
 
 
 class DAYTIMEServerProcess(TCPProcess):

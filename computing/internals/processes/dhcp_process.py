@@ -1,8 +1,8 @@
 from address.ip_address import IPAddress
+from computing.internals.processes.process import Process, WaitingForPacket, ReturnedPacket
 from consts import OPCODES
 from exceptions import *
 from packets.dhcp import DHCPData
-from processes.process import Process, WaitingForPacket, ReturnedPacket
 
 
 def dhcp_for(mac_addresses):

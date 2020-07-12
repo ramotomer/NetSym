@@ -5,6 +5,12 @@ from address.ip_address import IPAddress
 from address.mac_address import MACAddress
 from computing.interface import Interface
 from computing.internals.filesystem.filesystem import Filesystem
+from computing.internals.processes.arp_process import ARPProcess, SendPacketWithArpsProcess
+from computing.internals.processes.daytime_process import DAYTIMEServerProcess
+from computing.internals.processes.dhcp_process import DHCPClient
+from computing.internals.processes.dhcp_process import DHCPServer
+from computing.internals.processes.ftp_process import FTPServerProcess
+from computing.internals.processes.ping_process import SendPing
 from computing.internals.routing_table import RoutingTable, RoutingTableItem
 from consts import *
 from exceptions import *
@@ -16,12 +22,6 @@ from packets.icmp import ICMP
 from packets.ip import IP
 from packets.tcp import TCP
 from packets.udp import UDP
-from processes.arp_process import ARPProcess, SendPacketWithArpsProcess
-from processes.daytime_process import DAYTIMEServerProcess
-from processes.dhcp_process import DHCPClient
-from processes.dhcp_process import DHCPServer
-from processes.ftp_process import FTPServerProcess
-from processes.ping_process import SendPing
 from usefuls import get_the_one
 
 ARPCacheItem = namedtuple("ARPCacheItem", [
@@ -1069,7 +1069,7 @@ class Computer:
         returned.filesystem = Filesystem.from_dict_load(dict_["filesystem"])
         return returned
 
-    def arp_cache_display(self):
+    def arp_cache_repr(self):
         """
         Returns a string that displays the arp cache nicely
         :return:

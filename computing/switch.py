@@ -1,11 +1,11 @@
 from address.mac_address import MACAddress
 from computing.computer import Computer
 from computing.interface import Interface
+from computing.internals.processes.stp_process import STPProcess
+from computing.internals.processes.switching_process import SwitchingProcess
 from consts import OS, PROTOCOLS, IMAGES
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.stp import STP, LogicalLinkControl
-from processes.stp_process import STPProcess
-from processes.switching_process import SwitchingProcess
 
 
 class Switch(Computer):

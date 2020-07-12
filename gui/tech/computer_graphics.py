@@ -2,6 +2,9 @@ from collections import namedtuple
 from os import linesep
 
 from address.ip_address import IPAddress
+from computing.internals.processes.daytime_process import DAYTIMEClientProcess
+from computing.internals.processes.ddos_process import DDOSProcess
+from computing.internals.processes.ftp_process import FTPClientProcess
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
@@ -10,9 +13,6 @@ from gui.tech.output_console import OutputConsole
 from gui.tech.process_graphics import ProcessGraphicsList
 from gui.user_interface.popup_windows.popup_console import PopupConsole
 from gui.user_interface.text_graphics import Text
-from processes.daytime_process import DAYTIMEClientProcess
-from processes.ddos_process import DDOSProcess
-from processes.ftp_process import FTPClientProcess
 from usefuls import with_args
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", [

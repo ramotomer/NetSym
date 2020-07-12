@@ -13,6 +13,8 @@ from pyglet.window import key
 from address.ip_address import IPAddress
 from computing.computer import Computer
 from computing.interface import Interface
+from computing.internals.processes.stp_process import STPProcess
+from computing.internals.processes.tcp_process import TCPProcess
 from computing.router import Router
 from computing.switch import Switch, Hub, Antenna
 from consts import *
@@ -35,8 +37,6 @@ from gui.user_interface.popup_windows.popup_window import PopupWindow
 from gui.user_interface.popup_windows.yes_no_popup_window import YesNoPopupWindow
 from gui.user_interface.selecting_square import SelectingSquare
 from gui.user_interface.text_graphics import Text
-from processes.stp_process import STPProcess
-from processes.tcp_process import TCPProcess
 from usefuls import get_the_one, distance, with_args, called_in_order, circular_coordinates, sum_tuples, scale_tuple
 
 ObjectView = namedtuple("ObjectView", [

@@ -1,5 +1,6 @@
+from computing.internals.processes.process import Process, ReturnedPacket, WaitingForPacketWithTimeout, Timeout, \
+    WaitingFor
 from consts import OPCODES, PROTOCOLS
-from processes.process import Process, ReturnedPacket, WaitingForPacketWithTimeout, Timeout, WaitingFor
 
 
 def arp_reply_from(ip_address):

@@ -1,6 +1,6 @@
+from computing.internals.processes.process import Process, WaitingForPacket, ReturnedPacket, WaitingFor
 from consts import OPCODES
 from exceptions import NoIPAddressError
-from processes.process import Process, WaitingForPacket, ReturnedPacket, WaitingFor
 
 
 class SendPing(Process):

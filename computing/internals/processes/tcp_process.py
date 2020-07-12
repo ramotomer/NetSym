@@ -5,13 +5,13 @@ from operator import attrgetter
 
 from recordclass import recordclass
 
+from computing.internals.processes.process import Process, WaitingForPacketWithTimeout, Timeout, ReturnedPacket, \
+    NoNeedForPacket, WaitingFor
 from consts import *
 from exceptions import TCPDataLargerThanMaxSegmentSize
 from gui.main_loop import MainLoop
 from packets.packet import Packet
 from packets.tcp import TCP
-from processes.process import Process, WaitingForPacketWithTimeout, Timeout, ReturnedPacket, \
-    NoNeedForPacket, WaitingFor
 from usefuls import insort
 from usefuls import split_by_size
 

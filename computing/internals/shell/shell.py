@@ -10,6 +10,8 @@ from computing.internals.shell.commands.filesystem.rm import Rm
 from computing.internals.shell.commands.filesystem.touch import Touch
 from computing.internals.shell.commands.net.arp import Arp
 from computing.internals.shell.commands.net.ip import Ip
+from computing.internals.shell.commands.net.ip_address import IpAddressCommand
+from computing.internals.shell.commands.net.ip_route import IpRouteCommand
 from computing.internals.shell.commands.uname import Uname
 from consts import CONSOLE
 
@@ -48,18 +50,24 @@ class Shell:
         }
         self.string_to_command = {command.name: command for command in self.commands}
         command_translations = {
-            "dir": "ls",
-            "type": "cat",
+            "dir": self.commands[1],
+            "type": self.commands[5],
+            "ifconfig": IpAddressCommand(computer, self),
+            "ipconfig": IpAddressCommand(computer, self),
+            "route": IpRouteCommand(computer, self),
         }
 
         for extra_command, translation in command_translations.items():
-            self.string_to_command[extra_command] = self.string_to_command[translation]
+            self.string_to_command[extra_command] = translation
 
         self.cwd = self.computer.filesystem.root
 
         self.history = []
 
         self.history_index = None
+
+        # TODO: add piping, and the commands: ps, grep, ping, tcpdump, arping
+        # TODO: add some good flags like rm -r, ls -la
 
     @property
     def cwd_path(self):
