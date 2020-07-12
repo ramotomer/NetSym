@@ -1,17 +1,19 @@
 from datetime import datetime
 
 from exceptions import FileNotOpenError
+from usefuls import datetime_from_string
 
 
 class File:
     """
     A file in the computers filesystem.
     """
-    def __init__(self, content):
+    def __init__(self, name, content=''):
         """
         Initiated with its contents
         :param content: `str`
         """
+        self.name = name
         self.__content = content
         self.creation_time = datetime.now()
         self.last_edit_time = datetime.now()
@@ -46,6 +48,7 @@ class File:
         """
         if self._is_open_for_writing:
             self.__content = data
+            self.last_edit_time = datetime.now()
         else:
             raise FileNotOpenError("Cannot write to closed file for writing!")
 
@@ -81,3 +84,27 @@ class File:
         :return:
         """
         self.close()
+
+    def dict_save(self):
+        """
+        Saves the File object as a dictionary so it could be saved in a file
+        :return:
+        """
+        return {
+            "class": "File",
+            "name": self.name,
+            "creation_time": repr(self.creation_time),
+            "last_edit_time": repr(self.last_edit_time),
+            "content": self.__content,
+        }
+
+    @classmethod
+    def from_dict_load(cls, dict_):
+        """
+        Loads a File object from an actual dictionary from a json file
+        :return:
+        """
+        file = cls(dict_["name"], dict_["content"])
+        file.creation_time = datetime_from_string(dict_["creation_time"])
+        file.last_edit_time = datetime_from_string(dict_["last_edit_time"])
+        return file

@@ -1051,6 +1051,7 @@ class Computer:
             *interfaces
         )
         returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])
+        returned.filesystem = Filesystem.from_dict_load(dict_["filesystem"])
         return returned
 
     def arp_cache_display(self):

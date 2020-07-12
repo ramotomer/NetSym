@@ -35,6 +35,10 @@ class Directory:
     def parent(self):
         return self.directories[FILESYSTEM.PARENT_DIRECTORY]
 
+    @parent.setter
+    def parent(self, dir_):
+        self.directories[FILESYSTEM.PARENT_DIRECTORY] = dir_
+
     def at_relative_path(self, path):
         """
         Returns a file or directory in the relative path given.
@@ -76,7 +80,7 @@ class Directory:
         :param name:
         :return:
         """
-        self.files[name] = File('')
+        self.files[name] = File(name, '')
 
     @property
     def full_path(self):
@@ -96,6 +100,41 @@ class Directory:
             FILESYSTEM.CWD: self.directories[FILESYSTEM.CWD],
             FILESYSTEM.PARENT_DIRECTORY: self.directories[FILESYSTEM.PARENT_DIRECTORY],
         }
+
+    def dict_save(self):
+        """
+        Save to dict for file saving!
+        :return:
+        """
+        return {
+            "class": "Directory",
+            "name": self.name,
+            "mount": self.mount,
+            "files": [
+                file.dict_save() for file in self.files.values()
+            ],
+            "directories": [
+                directory.dict_save() for directory in self.contained_directories.values()
+            ],
+        }
+
+    @classmethod
+    def from_dict_load(cls, dict_):
+        """
+        Load from json file
+        :param dict_:
+        :return:
+        """
+        loaded = cls(
+            dict_["name"], None, mount=dict_["mount"],
+            files={filedict["name"]: File.from_dict_load(filedict) for filedict in dict_["files"]},
+            directories={dirdict["name"]: cls.from_dict_load(dirdict) for dirdict in dict_["directories"]},
+        )
+
+        for sub_dir in loaded.contained_directories.values():
+            sub_dir.parent = loaded
+
+        return loaded
 
     def __repr__(self):
         return f"Directory({self.name})"

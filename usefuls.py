@@ -1,4 +1,5 @@
 import cmath
+import datetime
 from functools import reduce
 from math import sqrt, sin, cos, pi, atan
 from operator import mul
@@ -206,5 +207,21 @@ def darken_color(color, diff=COLORS.COLOR_DIFF):
 
 
 def bindigits(n, bits):
+    """
+    Receives a number (even a negative one!!!), returns a string
+    os the binary form of that number. the string will be `bits` bits long.
+    :param n: the number
+    :param bits: the amount of bits to give the binary form
+    :return: `str`
+    """
     s = bin(n & int("1"*bits, 2))[2:]
     return ("{0:0>%s}" % bits).format(s)
+
+
+def datetime_from_string(string):
+    """
+    receives the output of a `repr(datetime.datetime)` for some datetime.datetime object,
+    returns the datetime object itself.
+    """
+    args = string[string.index('(') + 1: string.index(')')].split(', ')
+    return datetime.datetime(*map(int, args))

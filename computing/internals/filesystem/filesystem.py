@@ -166,3 +166,26 @@ class Filesystem:
                 file.append(data)
             else:
                 file.write(data)
+
+    def dict_save(self):
+        """
+        Save to dict for json file
+        :return:
+        """
+        return {
+            "class": "Filesystem",
+            "root_path": self.root_path,
+            "root": self.root.dict_save(),
+        }
+
+    @classmethod
+    def from_dict_load(cls, dict_):
+        """
+        Loads filesystem from json file dict.
+        :param dict_:
+        :return:
+        """
+        filesystem = cls()
+        filesystem.root_path = dict_["root_path"]
+        filesystem.root = Directory.from_dict_load(dict_["root"])
+        return filesystem

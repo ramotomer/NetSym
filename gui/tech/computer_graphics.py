@@ -205,6 +205,7 @@ Name: {self.computer.name}
             "open_tcp_ports": self.computer.open_tcp_ports,
             "open_udp_ports": self.computer.open_udp_ports,
             "routing_table": self.computer.routing_table.dict_save(),
+            "filesystem": self.computer.filesystem.dict_save(),
         }
 
         if self.class_name == "Router":
