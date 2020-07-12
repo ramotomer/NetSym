@@ -18,7 +18,14 @@ class IpRouteCommand(Command):
 
         self.parser.add_argument('args', metavar='args', type=str, nargs='*', help='arguments')
 
-    def add_route(self, args):
+        self.commands = {
+            'list': self._list_routes,
+            'print': self._list_routes,
+            'add': self._add_route,
+            'del': self._del_route,
+        }
+
+    def _add_route(self, args):
         """
         Receives arguments, adds a route and returns a CommandOutput
         :param args:
@@ -34,7 +41,7 @@ class IpRouteCommand(Command):
         self.computer.routing_table.route_add(net, gateway, IPAddress.copy(interface_ip))
         return CommandOutput('OK!', '')
 
-    def del_route(self, args):
+    def _del_route(self, args):
         """
         Receives arguments, deletes a route and returns CommandOutput
         :param args:
@@ -48,20 +55,23 @@ class IpRouteCommand(Command):
         else:
             return CommandOutput("OK!", '')
 
+    def _list_routes(self, args):
+        """
+        list the active routes
+        :param args:
+        :return:
+        """
+        return CommandOutput(repr(self.computer.routing_table), '')
+
     def action(self, parsed_args):
         """
         prints out the arguments.
         """
-        args = parsed_args.args
+        if not parsed_args.args:
+            return self._list_routes(parsed_args.args)
 
-        if (not args) or (args[0] == 'list') or (args[0] == 'print'):
-            return CommandOutput(repr(self.computer.routing_table), '')
-
-        if args[0] == 'add':
-            return self.add_route(args)
-
-        if args[0] == 'del':
-            return self.del_route(args)
+        elif parsed_args.args[0] in self.commands:
+            return self.commands[parsed_args.args[0]](parsed_args.args)
 
         else:
             return CommandOutput(

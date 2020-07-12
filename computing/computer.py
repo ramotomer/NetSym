@@ -195,17 +195,18 @@ class Computer:
         for process, args in self.startup_processes:
             self.start_process(process, *args)
 
-    def add_interface(self, name=None):
+    def add_interface(self, name=None, mac=None):
         """
         Adds an interface to the computer with a given name.
         If the name already exists, raise a DeviceNameAlreadyExists.
         If no name is given, randomize.
         :param name:
+        :param mac:
         :return:
         """
         if any(interface.name == name for interface in self.all_interfaces):
             raise DeviceNameAlreadyExists("Cannot have two interfaces with the same name!!!")
-        new_interface = Interface(MACAddress.randomac(), name=name)
+        new_interface = Interface((MACAddress.randomac() if mac is not None else mac), name=name)
         self.interfaces.append(new_interface)
         self.graphics.add_interface(new_interface)
         return new_interface
@@ -491,9 +492,7 @@ class Computer:
         if interface is None:
             raise PopupWindowWithThisError("The computer does not have interfaces!!!")
 
-        if interface.has_ip():
-            self.routing_table.delete_interface(interface.ip)
-
+        self.remove_ip(interface)
         interface.ip = IPAddress(string_ip)
 
         if self.is_process_running(DHCPServer):
@@ -504,6 +503,18 @@ class Computer:
         self.graphics.update_text()
 
     # TODO: deleting an interface and then connecting the device does not work well
+
+    def remove_ip(self, interface):
+        """
+        Removes the ip of an interface.
+        :param interface:
+        :return:
+        """
+        if not interface.has_ip():
+            return
+
+        self.routing_table.delete_interface(interface.ip)
+        interface.ip = None
 
     def set_name(self, name):
         """
@@ -1036,6 +1047,10 @@ class Computer:
         """a simple string representation of the computer"""
         return f"{self.name}"
 
+
+# ----------------------------------------- Other methods  ----------------------------------------
+
+
     @classmethod
     def from_dict_load(cls, dict_):
         """
@@ -1056,7 +1071,19 @@ class Computer:
 
     def arp_cache_display(self):
         """
-        Returns a string that displays the arp cahe nicely
+        Returns a string that displays the arp cache nicely
         :return:
         """
         # TODO: implement
+
+    def interface_by_name(self, name):
+        """
+        Receives an interface name and returns the `Interface`
+        :param name:
+        :return:
+        """
+        return get_the_one(
+            self.all_interfaces,
+            lambda c: c.name == name,
+            NoSuchInterfaceError
+        )

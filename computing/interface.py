@@ -163,6 +163,7 @@ class Interface:
         """
         Blocks the connection and does not receive packets from it anymore.
         It only accepts packets that contain the `accept` layer (for example "STP")
+        if blocked, does nothing (updates the 'accept')
         :return: None
         """
         self.is_blocked = True
@@ -175,6 +176,7 @@ class Interface:
     def unblock(self):
         """
         Releases the blocking of the connection and allows it to receive packets again.
+        if not blocked, does nothing...
         :return: None
         """
         self.is_blocked = False

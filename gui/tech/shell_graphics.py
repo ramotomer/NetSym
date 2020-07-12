@@ -18,7 +18,18 @@ class ShellGraphics(OutputConsole):
     """
     Like an `OutputConsole` only you can write things into it!
     """
-    def __init__(self, x, y, initial_text, computer, carrying_window, width=CONSOLE.SHELL.WIDTH, height=CONSOLE.SHELL.HEIGHT):
+    def __init__(self, x, y, initial_text, computer, carrying_window,
+                 width=CONSOLE.SHELL.WIDTH, height=CONSOLE.SHELL.HEIGHT):
+        """
+        initiate the graphics of the shell
+        :param x:
+        :param y:
+        :param initial_text:
+        :param computer:
+        :param carrying_window:
+        :param width:
+        :param height:
+        """
         super(ShellGraphics, self).__init__(x, y, initial_text, width, height,
                                             font_size=CONSOLE.SHELL.FONT_SIZE, font='Courier New')
         self.computer = computer
