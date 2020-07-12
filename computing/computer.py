@@ -1074,7 +1074,18 @@ class Computer:
         Returns a string that displays the arp cache nicely
         :return:
         """
-        # TODO: implement
+        string = f"{'IP address': >19}{'mac': >22}\n"
+        for ip, arp_cache_item in self.arp_cache.items():
+            string += f"{str(ip): >19}{str(arp_cache_item.mac): >22}\n"
+        return string
+
+    def wipe_arp_cache(self):
+        """
+        Wipes the arp cache of the computer
+        :return:
+        """
+        # TODO: add an ArpCache object that can handle things like static and dynamic arp cache items.
+        self.arp_cache.clear()
 
     def interface_by_name(self, name):
         """

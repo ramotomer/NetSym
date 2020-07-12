@@ -693,7 +693,8 @@ class UserInterface:
         """
         try:
             sending_computer = random.choice([computer for computer in self.computers if computer.has_ip()])
-            receiving_computer = random.choice([computer for computer in self.computers if computer.has_ip()])
+            receiving_computer = random.choice([computer for computer in self.computers
+                                                if computer.has_ip() and computer is not sending_computer])
             sending_computer.start_ping_process(receiving_computer.get_ip())
         except IndexError:
             pass
