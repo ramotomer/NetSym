@@ -486,7 +486,15 @@ class CONSOLE:
         PREFIX = '> '
         START_LOCATION = 170, 40
         FONT_SIZE = TEXT.FONT.DEFAULT_SIZE
+        FONT = 'Courier New'
         REDIRECTION = '>'
+        # CARET = chr(11476)
+        # CARET = chr(741)
+        # CARET = chr(643)
+        # CARET = chr(621)
+        # CARET = chr(1216)
+        # CARET = '¦'
+        CARET = '|'
 
 
 class SHAPES:
