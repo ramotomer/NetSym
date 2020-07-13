@@ -2,6 +2,7 @@ import argparse
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 
+from usefuls import PrintStealer
 
 CommandOutput = namedtuple("CommandOutput", [
     "stdout",
@@ -12,6 +13,8 @@ ParsedCommand = namedtuple("ParsedCommand", [
     "command_class",
     "parsed_args",
 ])
+
+SyntaxArgumentError = str
 
 
 class Command(metaclass=ABCMeta):
@@ -41,6 +44,12 @@ class Command(metaclass=ABCMeta):
         :return:
         """
         args = string.split()[1:]
-        parsed_args = self.parser.parse_args(args)
 
-        return ParsedCommand(self, parsed_args)
+        stdout_stealer = PrintStealer()
+        with stdout_stealer:
+            try:
+                parsed_args = self.parser.parse_args(args)
+                return ParsedCommand(self, parsed_args)
+            except SystemExit:
+                pass
+        return SyntaxArgumentError(stdout_stealer.printed)

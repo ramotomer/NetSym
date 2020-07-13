@@ -140,9 +140,8 @@ class ComputerGraphics(ImageGraphics):
                 0.8
             ),
             "open console (shift+i)": with_args(
-                PopupConsole,
+                self._open_shell,
                 user_interface,
-                self.computer,
             ),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
@@ -152,6 +151,14 @@ class ComputerGraphics(ImageGraphics):
         """Ends the viewing of the object in the side window"""
         user_interface.remove_buttons(self.buttons_id)
         self.child_graphics_objects.console.hide()
+
+    def _open_shell(self, user_interface):
+        """
+        Opens a shell window on the computer
+        :return:
+        """
+        if self.computer.is_powered_on:
+            PopupConsole(user_interface, self.computer)
 
     def generate_view_text(self):
         """

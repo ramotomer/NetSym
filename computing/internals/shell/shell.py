@@ -1,5 +1,6 @@
 import os
 
+from computing.internals.shell.commands.command import SyntaxArgumentError
 from computing.internals.shell.commands.echo import Echo
 from computing.internals.shell.commands.filesystem.cat import Cat
 from computing.internals.shell.commands.filesystem.cd import Cd
@@ -32,27 +33,16 @@ class Shell:
         self.computer = computer
         self.shell_graphics = shell_graphics
 
-        self.commands = [
-            Echo(computer, self),
-            Ls(computer, self),
-            Cd(computer, self),
-            Pwd(computer, self),
-            Touch(computer, self),
-            Cat(computer, self),
-            Mkdir(computer, self),
-            Rm(computer, self),
-            Uname(computer, self),
-            Ip(computer, self),
-            Arp(computer, self),
-            Ps(computer, self),
-            Ping(computer, self),
-            Tcpdump(computer, self),
-        ]
+        self.commands = [Echo, Ls, Cd, Pwd, Touch, Cat, Mkdir, Rm, Uname, Ip, Arp, Ps, Ping, Tcpdump]
+        self.commands = [command(computer, self) for command in self.commands]
+
         self.parser_commands = {
             'clear': self.shell_graphics.clear_screen,
             'cls': self.shell_graphics.clear_screen,
             'exit': self.shell_graphics.exit,
             'history': self.write_history,
+            'shutdown': self.computer_shutdown,
+            'reboot': self.computer_reboot,
         }
         self.string_to_command = {command.name: command for command in self.commands}
         command_translations = {
@@ -71,10 +61,6 @@ class Shell:
         self.history = []
 
         self.history_index = None
-
-        # TODO: add piping, and the commands: ps, grep, ping, tcpdump, arping
-        # TODO: add some good flags like rm -r, ls -la
-        # TODO: bugfix: command crash if you put the wrong arguments or `-h`! fix!
 
     @property
     def cwd_path(self):
@@ -160,6 +146,22 @@ class Shell:
         self.shell_graphics.clear_line()
         self.shell_graphics.write_to_line(([''] + self.history[::-1])[self.history_index + 1])
 
+    def computer_shutdown(self):
+        """
+        Shuts down the computer using a command. closes the terminal
+        :return:
+        """
+        self.computer.power()
+        self.shell_graphics.exit()
+
+    def computer_reboot(self):
+        """
+        Reboots the computer and closes the terminal
+        :return:
+        """
+        self.computer_shutdown()
+        self.computer.power()
+
     def execute(self, string):
         """
         Receives the string of a command and returns the command and its arguments.
@@ -198,6 +200,9 @@ class Shell:
             string, filename, is_appending = self._handle_redirections(string)
 
         parsed_command = self.string_to_command[command].parse(string)
+        if isinstance(parsed_command, SyntaxArgumentError):
+            return self.shell_graphics.write(parsed_command)
+
         output = parsed_command.command_class.action(parsed_command.parsed_args)
 
         self.write_output(output, filename=filename, append=is_appending)

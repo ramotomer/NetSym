@@ -1,5 +1,6 @@
 import cmath
 import datetime
+import sys
 from functools import reduce
 from math import sqrt, sin, cos, pi, atan
 from operator import mul
@@ -225,3 +226,37 @@ def datetime_from_string(string):
     """
     args = string[string.index('(') + 1: string.index(')')].split(', ')
     return datetime.datetime(*map(int, args))
+
+
+class StringIO:
+    def __init__(self):
+        self.text = ''
+
+    def write(self, string):
+        if not self.text:
+            self.text = string
+        else:
+            self.text += f"\n{string}"
+
+    def getvalue(self):
+        return self.text
+
+    def close(self):
+        pass
+
+
+class PrintStealer:
+    def __init__(self):
+        self.printed = ''
+
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        self._original_stderr = sys.stderr
+        sys.stdout = StringIO()
+        sys.stderr = sys.stdout
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.printed = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = self._original_stdout
+        sys.stderr = self._original_stderr

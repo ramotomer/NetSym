@@ -185,6 +185,7 @@ class Computer:
 
         for interface in self.all_interfaces:
             interface.is_powered_on = self.is_powered_on
+            # TODO: add UP and DOWN for interfaces.
         self.graphics.toggle_opacity()
 
         if self.is_powered_on:
