@@ -45,7 +45,8 @@ class PopupWindow(UserInterfaceGraphicsObject):
             height=WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT,
             color=self.outline_color,
             text_color=COLORS.BLACK,
-            key=(key.ESCAPE, MODIFIERS.NONE),
+            key=(key.ESCAPE, KEYBOARD.MODIFIERS.NONE),
+            is_outlined=False,
         )
         exit_button.set_parent_graphics(self, (self.width - WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT, self.height))
 
@@ -120,4 +121,4 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.__is_active = False
 
     def __str__(self):
-        return "A popup window"
+        return f"PopupWindow(title='{self.child_graphics_objects[0].text}')"

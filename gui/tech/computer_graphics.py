@@ -2,16 +2,17 @@ from collections import namedtuple
 from os import linesep
 
 from address.ip_address import IPAddress
+from computing.internals.processes.daytime_process import DAYTIMEClientProcess
+from computing.internals.processes.ddos_process import DDOSProcess
+from computing.internals.processes.ftp_process import FTPClientProcess
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
-from gui.tech.console import Console
 from gui.tech.interface_graphics import InterfaceGraphicsList
+from gui.tech.output_console import OutputConsole
 from gui.tech.process_graphics import ProcessGraphicsList
+from gui.user_interface.popup_windows.popup_console import PopupConsole
 from gui.user_interface.text_graphics import Text
-from processes.daytime_process import DAYTIMEClientProcess
-from processes.ddos_process import DDOSProcess
-from processes.ftp_process import FTPClientProcess
 from usefuls import with_args
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", [
@@ -50,7 +51,7 @@ class ComputerGraphics(ImageGraphics):
 
         self.child_graphics_objects = ChildGraphicsObjects(
             Text(self.generate_text(), self.x, self.y, self),
-            Console(*self.console_location),
+            OutputConsole(*self.console_location),
             ProcessGraphicsList(self),
             InterfaceGraphicsList(self),
         )
@@ -59,7 +60,7 @@ class ComputerGraphics(ImageGraphics):
 
     @property
     def console_location(self):
-        return MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2) - CONSOLE.X, CONSOLE.Y
+        return MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2) - (CONSOLE.WIDTH / 2), CONSOLE.Y
 
     def generate_text(self):
         """
@@ -136,7 +137,11 @@ class ComputerGraphics(ImageGraphics):
                 self.computer.start_process,
                 DDOSProcess,
                 1000,
-                0.1
+                0.8
+            ),
+            "open console (shift+i)": with_args(
+                self._open_shell,
+                user_interface,
             ),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
@@ -146,6 +151,14 @@ class ComputerGraphics(ImageGraphics):
         """Ends the viewing of the object in the side window"""
         user_interface.remove_buttons(self.buttons_id)
         self.child_graphics_objects.console.hide()
+
+    def _open_shell(self, user_interface):
+        """
+        Opens a shell window on the computer
+        :return:
+        """
+        if self.computer.is_powered_on:
+            PopupConsole(user_interface, self.computer)
 
     def generate_view_text(self):
         """
@@ -199,6 +212,7 @@ Name: {self.computer.name}
             "open_tcp_ports": self.computer.open_tcp_ports,
             "open_udp_ports": self.computer.open_udp_ports,
             "routing_table": self.computer.routing_table.dict_save(),
+            "filesystem": self.computer.filesystem.dict_save(),
         }
 
         if self.class_name == "Router":

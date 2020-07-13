@@ -16,7 +16,7 @@ class Button(UserInterfaceGraphicsObject):
     """
     def __init__(self, x, y, action=lambda: None, text=BUTTONS.DEFAULT_TEXT, start_hidden=False,
                  width=BUTTONS.DEFAULT_WIDTH, height=BUTTONS.DEFAULT_HEIGHT, key=None,
-                 color=BUTTONS.COLOR, text_color=BUTTONS.TEXT_COLOR):
+                 color=BUTTONS.COLOR, text_color=BUTTONS.TEXT_COLOR, is_outlined=True):
         """
         Initiates the button.
         :param x:
@@ -44,22 +44,9 @@ class Button(UserInterfaceGraphicsObject):
         )
         self.key = key
 
-        self.parent_graphics = None  # see 'text_graphics.py' for documentation
-        self.padding = None
-
         self.color = color
         self.light_color = tuple(rgb + COLORS.COLOR_DIFF for rgb in color)
-
-    def set_parent_graphics(self, parent, padding=(0, 0)):
-        """
-        Sets the parent graphics object of the button
-        :param parent: a `GraphicsObject` to follow
-        :param padding: a tuple of integers
-        :return: None
-        """
-        self.parent_graphics = parent
-        self.padding = padding
-        self.move()
+        self.is_outlined = is_outlined
 
     def is_mouse_in(self):
         """Returns whether or not the mouse is located inside of the button."""
@@ -96,7 +83,8 @@ class Button(UserInterfaceGraphicsObject):
         """
         if not self.is_hidden:
             draw_button(self.x, self.y, self.width, self.height,
-                        color=(self.light_color if self.is_mouse_in() else self.color))
+                        color=(self.light_color if self.is_mouse_in() else self.color),
+                        outline_width=(BUTTONS.OUTLINE_WIDTH if self.is_outlined else 0))
 
     def move(self):
         """

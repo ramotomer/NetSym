@@ -1,11 +1,11 @@
 from computing.computer import Computer
 from computing.interface import Interface
-from computing.routing_table import RoutingTable
+from computing.internals.processes.dhcp_process import DHCPServer
+from computing.internals.processes.process import Process, WaitingFor
+from computing.internals.routing_table import RoutingTable
 from consts import *
 from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
-from processes.dhcp_process import DHCPServer
-from processes.process import Process, WaitingFor
 
 
 class RoutePacket(Process):
@@ -140,6 +140,7 @@ class Router(Computer):
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.ROUTER)
+        self.loopback.connection.connection.show(self.graphics)
 
     def route_new_packets(self):
         """

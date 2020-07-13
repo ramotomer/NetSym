@@ -2,7 +2,7 @@ import os
 
 from pyglet.window import key
 
-from consts import DIRECTORIES, COLORS, WINDOWS, MODIFIERS
+from consts import DIRECTORIES, COLORS, WINDOWS, KEYBOARD
 from gui.user_interface.button import Button
 from gui.user_interface.popup_windows.popup_window import PopupWindow
 
@@ -24,7 +24,7 @@ class PopupHelp(PopupWindow):
                     *WINDOWS.POPUP.HELP.OK_BUTTON_COORDINATES,
                     text="EXIT",
                     width=WINDOWS.POPUP.SUBMIT_BUTTON.WIDTH,
-                    key=(key.ENTER, MODIFIERS.NONE),
+                    key=(key.ENTER, KEYBOARD.MODIFIERS.NONE),
                     action=self.delete,
                 ),
             ],

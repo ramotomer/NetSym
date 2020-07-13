@@ -1,5 +1,6 @@
 from consts import ADDRESSES, MESSAGES
 from exceptions import InvalidAddressError, AddressTooLargeError
+from usefuls import bindigits
 
 
 class IPAddress:
@@ -121,6 +122,18 @@ class IPAddress:
         """
         mask = int(self.as_bits(self.mask_from_number(self.subnet_mask)), 2)
         masked_address = int(self.as_bits(self.string_ip), 2) & mask
+        masked_address_bin = '0b' + bin(masked_address)[2:].zfill(ADDRESSES.IP.BIT_LENGTH)
+        return self.from_bits(masked_address_bin, int(self.subnet_mask))
+
+    def subnet_broadcast(self):
+        """
+        The broadcast address that fits this ip address
+        :return:
+        """
+        mask = int(self.as_bits(self.mask_from_number(self.subnet_mask)), 2)
+        masked_address = int(self.as_bits(self.string_ip), 2) & mask
+        flipped_mask = int(bindigits(~mask, ADDRESSES.IP.BIT_LENGTH), base=2)
+        masked_address |= flipped_mask
         masked_address_bin = '0b' + bin(masked_address)[2:].zfill(ADDRESSES.IP.BIT_LENGTH)
         return self.from_bits(masked_address_bin, int(self.subnet_mask))
 

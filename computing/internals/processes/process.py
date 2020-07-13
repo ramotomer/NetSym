@@ -38,11 +38,12 @@ class Process(metaclass=ABCMeta):
     The `process` property of the Process is a generator of the code, the value
     of the `self.code()` method call.
     """
-    def __init__(self, computer):
+    def __init__(self, pid, computer):
         """
         The process currently has access to all of the computer's resources.
         :param computer: The computer that this process is run on.
         """
+        self.pid = pid
         self.computer = computer
         self.process = self.code()
         self.kill_me = False

@@ -22,7 +22,7 @@ class PopupError(PopupWindow):
                     *WINDOWS.POPUP.SUBMIT_BUTTON.COORDINATES,
                     text="OK",
                     width=WINDOWS.POPUP.SUBMIT_BUTTON.WIDTH,
-                    key=(key.ENTER, MODIFIERS.NONE),
+                    key=(key.ENTER, KEYBOARD.MODIFIERS.NONE),
                     action=self.delete,
                 ),
             ],

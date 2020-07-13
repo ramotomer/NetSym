@@ -4,13 +4,13 @@ import os
 from exceptions import TCPDoneReceiving
 
 
-def debugp(string):
+def debugp(*strings):
     """
     A print i use for debugging so i know where to delete it afterwards.
     :param string:
     :return:
     """
-    print(f"DEBUG: {string}")
+    print(f"DEBUG:", *strings)
 
 
 SENDING_GRAT_ARPS = False
@@ -95,6 +95,9 @@ class PROTOCOLS:
         RESEND_TIME = 6  # seconds
         RESEND_COUNT = 3  # seconds
 
+    class ICMP:
+        INFINITY = None
+
     class TCP:
         MAX_SEQUENCE_NUMBER = 2**32 - 1
         RESEND_TIME = 15  # seconds
@@ -145,15 +148,18 @@ class PORTS:
     }
 
 
-class MODIFIERS:
-    """
-    key modifiers, you can `|` them together to get the different combinations.
-    """
-    NONE = 0
-    SHIFT = 1
-    CTRL = 2
-    ALT = 4
-    CAPS = 8
+class KEYBOARD:
+    PRINTABLE_RANGE = range(0x20, 0x80)
+
+    class MODIFIERS:
+        """
+        key modifiers, you can `|` them together to get the different combinations.
+        """
+        NONE = 0
+        SHIFT = 1
+        CTRL = 2
+        ALT = 4
+        CAPS = 8
 
 
 class MESSAGES:
@@ -423,13 +429,18 @@ class TEXT:
     DEFAULT_Y_PADDING = -30
     COLOR = COLORS.BLACK
 
+    class ALIGN:
+        CENTER = 'center'
+        LEFT = 'left'
+        RIGHT = 'right'
+
     class FONT:
         DEFAULT = "Arial"
         DEFAULT_SIZE = 10
 
 
 class CONNECTIONS:
-    DEFAULT_SPEED = 150  # pixels / second
+    DEFAULT_SPEED = 450  # pixels / second
     DEFAULT_LENGTH = 100  # pixels
     DEFAULT_PL = 0.5  # the point in the connection where packets are dropped
     MOUSE_TOUCH_SENSITIVITY = 5  # pixels
@@ -462,12 +473,29 @@ class MODES:
 
 
 class CONSOLE:
-    X, Y = 105, 10
     WIDTH = WINDOWS.SIDE.WIDTH - 20
+    Y = 10
     HEIGHT = 3 * (WIDTH / 4)
+
     FONT_SIZE = 8
     LINE_HEIGHT = 14
     CHAR_WIDTH = 8
+
+    COLOR = COLORS.BLACK
+    TEXT_COLOR = COLORS.WHITE
+    FONT = 'Courier New'
+
+    class SHELL:
+        WIDTH = 700
+        HEIGHT = 500
+        PREFIX = '> '
+        START_LOCATION = 170, 40
+        FONT_SIZE = TEXT.FONT.DEFAULT_SIZE
+        FONT = 'Courier New'
+        REDIRECTION = '>'
+        CARET = '|'
+
+        COMMENT_SIGN = '#'
 
 
 class SHAPES:
@@ -498,3 +526,26 @@ class SELECTED_OBJECT:
     STEP_SIZE = 30
     SMALL_STEP_SIZE = 5
     BIG_STEP_SIZE = 80
+
+
+class FILESYSTEM:
+    CWD = '.'
+    PARENT_DIRECTORY = '..'
+    SEPARATOR = '/'
+    ROOT = '/'
+    HOME_DIR = '/home'
+
+    class TYPE:
+        NTFS = 'ntfs'
+        EXT3 = 'ext3'
+        EXT4 = 'ext4'
+        FAT = 'fat'
+        TMPFS = 'tmp'
+
+
+class COMPUTER:
+    class OUTPUT_METHOD:
+        CONSOLE = 'console'
+        SHELL = 'shell'
+        STDOUT = 'stdout'
+        NONE = None

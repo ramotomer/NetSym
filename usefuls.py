@@ -1,4 +1,6 @@
 import cmath
+import datetime
+import sys
 from functools import reduce
 from math import sqrt, sin, cos, pi, atan
 from operator import mul
@@ -203,3 +205,58 @@ def lighten_color(color, diff=COLORS.COLOR_DIFF):
 
 def darken_color(color, diff=COLORS.COLOR_DIFF):
     return lighten_color(color, -diff)
+
+
+def bindigits(n, bits):
+    """
+    Receives a number (even a negative one!!!), returns a string
+    os the binary form of that number. the string will be `bits` bits long.
+    :param n: the number
+    :param bits: the amount of bits to give the binary form
+    :return: `str`
+    """
+    s = bin(n & int("1"*bits, 2))[2:]
+    return ("{0:0>%s}" % bits).format(s)
+
+
+def datetime_from_string(string):
+    """
+    receives the output of a `repr(datetime.datetime)` for some datetime.datetime object,
+    returns the datetime object itself.
+    """
+    args = string[string.index('(') + 1: string.index(')')].split(', ')
+    return datetime.datetime(*map(int, args))
+
+
+class StringIO:
+    def __init__(self):
+        self.text = ''
+
+    def write(self, string):
+        if not self.text:
+            self.text = string
+        else:
+            self.text += f"\n{string}"
+
+    def getvalue(self):
+        return self.text
+
+    def close(self):
+        pass
+
+
+class PrintStealer:
+    def __init__(self):
+        self.printed = ''
+
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        self._original_stderr = sys.stderr
+        sys.stdout = StringIO()
+        sys.stderr = sys.stdout
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.printed = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = self._original_stdout
+        sys.stderr = self._original_stderr

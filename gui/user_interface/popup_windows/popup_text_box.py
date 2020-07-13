@@ -4,6 +4,7 @@ from pyglet.window import key
 
 from consts import *
 from gui.user_interface.button import Button
+from gui.user_interface.key_writer import KeyWriter
 from gui.user_interface.popup_windows.popup_window import PopupWindow
 from gui.user_interface.text_graphics import Text
 
@@ -22,11 +23,6 @@ class PopupTextBox(PopupWindow):
     The `PopupTextBox` has a field of text that you fill up and a below it a button with a 'submit' on it.
     """
 
-    TO_UPPERCASE = {
-        '-': '_', '=': '+', '0': ')', '9': '(', '8': '*', '7': '&', '6': '^', '5': '%', '4': '$', '3': '#', '2': '@',
-        '1': '!', '`': '~', '/': '?', ',': '<', '.': '>', '[': '{', ']': '}', ';': ':', '\'': '"', '\\': '|'
-    }
-
     def __init__(self, text, user_interface, action=lambda s: None):
         """
         Initiates the `PopupTextBox` object.
@@ -40,7 +36,7 @@ class PopupTextBox(PopupWindow):
             self.submit,
             "SUBMIT",
             width=WINDOWS.POPUP.SUBMIT_BUTTON.WIDTH,
-            key=(key.ENTER, MODIFIERS.NONE),
+            key=(key.ENTER, KEYBOARD.MODIFIERS.NONE),
         )
 
         super(PopupTextBox, self).__init__(*WINDOWS.POPUP.TEXTBOX.COORDINATES,
@@ -72,48 +68,42 @@ class PopupTextBox(PopupWindow):
                                               reversed(open(WINDOW_INPUT_LIST_FILE, 'r').readlines())))
         self.old_inputs_index = 0
 
-    def mark_as_selected(self):
+        self.key_writer = KeyWriter(self.write, self.delete_one_char, self.submit, self.delete)
+        self.key_writer.add_key_mapping(key.UP, self.scroll_up_through_old_inputs)
+        self.key_writer.add_key_mapping(key.DOWN, self.scroll_down_through_old_inputs)
+
+    def scroll_up_through_old_inputs(self):
         """
-        required for the API
+        Scrolls up in the window through the old inputs you have already entered before.
+        (occurs when you press the UP arrow)
         :return:
         """
-        pass
+        self.old_inputs_index += 1 if self.old_inputs_index < len(self.old_inputs) - 1 else 0
+        self.child_graphics_objects.written_text.set_text(self.old_inputs[self.old_inputs_index])
 
-    @staticmethod
-    def _is_printable(char_ord):
-        """Receives an order of a character and returns whether or not that character is printable or not"""
-        return 0x1f < char_ord < 0x7f
-
-    def pressed(self, symbol, modifiers):
+    def scroll_down_through_old_inputs(self):
         """
-        This is called when the user is typing the string into the `PopupTextBox`.
-        :param symbol: a string of the key that was pressed.
-        :param modifiers: a bitwise representation of what other button were also pressed (CTRL_MODIFIER, SHIFT_MODIFIER, etc...)
-        :return: None
+        Scrolls down in the window through the old inputs you have already entered before.
+        (occurs when you press the DOWN arrow)
+        :return:
         """
-        if symbol == key.ENTER:
-            self.submit()
+        self.old_inputs_index -= 1 if self.old_inputs_index > 0 else 0
+        self.child_graphics_objects.written_text.set_text(self.old_inputs[self.old_inputs_index])
 
-        elif symbol == key.ESCAPE:
-            self.delete()
+    def write(self, string):
+        """
+        Appends a string to the input text in the window.
+        :param string:
+        :return:
+        """
+        self.child_graphics_objects.written_text.set_text(self.child_graphics_objects.written_text.text + string)
 
-        elif symbol == key.BACKSPACE:
-            self.child_graphics_objects.written_text.set_text(self.child_graphics_objects.written_text.text[:-1])
-
-        elif symbol == key.UP:
-            self.old_inputs_index += 1 if self.old_inputs_index < len(self.old_inputs) - 1 else 0
-            self.child_graphics_objects.written_text.set_text(self.old_inputs[self.old_inputs_index])
-
-        elif symbol == key.DOWN:
-            self.old_inputs_index -= 1 if self.old_inputs_index > 0 else 0
-            self.child_graphics_objects.written_text.set_text(self.old_inputs[self.old_inputs_index])
-
-        elif self._is_printable(symbol):
-            char = chr(symbol).lower()
-            if (modifiers & MODIFIERS.SHIFT) ^ (modifiers & MODIFIERS.CAPS):
-                char = char.upper()
-                char = self.TO_UPPERCASE.get(char, char)
-            self.child_graphics_objects.written_text.set_text(self.child_graphics_objects.written_text.text + char)
+    def delete_one_char(self):
+        """
+        Deletes the last char from the input string in the window
+        :return:
+        """
+        self.child_graphics_objects.written_text.set_text(self.child_graphics_objects.written_text.text[:-1])
 
     def submit(self):
         """

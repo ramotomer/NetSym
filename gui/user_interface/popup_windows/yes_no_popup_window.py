@@ -22,7 +22,7 @@ class YesNoPopupWindow(PopupWindow):
                 called_in_order(yes_action, self.delete),
                 "yes",
                 width=WINDOWS.POPUP.SUBMIT_BUTTON.WIDTH,
-                key=(key.ENTER, MODIFIERS.NONE),
+                key=(key.ENTER, KEYBOARD.MODIFIERS.NONE),
             ),
             Button(
                 *WINDOWS.POPUP.NO_BUTTON_COORDINATES,

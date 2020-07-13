@@ -4,7 +4,14 @@ from collections import namedtuple
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
 from computing.interface import Interface
-from computing.routing_table import RoutingTable, RoutingTableItem
+from computing.internals.filesystem.filesystem import Filesystem
+from computing.internals.processes.arp_process import ARPProcess, SendPacketWithArpsProcess
+from computing.internals.processes.daytime_process import DAYTIMEServerProcess
+from computing.internals.processes.dhcp_process import DHCPClient
+from computing.internals.processes.dhcp_process import DHCPServer
+from computing.internals.processes.ftp_process import FTPServerProcess
+from computing.internals.processes.ping_process import SendPing
+from computing.internals.routing_table import RoutingTable, RoutingTableItem
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
@@ -15,12 +22,6 @@ from packets.icmp import ICMP
 from packets.ip import IP
 from packets.tcp import TCP
 from packets.udp import UDP
-from processes.arp_process import ARPProcess, SendPacketWithArpsProcess
-from processes.daytime_process import DAYTIMEServerProcess
-from processes.dhcp_process import DHCPClient
-from processes.dhcp_process import DHCPServer
-from processes.ftp_process import FTPServerProcess
-from processes.ping_process import SendPing
 from usefuls import get_the_one
 
 ARPCacheItem = namedtuple("ARPCacheItem", [
@@ -74,15 +75,16 @@ class Computer:
         self.packets_sniffed = 0
         self.loopback = Interface.loopback()
 
+        self.received = []
         self.arp_cache = {}
         # ^ a dictionary of {<ip address> : ARPCacheItem(<mac address>, <initiation time of this item>)
         self.routing_table = RoutingTable.create_default(self)
-        self.received = []
-
         self.waiting_processes = []
         # ^ a list of `WaitingProcess` namedtuple-s. If the process is new, its `WaitingProcess.waiting_for` is None.
         self.process_last_check = MainLoop.instance.time()
         # ^ the last time that the waiting_processes were checked for 'can they run?'
+        self.startup_processes = []
+        self.filesystem = Filesystem.with_default_dirs()
 
         self.graphics = None
         # ^ The `GraphicsObject` of the computer, not initiated for now.
@@ -101,7 +103,8 @@ class Computer:
 
         self.is_supporting_wireless_connections = False
 
-        self.on_startup = []
+        self.output_method = COMPUTER.OUTPUT_METHOD.CONSOLE
+        self.active_shells = []
 
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ method does not run when program is paused
@@ -158,34 +161,67 @@ class Computer:
         :param string: The string to print.
         :return: None
         """
-        self.graphics.child_graphics_objects.console.write(string)
+        {
+            COMPUTER.OUTPUT_METHOD.CONSOLE: self.graphics.child_graphics_objects.console.write,
+            COMPUTER.OUTPUT_METHOD.SHELL: self._print_on_all_shells,
+            COMPUTER.OUTPUT_METHOD.STDOUT: print,
+            COMPUTER.OUTPUT_METHOD.NONE: lambda s: None
+        }[self.output_method](string)
+
+    def _print_on_all_shells(self, string):
+        """
+        print a string on all of the active shells that the computer has
+        :param string:
+        :return:
+        """
+        for shell in self.active_shells:
+            shell.write(string)
 
     def power(self):
         """
         Powers the computer on or off.
         """
-        self.waiting_processes.clear()
-
         self.is_powered_on = not self.is_powered_on
+
         for interface in self.all_interfaces:
             interface.is_powered_on = self.is_powered_on
+            # TODO: add UP and DOWN for interfaces.
         self.graphics.toggle_opacity()
 
         if self.is_powered_on:
-            for process, args in self.on_startup:
-                self.start_process(process, *args)
+            self.on_startup()
+        else:
+            self.on_shutdown()
 
-    def add_interface(self, name=None):
+    def on_shutdown(self):
+        """
+        Things the computer should perform as it is shut down.
+        :return:
+        """
+        self.waiting_processes.clear()
+        self.filesystem.wipe_temporary_directories()
+
+    def on_startup(self):
+        """
+        Things the computer should do when it is turned on
+        :return:
+        """
+        self.waiting_processes.clear()
+        for process, args in self.startup_processes:
+            self.start_process(process, *args)
+
+    def add_interface(self, name=None, mac=None):
         """
         Adds an interface to the computer with a given name.
         If the name already exists, raise a DeviceNameAlreadyExists.
         If no name is given, randomize.
         :param name:
+        :param mac:
         :return:
         """
         if any(interface.name == name for interface in self.all_interfaces):
             raise DeviceNameAlreadyExists("Cannot have two interfaces with the same name!!!")
-        new_interface = Interface(MACAddress.randomac(), name=name)
+        new_interface = Interface((MACAddress.randomac() if mac is not None else mac), name=name)
         self.interfaces.append(new_interface)
         self.graphics.add_interface(new_interface)
         return new_interface
@@ -368,14 +404,15 @@ class Computer:
             if packet_type in packet:
                 self.packet_types_and_handlers[packet_type](packet, receiving_interface)
 
-    def start_ping_process(self, ip_address, opcode=OPCODES.ICMP.REQUEST):
+    def start_ping_process(self, ip_address, opcode=OPCODES.ICMP.REQUEST, count=1):
         """
         Starts sending a ping to another computer.
         :param ip_address: an `IPAddress` object to ping.
         :param opcode: the opcode of the ping to send
+        :param count: how many pings to send
         :return: None
         """
-        self.start_process(SendPing, ip_address, opcode)
+        self.start_process(SendPing, ip_address, opcode, count)
 
     def is_for_me(self, packet):
         """
@@ -470,14 +507,30 @@ class Computer:
         """
         if interface is None:
             raise PopupWindowWithThisError("The computer does not have interfaces!!!")
+
+        self.remove_ip(interface)
         interface.ip = IPAddress(string_ip)
+
         if self.is_process_running(DHCPServer):
             dhcp_server_process = self.get_running_process(DHCPServer)
             dhcp_server_process.update_server_data()
+
         self.routing_table.add_interface(interface.ip)
         self.graphics.update_text()
 
     # TODO: deleting an interface and then connecting the device does not work well
+
+    def remove_ip(self, interface):
+        """
+        Removes the ip of an interface.
+        :param interface:
+        :return:
+        """
+        if not interface.has_ip():
+            return
+
+        self.routing_table.delete_interface(interface.ip)
+        interface.ip = None
 
     def set_name(self, name):
         """
@@ -494,7 +547,7 @@ class Computer:
         self.name = name
         self.graphics.update_text()
 
-    def toggle_sniff(self, interface_name=INTERFACES.ANY_INTERFACE, is_promisc=False):
+    def start_sniff(self, interface_name=INTERFACES.ANY_INTERFACE, is_promisc=False):
         """
         Starts sniffing on the interface with the given name.
         If no such interface exists, raises NoSuchInterfaceError.
@@ -504,23 +557,77 @@ class Computer:
         :return: None
         """
         if interface_name == INTERFACES.ANY_INTERFACE:
-            for name in [interface.name for interface in self.interfaces]:
-                self.toggle_sniff(name, is_promisc)
+            for interface in self.interfaces:
+                self.start_sniff(interface.name, is_promisc)
             return
 
-        self.print(f"sniffing toggled on interface {interface_name}")
-        interface = get_the_one(self.interfaces, lambda i: i.name == interface_name, NoSuchInterfaceError)
+        interface = self.interface_by_name(interface_name)
+        if interface.is_sniffing:
+            return
+
         interface.is_promisc = is_promisc
-        interface.is_sniffing = not interface.is_sniffing
+        interface.is_sniffing = True
+        self.print(f"started sniffing on {interface_name}")
+
+    def stop_sniff(self, interface_name=INTERFACES.ANY_INTERFACE):
+        """
+        Stops sniffing on the given interface
+        :param interface_name:
+        :return:
+        """
+        if interface_name == INTERFACES.ANY_INTERFACE:
+            for interface in self.interfaces:
+                self.stop_sniff(interface.name)
+            return
+
+        interface = self.interface_by_name(interface_name)
+        if not interface.is_sniffing:
+            return
+
+        interface.is_sniffing = False
+        self.print(f"stopped sniffing on {interface_name}")
+
+    def toggle_sniff(self, interface_name=INTERFACES.ANY_INTERFACE, is_promisc=False):
+        """
+        Toggles sniffing on the given interface
+        """
+        if interface_name == INTERFACES.ANY_INTERFACE:
+            for interface in self.interfaces:
+                self.toggle_sniff(interface.name, is_promisc)
+            return
+        interface = self.interface_by_name(interface_name)
+        if interface.is_sniffing:
+            self.start_sniff(interface.name, is_promisc)
+        else:
+            self.stop_sniff(interface.name)
 
     def _sniff_packet(self, packet):
         """
         Receives a `Packet` and prints it out to the computer's console. should be called only if the packet was sniffed
         """
-        deepest = packet.deepest_layer()
-        packet_str = deepest.opcode if hasattr(deepest, "opcode") else type(deepest).__name__
-        self.print(f"({self.packets_sniffed}) sniff: {packet_str}")
+        self.print(f"({self.packets_sniffed}) {self._sniff_packet_info_line(packet)}")
         self.packets_sniffed += 1
+
+    def _sniff_packet_info_line(self, packet):
+        """
+        Return the line that is printed when the packet is sniffed.
+        :param packet:
+        :return:
+        """
+        deepest = packet.deepest_layer()
+        line = deepest.opcode if hasattr(deepest, "opcode") else type(deepest).__name__
+        if 'TCP' in packet:
+            line = f"TCP {' '.join([f for f in OPCODES.TCP.FLAGS_DISPLAY_PRIORITY if f in packet['TCP'].flags])}"
+
+        if 'IP' in packet:
+            protocol = 'IP'
+        elif 'ARP' in packet:
+            protocol = 'ARP'
+        else:
+            return line
+
+        src_ip, dst_ip = packet[protocol].src_ip, packet[protocol].dst_ip
+        return f"{line} {src_ip!s} > {dst_ip!s}"
 
     def new_packets_since(self, time_):
         """
@@ -778,32 +885,33 @@ class Computer:
         :param args: The arguments that the `Process` subclass constructor requires.
         :return: None
         """
-        self.waiting_processes.append((process_type(self, *args), None))
+        pid = len(self.waiting_processes) + 2
+        self.waiting_processes.append((process_type(pid, self, *args), None))
 
     def add_startup_process(self, process_type, *args):
         """
-        This function adds a process to the `on_startup` list, These processes are run right after the computer is
+        This function adds a process to the `startup_processes` list, These processes are run right after the computer is
         turned on.
         :param process_type: The process that one wishes to run
         :param args: its arguments
         :return:
         """
-        self.on_startup.append((process_type, args))
+        self.startup_processes.append((process_type, args))
 
         if not self.is_process_running(process_type):
             self.start_process(process_type, *args)
 
     def remove_startup_process(self, process_type):
         """
-        Removes a process from from the on_startup list.
+        Removes a process from from the startup_processes list.
         :param process_type: a process class that will be removed
         :return: None
         """
         removed = get_the_one(
-            self.on_startup,
+            self.startup_processes,
             lambda t: t[0] is process_type,
             NoSuchProcessError)
-        self.on_startup.remove(removed)
+        self.startup_processes.remove(removed)
 
     @staticmethod
     def run_process(process):
@@ -1010,6 +1118,10 @@ class Computer:
         """a simple string representation of the computer"""
         return f"{self.name}"
 
+
+# ----------------------------------------- Other methods  ----------------------------------------
+
+
     @classmethod
     def from_dict_load(cls, dict_):
         """
@@ -1025,4 +1137,35 @@ class Computer:
             *interfaces
         )
         returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])
+        returned.filesystem = Filesystem.from_dict_load(dict_["filesystem"])
         return returned
+
+    def arp_cache_repr(self):
+        """
+        Returns a string that displays the arp cache nicely
+        :return:
+        """
+        string = f"{'IP address': >19}{'mac': >22}\n"
+        for ip, arp_cache_item in self.arp_cache.items():
+            string += f"{str(ip): >19}{str(arp_cache_item.mac): >22}\n"
+        return string
+
+    def wipe_arp_cache(self):
+        """
+        Wipes the arp cache of the computer
+        :return:
+        """
+        # TODO: add an ArpCache object that can handle things like static and dynamic arp cache items.
+        self.arp_cache.clear()
+
+    def interface_by_name(self, name):
+        """
+        Receives an interface name and returns the `Interface`
+        :param name:
+        :return:
+        """
+        return get_the_one(
+            self.all_interfaces,
+            lambda c: c.name == name,
+            NoSuchInterfaceError
+        )

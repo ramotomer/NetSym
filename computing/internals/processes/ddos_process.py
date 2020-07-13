@@ -1,19 +1,19 @@
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
+from computing.internals.processes.process import Process, WaitingFor, Timeout
 from packets.udp import UDP
-from processes.process import Process, WaitingFor, Timeout
 
 
 class DDOSProcess(Process):
     """
     A process that repeatedly sends udp packets in broadcast
     """
-    def __init__(self, computer, count, sending_interval):
+    def __init__(self, pid, computer, count, sending_interval):
         """
         Initiates the process with a counter of packets to send and a sending interval
         between each packets
         """
-        super(DDOSProcess, self).__init__(computer)
+        super(DDOSProcess, self).__init__(pid, computer)
         self.count = count
         self.sending_interval = sending_interval
 
@@ -41,4 +41,4 @@ class DDOSProcess(Process):
 
     def __repr__(self):
         """A string representation of the process"""
-        return "A DDOS process"
+        return "DDOS process"

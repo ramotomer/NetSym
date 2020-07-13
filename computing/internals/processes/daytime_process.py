@@ -1,7 +1,7 @@
 import datetime
 
+from computing.internals.processes.tcp_process import TCPProcess
 from consts import *
-from processes.tcp_process import TCPProcess
 
 
 class DAYTIMEServerProcess(TCPProcess):
@@ -9,12 +9,12 @@ class DAYTIMEServerProcess(TCPProcess):
     This is a very simple TCP process where the client initiates a connection with the server and the server sends it
     the current time and day.
     """
-    def __init__(self, computer):
+    def __init__(self, pid, computer):
         """
         Initiates the process of serving DAYTIME with the computer that run the process
         :param computer: the `Computer` that runs the process
         """
-        super(DAYTIMEServerProcess, self).__init__(computer, src_port=PORTS.DAYTIME, is_client=False)
+        super(DAYTIMEServerProcess, self).__init__(pid, computer, src_port=PORTS.DAYTIME, is_client=False)
 
     def code(self):
         """

@@ -1,11 +1,11 @@
 from address.mac_address import MACAddress
 from computing.computer import Computer
 from computing.interface import Interface
+from computing.internals.processes.stp_process import STPProcess
+from computing.internals.processes.switching_process import SwitchingProcess
 from consts import OS, PROTOCOLS, IMAGES
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.stp import STP, LogicalLinkControl
-from processes.stp_process import STPProcess
-from processes.switching_process import SwitchingProcess
 
 
 class Switch(Computer):
@@ -40,6 +40,7 @@ class Switch(Computer):
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.SWITCH)
+        self.loopback.connection.connection.show(self.graphics)
 
     def is_for_me(self, packet):
         """
@@ -103,6 +104,7 @@ class Hub(Switch):
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.HUB)
+        self.loopback.connection.connection.show(self.graphics)
 
 
 class Antenna(Switch):
@@ -122,3 +124,4 @@ class Antenna(Switch):
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.ANTENNA)
+        self.loopback.connection.connection.show(self.graphics)

@@ -14,4 +14,3 @@ if __name__ == '__main__':
 
     # TODO: make sure no two computers or interfaces have the same name!
     # TODO: there are errors with removing connections and the routing table
-    # TODO: cannot add routes to a router. - fix this.

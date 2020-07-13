@@ -1,9 +1,9 @@
 from collections import namedtuple
 
+from computing.internals.processes.process import Process, WaitingForPacket, ReturnedPacket
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
-from processes.process import Process, WaitingForPacket, ReturnedPacket
 
 SwitchTableItem = namedtuple("SwitchTableItem", [
     "leg",
@@ -15,11 +15,11 @@ class SwitchingProcess(Process):
     """
     This is the process that is in charge of switching packets on a computer.
     """
-    def __init__(self, switch):
+    def __init__(self, pid, switch):
         """
         Initiates the process with a computer that runs it.
         """
-        super(SwitchingProcess, self).__init__(switch)
+        super(SwitchingProcess, self).__init__(pid, switch)
         self.switching_table = {}
         # ^ a dictionary mapping mac addresses to the corresponding leg (interface) they sit behind.
 

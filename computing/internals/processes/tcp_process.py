@@ -5,13 +5,13 @@ from operator import attrgetter
 
 from recordclass import recordclass
 
+from computing.internals.processes.process import Process, WaitingForPacketWithTimeout, Timeout, ReturnedPacket, \
+    NoNeedForPacket, WaitingFor
 from consts import *
 from exceptions import TCPDataLargerThanMaxSegmentSize
 from gui.main_loop import MainLoop
 from packets.packet import Packet
 from packets.tcp import TCP
-from processes.process import Process, WaitingForPacketWithTimeout, Timeout, ReturnedPacket, \
-    NoNeedForPacket, WaitingFor
 from usefuls import insort
 from usefuls import split_by_size
 
@@ -56,7 +56,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         yield from self.goodbye_handshake(initiate=True)
 
     """
-    def __init__(self, computer, dst_ip=None, dst_port=None, src_port=None, is_client=True, mss=PROTOCOLS.TCP.MAX_MSS):
+    def __init__(self, pid, computer, dst_ip=None, dst_port=None, src_port=None, is_client=True, mss=PROTOCOLS.TCP.MAX_MSS):
         """
         Initiates a TCP process.
         :param computer: the `Computer` running the process
@@ -66,7 +66,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         :param is_client: whether or not this computer sends the initial SYN packet.
         :param src_port: the source port of the process (If unknown - None - and it will be randomized)
         """
-        super(TCPProcess, self).__init__(computer)
+        super(TCPProcess, self).__init__(pid, computer)
 
         self.is_client = is_client  # decides who sends the original SYN packet (the client does)
 
