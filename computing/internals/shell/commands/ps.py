@@ -11,6 +11,10 @@ class Ps(Command):
         :param computer:
         """
         super(Ps, self).__init__('ps', 'print out processes', computer, shell)
+        self.parser.add_argument('-f', action='store_true')
+        self.parser.add_argument('-a', action='store_true')
+        self.parser.add_argument('-d', action='store_true')
+        self.parser.add_argument('-e', action='store_true')
 
     @staticmethod
     def _process_info(process):
