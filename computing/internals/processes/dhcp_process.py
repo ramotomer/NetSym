@@ -87,12 +87,12 @@ class DHCPServer(Process):
 
     The stages of DHCP are: discover, offer, request and pack
     """
-    def __init__(self, computer, default_gateway):
+    def __init__(self, pid, computer, default_gateway):
         """
         Initiates the process
         :param computer: The computer that runs this process.
         """
-        super(DHCPServer, self).__init__(computer)
+        super(DHCPServer, self).__init__(pid, computer)
 
         self.default_gateway = default_gateway  # a `Computer` that is the default gateway of the subnets this server serves.
 

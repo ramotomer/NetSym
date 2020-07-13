@@ -7,11 +7,12 @@ class SendPing(Process):
     """
     This is a process for sending a ping request to another computer and receiving the reply.
     """
-    def __init__(self, computer, ip_address, opcode=OPCODES.ICMP.REQUEST):
-        super(SendPing, self).__init__(computer)
+    def __init__(self, pid, computer, ip_address, opcode=OPCODES.ICMP.REQUEST, count=1):
+        super(SendPing, self).__init__(pid, computer)
         self.dst_ip = ip_address
         self.ping_opcode = opcode
         self.is_sending_to_gateway = False
+        self.count = count
 
     def _send_the_ping(self, ip_for_the_mac):
         """
@@ -65,13 +66,14 @@ class SendPing(Process):
         ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip, self)
         yield WaitingFor(done_searching)
 
-        self._send_the_ping(ip_for_the_mac)
+        for _ in range(self.count):
+            self._send_the_ping(ip_for_the_mac)
 
-        if self.ping_opcode == OPCODES.ICMP.REQUEST:
-            returned_packet = ReturnedPacket()
-            yield WaitingForPacket(self.ping_reply_from(self.dst_ip), returned_packet)
-            self._print_output(returned_packet)
+            if self.ping_opcode == OPCODES.ICMP.REQUEST:
+                returned_packet = ReturnedPacket()
+                yield WaitingForPacket(self.ping_reply_from(self.dst_ip), returned_packet)
+                self._print_output(returned_packet)
 
     def __repr__(self):
         """The string representation of the SendPing process"""
-        return "SendPing process"
+        return "Ping process"

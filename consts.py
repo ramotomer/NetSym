@@ -473,9 +473,11 @@ class CONSOLE:
     WIDTH = WINDOWS.SIDE.WIDTH - 20
     Y = 10
     HEIGHT = 3 * (WIDTH / 4)
+
     FONT_SIZE = 8
     LINE_HEIGHT = 14
     CHAR_WIDTH = 8
+
     COLOR = COLORS.BLACK
     TEXT_COLOR = COLORS.WHITE
     FONT = 'Courier New'
@@ -488,13 +490,9 @@ class CONSOLE:
         FONT_SIZE = TEXT.FONT.DEFAULT_SIZE
         FONT = 'Courier New'
         REDIRECTION = '>'
-        # CARET = chr(11476)
-        # CARET = chr(741)
-        # CARET = chr(643)
-        # CARET = chr(621)
-        # CARET = chr(1216)
-        # CARET = '¦'
         CARET = '|'
+
+        COMMENT_SIGN = '#'
 
 
 class SHAPES:
@@ -540,3 +538,11 @@ class FILESYSTEM:
         EXT4 = 'ext4'
         FAT = 'fat'
         TMPFS = 'tmp'
+
+
+class COMPUTER:
+    class OUTPUT_METHOD:
+        CONSOLE = 'console'
+        SHELL = 'shell'
+        STDOUT = 'stdout'
+        NONE = None

@@ -75,15 +75,16 @@ class Computer:
         self.packets_sniffed = 0
         self.loopback = Interface.loopback()
 
+        self.received = []
         self.arp_cache = {}
         # ^ a dictionary of {<ip address> : ARPCacheItem(<mac address>, <initiation time of this item>)
         self.routing_table = RoutingTable.create_default(self)
-        self.received = []
-
         self.waiting_processes = []
         # ^ a list of `WaitingProcess` namedtuple-s. If the process is new, its `WaitingProcess.waiting_for` is None.
         self.process_last_check = MainLoop.instance.time()
         # ^ the last time that the waiting_processes were checked for 'can they run?'
+        self.startup_processes = []
+        self.filesystem = Filesystem.with_default_dirs()
 
         self.graphics = None
         # ^ The `GraphicsObject` of the computer, not initiated for now.
@@ -102,9 +103,8 @@ class Computer:
 
         self.is_supporting_wireless_connections = False
 
-        self.startup_processes = []
-
-        self.filesystem = Filesystem.with_default_dirs()
+        self.output_method = COMPUTER.OUTPUT_METHOD.CONSOLE
+        self.active_shells = []
 
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ method does not run when program is paused
@@ -161,7 +161,21 @@ class Computer:
         :param string: The string to print.
         :return: None
         """
-        self.graphics.child_graphics_objects.console.write(string)
+        {
+            COMPUTER.OUTPUT_METHOD.CONSOLE: self.graphics.child_graphics_objects.console.write,
+            COMPUTER.OUTPUT_METHOD.SHELL: self._print_on_all_shells,
+            COMPUTER.OUTPUT_METHOD.STDOUT: print,
+            COMPUTER.OUTPUT_METHOD.NONE: lambda s: None
+        }[self.output_method](string)
+
+    def _print_on_all_shells(self, string):
+        """
+        print a string on all of the active shells that the computer has
+        :param string:
+        :return:
+        """
+        for shell in self.active_shells:
+            shell.write(string)
 
     def power(self):
         """
@@ -389,14 +403,15 @@ class Computer:
             if packet_type in packet:
                 self.packet_types_and_handlers[packet_type](packet, receiving_interface)
 
-    def start_ping_process(self, ip_address, opcode=OPCODES.ICMP.REQUEST):
+    def start_ping_process(self, ip_address, opcode=OPCODES.ICMP.REQUEST, count=1):
         """
         Starts sending a ping to another computer.
         :param ip_address: an `IPAddress` object to ping.
         :param opcode: the opcode of the ping to send
+        :param count: how many pings to send
         :return: None
         """
-        self.start_process(SendPing, ip_address, opcode)
+        self.start_process(SendPing, ip_address, opcode, count)
 
     def is_for_me(self, packet):
         """
@@ -815,7 +830,8 @@ class Computer:
         :param args: The arguments that the `Process` subclass constructor requires.
         :return: None
         """
-        self.waiting_processes.append((process_type(self, *args), None))
+        pid = len(self.waiting_processes) + 2
+        self.waiting_processes.append((process_type(pid, self, *args), None))
 
     def add_startup_process(self, process_type, *args):
         """

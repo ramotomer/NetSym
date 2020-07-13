@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from consts import COLORS, CONSOLE
+from consts import COLORS, CONSOLE, COMPUTER
 from gui.main_loop import MainLoop
 from gui.tech.shell_graphics import ShellGraphics
 from gui.user_interface.popup_windows.popup_window import PopupWindow
@@ -31,10 +31,14 @@ class PopupConsole(PopupWindow):
         title_text, info_text, exit_button = self.child_graphics_objects[:3]
         MainLoop.instance.unregister_graphics_object(info_text)
 
+        self.computer = computer
+        self.computer.output_method = COMPUTER.OUTPUT_METHOD.SHELL
+
         shell = ShellGraphics(*self.location, f"Shell on {computer.name}\n", computer, self)
         shell.width, shell.height = self.width, self.height
         shell.set_parent_graphics(self)
         shell.show()
+        self.computer.active_shells.append(shell)
         MainLoop.instance.move_to_front(shell)
 
         self.child_graphics_objects = ChildrenGraphicsObjects(
@@ -47,3 +51,9 @@ class PopupConsole(PopupWindow):
     @property
     def shell(self):
         return self.child_graphics_objects.shell
+
+    def delete(self):
+        super(PopupConsole, self).delete()
+        self.computer.active_shells.remove(self.shell)
+        if not self.computer.active_shells:
+            self.computer.output_method = COMPUTER.OUTPUT_METHOD.CONSOLE

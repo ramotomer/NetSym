@@ -7,11 +7,11 @@ class FTPProcess(TCPProcess):
     """
     A generic FTP process (Server or Client)
     """
-    def __init__(self, computer, is_client, server_ip=None):
+    def __init__(self, pid, computer, is_client, server_ip=None):
         """
         Initiates the FTP process with a bool that tells it whether it is the server or the client
         """
-        super(FTPProcess, self).__init__(computer,
+        super(FTPProcess, self).__init__(pid, computer,
                                          is_client=is_client,
                                          dst_ip=server_ip,
                                          src_port=PORTS.FTP if not is_client else None,
@@ -38,13 +38,13 @@ class FTPServerProcess(FTPProcess):
     """
     This is a file transferring process. It is not really like FTP it is just something i made to test the TCP process.
     """
-    def __init__(self, computer, file_location=os.path.join(DIRECTORIES.FILES, TRANSFER_FILE)):
+    def __init__(self, pid, computer, file_location=os.path.join(DIRECTORIES.FILES, TRANSFER_FILE)):
         """
         Initiates the process from a base TCP process.
         :param computer: The computer running the process
         :param file_location: the location of the file one wishes to transfer
         """
-        super(FTPServerProcess, self).__init__(computer, is_client=False)
+        super(FTPServerProcess, self).__init__(pid, computer, is_client=False)
         self.file_location = file_location
         self.file_content = open(self.file_location, 'r').read()
 
@@ -79,13 +79,13 @@ class FTPClientProcess(FTPProcess):
     """
     The client process side of the FTP
     """
-    def __init__(self, computer, dst_ip):
+    def __init__(self, pid, computer, dst_ip):
         """
         Initialize the process with a server_ip
         :param computer: 
         :param dst_ip: the IP address of the server
         """
-        super(FTPClientProcess, self).__init__(computer, is_client=True, server_ip=dst_ip)
+        super(FTPClientProcess, self).__init__(pid, computer, is_client=True, server_ip=dst_ip)
 
     def code(self):
         """

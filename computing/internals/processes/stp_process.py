@@ -33,12 +33,12 @@ class STPProcess(Process):
     The process of sending and receiving STP packets.
     It is run by some switches to avoid switch loops and 'Chernobyl packets'
     """
-    def __init__(self, computer):
+    def __init__(self, pid, computer):
         """
         Initiates the process.
         :param computer: The `Computer` that runs this process.
         """
-        super(STPProcess, self).__init__(computer)
+        super(STPProcess, self).__init__(pid, computer)
         self.my_bid = BID(self.computer.priority, self.computer.get_mac(), self.computer.name)
         self.root_bid = self.my_bid
         self.stp_ports = {}  # a dictionary {`Interface`: `STPPort`}

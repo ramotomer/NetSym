@@ -12,6 +12,8 @@ from computing.internals.shell.commands.net.arp import Arp
 from computing.internals.shell.commands.net.ip import Ip
 from computing.internals.shell.commands.net.ip_address import IpAddressCommand
 from computing.internals.shell.commands.net.ip_route import IpRouteCommand
+from computing.internals.shell.commands.net.ping import Ping
+from computing.internals.shell.commands.ps import Ps
 from computing.internals.shell.commands.uname import Uname
 from consts import CONSOLE
 
@@ -41,6 +43,8 @@ class Shell:
             Uname(computer, self),
             Ip(computer, self),
             Arp(computer, self),
+            Ps(computer, self),
+            Ping(computer, self),
         ]
         self.parser_commands = {
             'clear': self.shell_graphics.clear_screen,
@@ -68,6 +72,7 @@ class Shell:
 
         # TODO: add piping, and the commands: ps, grep, ping, tcpdump, arping
         # TODO: add some good flags like rm -r, ls -la
+        # TODO: bugfix: command crash if you put the wrong arguments or `-h`! fix!
 
     @property
     def cwd_path(self):
@@ -161,8 +166,13 @@ class Shell:
         """
         if not string:
             return
+
         self.history.append(string)
         self.history_index = None
+
+        if string.startswith(CONSOLE.SHELL.COMMENT_SIGN):
+            return
+
         command = string.split()[0]
 
         if command in self.string_to_command:

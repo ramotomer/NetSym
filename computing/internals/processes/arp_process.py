@@ -14,13 +14,13 @@ class ARPProcess(Process):
     """
     This is the process of the computer asking for an IP address using ARPs.
     """
-    def __init__(self, computer, address, requesting_process=None):
+    def __init__(self, pid, computer, address, requesting_process=None):
         """
         Initiates the process with the address to request.
         :param computer:
         :param address:
         """
-        super(ARPProcess, self).__init__(computer)
+        super(ARPProcess, self).__init__(pid, computer)
         self.address = address
         self.requesting_process = requesting_process
 
@@ -44,7 +44,7 @@ class ARPProcess(Process):
             self.computer.kill_process(type(self.requesting_process))
 
     def __repr__(self):
-        return "Address Resolution Process (ARP sending)"
+        return "Address Resolution (ARP) Process "
 
 
 class SendPacketWithArpsProcess(Process):
@@ -52,12 +52,12 @@ class SendPacketWithArpsProcess(Process):
     This is a process that starts a complete sending of a packet.
     It checks the routing table and asks for the address and does whatever is necessary.
     """
-    def __init__(self, computer, ip_layer):
+    def __init__(self, pid, computer, ip_layer):
         """
         Initiates the process with the running computer
         the ip_layer will be wrapped in ethernet
         """
-        super(SendPacketWithArpsProcess, self).__init__(computer)
+        super(SendPacketWithArpsProcess, self).__init__(pid, computer)
         self.ip_layer = ip_layer
 
     def code(self):
@@ -74,3 +74,6 @@ class SendPacketWithArpsProcess(Process):
             dst_ip,
             self.ip_layer,
         )
+
+    def __repr__(self):
+        return "Address Resolution Protocol (ARP) process "
