@@ -93,7 +93,7 @@ class Packet:
         for layer in self.get_layers():
             if layer.__class__.__name__ == item:
                 return layer
-        raise NoSuchLayerError('The packet does not contain that layer!')
+        raise NoSuchLayerError(f'The packet does not contain the layer {item}!')
 
     def __str__(self):
         """The shorter string representation of the packet"""

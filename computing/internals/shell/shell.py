@@ -13,6 +13,7 @@ from computing.internals.shell.commands.net.ip import Ip
 from computing.internals.shell.commands.net.ip_address import IpAddressCommand
 from computing.internals.shell.commands.net.ip_route import IpRouteCommand
 from computing.internals.shell.commands.net.ping import Ping
+from computing.internals.shell.commands.net.tcpdump import Tcpdump
 from computing.internals.shell.commands.ps import Ps
 from computing.internals.shell.commands.uname import Uname
 from consts import CONSOLE
@@ -45,6 +46,7 @@ class Shell:
             Arp(computer, self),
             Ps(computer, self),
             Ping(computer, self),
+            Tcpdump(computer, self),
         ]
         self.parser_commands = {
             'clear': self.shell_graphics.clear_screen,

@@ -95,6 +95,9 @@ class PROTOCOLS:
         RESEND_TIME = 6  # seconds
         RESEND_COUNT = 3  # seconds
 
+    class ICMP:
+        INFINITY = None
+
     class TCP:
         MAX_SEQUENCE_NUMBER = 2**32 - 1
         RESEND_TIME = 15  # seconds

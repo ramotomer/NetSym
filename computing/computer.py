@@ -546,7 +546,7 @@ class Computer:
         self.name = name
         self.graphics.update_text()
 
-    def toggle_sniff(self, interface_name=INTERFACES.ANY_INTERFACE, is_promisc=False):
+    def start_sniff(self, interface_name=INTERFACES.ANY_INTERFACE, is_promisc=False):
         """
         Starts sniffing on the interface with the given name.
         If no such interface exists, raises NoSuchInterfaceError.
@@ -556,23 +556,77 @@ class Computer:
         :return: None
         """
         if interface_name == INTERFACES.ANY_INTERFACE:
-            for name in [interface.name for interface in self.interfaces]:
-                self.toggle_sniff(name, is_promisc)
+            for interface in self.interfaces:
+                self.start_sniff(interface.name, is_promisc)
             return
 
-        self.print(f"sniffing toggled on interface {interface_name}")
-        interface = get_the_one(self.interfaces, lambda i: i.name == interface_name, NoSuchInterfaceError)
+        interface = self.interface_by_name(interface_name)
+        if interface.is_sniffing:
+            return
+
         interface.is_promisc = is_promisc
-        interface.is_sniffing = not interface.is_sniffing
+        interface.is_sniffing = True
+        self.print(f"started sniffing on {interface_name}")
+
+    def stop_sniff(self, interface_name=INTERFACES.ANY_INTERFACE):
+        """
+        Stops sniffing on the given interface
+        :param interface_name:
+        :return:
+        """
+        if interface_name == INTERFACES.ANY_INTERFACE:
+            for interface in self.interfaces:
+                self.stop_sniff(interface.name)
+            return
+
+        interface = self.interface_by_name(interface_name)
+        if not interface.is_sniffing:
+            return
+
+        interface.is_sniffing = False
+        self.print(f"stopped sniffing on {interface_name}")
+
+    def toggle_sniff(self, interface_name=INTERFACES.ANY_INTERFACE, is_promisc=False):
+        """
+        Toggles sniffing on the given interface
+        """
+        if interface_name == INTERFACES.ANY_INTERFACE:
+            for interface in self.interfaces:
+                self.toggle_sniff(interface.name, is_promisc)
+            return
+        interface = self.interface_by_name(interface_name)
+        if interface.is_sniffing:
+            self.start_sniff(interface.name, is_promisc)
+        else:
+            self.stop_sniff(interface.name)
 
     def _sniff_packet(self, packet):
         """
         Receives a `Packet` and prints it out to the computer's console. should be called only if the packet was sniffed
         """
-        deepest = packet.deepest_layer()
-        packet_str = deepest.opcode if hasattr(deepest, "opcode") else type(deepest).__name__
-        self.print(f"({self.packets_sniffed}) sniff: {packet_str}")
+        self.print(f"({self.packets_sniffed}) {self._sniff_packet_info_line(packet)}")
         self.packets_sniffed += 1
+
+    def _sniff_packet_info_line(self, packet):
+        """
+        Return the line that is printed when the packet is sniffed.
+        :param packet:
+        :return:
+        """
+        deepest = packet.deepest_layer()
+        line = deepest.opcode if hasattr(deepest, "opcode") else type(deepest).__name__
+        if 'TCP' in packet:
+            line = f"TCP {' '.join([f for f in OPCODES.TCP.FLAGS_DISPLAY_PRIORITY if f in packet['TCP'].flags])}"
+
+        if 'IP' in packet:
+            protocol = 'IP'
+        elif 'ARP' in packet:
+            protocol = 'ARP'
+        else:
+            return line
+
+        src_ip, dst_ip = packet[protocol].src_ip, packet[protocol].dst_ip
+        return f"{line} {src_ip!s} > {dst_ip!s}"
 
     def new_packets_since(self, time_):
         """
