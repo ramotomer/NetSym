@@ -21,9 +21,7 @@ class Rm(Command):
         """
         stdout, stderr = [], []
         for file_path in parsed_args.filenames:
-            full_path = self.computer.filesystem.absolute_from_relative(self.shell.cwd, file_path)
-            base_dir_path, filename = self.computer.filesystem.separate_base(full_path)
-            base_dir = self.computer.filesystem.at_absolute_path(base_dir_path)
+            base_dir, filename = self.computer.filesystem.filename_and_dir_from_path(self.shell.cwd, file_path)
             try:
                 del base_dir.files[filename]
             except KeyError:

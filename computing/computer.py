@@ -331,6 +331,18 @@ class Computer:
             return get_the_one(self.interfaces, lambda i: i.has_ip(), NoSuchInterfaceError)
         return get_the_one(self.all_interfaces, lambda i: i.has_this_ip(ip_address))
 
+    def interface_by_name(self, name):
+        """
+        Receives an interface name and returns the `Interface`
+        :param name:
+        :return:
+        """
+        return get_the_one(
+            self.all_interfaces,
+            lambda c: c.name == name,
+            NoSuchInterfaceError
+        )
+
     def _handle_arp(self, packet, interface):
         """
         Receives a `Packet` object and if it contains an ARP request layer, sends back
@@ -404,6 +416,24 @@ class Computer:
             if packet_type in packet:
                 self.packet_types_and_handlers[packet_type](packet, receiving_interface)
 
+    def arp_cache_repr(self):
+        """
+        Returns a string that displays the arp cache nicely
+        :return:
+        """
+        # TODO: add an ArpCache object that can handle things like static and dynamic arp cache items.
+        string = f"{'IP address': >19}{'mac': >22}\n"
+        for ip, arp_cache_item in self.arp_cache.items():
+            string += f"{str(ip): >19}{str(arp_cache_item.mac): >22}\n"
+        return string
+
+    def wipe_arp_cache(self):
+        """
+        Wipes the arp cache of the computer
+        :return:
+        """
+        self.arp_cache.clear()
+
     def start_ping_process(self, ip_address, opcode=OPCODES.ICMP.REQUEST, count=1):
         """
         Starts sending a ping to another computer.
@@ -446,7 +476,7 @@ class Computer:
         One can read more at the 'dhcp_process.py' file.
         :return: None
         """
-        self.kill_process(DHCPClient)  # if currently asking for dhcp, stop it
+        self.kill_process_by_type(DHCPClient)  # if currently asking for dhcp, stop it
         self.start_process(DHCPClient)
 
     def open_tcp_port(self, port_number):
@@ -461,7 +491,7 @@ class Computer:
         process = self.TCP_PORTS_TO_PROCESSES[port_number]
         if port_number in self.open_tcp_ports:
             if process is not None:
-                self.kill_process(process)
+                self.kill_process_by_type(process)
             self.open_tcp_ports.remove(port_number)
         else:
             if process is not None:
@@ -888,6 +918,14 @@ class Computer:
         pid = len(self.waiting_processes) + 2
         self.waiting_processes.append((process_type(pid, self, *args), None))
 
+    def waiting_process_from_pid(self, pid):
+        """
+        Returns the WaitingProcess that fits the pid given.
+        :param pid: `int`
+        :return:
+        """
+        return get_the_one(self.waiting_processes, lambda wp: wp.process.pid == pid, NoSuchProcessError)
+
     def add_startup_process(self, process_type, *args):
         """
         This function adds a process to the `startup_processes` list, These processes are run right after the computer is
@@ -914,7 +952,7 @@ class Computer:
         self.startup_processes.remove(removed)
 
     @staticmethod
-    def run_process(process):
+    def _run_process(process):
         """
         This function receives a process and runs it until yielding a `WaitingForPacket` namedtuple.
         Returns the yielded `WaitingForPacket`.
@@ -926,7 +964,7 @@ class Computer:
         except StopIteration:
             return None
 
-    def kill_process(self, process_type):
+    def kill_process_by_type(self, process_type):
         """
         Takes in a process type and kills all of the waiting processes of that type in this `Computer`.
         :param process_type: a `Process` subclass type (for example `SendPing` or `DHCPClient`)
@@ -935,6 +973,14 @@ class Computer:
         for waiting_process in self.waiting_processes:
             if isinstance(waiting_process.process, process_type):
                 self.waiting_processes.remove(waiting_process)
+
+    def kill_process(self, pid):
+        """
+        Receives a pid and kills that process
+        :param pid:
+        :return:
+        """
+        self.waiting_processes.remove(self.waiting_process_from_pid(pid))
 
     def is_process_running(self, process_type):
         """
@@ -986,7 +1032,7 @@ class Computer:
         """
         ready_processes = self._get_ready_processes()
         for process in ready_processes:
-            waiting_for = self.run_process(process)
+            waiting_for = self._run_process(process)
             if waiting_for is not None:  # only None if the process is done!
                 self.waiting_processes.append(WaitingProcess(process, waiting_for))
 
@@ -1118,9 +1164,7 @@ class Computer:
         """a simple string representation of the computer"""
         return f"{self.name}"
 
-
 # ----------------------------------------- Other methods  ----------------------------------------
-
 
     @classmethod
     def from_dict_load(cls, dict_):
@@ -1139,33 +1183,3 @@ class Computer:
         returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])
         returned.filesystem = Filesystem.from_dict_load(dict_["filesystem"])
         return returned
-
-    def arp_cache_repr(self):
-        """
-        Returns a string that displays the arp cache nicely
-        :return:
-        """
-        string = f"{'IP address': >19}{'mac': >22}\n"
-        for ip, arp_cache_item in self.arp_cache.items():
-            string += f"{str(ip): >19}{str(arp_cache_item.mac): >22}\n"
-        return string
-
-    def wipe_arp_cache(self):
-        """
-        Wipes the arp cache of the computer
-        :return:
-        """
-        # TODO: add an ArpCache object that can handle things like static and dynamic arp cache items.
-        self.arp_cache.clear()
-
-    def interface_by_name(self, name):
-        """
-        Receives an interface name and returns the `Interface`
-        :param name:
-        :return:
-        """
-        return get_the_one(
-            self.all_interfaces,
-            lambda c: c.name == name,
-            NoSuchInterfaceError
-        )

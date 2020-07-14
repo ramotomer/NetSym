@@ -56,7 +56,7 @@ class Ls(Command):
                 dir_items[i] = f"F) {item: >10} {ctime: >5} {etime: >5}"
             else:
                 dir_items[i] = f"D) {item: >10}"
-        returned = f"{'NAME': >12} {'CTIME': >5} {'ETIME': >5}\n" + '\n'.join(dir_items)
+        returned = f"TYPE     NAME CTIME ETIME\n" + '\n'.join(dir_items)
         return returned
 
     def action(self, parsed_args):

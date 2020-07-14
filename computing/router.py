@@ -14,11 +14,11 @@ class RoutePacket(Process):
     `decide_routing_interfaces` method.
     The process is of routing a single packet over the router.
     """
-    def __init__(self, computer, packet):
+    def __init__(self, pid, computer, packet):
         """
         Initiates the process with the given packet to route and the routing computer.
         """
-        super(RoutePacket, self).__init__(computer)
+        super(RoutePacket, self).__init__(pid, computer)
         self.packet = packet
 
     def _is_packet_routable(self):

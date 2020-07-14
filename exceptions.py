@@ -330,7 +330,13 @@ class ShellError(NetworkSimulationError):
     """
 
 
-class CommandParsingError(ShellError):
+class CommandError(ShellError):
+    """
+    Error with a command
+    """
+
+
+class CommandParsingError(CommandError):
     """
     Error in parsing a command in the shell
     """
@@ -339,4 +345,10 @@ class CommandParsingError(ShellError):
 class WrongArgumentsError(CommandParsingError):
     """
     Arguments that were given to the parsed command were not correct.
+    """
+
+
+class CannotBeUsedWithPiping(CommandError):
+    """
+    There are commands that cannot be used with piping (for example: `echo hi | rm` cannot be done!)
     """

@@ -1,3 +1,5 @@
+from random import randint
+
 from computing.internals.shell.commands.command import Command, CommandOutput
 
 
@@ -12,8 +14,19 @@ class Uname(Command):
         """
         super(Uname, self).__init__('uname', 'print architecture name', computer, shell)
 
+        self.parser.add_argument('-a', '--all', dest='is_extended', action='store_true', help='show extended uname')
+
+    def to_print(self, parsed_args):
+        """
+        The message to print.
+        :return:
+        """
+        if parsed_args.is_extended:
+            return f"{self.computer.os} Kernel {randint(0, 15)}.{randint(0, 9)} Compiled today just for you!"
+        return self.computer.os
+
     def action(self, parsed_args):
         """
         prints out the arguments.
         """
-        return CommandOutput(self.computer.os, '')
+        return CommandOutput(self.to_print(parsed_args), '')

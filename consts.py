@@ -494,6 +494,7 @@ class CONSOLE:
         FONT = 'Courier New'
         REDIRECTION = '>'
         CARET = '|'
+        PIPING_CHAR = '|'
 
         COMMENT_SIGN = '#'
 
@@ -534,6 +535,7 @@ class FILESYSTEM:
     SEPARATOR = '/'
     ROOT = '/'
     HOME_DIR = '/home'
+    PIPING_FILE = ".%%%PipingFile%%%."
 
     class TYPE:
         NTFS = 'ntfs'
@@ -549,3 +551,6 @@ class COMPUTER:
         SHELL = 'shell'
         STDOUT = 'stdout'
         NONE = None
+
+    class PROCESSES:
+        INIT_PID = 1

@@ -102,14 +102,13 @@ class ComputerGraphics(ImageGraphics):
                 self.computer.set_name,
             ),
             "power on/off (o)": self.computer.power,
-            "show/hide console (shift+o)": self.child_graphics_objects.console.toggle_showing,
             "add/delete interface (^i)": with_args(
                 user_interface.ask_user_for,
                 str,
                 MESSAGES.INSERT.INTERFACE_INFO,
                 with_args(user_interface.add_delete_interface, self)
             ),
-            "open/close port (alt+o)": with_args(
+            "open/close port (shift+o)": with_args(
                 user_interface.ask_user_for,
                 int,
                 MESSAGES.INSERT.PORT_NUMBER,

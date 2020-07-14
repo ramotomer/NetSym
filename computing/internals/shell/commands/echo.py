@@ -16,6 +16,6 @@ class Echo(Command):
 
     def action(self, parsed_args):
         """
-        prints out the arguments.
+        The command action
         """
         return CommandOutput(' '.join(parsed_args.words), '')

@@ -108,3 +108,20 @@ class File:
         file.creation_time = datetime_from_string(dict_["creation_time"])
         file.last_edit_time = datetime_from_string(dict_["last_edit_time"])
         return file
+
+
+class PipingFile(File):
+    """
+    The file that is not mapped to the filesystem. We need it for command piping (`ps | grep 'hello'`)
+    """
+    __instance = None
+
+    def __init__(self, content=''):
+        super(PipingFile, self).__init__('PipingFile', content)
+        self.__class__.__instance = self
+
+    @classmethod
+    def instance(cls):
+        if cls.__instance is None:
+            cls.__instance = cls()
+        return cls.__instance

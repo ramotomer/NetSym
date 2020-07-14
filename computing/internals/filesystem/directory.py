@@ -1,4 +1,4 @@
-from computing.internals.filesystem.file import File
+from computing.internals.filesystem.file import File, PipingFile
 from consts import FILESYSTEM
 from exceptions import NoSuchDirectoryError, NoSuchFileError, DirectoryAlreadyExistsError
 
@@ -45,6 +45,9 @@ class Directory:
         :param path:
         :return:
         """
+        if path == FILESYSTEM.PIPING_FILE:
+            return PipingFile.instance()
+
         if path.endswith(FILESYSTEM.SEPARATOR):
             path = path[:len(FILESYSTEM.SEPARATOR)]
 

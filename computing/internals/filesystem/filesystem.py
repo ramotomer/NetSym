@@ -1,7 +1,7 @@
 from computing.internals.filesystem.directory import Directory
-from computing.internals.filesystem.file import File
+from computing.internals.filesystem.file import File, PipingFile
 from consts import FILESYSTEM
-from exceptions import PathError, NoSuchItemError
+from exceptions import PathError, NoSuchItemError, CannotBeUsedWithPiping
 
 
 class Filesystem:
@@ -29,21 +29,22 @@ class Filesystem:
         filesystem.make_dir('/var')
         filesystem.make_dir('/boot')
         filesystem.make_dir('/bin')
+        filesystem.make_dir('/etc')
         filesystem.make_dir('/tmp', mount=FILESYSTEM.TYPE.TMPFS)
         filesystem.make_dir(FILESYSTEM.HOME_DIR)
         return filesystem
 
-
-    @staticmethod
-    def is_absolute_path(path):
+    @classmethod
+    def is_absolute_path(cls, path):
         """
         returns the answer to the damn question in the title of the method!!! hell, why do i even document....
         :param path:
         :return:
         """
-        return path.startswith(FILESYSTEM.ROOT)
+        return (path != FILESYSTEM.PIPING_FILE) and (path.startswith(FILESYSTEM.ROOT))
 
-    def absolute_from_relative(self, parent: Directory, path: str):
+    @classmethod
+    def absolute_from_relative(cls, parent: Directory, path: str):
         """
         receives relative path and prent dir and return absolute path.
         If already absolute, returns the path.
@@ -51,7 +52,7 @@ class Filesystem:
         :param path:
         :return:
         """
-        if self.is_absolute_path(path):
+        if cls.is_absolute_path(path):
             return path
 
         returned = parent.full_path
@@ -70,6 +71,9 @@ class Filesystem:
         :param path:
         :return:
         """
+        if path == FILESYSTEM.PIPING_FILE:
+            return PipingFile.instance()
+
         if not self.is_absolute_path(path):
             raise PathError(f"path is not absolute! '{path}'")
 
@@ -121,6 +125,21 @@ class Filesystem:
             base_dir_path = self.root_path
         return base_dir_path, filename
 
+    def filename_and_dir_from_path(self, cwd, path):
+        """
+        Receives the CWD and a path (absolute or relative)
+        Returns a tuple, of the containing `Directory` object of the destination file, and its filename.
+        :param cwd: `Directory`
+        :param path: `str`
+        :return:
+        """
+        if path == FILESYSTEM.PIPING_FILE:
+            raise CannotBeUsedWithPiping(
+                "This command cannot be used with piping, since it requires a file's parent dir!")
+        abs_path = self.absolute_from_relative(cwd, path)
+        base_dir_path, filename = self.separate_base(abs_path)
+        return self.at_absolute_path(base_dir_path), filename
+
     def make_dir(self, absolute_path, mount=FILESYSTEM.TYPE.EXT4):
         """
         Creates a directory in a given path.
@@ -154,13 +173,18 @@ class Filesystem:
         :param append:
         :return:
         """
-        base_dir_path, filename = self.separate_base(path)
-        base_dir = self.at_path(cwd, base_dir_path)
+        if path == FILESYSTEM.PIPING_FILE:
+            file = PipingFile.instance()
 
-        if not self.is_file(path, cwd):
-            base_dir.make_empty_file(filename)
+        else:
+            base_dir_path, filename = self.separate_base(path)
+            base_dir = self.at_path(cwd, base_dir_path)
 
-        file = base_dir.files[filename]
+            if not self.is_file(path, cwd):
+                base_dir.make_empty_file(filename)
+
+            file = base_dir.files[filename]
+
         with file:
             if append:
                 file.append(data)

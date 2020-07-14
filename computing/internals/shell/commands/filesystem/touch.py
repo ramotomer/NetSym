@@ -31,12 +31,12 @@ class Touch(Command):
                 file.last_edit_time = datetime.now()
                 stdout += f"touched {file_path}\n"
             else:
-                base_dir_path, filename = self.computer.filesystem.separate_base(file_path)
+                base_dir, filename = self.computer.filesystem.filename_and_dir_from_path(self.shell.cwd, file_path)
                 try:
-                    self.computer.filesystem.at_path(self.shell.cwd, base_dir_path).make_empty_file(filename)
+                    base_dir.make_empty_file(filename)
                 except NoSuchItemError:
-                    stderr += f"could not touch {file_path}\n"
+                    stderr += f"Could not touch {file_path} :(\n"
                 else:
-                    stdout += f"created {file_path}\n"
+                    stdout += f"Created {file_path}\n"
 
         return CommandOutput(stdout[:-1], stderr[:-1])

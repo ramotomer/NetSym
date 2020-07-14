@@ -1,6 +1,6 @@
 import os
 
-from computing.internals.shell.commands.command import SyntaxArgumentError
+from computing.internals.shell.commands.command import SyntaxArgumentError, CommandOutput
 from computing.internals.shell.commands.echo import Echo
 from computing.internals.shell.commands.filesystem.cat import Cat
 from computing.internals.shell.commands.filesystem.cd import Cd
@@ -9,15 +9,19 @@ from computing.internals.shell.commands.filesystem.mkdir import Mkdir
 from computing.internals.shell.commands.filesystem.pwd import Pwd
 from computing.internals.shell.commands.filesystem.rm import Rm
 from computing.internals.shell.commands.filesystem.touch import Touch
+from computing.internals.shell.commands.grep import Grep
+from computing.internals.shell.commands.hostname import Hostname
+from computing.internals.shell.commands.kill import Kill
 from computing.internals.shell.commands.net.arp import Arp
 from computing.internals.shell.commands.net.ip import Ip
 from computing.internals.shell.commands.net.ip_address import IpAddressCommand
 from computing.internals.shell.commands.net.ip_route import IpRouteCommand
+from computing.internals.shell.commands.net.netstat import Netstat
 from computing.internals.shell.commands.net.ping import Ping
 from computing.internals.shell.commands.net.tcpdump import Tcpdump
 from computing.internals.shell.commands.ps import Ps
 from computing.internals.shell.commands.uname import Uname
-from consts import CONSOLE
+from consts import CONSOLE, FILESYSTEM
 
 
 class Shell:
@@ -33,7 +37,8 @@ class Shell:
         self.computer = computer
         self.shell_graphics = shell_graphics
 
-        self.commands = [Echo, Ls, Cd, Pwd, Touch, Cat, Mkdir, Rm, Uname, Ip, Arp, Ps, Ping, Tcpdump]
+        self.commands = [Echo, Ls, Cd, Pwd, Touch, Cat, Mkdir, Rm, Uname, Grep,
+                         Ip, Arp, Ps, Ping, Tcpdump, Kill, Hostname, Netstat]
         self.commands = [command(computer, self) for command in self.commands]
 
         self.parser_commands = {
@@ -121,6 +126,15 @@ class Shell:
         new_string_command, filename = splitted
         return new_string_command, filename, is_appending
 
+    @staticmethod
+    def _contains_piping(string):
+        """
+        checks if the string does
+        :param string:
+        :return:
+        """
+        return CONSOLE.SHELL.PIPING_CHAR in string
+
     def scroll_up_history(self):
         """
         allows to go up and down the history of commands
@@ -180,7 +194,7 @@ class Shell:
         command = string.split()[0]
 
         if command in self.string_to_command:
-            self.execute_regular_command(command, string)
+            self.execute_regular_command(string)
 
         elif command in self.parser_commands:
             self.parser_commands[command]()
@@ -188,21 +202,42 @@ class Shell:
         else:
             self.shell_graphics.write(self._unknown_command(command))
 
-    def execute_regular_command(self, command, string):
+    def execute_regular_command(self, full_string):
         """
         operates the command, writes to file, does piping (in the future, and more!)
-        :param command:
+        :param full_string:
+        :return:
+        """
+        output_filename, is_appending = None, False
+        if self._contains_redirections(full_string):
+            full_string, output_filename, is_appending = self._handle_redirections(full_string)
+
+        commands = [full_string]
+        if self._contains_piping(full_string):
+            commands = self._handle_piping(full_string)
+
+        for command in commands[:-1]:
+            self.write_output(self.output_of_command(command), filename=FILESYSTEM.PIPING_FILE)
+        self.write_output(self.output_of_command(commands[-1]), filename=output_filename, append=is_appending)
+
+    def output_of_command(self, string):
+        """
+        Receive a string command, return its output. (parses and runs it...)
         :param string:
         :return:
         """
-        filename, is_appending = None, False
-        if self._contains_redirections(string):
-            string, filename, is_appending = self._handle_redirections(string)
-
-        parsed_command = self.string_to_command[command].parse(string)
+        parsed_command = self.string_to_command[string.split()[0]].parse(string)
         if isinstance(parsed_command, SyntaxArgumentError):
-            return self.shell_graphics.write(parsed_command)
+            self.shell_graphics.write(parsed_command)
+            return CommandOutput('', '')
+        return parsed_command.command_class.action(parsed_command.parsed_args)
 
-        output = parsed_command.command_class.action(parsed_command.parsed_args)
-
-        self.write_output(output, filename=filename, append=is_appending)
+    @staticmethod
+    def _handle_piping(string):
+        """
+        Runs all of the commands except the last one, returns it.
+        :param string:
+        :return:
+        """
+        splitted = string.split(CONSOLE.SHELL.PIPING_CHAR)
+        return splitted[:1] + list(map(lambda s: f"{s} {FILESYSTEM.PIPING_FILE}", splitted[1:]))
