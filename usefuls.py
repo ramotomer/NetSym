@@ -244,7 +244,10 @@ def all_indexes(string, substring):
             return
 
 
-class StringIO:
+class MyStringIO:
+    """
+    I could not (for some reason) import or install StringIO, made a simple one myself.
+    """
     def __init__(self):
         self.text = ''
 
@@ -262,13 +265,17 @@ class StringIO:
 
 
 class PrintStealer:
+    """
+    A context manager that takes what is printed to stdout and stderr inside it, traps it, and records it.
+    After you step out of it, you can view what was printed, it will be save in the `self.printed` attribute.
+    """
     def __init__(self):
         self.printed = ''
 
     def __enter__(self):
         self._original_stdout = sys.stdout
         self._original_stderr = sys.stderr
-        sys.stdout = StringIO()
+        sys.stdout = MyStringIO()
         sys.stderr = sys.stdout
 
     def __exit__(self, exc_type, exc_val, exc_tb):

@@ -1,20 +1,24 @@
 import os
 
-from computing.internals.shell.commands.alias import Alias
 from computing.internals.shell.commands.command import SyntaxArgumentMessage, CommandOutput
-from computing.internals.shell.commands.echo import Echo
 from computing.internals.shell.commands.filesystem.cat import Cat
 from computing.internals.shell.commands.filesystem.cd import Cd
 from computing.internals.shell.commands.filesystem.cp import Cp
+from computing.internals.shell.commands.filesystem.head import Head
 from computing.internals.shell.commands.filesystem.ls import Ls
 from computing.internals.shell.commands.filesystem.mkdir import Mkdir
 from computing.internals.shell.commands.filesystem.mv import Mv
 from computing.internals.shell.commands.filesystem.pwd import Pwd
 from computing.internals.shell.commands.filesystem.rm import Rm
+from computing.internals.shell.commands.filesystem.tail import Tail
 from computing.internals.shell.commands.filesystem.touch import Touch
-from computing.internals.shell.commands.grep import Grep
-from computing.internals.shell.commands.hostname import Hostname
-from computing.internals.shell.commands.kill import Kill
+from computing.internals.shell.commands.misc.alias import Alias
+from computing.internals.shell.commands.misc.echo import Echo
+from computing.internals.shell.commands.misc.grep import Grep
+from computing.internals.shell.commands.misc.help import Help
+from computing.internals.shell.commands.misc.hostname import Hostname
+from computing.internals.shell.commands.misc.unalias import Unalias
+from computing.internals.shell.commands.misc.uname import Uname
 from computing.internals.shell.commands.net.arp import Arp
 from computing.internals.shell.commands.net.ip import Ip
 from computing.internals.shell.commands.net.ip_address import IpAddressCommand
@@ -22,9 +26,8 @@ from computing.internals.shell.commands.net.ip_route import IpRouteCommand
 from computing.internals.shell.commands.net.netstat import Netstat
 from computing.internals.shell.commands.net.ping import Ping
 from computing.internals.shell.commands.net.tcpdump import Tcpdump
-from computing.internals.shell.commands.ps import Ps
-from computing.internals.shell.commands.unalias import Unalias
-from computing.internals.shell.commands.uname import Uname
+from computing.internals.shell.commands.processes.kill import Kill
+from computing.internals.shell.commands.processes.ps import Ps
 from consts import CONSOLE, FILESYSTEM, debugp
 from usefuls import called_in_order, all_indexes
 
@@ -43,7 +46,8 @@ class Shell:
         self.shell_graphics = shell_graphics
 
         self.commands = [Echo, Ls, Cd, Pwd, Touch, Cat, Mkdir, Rm, Uname, Grep,
-                         Ip, Arp, Ps, Ping, Tcpdump, Kill, Hostname, Netstat, Cp, Mv, Alias, Unalias]
+                         Ip, Arp, Ps, Ping, Tcpdump, Kill, Hostname, Netstat, Cp,
+                         Mv, Alias, Unalias, Help, Head, Tail]
         self.commands = [command(computer, self) for command in self.commands]
 
         self.parser_commands = {

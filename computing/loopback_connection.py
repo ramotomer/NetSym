@@ -17,6 +17,8 @@ class LoopbackConnection(Connection):
         super(LoopbackConnection, self).__init__(length=CONNECTIONS.DEFAULT_LENGTH, speed=CONNECTIONS.LOOPBACK.SPEED)
         self.radius = radius
 
+        # TODO: loopback is totally broken! fix!!!
+
     def get_side(self):
         """Returns the only side of the connection"""
         return self.left_side

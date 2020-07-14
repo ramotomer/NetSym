@@ -30,6 +30,7 @@ class Command(metaclass=ABCMeta):
         self.name = name
         self.shell = shell
         self.parser = argparse.ArgumentParser(prog=name, description=description)
+        self.description = description
 
     @abstractmethod
     def action(self, parsed_args) -> CommandOutput:
