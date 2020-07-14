@@ -228,6 +228,22 @@ def datetime_from_string(string):
     return datetime.datetime(*map(int, args))
 
 
+def all_indexes(string, substring):
+    """
+    generator that yields indexes of all of the occurrences of the substring in the string
+    :param string:
+    :param substring:
+    :return:
+    """
+    last_index = -1
+    while True:
+        try:
+            last_index = string.index(substring, last_index + 1)
+            yield last_index
+        except ValueError:
+            return
+
+
 class StringIO:
     def __init__(self):
         self.text = ''

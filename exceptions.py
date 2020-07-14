@@ -352,3 +352,7 @@ class CannotBeUsedWithPiping(CommandError):
     """
     There are commands that cannot be used with piping (for example: `echo hi | rm` cannot be done!)
     """
+
+
+class InvalidAliasCommand(CommandError):
+    pass

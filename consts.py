@@ -440,7 +440,7 @@ class TEXT:
 
 
 class CONNECTIONS:
-    DEFAULT_SPEED = 450  # pixels / second
+    DEFAULT_SPEED = 120 # pixels / second
     DEFAULT_LENGTH = 100  # pixels
     DEFAULT_PL = 0.5  # the point in the connection where packets are dropped
     MOUSE_TOUCH_SENSITIVITY = 5  # pixels
@@ -488,15 +488,17 @@ class CONSOLE:
     class SHELL:
         WIDTH = 700
         HEIGHT = 500
-        PREFIX = '> '
         START_LOCATION = 170, 40
+
+        PREFIX = '> '
         FONT_SIZE = TEXT.FONT.DEFAULT_SIZE
         FONT = 'Courier New'
         REDIRECTION = '>'
         CARET = '|'
         PIPING_CHAR = '|'
-
         COMMENT_SIGN = '#'
+        ALIAS_SET_SIGN = '='
+        END_COMMAND = ';'
 
 
 class SHAPES:

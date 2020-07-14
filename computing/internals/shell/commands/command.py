@@ -14,7 +14,7 @@ ParsedCommand = namedtuple("ParsedCommand", [
     "parsed_args",
 ])
 
-SyntaxArgumentError = str
+SyntaxArgumentMessage = str
 
 
 class Command(metaclass=ABCMeta):
@@ -52,4 +52,4 @@ class Command(metaclass=ABCMeta):
                 return ParsedCommand(self, parsed_args)
             except SystemExit:
                 pass
-        return SyntaxArgumentError(stdout_stealer.printed)
+        return SyntaxArgumentMessage(stdout_stealer.printed)

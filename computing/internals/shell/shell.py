@@ -1,6 +1,7 @@
 import os
 
-from computing.internals.shell.commands.command import SyntaxArgumentError, CommandOutput
+from computing.internals.shell.commands.alias import Alias
+from computing.internals.shell.commands.command import SyntaxArgumentMessage, CommandOutput
 from computing.internals.shell.commands.echo import Echo
 from computing.internals.shell.commands.filesystem.cat import Cat
 from computing.internals.shell.commands.filesystem.cd import Cd
@@ -22,8 +23,10 @@ from computing.internals.shell.commands.net.netstat import Netstat
 from computing.internals.shell.commands.net.ping import Ping
 from computing.internals.shell.commands.net.tcpdump import Tcpdump
 from computing.internals.shell.commands.ps import Ps
+from computing.internals.shell.commands.unalias import Unalias
 from computing.internals.shell.commands.uname import Uname
-from consts import CONSOLE, FILESYSTEM
+from consts import CONSOLE, FILESYSTEM, debugp
+from usefuls import called_in_order, all_indexes
 
 
 class Shell:
@@ -40,7 +43,7 @@ class Shell:
         self.shell_graphics = shell_graphics
 
         self.commands = [Echo, Ls, Cd, Pwd, Touch, Cat, Mkdir, Rm, Uname, Grep,
-                         Ip, Arp, Ps, Ping, Tcpdump, Kill, Hostname, Netstat, Cp, Mv]
+                         Ip, Arp, Ps, Ping, Tcpdump, Kill, Hostname, Netstat, Cp, Mv, Alias, Unalias]
         self.commands = [command(computer, self) for command in self.commands]
 
         self.parser_commands = {
@@ -48,8 +51,11 @@ class Shell:
             'cls': self.shell_graphics.clear_screen,
             'exit': self.shell_graphics.exit,
             'history': self.write_history,
-            'shutdown': self.computer_shutdown,
-            'reboot': self.computer_reboot,
+            'shutdown': called_in_order(self.shell_graphics.exit,
+                                        self.computer.power),
+            'reboot': called_in_order(self.shell_graphics.exit,
+                                      self.computer.power,
+                                      self.computer.power),
         }
         self.string_to_command = {command.name: command for command in self.commands}
         command_translations = {
@@ -66,8 +72,9 @@ class Shell:
         self.cwd = self.computer.filesystem.root
 
         self.history = []
-
         self.history_index = None
+
+        self.aliases = {}
 
     @property
     def cwd_path(self):
@@ -162,21 +169,28 @@ class Shell:
         self.shell_graphics.clear_line()
         self.shell_graphics.write_to_line(([''] + self.history[::-1])[self.history_index + 1])
 
-    def computer_shutdown(self):
-        """
-        Shuts down the computer using a command. closes the terminal
-        :return:
-        """
-        self.computer.power()
-        self.shell_graphics.exit()
+    @staticmethod
+    def _split_by_command_enders_outside_of_quotes(string):
+        """"""
+        indexes = [index for index in all_indexes(string, ';')
+                   if string[:index].count("\'") % 2 == 0 and string[:index].count('\"') % 2 == 0]
+        indexes = [-1] + indexes + [len(string)]
 
-    def computer_reboot(self):
+        returned = []
+        for i in range(len(indexes) - 1):
+            returned.append(string[indexes[i] + 1: indexes[i + 1]].strip())
+
+        return returned
+
+    @classmethod
+    def _does_string_require_split_by_command_enders(cls, string):
         """
-        Reboots the computer and closes the terminal
+        Returns that
+        :param string:
         :return:
         """
-        self.computer_shutdown()
-        self.computer.power()
+        return (CONSOLE.SHELL.END_COMMAND in string) and \
+               (len(cls._split_by_command_enders_outside_of_quotes(string)) != 1)
 
     def execute(self, string):
         """
@@ -184,18 +198,30 @@ class Shell:
         :param string:
         :return:
         """
+        debugp(f"executing {string}")
         if not string:
             return
 
         self.history.append(string)
         self.history_index = None
 
-        if string.startswith(CONSOLE.SHELL.COMMENT_SIGN):
+        string = string.split(CONSOLE.SHELL.COMMENT_SIGN)[0]
+
+        if self._does_string_require_split_by_command_enders(string):
+            for inline_command in self._split_by_command_enders_outside_of_quotes(string):  # split by ;-s
+                self.execute(inline_command)
             return
 
         command = string.split()[0]
+        args = ' '.join(string.split()[1:])
 
-        if command in self.string_to_command:
+        if command in self.aliases:
+            if self.aliases[command] not in self.aliases:
+                self.execute(self.aliases[command] + f" {args}")
+            else:
+                self.shell_graphics.write("Cannot use alias of an alias! :(")
+
+        elif command in self.string_to_command:
             self.execute_regular_command(string)
 
         elif command in self.parser_commands:
@@ -229,7 +255,7 @@ class Shell:
         :return:
         """
         parsed_command = self.string_to_command[string.split()[0]].parse(string)
-        if isinstance(parsed_command, SyntaxArgumentError):
+        if isinstance(parsed_command, SyntaxArgumentMessage):
             self.shell_graphics.write(parsed_command)
             return CommandOutput('', '')
         return parsed_command.command_class.action(parsed_command.parsed_args)

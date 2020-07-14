@@ -14,14 +14,14 @@ class Cat(Command):
         """
         super(Cat, self).__init__('cat', 'print out a file content', computer, shell)
 
-        self.parser.add_argument('file', metavar='file', type=str, nargs=1, help='file to read')
+        self.parser.add_argument('file', metavar='file', type=str, help='file to read')
 
     def action(self, parsed_args):
         """
         prints out the arguments.
         """
         try:
-            file = self.computer.filesystem.at_path(self.shell.cwd, parsed_args.file[0])
+            file = self.computer.filesystem.at_path(self.shell.cwd, parsed_args.file)
             if isinstance(file, Directory):
                 return CommandOutput('', f"'{file.name}' is a directory!")
             with file:
