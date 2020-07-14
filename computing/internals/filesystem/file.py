@@ -109,6 +109,14 @@ class File:
         file.last_edit_time = datetime_from_string(dict_["last_edit_time"])
         return file
 
+    def copy(self, new_name=None):
+        """
+        Returns a new file object, that is identical
+        :return:
+        """
+        name = self.name if new_name is None else new_name
+        return self.__class__(name, self.__content)
+
 
 class PipingFile(File):
     """

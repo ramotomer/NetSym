@@ -4,8 +4,10 @@ from computing.internals.shell.commands.command import SyntaxArgumentError, Comm
 from computing.internals.shell.commands.echo import Echo
 from computing.internals.shell.commands.filesystem.cat import Cat
 from computing.internals.shell.commands.filesystem.cd import Cd
+from computing.internals.shell.commands.filesystem.cp import Cp
 from computing.internals.shell.commands.filesystem.ls import Ls
 from computing.internals.shell.commands.filesystem.mkdir import Mkdir
+from computing.internals.shell.commands.filesystem.mv import Mv
 from computing.internals.shell.commands.filesystem.pwd import Pwd
 from computing.internals.shell.commands.filesystem.rm import Rm
 from computing.internals.shell.commands.filesystem.touch import Touch
@@ -38,7 +40,7 @@ class Shell:
         self.shell_graphics = shell_graphics
 
         self.commands = [Echo, Ls, Cd, Pwd, Touch, Cat, Mkdir, Rm, Uname, Grep,
-                         Ip, Arp, Ps, Ping, Tcpdump, Kill, Hostname, Netstat]
+                         Ip, Arp, Ps, Ping, Tcpdump, Kill, Hostname, Netstat, Cp, Mv]
         self.commands = [command(computer, self) for command in self.commands]
 
         self.parser_commands = {

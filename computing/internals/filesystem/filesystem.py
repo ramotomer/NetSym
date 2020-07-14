@@ -1,7 +1,7 @@
 from computing.internals.filesystem.directory import Directory
 from computing.internals.filesystem.file import File, PipingFile
 from consts import FILESYSTEM
-from exceptions import PathError, NoSuchItemError, CannotBeUsedWithPiping
+from exceptions import PathError, NoSuchItemError, CannotBeUsedWithPiping, WrongUsageError
 
 
 class Filesystem:
@@ -190,6 +190,28 @@ class Filesystem:
                 file.append(data)
             else:
                 file.write(data)
+
+    def move_file(self, src_path, dst_path, cwd=None, keep_origin=False):
+        """
+        Move a file. The paths can be relative if a cwd is specified.
+        :param src_path:
+        :param dst_path:
+        :param keep_origin: whether or not to keep
+        :param cwd:
+        :return:
+        """
+        if cwd is None and not (self.is_absolute_path(src_path) and self.is_absolute_path(dst_path)):
+            raise WrongUsageError("If cwd is not specified, paths must be absolute")
+
+        src_dir, filename = self.filename_and_dir_from_path(cwd, src_path)
+        dst_dir, new_name = self.filename_and_dir_from_path(cwd, dst_path)
+        item = (src_dir.items[filename].copy if keep_origin else dst_dir.pop_item)(filename)
+        item.name = new_name
+
+        if isinstance(item, Directory):
+            dst_dir.directories[new_name] = item
+        elif isinstance(item, File):
+            dst_dir.files[new_name] = item
 
     def dict_save(self):
         """

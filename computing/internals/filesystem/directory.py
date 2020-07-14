@@ -1,6 +1,7 @@
 from computing.internals.filesystem.file import File, PipingFile
 from consts import FILESYSTEM
-from exceptions import NoSuchDirectoryError, NoSuchFileError, DirectoryAlreadyExistsError
+from exceptions import NoSuchDirectoryError, NoSuchFileError, DirectoryAlreadyExistsError, WrongUsageError, \
+    NoSuchItemError
 
 
 class Directory:
@@ -103,6 +104,37 @@ class Directory:
             FILESYSTEM.CWD: self.directories[FILESYSTEM.CWD],
             FILESYSTEM.PARENT_DIRECTORY: self.directories[FILESYSTEM.PARENT_DIRECTORY],
         }
+
+    def add_item(self, item):
+        """
+        Adds an item to the directory (could be a file or a directory)
+        :param item:
+        :return:
+        """
+        if isinstance(item, File):
+            self.files[item.name] = item
+        elif isinstance(item, Directory):
+            self.directories[item.name] = item
+        else:
+            raise WrongUsageError("Only use with files or directories!")
+
+    def pop_item(self, item_name):
+        """
+        Removes an item from the directory. (could be File or Directory)
+        :param item_name:
+        :return:
+        """
+        try:
+            if item_name in self.directories:
+                item = self.directories[item_name]
+                del self.directories[item_name]
+            else:
+                item = self.files[item_name]
+                del self.files[item_name]
+        except KeyError:
+            raise NoSuchItemError
+
+        return item
 
     def dict_save(self):
         """
