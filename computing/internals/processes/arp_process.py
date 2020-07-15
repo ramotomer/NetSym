@@ -70,7 +70,7 @@ class SendPacketWithArpsProcess(Process):
         yield WaitingFor(done_searching)
 
         self.computer.send_with_ethernet(
-            self.computer.arp_cache[ip_for_the_mac],
+            self.computer.arp_cache[ip_for_the_mac].mac,
             dst_ip,
             self.ip_layer,
         )

@@ -142,7 +142,7 @@ class InterfaceGraphics(GraphicsObject):
             "location": (self.real_x, self.real_y),
             "name": self.interface.name,
             "mac": str(self.interface.mac),
-            "ip": str(self.interface.ip) if self.interface.ip is not None else None,
+            "ip": repr(self.interface.ip) if self.interface.ip is not None else None,
             "color": self.color,
             "is_blocked": self.interface.is_blocked,
         }

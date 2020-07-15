@@ -4,6 +4,7 @@ from collections import namedtuple
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
 from computing.interface import Interface
+from computing.internals.arp_cache import ArpCache
 from computing.internals.filesystem.filesystem import Filesystem
 from computing.internals.processes.arp_process import ARPProcess, SendPacketWithArpsProcess
 from computing.internals.processes.daytime_process import DAYTIMEServerProcess
@@ -24,11 +25,6 @@ from packets.tcp import TCP
 from packets.udp import UDP
 from usefuls import get_the_one
 
-ARPCacheItem = namedtuple("ARPCacheItem", [
-    "mac",
-    "time",
-])
-# ^ the values of the ARP cache of the computer (MAC address and creation time)
 ReceivedPacket = namedtuple("ReceivedPacket", "packet time interface")
 # ^ a packet that was received in this computer  (packet object, receiving time, interface packet is received on)
 WaitingProcess = namedtuple("WaitingProcess", "process waiting_for")
@@ -76,7 +72,7 @@ class Computer:
         self.loopback = Interface.loopback()
 
         self.received = []
-        self.arp_cache = {}
+        self.arp_cache = ArpCache()
         # ^ a dictionary of {<ip address> : ARPCacheItem(<mac address>, <initiation time of this item>)
         self.routing_table = RoutingTable.create_default(self)
         self.waiting_processes = []
@@ -236,9 +232,10 @@ class Computer:
         if interface.is_connected():
             raise DeviceAlreadyConnectedError("Cannot remove a connected interface!!!")
         if interface.has_ip():
-            self.routing_table.remove_interface(interface)
+            self.routing_table.delete_interface(interface)
         self.interfaces.remove(interface)
         MainLoop.instance.unregister_graphics_object(interface.graphics)
+        self.graphics.update_text()
 
     def add_remove_interface(self, name):
         """
@@ -357,7 +354,7 @@ class Computer:
         except KeyError:
             raise NoARPLayerError("This function should only be called with an ARP packet!!!")
 
-        self.arp_cache[arp.src_ip] = ARPCacheItem(arp.src_mac, MainLoop.instance.time())  # learn from the ARP
+        self.arp_cache.add_dynamic(arp.src_ip, arp.src_mac)
 
         if arp.opcode == OPCODES.ARP.REQUEST and interface.has_this_ip(arp.dst_ip):
             self.send_arp_reply(packet)                     # Answer if request
@@ -416,24 +413,6 @@ class Computer:
             if packet_type in packet:
                 self.packet_types_and_handlers[packet_type](packet, receiving_interface)
 
-    def arp_cache_repr(self):
-        """
-        Returns a string that displays the arp cache nicely
-        :return:
-        """
-        # TODO: add an ArpCache object that can handle things like static and dynamic arp cache items.
-        string = f"{'IP address': >19}{'mac': >22}\n"
-        for ip, arp_cache_item in self.arp_cache.items():
-            string += f"{str(ip): >19}{str(arp_cache_item.mac): >22}\n"
-        return string
-
-    def wipe_arp_cache(self):
-        """
-        Wipes the arp cache of the computer
-        :return:
-        """
-        self.arp_cache.clear()
-
     def start_ping_process(self, ip_address, opcode=OPCODES.ICMP.REQUEST, count=1):
         """
         Starts sending a ping to another computer.
@@ -460,15 +439,6 @@ class Computer:
         :return: boolean
         """
         return any([interface.is_directly_for_me(packet) for interface in self.interfaces])
-
-    def _forget_arp_cache(self):
-        """
-        Check through the ARP cache if any addresses should be forgotten and if so forget them. (removes from the arp cache)
-        :return: None
-        """
-        for ip, arp_cache_item in list(self.arp_cache.items()):
-            if MainLoop.instance.time_since(arp_cache_item.time) > ARP_CACHE.ITEM_LIFETIME:
-                del self.arp_cache[ip]
 
     def ask_dhcp(self):
         """
@@ -559,7 +529,7 @@ class Computer:
         if not interface.has_ip():
             return
 
-        self.routing_table.delete_interface(interface.ip)
+        self.routing_table.delete_interface(interface)
         interface.ip = None
 
     def set_name(self, name):
@@ -1154,7 +1124,7 @@ class Computer:
                 self._handle_special_packet(packet, interface)
 
         self._handle_processes()
-        self._forget_arp_cache()  # deletes just the required items in the arp cache....
+        self.arp_cache.forget_old_items()  # deletes just the required items in the arp cache....
 
     def __repr__(self):
         """The string representation of the computer"""
