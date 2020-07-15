@@ -116,15 +116,17 @@ class RoutingTable:
         self.route_add(IPAddress(interface_ip.string_ip + "/32"), IPAddress.loopback(), IPAddress.loopback())
         # TODO: BUG: when a computer doesn't have an IP and we give it one after it is created it cant send itself pings
 
-    def delete_interface(self, interface_ip):
+    def delete_interface(self, interface):
         """
         Removes an interface from the routing table.
         (This is also used when changing an interface's ip address)
         :param interface_ip:
         :return:
         """
-        self.route_delete(interface_ip.subnet())
-        self.route_delete(IPAddress(interface_ip.string_ip + "/32"))
+        if not interface.has_ip():
+            return
+        self.route_delete(interface.ip.subnet())
+        self.route_delete(IPAddress(interface.ip.string_ip + "/32"))
 
     def __getitem__(self, item):
         """
@@ -177,15 +179,15 @@ Default Gateway:        {self.default_gateway.ip_address}
         Save the routing table as a dict that can later be reassembled to a routing table
         :return:
         """
-        def ip_repr_or_none(item):
+        def ip_str_or_none(item):
             if item is None:
                 return None
-            return repr(item)
+            return str(item)
 
         return {
             "class": "RoutingTable",
             "dict": {
-                repr(ip): list(map(ip_repr_or_none, routing_table_item))
+                repr(ip): list(map(ip_str_or_none, routing_table_item))
                 for ip, routing_table_item in self.dictionary.items()
             }
         }

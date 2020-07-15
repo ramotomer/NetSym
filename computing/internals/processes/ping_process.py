@@ -65,10 +65,10 @@ class SendPing(Process):
         if self.ping_opcode == OPCODES.ICMP.REQUEST:
             self.computer.print(f"pinging {self.dst_ip} with some bytes")
 
-        ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip, self)
-        yield WaitingFor(done_searching)
-
         for _ in (range(self.count) if self.count is not PROTOCOLS.ICMP.INFINITY else cycle(['_'])):
+            ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip, self)
+            yield WaitingFor(done_searching)
+
             self._send_the_ping(ip_for_the_mac)
 
             if self.ping_opcode == OPCODES.ICMP.REQUEST:

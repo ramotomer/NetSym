@@ -556,3 +556,7 @@ class COMPUTER:
 
     class PROCESSES:
         INIT_PID = 1
+
+    class ARP_CACHE:
+        DYNAMIC = "dynamic"
+        STATIC = "static"

@@ -28,7 +28,7 @@ from computing.internals.shell.commands.net.ping import Ping
 from computing.internals.shell.commands.net.tcpdump import Tcpdump
 from computing.internals.shell.commands.processes.kill import Kill
 from computing.internals.shell.commands.processes.ps import Ps
-from consts import CONSOLE, FILESYSTEM, debugp
+from consts import CONSOLE, FILESYSTEM
 from usefuls import called_in_order, all_indexes
 
 
@@ -202,8 +202,7 @@ class Shell:
         :param string:
         :return:
         """
-        debugp(f"executing {string}")
-        if not string:
+        if not string.split():  # string is empty or all spaces
             return
 
         self.history.append(string)

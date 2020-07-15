@@ -41,8 +41,9 @@ where OBJECT := { link | address | route }
         """
         redirects the action to the action of the specified `ip` command (ip a, ip l, etc...)
         """
-        if parsed_args.object is None:
-            return CommandOutput(self._ip_help(), '')
-        command_class = self.object_to_command[parsed_args.object](self.computer, self.shell)
+        try:
+            command_class = self.object_to_command[parsed_args.object](self.computer, self.shell)
+        except KeyError:
+            return CommandOutput('', f"{self._ip_help()}")
         _, parsed_additional_args = command_class.parse(' '.join([f'ip_{parsed_args.object}'] + parsed_args.args))
         return command_class.action(parsed_additional_args)
