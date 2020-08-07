@@ -6,7 +6,7 @@ from computing.switch import Switch, Hub, Antenna
 from consts import *
 from gui.user_interface.popup_windows.image_button import ImageButton
 from gui.user_interface.popup_windows.popup_window import PopupWindow
-from usefuls import with_args, called_in_order
+from usefuls.funcs import with_args, called_in_order
 
 
 class DeviceCreationWindow(PopupWindow):

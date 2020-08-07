@@ -2,7 +2,7 @@ import random
 
 from consts import ADDRESSES
 from exceptions import *
-from usefuls import is_hex
+from usefuls.funcs import is_hex
 
 
 class MACAddress:

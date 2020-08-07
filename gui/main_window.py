@@ -2,7 +2,7 @@ import pyglet
 
 from consts import *
 from gui.main_loop import MainLoop
-from usefuls import normal_color_to_weird_gl_color
+from usefuls.funcs import normal_color_to_weird_gl_color
 
 
 class MainWindow(pyglet.window.Window):

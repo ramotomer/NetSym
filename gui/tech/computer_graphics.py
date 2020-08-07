@@ -13,7 +13,7 @@ from gui.tech.output_console import OutputConsole
 from gui.tech.process_graphics import ProcessGraphicsList
 from gui.user_interface.popup_windows.popup_console import PopupConsole
 from gui.user_interface.text_graphics import Text
-from usefuls import with_args
+from usefuls.funcs import with_args
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", [
     "text",

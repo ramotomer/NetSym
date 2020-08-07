@@ -4,7 +4,7 @@ from operator import itemgetter
 import pyglet
 
 from consts import *
-from usefuls import circular_coordinates, sine_wave_coordinates, lighten_color, darken_color
+from usefuls.funcs import circular_coordinates, sine_wave_coordinates, lighten_color, darken_color
 
 
 def draw_line(point_1, point_2, color=COLORS.WHITE):

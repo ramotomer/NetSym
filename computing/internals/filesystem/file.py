@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from exceptions import FileNotOpenError
-from usefuls import datetime_from_string
+from usefuls.funcs import datetime_from_string
 
 
 class File:

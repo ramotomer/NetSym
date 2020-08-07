@@ -7,7 +7,7 @@ from consts import CONSOLE, TEXT, KEYBOARD
 from gui.tech.output_console import OutputConsole
 from gui.user_interface.key_writer import KeyWriter
 from gui.user_interface.text_graphics import Text
-from usefuls import with_args
+from usefuls.funcs import with_args
 
 ChildrenGraphicsObjects = namedtuple("ChildGraphicsObject", [
         "text",

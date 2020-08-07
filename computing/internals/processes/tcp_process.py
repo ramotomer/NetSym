@@ -12,8 +12,8 @@ from exceptions import TCPDataLargerThanMaxSegmentSize
 from gui.main_loop import MainLoop
 from packets.packet import Packet
 from packets.tcp import TCP
-from usefuls import insort
-from usefuls import split_by_size
+from usefuls.funcs import insort
+from usefuls.funcs import split_by_size
 
 NotAckedPacket = recordclass("NotAckedPacket", [  # this is like a `namedtuple` but it is mutable!
     "packet",

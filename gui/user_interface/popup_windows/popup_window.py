@@ -7,7 +7,7 @@ from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rectangle
 from gui.user_interface.button import Button
 from gui.user_interface.text_graphics import Text
-from usefuls import with_args
+from usefuls.funcs import with_args
 
 
 class PopupWindow(UserInterfaceGraphicsObject):

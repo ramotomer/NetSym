@@ -89,6 +89,10 @@ class OPCODES:
         FLAGS = {ACK, FIN, PSH, SYN, RST}
         FLAGS_DISPLAY_PRIORITY = [SYN, FIN, RST, PSH, ACK]
 
+    class DNS:
+        REQUEST = 'request'
+        REPLY = 'reply'
+
 
 class PROTOCOLS:
     class ARP:
@@ -132,6 +136,7 @@ class PORTS:
     DAYTIME = 13
     FTP = 21
     SSH = 22
+    DNS = 53
     DHCP_SERVER = 67
     DHCP_CLIENT = 68
     HTTP = 80
@@ -273,6 +278,7 @@ class IMAGES:
         IP = "packets/ip_packet.png"
         UDP = "packets/udp_packet.png"
         STP = "packets/stp_packet.png"
+        DNS = "packets/dns_packet.png"
 
         class ARP:
             REQUEST = "packets/arp_request.png"
@@ -307,6 +313,7 @@ class IMAGES:
         class FTP:
             REQUEST_PACKET = "packets/ftp_request.png"
             DATA_PACKET = "packets/ftp_data.png"
+
 
     class COMPUTERS:
         COMPUTER = "computers/endpoint.png"
@@ -394,7 +401,11 @@ class PACKET:
         "FTP": {
             OPCODES.FTP.REQUEST_PACKET: IMAGES.PACKETS.FTP.REQUEST_PACKET,
             OPCODES.FTP.DATA_PACKET: IMAGES.PACKETS.FTP.DATA_PACKET,
-        }
+        },
+        "DNS": {
+            OPCODES.DNS.REQUEST,
+            OPCODES.DNS.REPLY,
+        },
     }
 
 

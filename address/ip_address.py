@@ -1,6 +1,6 @@
 from consts import ADDRESSES, MESSAGES
 from exceptions import InvalidAddressError, AddressTooLargeError
-from usefuls import bindigits
+from usefuls.funcs import bindigits
 
 
 class IPAddress:

@@ -1,7 +1,7 @@
 from abc import ABCMeta
 
 from gui.abstracts.graphics_object import GraphicsObject
-from usefuls import sum_tuples
+from usefuls.funcs import sum_tuples
 
 
 class UserInterfaceGraphicsObject(GraphicsObject, metaclass=ABCMeta):

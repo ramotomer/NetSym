@@ -2,7 +2,7 @@ import argparse
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 
-from usefuls import PrintStealer
+from usefuls.print_stealer import PrintStealer
 
 CommandOutput = namedtuple("CommandOutput", [
     "stdout",

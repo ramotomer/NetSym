@@ -1,7 +1,7 @@
 import time
 
 from exceptions import NoSuchGraphicsObjectError
-from usefuls import get_the_one
+from usefuls.funcs import get_the_one
 
 
 class MainLoop:

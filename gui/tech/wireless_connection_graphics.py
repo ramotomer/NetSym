@@ -4,7 +4,7 @@ from consts import SHAPES, CONNECTIONS, PACKET, IMAGES, DIRECTORIES
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.shape_drawing import draw_sine_wave
 from gui.tech.connection_graphics import ConnectionGraphics
-from usefuls import sine_wave_coordinates
+from usefuls.funcs import sine_wave_coordinates
 
 
 class WirelessConnectionGraphics(ConnectionGraphics):

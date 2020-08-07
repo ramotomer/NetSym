@@ -5,7 +5,7 @@ from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsOb
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_button
 from gui.user_interface.text_graphics import Text
-from usefuls import sum_tuples
+from usefuls.funcs import sum_tuples
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "text")
 

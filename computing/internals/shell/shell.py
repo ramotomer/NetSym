@@ -17,6 +17,7 @@ from computing.internals.shell.commands.misc.echo import Echo
 from computing.internals.shell.commands.misc.grep import Grep
 from computing.internals.shell.commands.misc.help import Help
 from computing.internals.shell.commands.misc.hostname import Hostname
+from computing.internals.shell.commands.misc.man import Man
 from computing.internals.shell.commands.misc.unalias import Unalias
 from computing.internals.shell.commands.misc.uname import Uname
 from computing.internals.shell.commands.net.arp import Arp
@@ -29,7 +30,7 @@ from computing.internals.shell.commands.net.tcpdump import Tcpdump
 from computing.internals.shell.commands.processes.kill import Kill
 from computing.internals.shell.commands.processes.ps import Ps
 from consts import CONSOLE, FILESYSTEM
-from usefuls import called_in_order, all_indexes
+from usefuls.funcs import called_in_order, all_indexes
 
 
 class Shell:
@@ -47,7 +48,7 @@ class Shell:
 
         self.commands = [Echo, Ls, Cd, Pwd, Touch, Cat, Mkdir, Rm, Uname, Grep,
                          Ip, Arp, Ps, Ping, Tcpdump, Kill, Hostname, Netstat, Cp,
-                         Mv, Alias, Unalias, Help, Head, Tail]
+                         Mv, Alias, Unalias, Help, Head, Tail, Man]
         self.commands = [command(computer, self) for command in self.commands]
 
         self.parser_commands = {
@@ -198,6 +199,9 @@ class Shell:
 
     def execute(self, string):
         """
+
+        The main function of the shell. This happens when one presses enter.
+
         Receives the string of a command and returns the command and its arguments.
         :param string:
         :return:

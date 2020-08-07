@@ -2,7 +2,7 @@ from consts import *
 from gui.abstracts.animation_graphics import AnimationGraphics
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_loop import MainLoop
-from usefuls import with_args
+from usefuls.funcs import with_args
 
 
 class PacketGraphics(ImageGraphics):

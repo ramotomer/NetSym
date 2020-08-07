@@ -8,8 +8,8 @@ from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_line
 from gui.shape_drawing import draw_rectangle
-from usefuls import distance
-from usefuls import with_args, get_the_one
+from usefuls.funcs import distance
+from usefuls.funcs import with_args, get_the_one
 
 Computers = namedtuple("Computers", [
     "start",

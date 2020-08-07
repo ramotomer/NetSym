@@ -2,7 +2,7 @@ from address.ip_address import IPAddress
 from computing.internals.shell.commands.command import Command, CommandOutput
 from consts import ADDRESSES
 from exceptions import RoutingTableError
-from usefuls import get_the_one
+from usefuls.funcs import get_the_one
 
 
 class IpRouteCommand(Command):

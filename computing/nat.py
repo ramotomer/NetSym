@@ -8,7 +8,7 @@
 # from exceptions import WrongUsageError, ThisCodeShouldNotBeReached, SomethingWentTerriblyWrongError
 # from gui.tech.computer_graphics import ComputerGraphics
 # from processes.process import Process, WaitingForPacket, ReturnedPacket
-# from usefuls import get_the_one
+# from usefuls.funcs import get_the_one
 #
 #
 # class NAT(Computer):

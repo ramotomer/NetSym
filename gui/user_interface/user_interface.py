@@ -37,7 +37,8 @@ from gui.user_interface.popup_windows.popup_window import PopupWindow
 from gui.user_interface.popup_windows.yes_no_popup_window import YesNoPopupWindow
 from gui.user_interface.selecting_square import SelectingSquare
 from gui.user_interface.text_graphics import Text
-from usefuls import get_the_one, distance, with_args, called_in_order, circular_coordinates, sum_tuples, scale_tuple
+from usefuls.funcs import get_the_one, distance, with_args, called_in_order, circular_coordinates, sum_tuples, \
+    scale_tuple
 
 ObjectView = namedtuple("ObjectView", [
     "sprite",
@@ -943,6 +944,8 @@ class UserInterface:
             if computer.is_process_running(TCPProcess):
                 process = computer.get_running_process(TCPProcess)
                 print(f"window (of {process}): {process.sending_window}")
+
+        self.set_all_connection_speeds(450)
 
     def create_computer_with_ip(self):
         """
