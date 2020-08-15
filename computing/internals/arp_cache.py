@@ -1,6 +1,7 @@
 from collections import namedtuple
 
-from consts import ARP_CACHE, COMPUTER
+from address.ip_address import IPAddress
+from consts import COMPUTER
 from gui.main_loop import MainLoop
 
 ARPCacheItem = namedtuple("ARPCacheItem", [
@@ -24,7 +25,7 @@ class ArpCache:
         """
         self.__cache = initial_dict if initial_dict is not None else {}
 
-    def forget_old_items(self, max_lifetime=ARP_CACHE.ITEM_LIFETIME):
+    def forget_old_items(self, max_lifetime=COMPUTER.ARP_CACHE.ITEM_LIFETIME):
         """
         Check through the ARP cache if any addresses should be forgotten and if so forget them.
         (removes from the arp cache)
@@ -65,10 +66,12 @@ class ArpCache:
             del self.__cache[key]
 
     def __contains__(self, item):
-        return item in self.__cache
+        return item.string_ip in {ip.string_ip: value for ip, value in self.__cache.items()}
 
     def __getitem__(self, item):
-        return self.__cache[item]
+        if not isinstance(item, IPAddress):
+            raise KeyError(f"Only search the arp cache for IPAddress! not {type(item)}!")
+        return {ip.string_ip: value for ip, value in self.__cache.items()}[item.string_ip]
 
     def __iter__(self):
         return iter(self.__cache)

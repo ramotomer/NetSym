@@ -15,15 +15,6 @@ def debugp(*strings):
 
 SENDING_GRAT_ARPS = False
 
-
-class SWITCH_TABLE:
-    ITEM_LIFETIME = 300  # seconds
-
-
-class ARP_CACHE:
-    ITEM_LIFETIME = 300  # seconds
-
-
 class ADDRESSES:
     class MAC:
         BROADCAST = 'ff:ff:ff:ff:ff:ff'
@@ -548,7 +539,7 @@ class FILESYSTEM:
     SEPARATOR = '/'
     ROOT = '/'
     HOME_DIR = '/home'
-    PIPING_FILE = ".%%%PipingFile%%%."
+    PIPING_FILE = ".%%% P i p i n g  F i l e %%%."
 
     class TYPE:
         NTFS = 'ntfs'
@@ -571,3 +562,7 @@ class COMPUTER:
     class ARP_CACHE:
         DYNAMIC = "dynamic"
         STATIC = "static"
+        ITEM_LIFETIME = 300  # seconds
+
+    class SWITCH_TABLE:
+        ITEM_LIFETIME = 300  # seconds
