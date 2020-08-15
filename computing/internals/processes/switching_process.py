@@ -44,7 +44,7 @@ class SwitchingProcess(Process):
         :return: None
         """
         for src_mac, switch_table_item in list(self.switching_table.items()):
-            if MainLoop.instance.time_since(switch_table_item.time) > SWITCH_TABLE.ITEM_LIFETIME:
+            if MainLoop.instance.time_since(switch_table_item.time) > COMPUTER.SWITCH_TABLE.ITEM_LIFETIME:
                 del self.switching_table[src_mac]
 
     def send_new_packets_to_destinations(self, packets):

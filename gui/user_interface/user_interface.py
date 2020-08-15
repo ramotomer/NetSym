@@ -945,7 +945,7 @@ class UserInterface:
                 process = computer.get_running_process(TCPProcess)
                 print(f"window (of {process}): {process.sending_window}")
 
-        self.set_all_connection_speeds(450)
+        # self.set_all_connection_speeds(200)
 
     def create_computer_with_ip(self):
         """
