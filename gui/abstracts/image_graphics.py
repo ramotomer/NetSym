@@ -1,11 +1,15 @@
+from itertools import product
+
 import pyglet
 
 from consts import *
+from exceptions import NoSuchGraphicsObjectError
 from gui.abstracts.graphics_object import GraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rectangle
 from gui.user_interface.resizing_dot import ResizingDot
+from usefuls.funcs import get_the_one
 
 
 class ImageGraphics(GraphicsObject):
@@ -23,9 +27,20 @@ class ImageGraphics(GraphicsObject):
 
         self.is_image = True
 
-        self.resizing_dot = None
+        self.resizing_dots = []
 
         MainLoop.instance.register_graphics_object(self, is_in_background)
+
+    @property
+    def location(self):
+        return self.x, self.y
+
+    @location.setter
+    def location(self, value):
+        self.x, self.y = value
+
+        for dot in self.resizing_dots:
+            dot.update_object_location()
 
     @property
     def width(self):
@@ -131,27 +146,49 @@ class ImageGraphics(GraphicsObject):
             x, y = self.get_centered_coordinates()
 
         corner = x - SELECTED_OBJECT.PADDING, y - SELECTED_OBJECT.PADDING
+        proportions = self.sprite.width + (2 * SELECTED_OBJECT.PADDING), self.sprite.height + (2 * SELECTED_OBJECT.PADDING)
+
         draw_rectangle(
             *corner,
-            self.sprite.width + (2 * SELECTED_OBJECT.PADDING),
-            self.sprite.height + (2 * SELECTED_OBJECT.PADDING),
+            *proportions,
             outline_color=SELECTED_OBJECT.COLOR,
         )
 
-        self.show_resizing_dot(corner)
+        directions = set(product(range(-1, 2), repeat=2)) - {(0, 0)}
+        for direction in directions:
+            self.show_resizing_dot(direction, constrain_proportions=(0 not in direction))
 
-    def show_resizing_dot(self, corner):
+    def get_corner_by_direction(self, direction):
         """
-        Displays and enables the little dot that allows resizing of objects.
-        :param corner:
+        Returns the location of a corner based on a direction, which is a tuple indicating the
+        sign (positivity or negativity) of the corner
+        :param direction: (1, 1) for example, or (0, -1)
         :return:
         """
-        if self.resizing_dot is None:
-            self.resizing_dot = ResizingDot(*corner, self)
-            MainLoop.instance.graphics_objects.append(self.resizing_dot)
+        x, y = self.x, self.y
+        if self.centered:
+            x, y = self.get_centered_coordinates()
 
-        self.resizing_dot.draw()
-        self.resizing_dot.move()
+        bottom_left_x, bottom_left_y = x - SELECTED_OBJECT.PADDING, y - SELECTED_OBJECT.PADDING
+        width = self.sprite.width + (2 * SELECTED_OBJECT.PADDING)
+        height = self.sprite.height + (2 * SELECTED_OBJECT.PADDING)
+
+        dx, dy = direction
+        return (bottom_left_x + width / 2) + ((width / 2) * dx), (bottom_left_y + height / 2) + ((height / 2) * dy)
+
+    def show_resizing_dot(self, direction, constrain_proportions=False):
+        """
+        Displays and enables the little dot that allows resizing of objects.
+        """
+        if get_the_one(self.resizing_dots, lambda d: d.direction == direction) is None:
+            dot = ResizingDot(*self.get_corner_by_direction(direction), self, direction, constrain_proportions)
+            self.resizing_dots.append(dot)
+            MainLoop.instance.graphics_objects.append(dot)
+            MainLoop.instance.insert_to_loop(dot.self_destruct_if_not_showing)
+
+        dot = get_the_one(self.resizing_dots, lambda d: d.direction == direction, NoSuchGraphicsObjectError)
+        dot.draw()
+        dot.move()
 
     def start_viewing(self, user_interface):
         """
@@ -203,9 +240,9 @@ class ImageGraphics(GraphicsObject):
 
         self.sprite.update(x=x, y=y)
 
-    def resize(self, width_diff, height_diff):
+    def resize(self, width_diff, height_diff, constrain_proportions=False):
         """
-
+        Receives a diff in the width and height and resizes the object accordingly
         """
         new_width = self.width + width_diff
         new_height = self.height + height_diff
@@ -213,8 +250,17 @@ class ImageGraphics(GraphicsObject):
         new_width = max(SHAPES.CIRCLE.RESIZE_DOT.MINIMAL_RESIZE_SIZE, new_width)
         new_height = max(SHAPES.CIRCLE.RESIZE_DOT.MINIMAL_RESIZE_SIZE, new_height)
 
-        self.sprite.update(scale_x=(new_width / self.sprite.image.width),
-                           scale_y=(new_height / self.sprite.image.height))
+        current_proportions = self.sprite.scale_y / self.sprite.scale_x
+
+        scale_x = (new_width / self.sprite.image.width)
+        scale_y = (new_height / self.sprite.image.height)
+        if constrain_proportions:
+            scale_y = current_proportions * scale_x
+
+        self.sprite.update(scale_x=scale_x, scale_y=scale_y)
+
+        for dot in self.resizing_dots:
+            dot.update_object_size()
 
     def __str__(self):
         """The string representation of the GraphicsObject"""

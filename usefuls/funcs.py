@@ -23,7 +23,7 @@ def get_the_one(iterable, condition, raises=None):
         if condition(item):
             return item
     if raises is not None:
-        raise raises('Failed to "get_the_one" since it does not exist in your iterable')
+        raise raises(f'Failed to "get_the_one" since it does not exist in your iterable: {iterable}')
     return None
 
 
