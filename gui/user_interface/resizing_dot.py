@@ -20,19 +20,16 @@ class ResizingDot(UserInterfaceGraphicsObject):
         """
         super(ResizingDot, self).__init__(x, y, centered=True, do_render=False)
         self.radius = SHAPES.CIRCLE.RESIZE_DOT.RADIUS
-        self.__resized_object = resized_object
-        self.__object_distance = distance((x, y), self.__resized_object.location)
+        self._resized_object = resized_object
+
+        self._x_diff, self._y_diff = x - self._resized_object.x, y - self._resized_object.y
 
         self.__last_drawn = time.time()
 
-        if not hasattr(self.__resized_object, "resize"):
-            raise ObjectIsNotResizableError(f"{self.__resized_object} has not 'resize' method")
+        if not hasattr(self._resized_object, "resize"):
+            raise ObjectIsNotResizableError(f"{self._resized_object} has not 'resize' method")
 
         self.location = x, y
-
-    @property
-    def ratio(self):
-        return distance(self.location, self.__resized_object.location) / self.__object_distance
 
     def is_mouse_in(self):
         return distance(MainWindow.main_window.get_mouse_location(), self.location) <= self.radius
@@ -51,12 +48,19 @@ class ResizingDot(UserInterfaceGraphicsObject):
         self.__last_drawn = time.time()
 
     def move(self):
-        self.location = MainWindow.main_window.get_mouse_location()
-        self.__resized_object.resize(self.ratio)
-        self.__object_distance = distance(self.location, self.__resized_object.location)
+        if self.is_mouse_in() and MainWindow.main_window.mouse_pressed:
+            self.location = MainWindow.main_window.get_mouse_location()
+            x, y = self.location
+
+            current_x_diff, current_y_diff = x - self._resized_object.x, y - self._resized_object.y
+
+            self._resized_object.resize((self._x_diff - current_x_diff) * 2,
+                                        (self._y_diff - current_y_diff) * 2)
+
+            self._x_diff, self._y_diff = x - self._resized_object.x, y - self._resized_object.y
 
     def dict_save(self):
         pass
 
     def __repr__(self):
-        return f"resizing dot for object: {repr(self.__resized_object)}"
+        return f"resizing dot for object: {repr(self._resized_object)}"
