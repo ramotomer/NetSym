@@ -508,7 +508,8 @@ class SHAPES:
         SEGMENT_COUNT = 50
 
         class RESIZE_DOT:
-            RADIUS = 10
+            RADIUS = 4
+            MINIMAL_RESIZE_SIZE = 10
 
     class SINE_WAVE:
         MINIMAL_POINT_DISTANCE = 5

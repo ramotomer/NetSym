@@ -1,13 +1,13 @@
 import time
 
 from exceptions import ObjectIsNotResizableError
-from gui.abstracts.graphics_object import GraphicsObject
+from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_window import MainWindow, SHAPES, SELECTION_SQUARE, COLORS
 from gui.shape_drawing import draw_circle
 from usefuls.funcs import distance
 
 
-class ResizingDot(GraphicsObject):
+class ResizingDot(UserInterfaceGraphicsObject):
     """
     The Dot in the side of the selected resizable objects. 
     Enables you to resize the objects. 
@@ -34,13 +34,15 @@ class ResizingDot(GraphicsObject):
     def ratio(self):
         return distance(self.location, self.__resized_object.location) / self.__object_distance
 
-    @property
     def is_mouse_in(self):
         return distance(MainWindow.main_window.get_mouse_location(), self.location) <= self.radius
 
+    def mark_as_selected(self):
+        pass
+
     @property
     def color(self):
-        if not self.is_mouse_in:
+        if not self.is_mouse_in():
             return SELECTION_SQUARE.COLOR
         return COLORS.RED
 
@@ -55,3 +57,6 @@ class ResizingDot(GraphicsObject):
 
     def dict_save(self):
         pass
+
+    def __repr__(self):
+        return f"resizing dot for object: {repr(self.__resized_object)}"

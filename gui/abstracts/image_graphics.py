@@ -133,11 +133,21 @@ class ImageGraphics(GraphicsObject):
             outline_color=SELECTED_OBJECT.COLOR,
         )
 
+        self.show_resizing_dot(corner)
+
+    def show_resizing_dot(self, corner):
+        """
+        Displays and enables the little dot that allows resizing of objects.
+        :param corner:
+        :return:
+        """
         if self.resizing_dot is None:
             self.resizing_dot = ResizingDot(*corner, self)
-            
+            MainLoop.instance.graphics_objects.append(self.resizing_dot)
+
         self.resizing_dot.draw()
-        if self.is_mouse_in() and MainWindow.main_window.mouse_pressed:
+
+        if self.resizing_dot.is_mouse_in() and MainWindow.main_window.mouse_pressed:
             self.resizing_dot.move()
 
     def start_viewing(self, user_interface):
@@ -196,7 +206,16 @@ class ImageGraphics(GraphicsObject):
         :param ratio:
         :return:
         """
-        self.sprite.update(scale_x=(ratio * self.sprite.scale_x), scale_y=(ratio * self.sprite.scale_y))
+
+        new_width = ratio * self.width
+        if not new_width:
+            ratio = 1
+        elif new_width < SHAPES.CIRCLE.RESIZE_DOT.MINIMAL_RESIZE_SIZE:
+            ratio = SHAPES.CIRCLE.RESIZE_DOT.MINIMAL_RESIZE_SIZE / new_width
+
+        new_scale_y = (ratio * self.sprite.scale_y)
+        new_scale_x = (ratio * self.sprite.scale_x)
+        self.sprite.update(scale_x=new_scale_x, scale_y=new_scale_y)
 
     def __str__(self):
         """The string representation of the GraphicsObject"""

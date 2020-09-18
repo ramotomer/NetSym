@@ -1440,7 +1440,8 @@ class UserInterface:
             object_the_mouse_is_on = MainLoop.instance.get_object_the_mouse_is_on()
 
             self.dragged_object = object_the_mouse_is_on
-            self.selected_object = object_the_mouse_is_on
+            if not isinstance(object_the_mouse_is_on, UserInterfaceGraphicsObject):
+                self.selected_object = object_the_mouse_is_on
 
             if object_the_mouse_is_on is not None:  # this block is in charge of dragging the marked objects
                 mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
