@@ -5,6 +5,7 @@ from gui.abstracts.graphics_object import GraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rectangle
+from gui.user_interface.resizing_dot import ResizingDot
 
 
 class ImageGraphics(GraphicsObject):
@@ -21,6 +22,8 @@ class ImageGraphics(GraphicsObject):
         self.sprite = None
 
         self.is_image = True
+
+        self.resizing_dot = None
 
         MainLoop.instance.register_graphics_object(self, is_in_background)
 
@@ -121,13 +124,21 @@ class ImageGraphics(GraphicsObject):
         x, y = self.x, self.y
         if self.centered:
             x, y = self.get_centered_coordinates()
+
+        corner = x - SELECTED_OBJECT.PADDING, y - SELECTED_OBJECT.PADDING
         draw_rectangle(
-            x - SELECTED_OBJECT.PADDING,
-            y - SELECTED_OBJECT.PADDING,
+            *corner,
             self.sprite.width + (2 * SELECTED_OBJECT.PADDING),
             self.sprite.height + (2 * SELECTED_OBJECT.PADDING),
             outline_color=SELECTED_OBJECT.COLOR,
         )
+
+        if self.resizing_dot is None:
+            self.resizing_dot = ResizingDot(*corner, self)
+            
+        self.resizing_dot.draw()
+        if self.is_mouse_in() and MainWindow.main_window.mouse_pressed:
+            self.resizing_dot.move()
 
     def start_viewing(self, user_interface):
         """
@@ -178,6 +189,14 @@ class ImageGraphics(GraphicsObject):
             x, y = self.get_centered_coordinates()
 
         self.sprite.update(x=x, y=y)
+
+    def resize(self, ratio):
+        """
+        Resizing the object
+        :param ratio:
+        :return:
+        """
+        self.sprite.update(scale_x=(ratio * self.sprite.scale_x), scale_y=(ratio * self.sprite.scale_y))
 
     def __str__(self):
         """The string representation of the GraphicsObject"""

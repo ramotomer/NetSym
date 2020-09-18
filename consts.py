@@ -507,6 +507,9 @@ class SHAPES:
     class CIRCLE:
         SEGMENT_COUNT = 50
 
+        class RESIZE_DOT:
+            RADIUS = 10
+
     class SINE_WAVE:
         MINIMAL_POINT_DISTANCE = 5
         INITIAL_ANGLE = 0
