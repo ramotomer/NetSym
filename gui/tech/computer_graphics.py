@@ -144,7 +144,7 @@ class ComputerGraphics(ImageGraphics):
             ),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
-        return self.copy_sprite(self.sprite, IMAGES.SCALE_FACTORS.VIEWING_OBJECTS), self.generate_view_text(), self.buttons_id
+        return self.copy_sprite(self.sprite), self.generate_view_text(), self.buttons_id
 
     def end_viewing(self, user_interface):
         """Ends the viewing of the object in the side window"""

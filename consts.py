@@ -340,6 +340,7 @@ class VIEW:
 
     TEXT_PADDING = 40
     PIXELS_PER_SCROLL = 20
+    IMAGE_SIZE = 83.4
 
 
 class ANIMATIONS:

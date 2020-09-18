@@ -64,6 +64,8 @@ class ImageGraphics(GraphicsObject):
         :param image_name: come on bro....
         :param x:
         :param y:
+        :param is_opaque:
+        :param scale_factor:
         :return: `pyglet.sprite.Sprite` object
         """
         returned = pyglet.sprite.Sprite(pyglet.image.load(image_name), x=x, y=y)
@@ -72,15 +74,18 @@ class ImageGraphics(GraphicsObject):
         return returned
 
     @staticmethod
-    def copy_sprite(sprite, scale):
+    def copy_sprite(sprite, new_width=VIEW.IMAGE_SIZE, new_height=None):
         """
         Receive a sprite object and return a copy of it.
         :param sprite: a `pyglet.sprite.Sprite` object.
-        :param scale: the scaling factor that we want the new sprite to have.
+        :param new_width: the desired width of the sprite
+        :param new_height: if left empty, equals to `new_width`
         :return: a new copied `pyglet.sprite.Sprite`
         """
         returned = pyglet.sprite.Sprite(sprite.image, x=sprite.x, y=sprite.y)
-        returned.update(scale=scale)
+        new_height = new_height if new_height is not None else new_width
+
+        returned.update(scale_x=(new_width / sprite.image.width), scale_y=(new_height / sprite.image.height))
         returned.opacity = sprite.opacity
         return returned
 
@@ -156,7 +161,7 @@ class ImageGraphics(GraphicsObject):
         when this object is pressed. also returns the added button id in the returned tuple.
         :return:
         """
-        return self.copy_sprite(self.sprite, IMAGES.SCALE_FACTORS.VIEWING_OBJECTS), self.generate_view_text(), None
+        return self.copy_sprite(self.sprite), self.generate_view_text(), None
 
     def generate_view_text(self):
         """

@@ -305,7 +305,9 @@ class UserInterface:
 
         sprite, text, buttons_id = graphics_object.start_viewing(self)
         if sprite is not None:
-            sprite.update(*self.viewing_image_location)
+            sprite.update(*self.viewing_image_location,
+                          scale_x=VIEW.IMAGE_SIZE / sprite.image.width,
+                          scale_y=VIEW.IMAGE_SIZE / sprite.image.height)
             MainLoop.instance.insert_to_loop(sprite.draw)
 
             if graphics_object.is_packet:
