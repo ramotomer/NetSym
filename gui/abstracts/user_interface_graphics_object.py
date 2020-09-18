@@ -10,6 +10,7 @@ class UserInterfaceGraphicsObject(GraphicsObject, metaclass=ABCMeta):
     """
     def __init__(self, x=None, y=None, do_render=True, centered=False, is_in_background=False, is_pressable=False):
         super(UserInterfaceGraphicsObject, self).__init__(x, y, do_render, centered, is_in_background, is_pressable)
+        self.location = x, y
         self.parent_graphics = None
         self.padding = None
 

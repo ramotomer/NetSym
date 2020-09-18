@@ -189,7 +189,18 @@ Name: {self.computer.name}
         Calculates the distance that the interface should be away from the computer.
         :return:
         """
-        return (IMAGES.SIZE * self.sprite.scale_x) - INTERFACES.COMPUTER_DISTANCE
+        return self.width - INTERFACES.COMPUTER_DISTANCE
+
+    def update_text_location(self):
+        """
+        updates the location of the text (the padding) according to the size of the computer
+        :return:
+        """
+        self.child_graphics_objects.text.padding = 0, -self.height / 2
+
+    def resize(self, width_diff, height_diff, constrain_proportions=False):
+        super(ComputerGraphics, self).resize(width_diff, height_diff, constrain_proportions)
+        self.update_text_location()
 
     def __str__(self):
         return "ComputerGraphics"
