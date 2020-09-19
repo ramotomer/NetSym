@@ -1,7 +1,7 @@
 import cmath
 import datetime
 from functools import reduce
-from math import sqrt, sin, cos, pi, atan
+from math import sin, cos, pi, atan
 from operator import mul
 
 from consts import *
@@ -23,7 +23,7 @@ def get_the_one(iterable, condition, raises=None):
         if condition(item):
             return item
     if raises is not None:
-        raise raises('Failed to "get_the_one" since it does not exist in your iterable')
+        raise raises(f'Failed to "get_the_one" since it does not exist in your iterable: {iterable}')
     return None
 
 
@@ -115,7 +115,7 @@ def insort(list_, item, key=lambda t: t):
     list_.insert(low_index, item)
 
 
-def circular_coordinates(center_location: tuple, radius, count):
+def circular_coordinates(center_location: tuple, radius, count, add_gl_coordinate=False):
     """
     a generator of coordinates in a circular fashion around a given point.
     :param center_location: The location of the center
@@ -129,7 +129,8 @@ def circular_coordinates(center_location: tuple, radius, count):
     d_theta = (2 * pi) / count
     initial_theta = 0  # pi / 2
     for i in range(count):
-        yield x + (radius * cos((i * d_theta) + initial_theta)), y + (radius * sin((i * d_theta) + initial_theta))
+        coords = x + (radius * cos((i * d_theta) + initial_theta)), y + (radius * sin((i * d_theta) + initial_theta))
+        yield (coords + (0,)) if add_gl_coordinate else coords
 
 
 def sine_wave_coordinates(start_coordinates, end_coordinates, amplitude=10, frequency=1):
@@ -241,3 +242,21 @@ def all_indexes(string, substring):
             yield last_index
         except ValueError:
             return
+
+
+def my_range(start, end=None, step=1):
+    """
+    Just like `range`, but supports non-whole `step`s
+    :param start:
+    :param end:
+    :param step:
+    :return:
+    """
+    if end is None:
+        end = start
+        start = 0
+
+    current = start
+    while current < end:
+        yield current
+        current += step

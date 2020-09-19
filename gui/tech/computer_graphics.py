@@ -144,7 +144,7 @@ class ComputerGraphics(ImageGraphics):
             ),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
-        return self.copy_sprite(self.sprite, IMAGES.SCALE_FACTORS.VIEWING_OBJECTS), self.generate_view_text(), self.buttons_id
+        return self.copy_sprite(self.sprite), self.generate_view_text(), self.buttons_id
 
     def end_viewing(self, user_interface):
         """Ends the viewing of the object in the side window"""
@@ -189,7 +189,18 @@ Name: {self.computer.name}
         Calculates the distance that the interface should be away from the computer.
         :return:
         """
-        return (IMAGES.SIZE * self.sprite.scale_x) - INTERFACES.COMPUTER_DISTANCE
+        return min(self.width, self.height) * INTERFACES.COMPUTER_DISTANCE_RATIO
+
+    def update_text_location(self):
+        """
+        updates the location of the text (the padding) according to the size of the computer
+        :return:
+        """
+        self.child_graphics_objects.text.padding = 0, -self.height / 2
+
+    def resize(self, width_diff, height_diff, constrain_proportions=False):
+        super(ComputerGraphics, self).resize(width_diff, height_diff, constrain_proportions)
+        self.update_text_location()
 
     def __str__(self):
         return "ComputerGraphics"
@@ -206,6 +217,7 @@ Name: {self.computer.name}
             "class": self.class_name,
             "location": self.location,
             "name": self.computer.name,
+            "size": [self.sprite.scale_x, self.sprite.scale_y],
             "os": self.computer.os,
             "interfaces": [interface.graphics.dict_save() for interface in self.computer.interfaces],
             "open_tcp_ports": self.computer.open_tcp_ports,

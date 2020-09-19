@@ -1,10 +1,15 @@
+from itertools import product
+
 import pyglet
 
 from consts import *
+from exceptions import NoSuchGraphicsObjectError
 from gui.abstracts.graphics_object import GraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rectangle
+from gui.user_interface.resizing_dot import ResizingDot
+from usefuls.funcs import get_the_one
 
 
 class ImageGraphics(GraphicsObject):
@@ -22,7 +27,20 @@ class ImageGraphics(GraphicsObject):
 
         self.is_image = True
 
+        self.resizing_dots = []
+
         MainLoop.instance.register_graphics_object(self, is_in_background)
+
+    @property
+    def location(self):
+        return self.x, self.y
+
+    @location.setter
+    def location(self, value):
+        self.x, self.y = value
+
+        for dot in self.resizing_dots:
+            dot.update_object_location()
 
     @property
     def width(self):
@@ -61,6 +79,8 @@ class ImageGraphics(GraphicsObject):
         :param image_name: come on bro....
         :param x:
         :param y:
+        :param is_opaque:
+        :param scale_factor:
         :return: `pyglet.sprite.Sprite` object
         """
         returned = pyglet.sprite.Sprite(pyglet.image.load(image_name), x=x, y=y)
@@ -69,15 +89,18 @@ class ImageGraphics(GraphicsObject):
         return returned
 
     @staticmethod
-    def copy_sprite(sprite, scale):
+    def copy_sprite(sprite, new_width=VIEW.IMAGE_SIZE, new_height=None):
         """
         Receive a sprite object and return a copy of it.
         :param sprite: a `pyglet.sprite.Sprite` object.
-        :param scale: the scaling factor that we want the new sprite to have.
+        :param new_width: the desired width of the sprite
+        :param new_height: if left empty, equals to `new_width`
         :return: a new copied `pyglet.sprite.Sprite`
         """
         returned = pyglet.sprite.Sprite(sprite.image, x=sprite.x, y=sprite.y)
-        returned.update(scale=scale)
+        new_height = new_height if new_height is not None else new_width
+
+        returned.update(scale_x=(new_width / sprite.image.width), scale_y=(new_height / sprite.image.height))
         returned.opacity = sprite.opacity
         return returned
 
@@ -121,13 +144,51 @@ class ImageGraphics(GraphicsObject):
         x, y = self.x, self.y
         if self.centered:
             x, y = self.get_centered_coordinates()
+
+        corner = x - SELECTED_OBJECT.PADDING, y - SELECTED_OBJECT.PADDING
+        proportions = self.sprite.width + (2 * SELECTED_OBJECT.PADDING), self.sprite.height + (2 * SELECTED_OBJECT.PADDING)
+
         draw_rectangle(
-            x - SELECTED_OBJECT.PADDING,
-            y - SELECTED_OBJECT.PADDING,
-            self.sprite.width + (2 * SELECTED_OBJECT.PADDING),
-            self.sprite.height + (2 * SELECTED_OBJECT.PADDING),
+            *corner,
+            *proportions,
             outline_color=SELECTED_OBJECT.COLOR,
         )
+
+        directions = set(product(range(-1, 2), repeat=2)) - {(0, 0)}
+        for direction in directions:
+            self.show_resizing_dot(direction, constrain_proportions=(0 not in direction))
+
+    def get_corner_by_direction(self, direction):
+        """
+        Returns the location of a corner based on a direction, which is a tuple indicating the
+        sign (positivity or negativity) of the corner
+        :param direction: (1, 1) for example, or (0, -1)
+        :return:
+        """
+        x, y = self.x, self.y
+        if self.centered:
+            x, y = self.get_centered_coordinates()
+
+        bottom_left_x, bottom_left_y = x - SELECTED_OBJECT.PADDING, y - SELECTED_OBJECT.PADDING
+        width = self.sprite.width + (2 * SELECTED_OBJECT.PADDING)
+        height = self.sprite.height + (2 * SELECTED_OBJECT.PADDING)
+
+        dx, dy = direction
+        return (bottom_left_x + width / 2) + ((width / 2) * dx), (bottom_left_y + height / 2) + ((height / 2) * dy)
+
+    def show_resizing_dot(self, direction, constrain_proportions=False):
+        """
+        Displays and enables the little dot that allows resizing of objects.
+        """
+        if get_the_one(self.resizing_dots, lambda d: d.direction == direction) is None:
+            dot = ResizingDot(*self.get_corner_by_direction(direction), self, direction, constrain_proportions)
+            self.resizing_dots.append(dot)
+            MainLoop.instance.graphics_objects.append(dot)
+            MainLoop.instance.insert_to_loop(dot.self_destruct_if_not_showing)
+
+        dot = get_the_one(self.resizing_dots, lambda d: d.direction == direction, NoSuchGraphicsObjectError)
+        dot.draw()
+        dot.move()
 
     def start_viewing(self, user_interface):
         """
@@ -135,7 +196,7 @@ class ImageGraphics(GraphicsObject):
         when this object is pressed. also returns the added button id in the returned tuple.
         :return:
         """
-        return self.copy_sprite(self.sprite, IMAGES.SCALE_FACTORS.VIEWING_OBJECTS), self.generate_view_text(), None
+        return self.copy_sprite(self.sprite), self.generate_view_text(), None
 
     def generate_view_text(self):
         """
@@ -178,6 +239,28 @@ class ImageGraphics(GraphicsObject):
             x, y = self.get_centered_coordinates()
 
         self.sprite.update(x=x, y=y)
+
+    def resize(self, width_diff, height_diff, constrain_proportions=False):
+        """
+        Receives a diff in the width and height and resizes the object accordingly
+        """
+        new_width = self.width + width_diff
+        new_height = self.height + height_diff
+
+        new_width = max(SHAPES.CIRCLE.RESIZE_DOT.MINIMAL_RESIZE_SIZE, new_width)
+        new_height = max(SHAPES.CIRCLE.RESIZE_DOT.MINIMAL_RESIZE_SIZE, new_height)
+
+        current_proportions = self.sprite.scale_y / self.sprite.scale_x
+
+        scale_x = (new_width / self.sprite.image.width)
+        scale_y = (new_height / self.sprite.image.height)
+        if constrain_proportions:
+            scale_y = current_proportions * scale_x
+
+        self.sprite.update(scale_x=scale_x, scale_y=scale_y)
+
+        for dot in self.resizing_dots:
+            dot.update_object_size()
 
     def __str__(self):
         """The string representation of the GraphicsObject"""

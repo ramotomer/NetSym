@@ -88,7 +88,7 @@ class PacketGraphics(ImageGraphics):
             "Drop (alt+d)": with_args(user_interface.drop_packet, self),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
-        return self.copy_sprite(self.sprite, IMAGES.SCALE_FACTORS.VIEWING_OBJECTS), '', self.buttons_id
+        return self.copy_sprite(self.sprite), '', self.buttons_id
 
     def end_viewing(self, user_interface):
         """

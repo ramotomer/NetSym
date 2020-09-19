@@ -221,6 +221,12 @@ class PopupWindowWithThisError(GraphicsError):
     is opened.
     """
 
+
+class ObjectIsNotResizableError(GraphicsError):
+    """
+    When a resizing dot is assigned to a non-resizable object.
+    """
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
