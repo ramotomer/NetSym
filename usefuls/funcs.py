@@ -115,7 +115,7 @@ def insort(list_, item, key=lambda t: t):
     list_.insert(low_index, item)
 
 
-def circular_coordinates(center_location: tuple, radius, count):
+def circular_coordinates(center_location: tuple, radius, count, add_gl_coordinate=False):
     """
     a generator of coordinates in a circular fashion around a given point.
     :param center_location: The location of the center
@@ -129,7 +129,8 @@ def circular_coordinates(center_location: tuple, radius, count):
     d_theta = (2 * pi) / count
     initial_theta = 0  # pi / 2
     for i in range(count):
-        yield x + (radius * cos((i * d_theta) + initial_theta)), y + (radius * sin((i * d_theta) + initial_theta))
+        coords = x + (radius * cos((i * d_theta) + initial_theta)), y + (radius * sin((i * d_theta) + initial_theta))
+        yield (coords + (0,)) if add_gl_coordinate else coords
 
 
 def sine_wave_coordinates(start_coordinates, end_coordinates, amplitude=10, frequency=1):

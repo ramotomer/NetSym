@@ -217,6 +217,7 @@ Name: {self.computer.name}
             "class": self.class_name,
             "location": self.location,
             "name": self.computer.name,
+            "size": [self.sprite.scale_x, self.sprite.scale_y],
             "os": self.computer.os,
             "interfaces": [interface.graphics.dict_save() for interface in self.computer.interfaces],
             "open_tcp_ports": self.computer.open_tcp_ports,

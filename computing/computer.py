@@ -102,6 +102,8 @@ class Computer:
         self.output_method = COMPUTER.OUTPUT_METHOD.CONSOLE
         self.active_shells = []
 
+        self.initial_size = IMAGES.SCALE_FACTORS.SPRITES, IMAGES.SCALE_FACTORS.SPRITES
+
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ method does not run when program is paused
 
@@ -150,6 +152,8 @@ class Computer:
         """
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.COMPUTER if not self.open_tcp_ports else IMAGES.COMPUTERS.SERVER)
         self.loopback.connection.connection.show(self.graphics)
+        self.graphics.sprite.update(scale_x=self.initial_size[0], scale_y=self.initial_size[1])
+        self.graphics.update_text_location()
 
     def print(self, string):
         """
@@ -1152,4 +1156,5 @@ class Computer:
         )
         returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])
         returned.filesystem = Filesystem.from_dict_load(dict_["filesystem"])
+        returned.initial_size = dict_["size"]
         return returned

@@ -429,7 +429,7 @@ class INTERFACES:
 
 
 class TEXT:
-    DEFAULT_Y_PADDING = -30
+    DEFAULT_Y_PADDING = -35
     COLOR = COLORS.BLACK
 
     class ALIGN:
