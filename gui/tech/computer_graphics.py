@@ -189,7 +189,7 @@ Name: {self.computer.name}
         Calculates the distance that the interface should be away from the computer.
         :return:
         """
-        return self.width - INTERFACES.COMPUTER_DISTANCE
+        return min(self.width, self.height) * INTERFACES.COMPUTER_DISTANCE_RATIO
 
     def update_text_location(self):
         """

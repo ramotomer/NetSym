@@ -1,5 +1,6 @@
 # this cannot import from anything!!! (almost)
 import os
+from math import sqrt
 
 from exceptions import TCPDoneReceiving
 
@@ -200,6 +201,7 @@ class COLORS:
     RED = (150, 0, 0)
     YELLOW = (200, 200, 0)
     GREEN = (0, 255, 0)
+    LIGHT_GREEN = (50, 255, 50)
     DARK_GREEN = (0, 100, 0)
     PINK = (255, 170, 170)
     ORANGE = (255, 215, 0)
@@ -422,6 +424,7 @@ class BUTTONS:
 
 class INTERFACES:
     COMPUTER_DISTANCE = 20
+    COMPUTER_DISTANCE_RATIO = 1 / sqrt(2)
     COLOR = COLORS.GRAY
     BLOCKED_COLOR = COLORS.RED
     WIDTH, HEIGHT = 10, 10
@@ -509,8 +512,9 @@ class SHAPES:
         SEGMENT_COUNT = 50
 
         class RESIZE_DOT:
-            RADIUS = 4
+            RADIUS = 5
             MINIMAL_RESIZE_SIZE = 30
+            COLOR_WHEN_SELECTED = COLORS.LIGHT_GREEN
 
     class SINE_WAVE:
         MINIMAL_POINT_DISTANCE = 5

@@ -1,7 +1,7 @@
 import cmath
 import datetime
 from functools import reduce
-from math import sqrt, sin, cos, pi, atan
+from math import sin, cos, pi, atan
 from operator import mul
 
 from consts import *
@@ -242,3 +242,21 @@ def all_indexes(string, substring):
             yield last_index
         except ValueError:
             return
+
+
+def my_range(start, end=None, step=1):
+    """
+    Just like `range`, but supports non-whole `step`s
+    :param start:
+    :param end:
+    :param step:
+    :return:
+    """
+    if end is None:
+        end = start
+        start = 0
+
+    current = start
+    while current < end:
+        yield current
+        current += step
