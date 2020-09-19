@@ -58,6 +58,9 @@ class ComputerGraphics(ImageGraphics):
 
         self.buttons_id = None
 
+        self.sprite.update(scale_x=self.computer.initial_size[0], scale_y=self.computer.initial_size[1])
+        self.update_text_location()
+
     @property
     def console_location(self):
         return MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2) - (CONSOLE.WIDTH / 2), CONSOLE.Y
@@ -196,7 +199,7 @@ Name: {self.computer.name}
         updates the location of the text (the padding) according to the size of the computer
         :return:
         """
-        self.child_graphics_objects.text.padding = 0, -self.height / 2
+        self.child_graphics_objects.text.padding = 0, (-self.height / 2) + TEXT.DEFAULT_Y_PADDING
 
     def resize(self, width_diff, height_diff, constrain_proportions=False):
         super(ComputerGraphics, self).resize(width_diff, height_diff, constrain_proportions)

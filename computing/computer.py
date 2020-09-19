@@ -152,8 +152,6 @@ class Computer:
         """
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.COMPUTER if not self.open_tcp_ports else IMAGES.COMPUTERS.SERVER)
         self.loopback.connection.connection.show(self.graphics)
-        self.graphics.sprite.update(scale_x=self.initial_size[0], scale_y=self.initial_size[1])
-        self.graphics.update_text_location()
 
     def print(self, string):
         """
