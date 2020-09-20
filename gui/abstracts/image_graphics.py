@@ -9,7 +9,7 @@ from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rectangle
 from gui.user_interface.resizing_dot import ResizingDot
-from usefuls.funcs import get_the_one, scale_tuple
+from usefuls.funcs import get_the_one, scale_tuple, sum_tuples
 
 
 class ImageGraphics(GraphicsObject):
@@ -280,18 +280,15 @@ class ImageGraphics(GraphicsObject):
         data = bytearray(img.get_data("BGRA", img.width * 4))
 
         hue_r, hue_g, hue_b = hue
+        new_color_ratio = 0.5
         for i in range(0, len(data), 4):
             b, g, r, a = data[i:i + 4]
-            try:
-                data[i:i + 4] = [
-                    min(255, max(0, hue_b + b)),
-                    min(255, max(0, hue_g + g)),
-                    min(255, max(0, hue_r + r)),
-                    a,
-                ]
-            except:
-                print(a, r, g, b)
-                raise
+            data[i:i + 4] = [
+                int(min(255, max(0, (hue_b * (1 - new_color_ratio)) + (b * new_color_ratio)))),
+                int(min(255, max(0, (hue_g * (1 - new_color_ratio)) + (g * new_color_ratio)))),
+                int(min(255, max(0, (hue_r * (1 - new_color_ratio)) + (r * new_color_ratio)))),
+                int(a),
+            ]
 
         img.set_data("BGRA", img.width * 4, bytes(data))
         self.sprite.image = img
@@ -306,11 +303,20 @@ class ImageGraphics(GraphicsObject):
                        for item, value in COLORS.__dict__.items()
                        if not item.startswith("__") and "diff" not in item.lower()}
         try:
-            color = color_names[color_name]
+            color = color_names[color_name.split()[-1]]
         except KeyError:
             raise PopupWindowWithThisError(f"invalid color name: '{color_name}'")
 
+        if len(color_name.split()) > 1:
+            try:
+                color = sum_tuples({"light": (50, 50, 50), "dark": (-50, -50, -50)}[color_name.split()[-2]], color)
+            except KeyError:
+                raise PopupWindowWithThisError(f"invalid color name: '{color_name}'")
+
         self.add_hue(scale_tuple(1, color, True))
+
+        for _ in range(color_name.split().count("very")):
+            self.color_by_name(f"{color_name.split()[-2]} {color_name.split()[-1]}")
 
     def __str__(self):
         """The string representation of the GraphicsObject"""
