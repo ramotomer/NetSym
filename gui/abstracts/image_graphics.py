@@ -270,6 +270,28 @@ class ImageGraphics(GraphicsObject):
         for dot in self.resizing_dots:
             dot.update_object_size()
 
+    def add_hue(self, hue):
+        """
+        Adds a certain hue to the picture. the hue should be in the form (r, g, b)
+        :param hue:
+        :return:
+        """
+        img = self.sprite.image.get_image_data()
+        data = bytearray(img.get_data("BGRA", img.width * 4))
+
+        hue_r, hue_g, hue_b = hue
+        for i in range(0, len(data), 4):
+            b, g, r, a = data[i:i + 4]
+            data[i:i + 4] = [
+                min(255, max(0, hue_b + b)),
+                min(255, max(0, hue_g + g)),
+                min(255, max(0, hue_r + r)),
+                a,
+            ]
+
+        img.set_data("BGRA", img.width * 4, bytes(data))
+        self.sprite.image = img
+
     def __str__(self):
         """The string representation of the GraphicsObject"""
         return f"GraphicsObject({self.image_name}, {self.x, self.y})"

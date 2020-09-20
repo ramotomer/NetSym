@@ -4,7 +4,6 @@ import operator
 import random
 from collections import namedtuple, defaultdict
 from functools import reduce
-from math import sqrt
 from operator import concat, attrgetter
 
 import pyglet
@@ -948,6 +947,10 @@ class UserInterface:
                 print(f"window (of {process}): {process.sending_window}")
 
         # self.set_all_connection_speeds(200)
+        for computer in self.computers:
+            computer.graphics.add_hue((random.randint(-150, 150),
+                                       random.randint(-150, 150),
+                                       random.randint(-150, 150)))
 
     def create_computer_with_ip(self):
         """
