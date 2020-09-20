@@ -145,6 +145,12 @@ class ComputerGraphics(ImageGraphics):
                 self._open_shell,
                 user_interface,
             ),
+            "color (ctrl+alt+c)": with_args(
+                user_interface.ask_user_for,
+                str,
+                MESSAGES.INSERT.COLOR,
+                self.color_by_name,
+            ),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
         return self.copy_sprite(self.sprite), self.generate_view_text(), self.buttons_id

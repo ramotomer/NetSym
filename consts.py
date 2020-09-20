@@ -172,6 +172,7 @@ class MESSAGES:
         IP_FOR_PROCESS = "Insert an IP to start your process to:"
         PORT_NUMBER = "Insert a port number to open/close:"
         COMPUTER_NAME = "Insert a new name for the computer:"
+        COLOR = "choose a color:"
 
 
 class DIRECTORIES:
@@ -187,25 +188,26 @@ WINDOW_INPUT_LIST_FILE = os.path.join(DIRECTORIES.FILES, "window_inputs.txt")
 
 
 class COLORS:
-    DARK_GRAY = (20, 20, 20)
-    GRAY = (10, 10, 10)
-    LIGHT_GRAY = (150, 150, 150)
-    VERY_LIGHT_GRAY = (200, 200, 200)
-    BLACK = (0, 0, 0)
-    WHITE = (255, 255, 255)
     BLUE = (0, 0, 255)
+    RED = (150, 0, 0)
+    GREEN = (0, 255, 0)
+    YELLOW = (200, 200, 0)
+    WHITE = (255, 255, 255)
+    BLACK = (0, 0, 0)
+    GRAY = (10, 10, 10)
+    BROWN = (62, 39, 35)
+    PURPLE = (171, 71, 188)
+    PINK = (255, 170, 170)
+    TURQUOISE = (10, 255, 255)
+    ORANGE = (255, 215, 0)
+
+    LIGHT_GRAY = (150, 150, 150)
+    DARK_GRAY = (20, 20, 20)
+    VERY_LIGHT_GRAY = (200, 200, 200)
     LIGHT_BLUE = (100, 100, 255)
     VERY_LIGHT_BLUE = (180, 180, 255)
-    PURPLE = (171, 71, 188)
-    BROWN = (62, 39, 35)
-    RED = (150, 0, 0)
-    YELLOW = (200, 200, 0)
-    GREEN = (0, 255, 0)
     LIGHT_GREEN = (50, 255, 50)
     DARK_GREEN = (0, 100, 0)
-    PINK = (255, 170, 170)
-    ORANGE = (255, 215, 0)
-    TURQUOISE = (10, 255, 255)
     DARK_RED = (100, 0, 0)
 
     COLOR_DIFF = 20
