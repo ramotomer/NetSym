@@ -4,7 +4,7 @@ from exceptions import ObjectIsNotResizableError
 from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow, SHAPES, SELECTION_SQUARE, COLORS
-from gui.shape_drawing import draw_full_circle
+from gui.shape_drawing import draw_circle
 from usefuls.funcs import distance
 
 
@@ -17,7 +17,7 @@ class ResizingDot(UserInterfaceGraphicsObject):
         """
         Initiates the dot with the graphics object to allow it to resize it. 
         :param x: 
-        :param y:
+        :param y:w
         :param direction: a tuple simulating where in the object the dot is located (1, 1) for example if it is in
         """
         super(ResizingDot, self).__init__(x, y, centered=True, do_render=False)
@@ -48,8 +48,7 @@ class ResizingDot(UserInterfaceGraphicsObject):
         return SHAPES.CIRCLE.RESIZE_DOT.COLOR_WHEN_SELECTED
 
     def draw(self):
-        # draw_circle(self.x, self.y, self.radius, self.color)
-        draw_full_circle(*self.location, self.radius, self.color, COLORS.BLACK)
+        draw_circle(self.x, self.y, self.radius, COLORS.BLACK, self.color)
         self.__last_drawn = time.time()
 
     def move(self):

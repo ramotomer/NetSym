@@ -188,14 +188,15 @@ def scale_tuple(scalar, tup):
     return tuple(map(lambda t: reduce(mul, t), zip(([scalar] * len(tup)), tup)))
 
 
-def normal_color_to_weird_gl_color(color):
+def normal_color_to_weird_gl_color(color, add_alpha=True):
     """
     Some open GL functions require some different weird format of colors
     :param color:
     :return:
     """
     r, g, b = color
-    return r / 255, g / 255, b / 255, 1.0
+    returned = r / 255, g / 255, b / 255
+    return returned + ((1.0,) if add_alpha else tuple())
 
 
 def lighten_color(color, diff=COLORS.COLOR_DIFF):

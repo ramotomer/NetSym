@@ -1,8 +1,10 @@
 from address.mac_address import MACAddress
 from computing.computer import Computer
 from computing.interface import Interface
+from computing.internals.filesystem.filesystem import Filesystem
 from computing.internals.processes.stp_process import STPProcess
 from computing.internals.processes.switching_process import SwitchingProcess
+from computing.internals.routing_table import RoutingTable
 from consts import OS, PROTOCOLS, IMAGES
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.stp import STP, LogicalLinkControl
@@ -82,6 +84,9 @@ class Switch(Computer):
         """
         returned = cls(dict_["name"])
         returned.interfaces = [Interface.from_dict_load(interface_dict) for interface_dict in dict_["interfaces"]]
+        returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])
+        returned.filesystem = Filesystem.from_dict_load(dict_["filesystem"])
+        returned.initial_size = dict_["size"]
         return returned
 
 

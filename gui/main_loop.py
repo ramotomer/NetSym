@@ -172,7 +172,7 @@ class MainLoop:
             self.main_window.user_interface.selected_object.mark_as_selected()
 
         for marked_object in self.main_window.user_interface.marked_objects:
-            marked_object.mark_as_selected()
+            marked_object.mark_as_selected_non_resizable()
 
     def delete_all_graphics(self):
         """

@@ -336,13 +336,13 @@ class IMAGES:
 
 
 class VIEW:
-    IMAGE_COORDINATES = \
-        ((WINDOWS.MAIN.WIDTH - (WINDOWS.SIDE.WIDTH / 2)) - (IMAGES.SIZE * IMAGES.SCALE_FACTORS.VIEWING_OBJECTS / 2)), \
-        WINDOWS.MAIN.HEIGHT - ((IMAGES.SIZE * IMAGES.SCALE_FACTORS.VIEWING_OBJECTS) + 15)
+    IMAGE_SIZE = 83
+
+    IMAGE_COORDINATES = ((WINDOWS.MAIN.WIDTH - (WINDOWS.SIDE.WIDTH / 2)) - (IMAGE_SIZE / 2)), \
+                        WINDOWS.MAIN.HEIGHT - (IMAGE_SIZE + 5)
 
     TEXT_PADDING = 40
     PIXELS_PER_SCROLL = 20
-    IMAGE_SIZE = 83.4
 
 
 class ANIMATIONS:
@@ -511,6 +511,9 @@ class SHAPES:
     class CIRCLE:
         SEGMENT_COUNT = 50
 
+        class FULL:
+            DENSITY = 1 / 0.5  # circles per pixel
+
         class RESIZE_DOT:
             RADIUS = 5
             MINIMAL_RESIZE_SIZE = 30
@@ -548,7 +551,7 @@ class FILESYSTEM:
     SEPARATOR = '/'
     ROOT = '/'
     HOME_DIR = '/home'
-    PIPING_FILE = ".%%% P i p i n g  F i l e %%%."
+    PIPING_FILE = ".%%%~P~i~p~i~n~g~/~F~i~l~e~%%%."
 
     class TYPE:
         NTFS = 'ntfs'

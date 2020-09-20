@@ -135,24 +135,32 @@ class ImageGraphics(GraphicsObject):
         return self.x - int(self.sprite.width / 2), \
                self.y - int(self.sprite.height / 2)
 
-    def mark_as_selected(self):
+    def mark_as_selected_non_resizable(self):
         """
-        Marks a rectangle around a `GraphicsObject` that is selected.
-        Only call this function if the object is selected.
-        :return: None
+        Marks the object as selected, but does not show the resizing dots :)
+        :return:
         """
         x, y = self.x, self.y
         if self.centered:
             x, y = self.get_centered_coordinates()
 
         corner = x - SELECTED_OBJECT.PADDING, y - SELECTED_OBJECT.PADDING
-        proportions = self.sprite.width + (2 * SELECTED_OBJECT.PADDING), self.sprite.height + (2 * SELECTED_OBJECT.PADDING)
+        proportions = self.sprite.width + (2 * SELECTED_OBJECT.PADDING), self.sprite.height + (
+                    2 * SELECTED_OBJECT.PADDING)
 
         draw_rectangle(
             *corner,
             *proportions,
             outline_color=SELECTED_OBJECT.COLOR,
         )
+
+    def mark_as_selected(self):
+        """
+        Marks a rectangle around a `GraphicsObject` that is selected.
+        Only call this function if the object is selected.
+        :return: None
+        """
+        self.mark_as_selected_non_resizable()
 
         directions = set(product(range(-1, 2), repeat=2)) - {(0, 0)}
         for direction in directions:

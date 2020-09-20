@@ -4,7 +4,8 @@ from operator import itemgetter
 import pyglet
 
 from consts import *
-from usefuls.funcs import circular_coordinates, sine_wave_coordinates, lighten_color, darken_color, my_range
+from usefuls.funcs import circular_coordinates, sine_wave_coordinates, lighten_color, darken_color, \
+    normal_color_to_weird_gl_color
 
 
 def draw_line(point_1, point_2, color=COLORS.WHITE):
@@ -134,35 +135,24 @@ def draw_pause_rectangles():
     _draw_rect_no_outline(x + 2 * SHAPES.PAUSE_RECT.WIDTH, y, SHAPES.PAUSE_RECT.WIDTH, SHAPES.PAUSE_RECT.HEIGHT, COLORS.RED)
 
 
-def draw_circle(x, y, radius, color=COLORS.WHITE):
+def draw_circle(x, y, radius, outline_color=COLORS.WHITE, fill_color=None):
     """
     Draws a circle with a given center location and a radius and a color.
     :return:
     """
-    vertices = list(chain(*circular_coordinates((x, y), radius, SHAPES.CIRCLE.SEGMENT_COUNT)))
+    if fill_color is not None:
+        pyglet.gl.glColor3f(*normal_color_to_weird_gl_color(fill_color, False))
+        pyglet.gl.glLoadIdentity()
+        pyglet.gl.glBegin(pyglet.gl.GL_POLYGON)
+        for cx, cy in circular_coordinates((x, y), radius, SHAPES.CIRCLE.SEGMENT_COUNT):
+            pyglet.gl.glVertex2f(cx, cy)
+        pyglet.gl.glEnd()
 
+    vertices = list(chain(*circular_coordinates((x, y), radius, SHAPES.CIRCLE.SEGMENT_COUNT)))
     pyglet.graphics.draw(SHAPES.CIRCLE.SEGMENT_COUNT, pyglet.gl.GL_LINE_LOOP,
                          ('v2f', tuple(vertices)),
-                         ('c3B', color * SHAPES.CIRCLE.SEGMENT_COUNT),
+                         ('c3B', outline_color * SHAPES.CIRCLE.SEGMENT_COUNT),
                          )
-
-
-def draw_full_circle(x, y, radius, fill_color=COLORS.WHITE, outline_color=COLORS.BLACK):
-    """
-    Draws a full circle (not just the outline)
-    This is done in a very stupid way! please change one day if you figure out how to...
-    :param outline_color:
-    :param fill_color:
-    :param x:
-    :param y:
-    :param radius:
-    :return:
-    """
-    density = 1 / 0.5  # circles per pixel length
-    gap_between_circles = 1 / density
-    for i in my_range(0, radius, gap_between_circles):
-        draw_circle(x, y, i, fill_color)
-    draw_circle(x, y, radius, outline_color)
 
 
 def draw_sine_wave(start_coordinates, end_coordinates,
