@@ -1,18 +1,19 @@
+from abc import ABCMeta
 from itertools import product
 
 import pyglet
 
 from consts import *
-from exceptions import NoSuchGraphicsObjectError
+from exceptions import NoSuchGraphicsObjectError, PopupWindowWithThisError
 from gui.abstracts.graphics_object import GraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rectangle
 from gui.user_interface.resizing_dot import ResizingDot
-from usefuls.funcs import get_the_one
+from usefuls.funcs import get_the_one, scale_tuple, sum_tuples
 
 
-class ImageGraphics(GraphicsObject):
+class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
     """
     This class is a superclass of any `GraphicsObject` subclass which uses an image in its `draw` method.
     Put simply, it is a graphics object with a picture.
@@ -269,6 +270,58 @@ class ImageGraphics(GraphicsObject):
 
         for dot in self.resizing_dots:
             dot.update_object_size()
+
+    def add_hue(self, hue):
+        """
+        Adds a certain hue to the picture. the hue should be in the form (r, g, b)
+        :param hue:
+        :return:
+        """
+        img = self.sprite.image.get_image_data()
+        data = bytearray(img.get_data("BGRA", img.width * 4))
+
+        hue_r, hue_g, hue_b = hue
+        new_color_ratio = 0.5
+        for i in range(0, len(data), 4):
+            b, g, r, a = data[i:i + 4]
+            data[i:i + 4] = [
+                int(min(255, max(0, (hue_b * (1 - new_color_ratio)) + (b * new_color_ratio)))),
+                int(min(255, max(0, (hue_g * (1 - new_color_ratio)) + (g * new_color_ratio)))),
+                int(min(255, max(0, (hue_r * (1 - new_color_ratio)) + (r * new_color_ratio)))),
+                int(a),
+            ]
+
+        img.set_data("BGRA", img.width * 4, bytes(data))
+        self.sprite.image = img
+
+    def color_by_name(self, color_name):
+        """
+        Colors the sprite by a color name ("red", "blue", "light green"
+        :param color_name:
+        :return:
+        """
+        color_names = {item.lower().replace('_', ' '): value
+                       for item, value in COLORS.__dict__.items()
+                       if not item.startswith("__") and "diff" not in item.lower()}
+        try:
+            color = color_names[color_name.split()[-1]]
+        except KeyError:
+            raise PopupWindowWithThisError(f"invalid color name: '{color_name}'")
+
+        for _ in range(color_name.split().count("very") + int(len(color_name.split()) > 1)):
+            try:
+                color = sum_tuples({"light": (50, 50, 50), "dark": (-50, -50, -50)}[color_name.split()[-2]], color)
+            except KeyError:
+                raise PopupWindowWithThisError(f"invalid color name: '{color_name}'")
+
+        self.add_hue(scale_tuple(1, color, True))
+
+    def flush_colors(self):
+        """
+        Flushes the colors and hues from the sprite.
+        :return:
+        """
+        self.sprite.image = pyglet.image.load(self.image_name)
 
     def __str__(self):
         """The string representation of the GraphicsObject"""

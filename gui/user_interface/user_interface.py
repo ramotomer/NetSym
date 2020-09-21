@@ -4,7 +4,6 @@ import operator
 import random
 from collections import namedtuple, defaultdict
 from functools import reduce
-from math import sqrt
 from operator import concat, attrgetter
 
 import pyglet
@@ -108,6 +107,7 @@ class UserInterface:
             (key.TAB, KEYBOARD.MODIFIERS.SHIFT): with_args(self.tab_through_selected, True),
             (key.ESCAPE, KEYBOARD.MODIFIERS.NONE): with_args(self.set_mode, MODES.NORMAL),
             (key.DELETE, KEYBOARD.MODIFIERS.NONE): self.delete_selected_and_marked,
+            (key.J, KEYBOARD.MODIFIERS.NONE): self.color_by_subnets,
         }
 
         for direction in {key.UP, key.RIGHT, key.LEFT, key.DOWN}:
@@ -241,11 +241,11 @@ class UserInterface:
             return
 
         draw_line(self.source_of_line_drag.location, MainWindow.main_window.get_mouse_location(), color=color)
-        self.source_of_line_drag.mark_as_selected()
+        self.source_of_line_drag.mark_as_selected_non_resizable()
 
         destination = MainLoop.instance.get_object_the_mouse_is_on()
         if destination is not None:
-            destination.mark_as_selected()
+            destination.mark_as_selected_non_resizable()
 
     def _stop_viewing_dead_packets(self):
         """
@@ -1461,3 +1461,28 @@ class UserInterface:
         """
         for connection, _, _ in self.connection_data:
             connection.set_speed(new_speed)
+
+    def color_by_subnets(self):
+        """
+        randomly colors the computers on the screen based on their subnet
+        :return:
+        """
+        subnets = {}
+        for computer in self.computers:
+            if not computer.has_ip():
+                continue
+
+            for ip in computer.ips:
+                subnet = get_the_one(subnets, lambda net: net.is_same_subnet(ip))
+                if subnet is None:
+                    subnets[ip.subnet()] = [computer]
+                else:
+                    subnets[subnet].append(computer)
+
+        for subnet in subnets:
+            color = (random.randint(0, 255),
+                     random.randint(0, 255),
+                     random.randint(0, 255))
+            for computer in subnets[subnet]:
+                computer.graphics.flush_colors()
+                computer.graphics.add_hue(color)

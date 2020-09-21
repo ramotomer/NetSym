@@ -178,14 +178,18 @@ def sum_tuples(*tuples):
         raise WrongUsageError(f"problem with the arguments {list(tuples)}")
 
 
-def scale_tuple(scalar, tup):
+def scale_tuple(scalar, tup, keep_ints=False):
     """
     Multiplies every item of the tuple with a number.
     :param scalar: number
     :param tup: tuple
+    :param keep_ints: round the numbers up to be integers
     :return:
     """
-    return tuple(map(lambda t: reduce(mul, t), zip(([scalar] * len(tup)), tup)))
+    returned = tuple(map(lambda t: reduce(mul, t), zip(([scalar] * len(tup)), tup)))
+    if keep_ints:
+        returned = tuple(map(lambda x: int(x), returned))
+    return returned
 
 
 def normal_color_to_weird_gl_color(color, add_alpha=True):
