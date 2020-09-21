@@ -241,11 +241,11 @@ class UserInterface:
             return
 
         draw_line(self.source_of_line_drag.location, MainWindow.main_window.get_mouse_location(), color=color)
-        self.source_of_line_drag.mark_as_selected()
+        self.source_of_line_drag.mark_as_selected_non_resizable()
 
         destination = MainLoop.instance.get_object_the_mouse_is_on()
         if destination is not None:
-            destination.mark_as_selected()
+            destination.mark_as_selected_non_resizable()
 
     def _stop_viewing_dead_packets(self):
         """

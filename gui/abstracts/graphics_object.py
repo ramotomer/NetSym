@@ -57,6 +57,10 @@ class GraphicsObject(metaclass=ABCMeta):
     def can_be_viewed(self):
         return hasattr(self, "start_viewing") and hasattr(self, "end_viewing")
 
+    @property
+    def mark_as_selected_non_resizable(self):
+        return self.mark_as_selected
+
     def is_mouse_in(self):
         """
         Returns whether or not the mouse is located inside this graphics object.
@@ -86,6 +90,13 @@ class GraphicsObject(metaclass=ABCMeta):
         This method should be overridden in any subclasses.
         It should handle the moving of the object on the screen, it will be called every loop of the program.
         :return: None
+        """
+        pass
+
+    def mark_as_selected(self):
+        """
+        Marks the graphics object as selected (pressed by the mouse)
+        :return:
         """
         pass
 

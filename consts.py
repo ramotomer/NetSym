@@ -209,6 +209,7 @@ class COLORS:
     LIGHT_GREEN = (50, 255, 50)
     DARK_GREEN = (0, 100, 0)
     DARK_RED = (100, 0, 0)
+    LIGHT_RED = (255, 50, 50)
 
     COLOR_DIFF = 20
     LARGE_COLOR_DIFF = 70
@@ -448,14 +449,14 @@ class TEXT:
 
 
 class CONNECTIONS:
-    DEFAULT_SPEED = 120 # pixels / second
+    DEFAULT_SPEED = 120  # pixels / second
     DEFAULT_LENGTH = 100  # pixels
     DEFAULT_PL = 0.5  # the point in the connection where packets are dropped
     MOUSE_TOUCH_SENSITIVITY = 5  # pixels
 
     COLOR = COLORS.BLACK
     SELECTED_COLOR = COLORS.LIGHT_BLUE
-    BLOCKED_COLOR = COLORS.RED
+    BLOCKED_COLOR = COLORS.LIGHT_RED
     PL_COLOR = COLORS.GREEN
 
     class WIRELESS:
