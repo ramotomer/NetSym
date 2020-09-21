@@ -1,3 +1,4 @@
+from abc import ABCMeta
 from itertools import product
 
 import pyglet
@@ -12,7 +13,7 @@ from gui.user_interface.resizing_dot import ResizingDot
 from usefuls.funcs import get_the_one, scale_tuple, sum_tuples
 
 
-class ImageGraphics(GraphicsObject):
+class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
     """
     This class is a superclass of any `GraphicsObject` subclass which uses an image in its `draw` method.
     Put simply, it is a graphics object with a picture.
@@ -307,7 +308,7 @@ class ImageGraphics(GraphicsObject):
         except KeyError:
             raise PopupWindowWithThisError(f"invalid color name: '{color_name}'")
 
-        if len(color_name.split()) > 1:
+        for _ in range(color_name.split().count("very") + int(len(color_name.split()) > 1)):
             try:
                 color = sum_tuples({"light": (50, 50, 50), "dark": (-50, -50, -50)}[color_name.split()[-2]], color)
             except KeyError:
@@ -315,8 +316,12 @@ class ImageGraphics(GraphicsObject):
 
         self.add_hue(scale_tuple(1, color, True))
 
-        for _ in range(color_name.split().count("very")):
-            self.color_by_name(f"{color_name.split()[-2]} {color_name.split()[-1]}")
+    def flush_colors(self):
+        """
+        Flushes the colors and hues from the sprite.
+        :return:
+        """
+        self.sprite.image = pyglet.image.load(self.image_name)
 
     def __str__(self):
         """The string representation of the GraphicsObject"""
