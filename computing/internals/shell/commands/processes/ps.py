@@ -35,7 +35,7 @@ class Ps(Command):
         :return:
         """
         string = f"PID\tNAME\n  1\tinit\n"
-        for process, _ in sorted(self.computer.waiting_processes, key=lambda wp: wp.process.pid):
+        for process, _ in sorted(self.computer.process_scheduler.waiting_processes, key=lambda wp: wp.process.pid):
             string += self._process_info(process)
         return CommandOutput(string, '')
 
