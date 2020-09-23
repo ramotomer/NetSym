@@ -389,7 +389,8 @@ class Computer:
             dst_port = packet["TCP"].dst_port
             if dst_port not in self.open_tcp_ports:
                 self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip,
-                             TCP(packet["TCP"].dst_port, packet["TCP"].src_port, 0, {OPCODES.TCP.RST}))
+                             TCP(packet["TCP"].dst_port, packet["TCP"].src_port, 0,
+                                 {OPCODES.TCP.RST}))
 
     def _handle_udp(self, packet, interface):
         """
@@ -890,7 +891,7 @@ class Computer:
         pid = len(self.waiting_processes) + 2
         self.waiting_processes.append((process_type(pid, self, *args), None))
 
-    def waiting_process_from_pid(self, pid):
+    def process_from_pid(self, pid):
         """
         Returns the WaitingProcess that fits the pid given.
         :param pid: `int`
@@ -946,13 +947,30 @@ class Computer:
             if isinstance(waiting_process.process, process_type):
                 self.waiting_processes.remove(waiting_process)
 
-    def kill_process(self, pid):
+    def kill_process(self, pid, force=False):
         """
         Receives a pid and kills that process
         :param pid:
+        :param force: whether or not to kill the process nicely
         :return:
         """
-        self.waiting_processes.remove(self.waiting_process_from_pid(pid))
+        if force:
+            self.waiting_processes.remove(self.process_from_pid(pid))
+        else:
+            self.send_process_signal(pid, COMPUTER.PROCESSES.SIGNALS.SIGTERM)
+
+    def send_process_signal(self, pid, signum):
+        """
+        Send a signal to a process based on the signals defined in
+        COMPUTER.PROCESSES.SIGNALS
+        :param pid: the process ID
+        :param signum:
+        :return:
+        """
+        if signum in COMPUTER.PROCESSES.SIGNALS.UNIGNORABLE_KILLING_SIGNALS:
+            self.kill_process(pid, force=True)
+        else:
+            self.process_from_pid(pid).process.signal_handlers[signum](signum)
 
     def is_process_running(self, process_type):
         """

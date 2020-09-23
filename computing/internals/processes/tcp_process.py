@@ -84,6 +84,9 @@ class TCPProcess(Process, metaclass=ABCMeta):
 
         self.last_packet_sent_time = MainLoop.instance.time()
 
+        for signum in COMPUTER.PROCESSES.SIGNALS.KILLING_SIGNALS:
+            self.signal_handlers[signum] = self.kill_signal_handler
+
     def _create_packet(self, flags=None, data='', is_retransmission=False):
         """
         Creates a full packet that contains TCP with all of the appropriate fields according to the state of
@@ -453,6 +456,15 @@ class TCPProcess(Process, metaclass=ABCMeta):
         if OPCODES.TCP.RST in tcp_layer.flags:
             received_data.append(PROTOCOLS.TCP.DONE_RECEIVING)
             self.kill_me = True
+
+    def kill_signal_handler(self, signum):
+        """
+        This is the handler to each signal that is supposed to kill this process.
+        :param signum:
+        :return:
+        """
+        self.reset_connection()
+        self.die()
 
     @abstractmethod
     def code(self):

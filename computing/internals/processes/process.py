@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 
+from consts import COMPUTER
 from exceptions import *
 from gui.main_loop import MainLoop
 
@@ -15,7 +16,6 @@ The condition should be specific so you don't accidentally catch the wrong packe
 """
 
 WaitingForPacketWithTimeout = namedtuple("WaitingForPacketWithTimeout", "condition value timeout")
-
 WaitingFor = namedtuple("WaitingFor", "condition")
 
 
@@ -47,6 +47,27 @@ class Process(metaclass=ABCMeta):
         self.computer = computer
         self.process = self.code()
         self.kill_me = False
+
+        self.signal_handlers = defaultdict(
+            lambda: self.default_signal_handler
+        )
+        # ^ maps {signum: handler} when handler takes in a signum and returns None
+        for signal, handler in {killing_signal: self.die for killing_signal in COMPUTER.PROCESSES.SIGNALS.KILLING_SIGNALS}.items():
+            self.signal_handlers[signal] = handler
+
+    def default_signal_handler(self, signum):
+        """
+        The default signal handler. This is called when a signal is sent.
+        :return: None
+        """
+        pass
+
+    def die(self):
+        """
+        self.kill_me = True
+        :return:
+        """
+        self.kill_me = True
 
     @abstractmethod
     def code(self):
