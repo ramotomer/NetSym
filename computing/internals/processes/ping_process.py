@@ -1,6 +1,6 @@
 from itertools import cycle
 
-from computing.internals.processes.process import Process, WaitingForPacket, ReturnedPacket, WaitingFor
+from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket, WaitingFor
 from consts import OPCODES, PROTOCOLS
 from exceptions import NoIPAddressError
 

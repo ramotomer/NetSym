@@ -606,6 +606,11 @@ class COMPUTER:
             SIGIO = 29  # I / O now possible (4.2 BSD)
             SIGPWR = 30  # Power failure restart (System V)
 
+            SIGSOCKSEND = 31  # does not exist in real life, just for NetSym's implementation of sockets
+            SIGSOCKRECV = 32
+
+            ALL = range(1, 33)
+
             KILLING_SIGNALS = {
                 SIGTERM,
                 SIGINT,
@@ -620,7 +625,6 @@ class COMPUTER:
                 SIGSTOP,
             }
 
-            ALL = range(1, 31)
 
     class ARP_CACHE:
         DYNAMIC = "dynamic"
@@ -629,3 +633,19 @@ class COMPUTER:
 
     class SWITCH_TABLE:
         ITEM_LIFETIME = 300  # seconds
+
+    class SOCKETS:
+        class TYPES:
+            SOCK_STREAM = 1
+            SOCK_DGRAM = 2
+            SOCK_RAW = 3
+
+        class ADDRESS_FAMILIES:
+            AF_INET = 2
+            AF_INET6 = 23
+
+        class STATES:
+            UNBOUND = 0
+            BOUND = 1
+            LISTENING = 2
+            ESTABLISHED = 3

@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from computing.internals.processes.process import Process, WaitingForPacket, ReturnedPacket
+from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop

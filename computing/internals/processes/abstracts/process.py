@@ -52,8 +52,7 @@ class Process(metaclass=ABCMeta):
             lambda: self.default_signal_handler
         )
         # ^ maps {signum: handler} when handler takes in a signum and returns None
-        for signal, handler in {killing_signal: self.die for killing_signal in COMPUTER.PROCESSES.SIGNALS.KILLING_SIGNALS}.items():
-            self.signal_handlers[signal] = handler
+        self.set_killing_signals_handler(self.die)
 
     def default_signal_handler(self, signum):
         """
@@ -68,6 +67,16 @@ class Process(metaclass=ABCMeta):
         :return:
         """
         self.kill_me = True
+
+    def set_killing_signals_handler(self, handler):
+        """
+        Receives a function that is a signal handler and sets it to be the handler of all of the signals
+        that kill a process
+        :param handler:  func(signum) -> None
+        :return:
+        """
+        for signum in COMPUTER.PROCESSES.SIGNALS.KILLING_SIGNALS:
+            self.signal_handlers[signum] = handler
 
     @abstractmethod
     def code(self):

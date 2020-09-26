@@ -1,6 +1,6 @@
 import datetime
 
-from computing.internals.processes.tcp_process import TCPProcess
+from computing.internals.processes.abstracts.tcp_process import TCPProcess
 from consts import *
 
 

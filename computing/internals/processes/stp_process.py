@@ -1,6 +1,7 @@
 from os import linesep
 
-from computing.internals.processes.process import Process, WaitingForPacketWithTimeout, ReturnedPacket, Timeout
+from computing.internals.processes.abstracts.process import Process, WaitingForPacketWithTimeout, ReturnedPacket, \
+    Timeout
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop

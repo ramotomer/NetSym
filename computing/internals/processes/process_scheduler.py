@@ -43,7 +43,7 @@ class ProcessScheduler:
         new_processes = []
         for process, waiting_for in self.waiting_processes[:]:
             if waiting_for is None:
-                # ^ if waiting for is None the process was not yet run.
+                # ^ that means the process was not yet run.
                 new_processes.append(process)
                 self.waiting_processes.remove((process, None))
         return new_processes
@@ -78,7 +78,7 @@ class ProcessScheduler:
         for waiting_process in self.waiting_processes[:]:
             process, _ = waiting_process
             if process.kill_me:
-                self.waiting_processes.remove(waiting_process)
+                self.terminate_process(waiting_process)
 
     def _decide_ready_processes_no_packet(self, ready_processes):
         """
@@ -140,13 +140,37 @@ class ProcessScheduler:
                     ready_processes.append(waiting_process.process)
                     self.waiting_processes.remove(waiting_process)
 
-    def get_process(self, pid):
+    def get_process(self, pid, raises=True):
         """
         Returns a process class from its process ID
         :param pid:
+        :param raises
         :return:
         """
-        return get_the_one(self.waiting_processes, lambda wp: wp.process.pid == pid, NoSuchProcessError)
+        return get_the_one(self.waiting_processes,
+                           lambda wp: wp.process.pid == pid,
+                           NoSuchProcessError if raises else None)
+
+    def terminate_process(self, waiting_process):
+        """
+        Handles closing all of the things the process was in charge of.
+        (Potentially (though not implemented) file-descriptors, sockets, memory allocations etc....)
+        :param waiting_process: a WaitingProcess instance
+        :return:
+        """
+        for socket in {**self.computer.sockets}:
+            if socket.pid == waiting_process.process.pid:
+                self.computer.remove_socket(socket)
+
+        self.waiting_processes.remove(waiting_process)
+
+    def terminate_all(self):
+        """
+        Terminates all processes
+        :return:
+        """
+        for waiting_process in self.waiting_processes:
+            self.terminate_process(waiting_process)
 
     def handle_processes(self):
         """

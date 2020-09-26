@@ -12,8 +12,8 @@ from pyglet.window import key
 from address.ip_address import IPAddress
 from computing.computer import Computer
 from computing.interface import Interface
+from computing.internals.processes.abstracts.tcp_process import TCPProcess
 from computing.internals.processes.stp_process import STPProcess
-from computing.internals.processes.tcp_process import TCPProcess
 from computing.router import Router
 from computing.switch import Switch, Hub, Antenna
 from consts import *

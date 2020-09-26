@@ -1,5 +1,8 @@
 import random
 from collections import namedtuple
+from typing import Tuple
+
+from recordclass import recordclass
 
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
@@ -14,6 +17,7 @@ from computing.internals.processes.ftp_process import FTPServerProcess
 from computing.internals.processes.ping_process import SendPing
 from computing.internals.processes.process_scheduler import ProcessScheduler
 from computing.internals.routing_table import RoutingTable, RoutingTableItem
+from computing.internals.sockets.tcp_socket import TCPSocket
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
@@ -28,6 +32,17 @@ from usefuls.funcs import get_the_one
 
 ReceivedPacket = namedtuple("ReceivedPacket", "packet time interface")
 # ^ a packet that was received in this computer  (packet object, receiving time, interface packet is received on)
+
+
+SocketData = recordclass("SocketData", [
+    "kind",
+    "local_ip_address",
+    "local_port",
+    "remote_ip_address",
+    "remote_port",
+    "state",
+    "pid",
+])
 
 
 class Computer:
@@ -91,6 +106,8 @@ class Computer:
 
         self.open_tcp_ports = []  # a list of the ports that are open on this computer.
         self.open_udp_ports = []
+
+        self.sockets = {}
 
         self.is_supporting_wireless_connections = False
 
@@ -191,7 +208,7 @@ class Computer:
         Things the computer should perform as it is shut down.
         :return:
         """
-        self.waiting_processes.clear()
+        self.process_scheduler.terminate_all()
         self.filesystem.wipe_temporary_directories()
 
     def on_startup(self):
@@ -199,8 +216,8 @@ class Computer:
         Things the computer should do when it is turned on
         :return:
         """
-        self.waiting_processes.clear()
-        for process, args in self.startup_processes:
+        self.process_scheduler.terminate_all()
+        for process, args in self.process_scheduler.startup_processes:
             self.start_process(process, *args)
 
     def add_interface(self, name=None, mac=None):
@@ -475,6 +492,7 @@ class Computer:
         :return:
         """
         raise NotImplementedError()
+        #TODO: implement this
 
     def update_routing_table(self):
         """updates the routing table according to the interfaces at the moment"""
@@ -885,6 +903,7 @@ class Computer:
         """
         pid = len(self.process_scheduler.waiting_processes) + 2
         self.process_scheduler.waiting_processes.append((process_type(pid, self, *args), None))
+        return pid
 
     def add_startup_process(self, process_type, *args):
         """
@@ -919,7 +938,7 @@ class Computer:
         """
         for waiting_process in self.process_scheduler.waiting_processes:
             if isinstance(waiting_process.process, process_type):
-                self.process_scheduler.waiting_processes.remove(waiting_process)
+                self.process_scheduler.terminate_process(waiting_process)
 
     def kill_process(self, pid, force=False):
         """
@@ -929,7 +948,7 @@ class Computer:
         :return:
         """
         if force:
-            self.process_scheduler.waiting_processes.remove(self.process_scheduler.get_process(pid))
+            self.process_scheduler.terminate_process(self.process_scheduler.get_process(pid))
         else:
             self.send_process_signal(pid, COMPUTER.PROCESSES.SIGNALS.SIGTERM)
 
@@ -971,7 +990,76 @@ class Computer:
                 return process
         raise NoSuchProcessError(f"'{process_type}' is not currently running!")
 
-# ------------------------------- v The main `logic` method of the computer's main loop v ---------------------------
+    # ------------------------------- v Sockets v ----------------------------------------------------------------------
+
+    def get_socket(self, requesting_process_pid,
+                   address_family=COMPUTER.SOCKETS.ADDRESS_FAMILIES.AF_INET,
+                   kind=COMPUTER.SOCKETS.TYPES.SOCK_STREAM):
+        """
+        Allows programs on the computer to acquire a network socket.
+        """
+        socket = {
+            COMPUTER.SOCKETS.TYPES.SOCK_STREAM: TCPSocket,
+            # COMPUTER.SOCKETS.TYPES.SOCK_DGRAM:
+        }[kind](self, address_family)
+
+        self.sockets[socket] = SocketData(kind=kind,
+                                          local_ip_address=None,
+                                          local_port=None,
+                                          remote_ip_address=None,
+                                          remote_port=None,
+                                          state=COMPUTER.SOCKETS.STATES.UNBOUND,
+                                          pid=requesting_process_pid)
+        return socket
+
+    def _is_port_taken(self, port, kind=COMPUTER.SOCKETS.TYPES.SOCK_STREAM):
+        """
+        Returns whether or not a port is already bound to a socket.
+        :param port:
+        :param kind:
+        :return:
+        """
+        def is_registered_on_port(socket_data):
+            return socket_data.local_port == port and socket_data.kind == kind
+
+        return any(map(is_registered_on_port, self.sockets.values()))
+
+    def bind_socket(self, socket, address: Tuple[IPAddress, int]):
+        """
+        bind a socket you acquired from the computer to a specific port and address.
+        :param socket: a return value of `self.get_socket`
+        :param address: (IPAddress, int)
+        :return:
+        """
+        ip_address, port = address
+
+        if self._is_port_taken(port, socket.kind):
+            raise PortAlreadyBoundError(f"The socket cannot be bound, since another socket is bound to port {port}")
+
+        try:
+            self.sockets[socket].local_ip_address = ip_address
+            self.sockets[socket].local_port = port
+            self.sockets[socket].state = COMPUTER.SOCKETS.STATES.BOUND
+        except KeyError:
+            raise SocketNotRegisteredError(f"The socket that was provided is not known to the operation system! "
+                                           f"It was probably not acquired using the `computer.get_socket` method! "
+                                           f"The socket: {socket}")
+
+    def remove_socket(self, socket):
+        """
+        Remove a socket from the operation system's management
+        :param socket:
+        :return:
+        """
+        try:
+            socket.close()
+            self.sockets.pop(socket)
+        except KeyError:
+            raise SocketNotRegisteredError(f"The socket that was provided is not known to the operation system! "
+                                           f"It was probably not acquired using the `computer.get_socket` method! "
+                                           f"The socket: {socket}")
+
+    # ------------------------------- v The main `logic` method of the computer's main loop v --------------------------
 
     def logic(self):
         """

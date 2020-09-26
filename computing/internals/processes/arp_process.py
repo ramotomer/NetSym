@@ -1,4 +1,4 @@
-from computing.internals.processes.process import Process, ReturnedPacket, WaitingForPacketWithTimeout, Timeout, \
+from computing.internals.processes.abstracts.process import Process, ReturnedPacket, WaitingForPacketWithTimeout, Timeout, \
     WaitingFor
 from consts import OPCODES, PROTOCOLS
 
