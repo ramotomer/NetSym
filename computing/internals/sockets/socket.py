@@ -35,11 +35,11 @@ class Socket(metaclass=ABCMeta):
 
         self.listening_count = None
 
-        self.send = self.check_connected(self.check_not_broken(self.check_not_closed(self.send)))
-        self.recv = self.check_bound(self.check_connected(self.check_not_broken(self.check_not_closed(self.recv))))
-        self.listen = self.check_bound(self.check_not_closed(self.listen))
-        self.accept = self.check_bound(self.check_not_closed(self.accept))
-        self.connect = self.check_not_closed(self.connect)
+        self.__class__.send = self.check_connected(self.check_not_broken(self.check_not_closed(self.__class__.send)))
+        self.__class__.recv = self.check_bound(self.check_connected(self.check_not_broken(self.check_not_closed(self.__class__.recv))))
+        self.__class__.listen = self.check_bound(self.check_not_closed(self.__class__.listen))
+        self.__class__.accept = self.check_bound(self.check_not_closed(self.__class__.accept))
+        self.__class__.connect = self.check_not_closed(self.__class__.connect)
         # ^ decorators that survive inheritance
 
     @property
@@ -48,13 +48,32 @@ class Socket(metaclass=ABCMeta):
 
     @property
     def process(self):
-        return self.computer.process_scheduler.get_process(self.pid, raises=False)
+        waiting_process = self.computer.process_scheduler.get_process(self.pid, raises=False)
+        return None if waiting_process is None else waiting_process.process
+
+    @property
+    def acquiring_process_pid(self):
+        return self.computer.sockets[self].pid
+
+    @property
+    def state(self):
+        return self.computer.sockets[self].state
+    
+    @property
+    def foreign_address(self):
+        address = self.computer.sockets[self].remote_ip_address
+        port = self.computer.sockets[self].remote_port
+
+        address = address if address is not None else IPAddress("0.0.0.0")
+        port = port if port is not None else 0
+
+        return address, port
 
     @staticmethod
     def check_bound(func):
         @wraps(func)
         def wrapper(self, *args, **kwargs):
-            if self.computer.sockets[self].local_port is not None:
+            if self.computer.sockets[self].local_port is None:
                 raise SocketNotBoundError("The socket is not bound to any address or port!!!")
             return func(self, *args, **kwargs)
         return wrapper
@@ -74,7 +93,7 @@ class Socket(metaclass=ABCMeta):
         def wrapper(self, *args, **kwargs):
             if self.pid is None or \
                     self.process is None:
-                raise SocketIsBrokenError("The socket is broken and cannot be used!!!")
+                raise SocketIsBrokenError(f"The socket is broken and cannot be used!!! pid: {self.pid}, process: {self.process}")
             return func(self, *args, **kwargs)
         return wrapper
 
@@ -141,4 +160,12 @@ class Socket(metaclass=ABCMeta):
         :return:
         """
         self.is_closed = True
+        self.is_connected = False
         self.computer.send_process_signal(self.pid, COMPUTER.PROCESSES.SIGNALS.SIGTERM)
+
+    def __repr__(self):
+        return f"TCP    " \
+            f"{':'.join(map(str, self.bound_address)): <23}" \
+            f"{':'.join(map(str, self.foreign_address)): <23}" \
+            f"{self.state: <16}" \
+            f"{self.acquiring_process_pid}"

@@ -4,7 +4,7 @@ from os import linesep
 from address.ip_address import IPAddress
 from computing.internals.processes.daytime_process import DAYTIMEClientProcess
 from computing.internals.processes.ddos_process import DDOSProcess
-from computing.internals.processes.ftp_process import FTPClientProcess
+from computing.internals.processes.ftp_process import ClientFTPProcess
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
@@ -133,7 +133,7 @@ class ComputerGraphics(ImageGraphics):
                 user_interface.ask_user_for,
                 IPAddress,
                 MESSAGES.INSERT.IP_FOR_PROCESS,
-                with_args(self.computer.start_process, FTPClientProcess)
+                with_args(self.computer.start_process, ClientFTPProcess)
             ),
             "start DDOS process (ctrl+w)": with_args(
                 self.computer.start_process,

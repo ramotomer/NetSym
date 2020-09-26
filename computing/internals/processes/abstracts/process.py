@@ -45,6 +45,7 @@ class Process(metaclass=ABCMeta):
         """
         self.pid = pid
         self.computer = computer
+        self.cwd = self.computer.filesystem.root
         self.process = self.code()
         self.kill_me = False
 

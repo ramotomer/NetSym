@@ -23,11 +23,8 @@ class Netstat(Command):
         :param parsed_args:
         :return:
         """
-        # TODO: after adding sockets, make this command work properly P:
-        string = f"{'PORT': >6}{'STATE': >10}{'TYPE': >10}\n"
-        string += '\n'.join([f"{port: >6}   LISTENING  STREAM" for port in self.computer.open_tcp_ports])
-        string += ''.join([f"\n{port: >6}   LISTENING  DGRAM" for port in self.computer.open_udp_ports])
-        return string
+        headers = f"{'Proto': <7}{'Local Address': <23}{'Foreign Address': <23}{'State': <16}PID\n"
+        return headers + '\n'.join(repr(socket) for socket in self.computer.sockets)
 
     def action(self, parsed_args):
         """

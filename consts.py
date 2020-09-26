@@ -645,7 +645,7 @@ class COMPUTER:
             AF_INET6 = 23
 
         class STATES:
-            UNBOUND = 0
-            BOUND = 1
-            LISTENING = 2
-            ESTABLISHED = 3
+            UNBOUND = "UNBOUND"
+            BOUND = "BOUND"
+            LISTENING = "LISTENING"
+            ESTABLISHED = "ESTABLISHED"

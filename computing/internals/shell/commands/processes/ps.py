@@ -23,10 +23,7 @@ class Ps(Command):
         :param process:
         :return:
         """
-        words = repr(process).lower().split()
-        words.remove('process')
-        name = ' '.join(words).title().replace(' ', '')
-
+        name = ' '.join(repr(process).lower().split()).title().replace(' ', '')
         return f"{process.pid: >3}\t{name}\n"
 
     def _list_processes(self):

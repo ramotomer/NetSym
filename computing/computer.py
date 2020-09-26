@@ -13,7 +13,7 @@ from computing.internals.processes.arp_process import ARPProcess, SendPacketWith
 from computing.internals.processes.daytime_process import DAYTIMEServerProcess
 from computing.internals.processes.dhcp_process import DHCPClient
 from computing.internals.processes.dhcp_process import DHCPServer
-from computing.internals.processes.ftp_process import FTPServerProcess
+from computing.internals.processes.ftp_process import ServerFTPProcess
 from computing.internals.processes.ping_process import SendPing
 from computing.internals.processes.process_scheduler import ProcessScheduler
 from computing.internals.routing_table import RoutingTable, RoutingTableItem
@@ -59,7 +59,7 @@ class Computer:
 
     TCP_PORTS_TO_PROCESSES = {
         PORTS.DAYTIME: DAYTIMEServerProcess,
-        PORTS.FTP: FTPServerProcess,
+        PORTS.FTP: ServerFTPProcess,
         PORTS.SSH: None,
         PORTS.HTTP: None,
         PORTS.HTTPS: None,
@@ -104,7 +104,6 @@ class Computer:
             "UDP": self._handle_udp,
         }
 
-        self.open_tcp_ports = []  # a list of the ports that are open on this computer.
         self.open_udp_ports = []
 
         self.sockets = {}
@@ -133,6 +132,11 @@ class Computer:
     def all_interfaces(self):
         """Returns the list of interfaces with the loopback"""
         return self.interfaces + [self.loopback]
+
+    @property
+    def open_tcp_ports(self):
+        return [socket_data.local_port for socket, socket_data in self.sockets.items()
+                if socket_data.state == COMPUTER.SOCKETS.STATES.LISTENING]
 
     @classmethod
     def with_ip(cls, ip_address, name=None):
@@ -477,11 +481,9 @@ class Computer:
         if port_number in self.open_tcp_ports:
             if process is not None:
                 self.kill_process_by_type(process)
-            self.open_tcp_ports.remove(port_number)
         else:
             if process is not None:
                 self.start_process(self.TCP_PORTS_TO_PROCESSES[port_number])
-            self.open_tcp_ports.append(port_number)
 
         self.graphics.update_image()
 
@@ -926,19 +928,21 @@ class Computer:
         """
         removed = get_the_one(
             self.process_scheduler.startup_processes,
-            lambda t: t[0] is process_type,
+            lambda startup_process_tuple: startup_process_tuple[0] is process_type,
             NoSuchProcessError)
         self.process_scheduler.startup_processes.remove(removed)
 
-    def kill_process_by_type(self, process_type):
+    def kill_process_by_type(self, process_type, force=False):
         """
         Takes in a process type and kills all of the waiting processes of that type in this `Computer`.
+        They are killed by a signal, unless specified specifically with the `force` param
         :param process_type: a `Process` subclass type (for example `SendPing` or `DHCPClient`)
+        :param force:
         :return: None
         """
         for waiting_process in self.process_scheduler.waiting_processes:
             if isinstance(waiting_process.process, process_type):
-                self.process_scheduler.terminate_process(waiting_process)
+                self.kill_process(waiting_process.proces.pid, force)
 
     def kill_process(self, pid, force=False):
         """
@@ -1044,7 +1048,7 @@ class Computer:
             raise SocketNotRegisteredError(f"The socket that was provided is not known to the operation system! "
                                            f"It was probably not acquired using the `computer.get_socket` method! "
                                            f"The socket: {socket}")
-
+        
     def remove_socket(self, socket):
         """
         Remove a socket from the operation system's management

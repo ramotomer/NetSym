@@ -1,6 +1,7 @@
 from typing import Tuple
 
 from address.ip_address import IPAddress
+from computing.internals.processes.abstracts.process import WaitingFor
 from computing.internals.processes.sockets.tcp_socket_process import ListeningTCPSocketProcess, \
     ConnectingTCPSocketProcess
 from computing.internals.sockets.socket import Socket
@@ -30,7 +31,7 @@ class TCPSocket(Socket):
         self.computer.send_process_signal(self.pid, COMPUTER.PROCESSES.SIGNALS.SIGSOCKSEND)
         return len(data)
 
-    def recv(self, count):
+    def recv(self, count=1024):
         """
         Recv the information from the other side of the socket
         :param count: how many bytes to receive
@@ -63,6 +64,7 @@ class TCPSocket(Socket):
         :return:
         """
         self.computer.sockets[self].state = COMPUTER.SOCKETS.STATES.LISTENING
+        self.computer.graphics.update_image()
         self.listening_count = count
 
     def accept(self):
@@ -71,3 +73,17 @@ class TCPSocket(Socket):
         :return:
         """
         self.pid = self.computer.start_process(ListeningTCPSocketProcess, self, self.bound_address)
+
+    def blocking_recv(self, received_list):
+        """
+        Like `self.recv` but is a generator that process can use `yield from` upon.
+        takes in a list, appends it with the received data when the generator is over.
+        :return:
+        """
+        received = self.recv()
+        while received is not None:
+            received = self.recv()
+            yield WaitingFor(lambda: True)
+
+        received_list.append(received)
+        return

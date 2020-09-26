@@ -82,8 +82,8 @@ class ListeningTCPSocketProcess(TCPSocketProcess):
         :param computer:
         :param socket:
         """
-        super(ListeningTCPSocketProcess, self).__init__(socket)
         super(TCPSocketProcess, self).__init__(pid, computer, src_port=bound_address[1], is_client=False)
+        super(ListeningTCPSocketProcess, self).__init__(socket)
 
 
 class ConnectingTCPSocketProcess(TCPSocketProcess):
@@ -97,5 +97,5 @@ class ConnectingTCPSocketProcess(TCPSocketProcess):
         :param socket:
         """
         dst_ip, dst_port = dst_address
-        super(ConnectingTCPSocketProcess, self).__init__(socket)
         super(TCPSocketProcess, self).__init__(pid, computer, dst_ip=dst_ip, dst_port=dst_port, is_client=True)
+        super(ConnectingTCPSocketProcess, self).__init__(socket)
