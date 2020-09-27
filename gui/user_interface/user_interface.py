@@ -941,10 +941,10 @@ class UserInterface:
             if not isinstance(computer, Switch):
                 print(repr(computer.routing_table))
             elif computer.stp_enabled and computer.is_process_running(STPProcess):  # computer is a Switch
-                print(computer.get_running_process(STPProcess).get_info())
+                print(computer.get_waiting_process(STPProcess).get_info())
 
             if computer.is_process_running(TCPProcess):
-                process = computer.get_running_process(TCPProcess)
+                process = computer.get_waiting_process(TCPProcess)
                 print(f"window (of {process}): {process.sending_window}")
 
         # self.set_all_connection_speeds(200)
@@ -1041,9 +1041,9 @@ class UserInterface:
         :return: None
         """
         stp_runners = [computer for computer in self.computers if computer.is_process_running(STPProcess)]
-        roots = [computer.get_running_process(STPProcess).root_bid for computer in stp_runners]
+        roots = [computer.get_waiting_process(STPProcess).root_bid for computer in stp_runners]
         for computer in stp_runners:
-            if computer.get_running_process(STPProcess).my_bid in roots:
+            if computer.get_waiting_process(STPProcess).my_bid in roots:
                 draw_circle(*computer.graphics.location, 60, COLORS.YELLOW)
 
     def ask_user_for(self, type_, window_text, action, error_msg="invalid input!!!"):

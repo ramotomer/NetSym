@@ -6,6 +6,7 @@ from computing.internals.processes.sockets.tcp_socket_process import ListeningTC
     ConnectingTCPSocketProcess
 from computing.internals.sockets.socket import Socket
 from consts import COMPUTER
+from exceptions import SocketIsClosedError
 
 
 class TCPSocket(Socket):
@@ -37,9 +38,9 @@ class TCPSocket(Socket):
         :param count: how many bytes to receive
         :return:
         """
-        self.computer.send_process_signal(self.pid, COMPUTER.PROCESSES.SIGNALS.SIGSOCKRECV)
-        returned, self.received = self.received, None
-        return returned
+        data = ''.join(self.received) if self.received else None
+        self.received.clear()
+        return data
 
     def connect(self, address: Tuple[IPAddress, int]):
         """
@@ -81,9 +82,21 @@ class TCPSocket(Socket):
         :return:
         """
         received = self.recv()
-        while received is not None:
-            received = self.recv()
-            yield WaitingFor(lambda: True)
+        try:
+            while received is None:
+                received = self.recv()
+                yield WaitingFor(lambda: True)
 
-        received_list.append(received)
-        return
+            received_list.append(received)
+        except SocketIsClosedError:
+            return
+
+    def __str__(self):
+        return f"socket of {self.computer.name}"
+
+    def __repr__(self):
+        return f"TCP    " \
+            f"{':'.join(map(str, self.bound_address)): <23}" \
+            f"{':'.join(map(str, self.foreign_address)): <23}" \
+            f"{self.state: <16}" \
+            f"{self.acquiring_process_pid}"

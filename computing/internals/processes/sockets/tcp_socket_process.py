@@ -10,19 +10,18 @@ class TCPSocketProcess(TCPProcess, metaclass=ABCMeta):
     """
     A process to handle the actions of a socket of kind SOCK_STREAM
     """
-    def __init__(self, socket):
+    def __init__(self, pid, computer, socket, dst_ip=None, dst_port=None, src_port=None, is_client=True):
         """
         Initiates the process with a src socket and the running computer
         :param socket:
         """
+        super(TCPSocketProcess, self).__init__(pid, computer, dst_ip, dst_port, src_port, is_client)
         self.socket = socket
         self.received = []
-
-        self.signal_handlers[COMPUTER.PROCESSES.SIGNALS.SIGSOCKRECV] = self.handle_signal_for_receiving
-        self.signal_handlers[COMPUTER.PROCESSES.SIGNALS.SIGSOCKSEND] = self.handle_signal_for_sending
-
         self.closing_the_socket = False
-        self.set_killing_signals_handler(self.kill_signal_handler)
+
+        self.signal_handlers[COMPUTER.PROCESSES.SIGNALS.SIGSOCKSEND] = self.handle_signal_for_sending
+        self.set_killing_signals_handler(self.handle_process_kill)
 
     def handle_signal_for_sending(self, signum):
         """
@@ -36,16 +35,6 @@ class TCPSocketProcess(TCPProcess, metaclass=ABCMeta):
 
         self.socket.to_send.clear()
 
-    def handle_signal_for_receiving(self, signum):
-        """
-        When this signal is received, the process writes to the socket what it received from
-        the destination
-        :param signum:
-        :return:
-        """
-        self.socket.received = ''.join(packet["TCP"].data for packet in self.received)
-        self.received.clear()
-
     def handle_process_kill(self, signum):
         """
         Handling of process being killed (closing the connection)
@@ -53,15 +42,26 @@ class TCPSocketProcess(TCPProcess, metaclass=ABCMeta):
         """
         self.closing_the_socket = True
 
+    def _set_socket_connected(self):
+        """
+        Sets the connection of the socket as established, defines the foreign address and port etc...
+        :return:
+        """
+        self.socket.is_connected = True
+        self.computer.sockets[self.socket].remote_ip_address = self.dst_ip
+        self.computer.sockets[self.socket].remote_port = self.dst_port
+        self.computer.sockets[self.socket].state = COMPUTER.SOCKETS.STATES.ESTABLISHED
+
     def code(self):
         """"""
         yield from self.hello_handshake()  # halts until receiving a syn to the port
-        self.socket.is_connected = True
+        self._set_socket_connected()
 
         while not (self.closing_the_socket and self.is_done_transmitting()):
-            yield from self.handle_tcp_and_receive(self.received)
+            yield from self.handle_tcp_and_receive(self.socket.received)
 
-        yield from self.goodbye_handshake(initiate=True)
+    def _end_session(self):
+        super(TCPSocketProcess, self)._end_session()
         self.socket.close()
 
     def __repr__(self):
@@ -82,8 +82,13 @@ class ListeningTCPSocketProcess(TCPSocketProcess):
         :param computer:
         :param socket:
         """
-        super(TCPSocketProcess, self).__init__(pid, computer, src_port=bound_address[1], is_client=False)
-        super(ListeningTCPSocketProcess, self).__init__(socket)
+        super(ListeningTCPSocketProcess, self).__init__(pid, computer, socket,
+                                                        src_port=bound_address[1], is_client=False)
+
+    def code(self):
+        yield from super(ListeningTCPSocketProcess, self).code()
+        yield from self.goodbye_handshake(initiate=True)
+        self.socket.close()
 
 
 class ConnectingTCPSocketProcess(TCPSocketProcess):
@@ -97,5 +102,10 @@ class ConnectingTCPSocketProcess(TCPSocketProcess):
         :param socket:
         """
         dst_ip, dst_port = dst_address
-        super(TCPSocketProcess, self).__init__(pid, computer, dst_ip=dst_ip, dst_port=dst_port, is_client=True)
-        super(ConnectingTCPSocketProcess, self).__init__(socket)
+        self.socket = socket
+        super(ConnectingTCPSocketProcess, self).__init__(pid, computer, socket,
+                                                         dst_ip=dst_ip, dst_port=dst_port, is_client=True)
+
+    def code(self):
+        self.socket.bind((self.computer.get_ip(), self.src_port))
+        yield from super(ConnectingTCPSocketProcess, self).code()

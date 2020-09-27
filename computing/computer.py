@@ -15,7 +15,7 @@ from computing.internals.processes.dhcp_process import DHCPClient
 from computing.internals.processes.dhcp_process import DHCPServer
 from computing.internals.processes.ftp_process import ServerFTPProcess
 from computing.internals.processes.ping_process import SendPing
-from computing.internals.processes.process_scheduler import ProcessScheduler
+from computing.internals.processes.process_scheduler import ProcessScheduler, WaitingProcess
 from computing.internals.routing_table import RoutingTable, RoutingTableItem
 from computing.internals.sockets.tcp_socket import TCPSocket
 from consts import *
@@ -530,7 +530,7 @@ class Computer:
         interface.ip = IPAddress(string_ip)
 
         if self.is_process_running(DHCPServer):
-            dhcp_server_process = self.get_running_process(DHCPServer)
+            dhcp_server_process = self.get_waiting_process(DHCPServer)
             dhcp_server_process.update_server_data()
 
         self.routing_table.add_interface(interface.ip)
@@ -903,8 +903,8 @@ class Computer:
         :param args: The arguments that the `Process` subclass constructor requires.
         :return: None
         """
-        pid = len(self.process_scheduler.waiting_processes) + 2
-        self.process_scheduler.waiting_processes.append((process_type(pid, self, *args), None))
+        pid = max([process.pid for process in self.process_scheduler.all_processes] + [1]) + 1
+        self.process_scheduler.waiting_processes.append(WaitingProcess(process_type(pid, self, *args), None))
         return pid
 
     def add_startup_process(self, process_type, *args):
@@ -942,7 +942,7 @@ class Computer:
         """
         for waiting_process in self.process_scheduler.waiting_processes:
             if isinstance(waiting_process.process, process_type):
-                self.kill_process(waiting_process.proces.pid, force)
+                self.kill_process(waiting_process.process.pid, force)
 
     def kill_process(self, pid, force=False):
         """
@@ -967,7 +967,7 @@ class Computer:
         if signum in COMPUTER.PROCESSES.SIGNALS.UNIGNORABLE_KILLING_SIGNALS:
             self.kill_process(pid, force=True)
         else:
-            self.process_scheduler.get_process(pid).process.signal_handlers[signum](signum)
+            self.process_scheduler.get_process(pid).signal_handlers[signum](signum)
 
     def is_process_running(self, process_type):
         """
@@ -981,7 +981,7 @@ class Computer:
                 return True
         return False
 
-    def get_running_process(self, process_type):
+    def get_waiting_process(self, process_type):
         """
         Receives a type of a `Process` subclass and returns the process object of the `Process` that is currently
         running in the computer.
@@ -1056,7 +1056,6 @@ class Computer:
         :return:
         """
         try:
-            socket.close()
             self.sockets.pop(socket)
         except KeyError:
             raise SocketNotRegisteredError(f"The socket that was provided is not known to the operation system! "

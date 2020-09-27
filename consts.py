@@ -98,7 +98,7 @@ class PROTOCOLS:
         MAX_SEQUENCE_NUMBER = 2**32 - 1
         RESEND_TIME = 15  # seconds
         MAX_WINDOW_SIZE = 20  # packets
-        SENDING_INTERVAL = 0.5  # seconds
+        SENDING_INTERVAL = 0.1  # seconds
         DONE_RECEIVING = TCPDoneReceiving
         MAX_UNUSED_CONNECTION_TIME = 15  # seconds
         MAX_MSS = 100
@@ -219,10 +219,10 @@ class WINDOWS:
     class MAIN:
         NAME = "NetSym"
         WIDTH = 1275
-        HEIGHT = 600
+        HEIGHT = 600  # if not __debug__ else 350
         INITIAL_LOCATION = 4, 50
         FRAME_RATE = 1 / 60.0
-        BACKGROUND = COLORS.VERY_LIGHT_GRAY
+        BACKGROUND = COLORS.VERY_LIGHT_GRAY  # if not __debug__ else COLORS.WHITE
 
     class SIDE:
         WIDTH = 230
@@ -519,7 +519,7 @@ class SHAPES:
 
         class RESIZE_DOT:
             RADIUS = 5
-            MINIMAL_RESIZE_SIZE = 30
+            MINIMAL_RESIZE_SIZE = 15
             COLOR_WHEN_SELECTED = COLORS.LIGHT_GREEN
 
     class SINE_WAVE:
@@ -607,9 +607,8 @@ class COMPUTER:
             SIGPWR = 30  # Power failure restart (System V)
 
             SIGSOCKSEND = 31  # does not exist in real life, just for NetSym's implementation of sockets
-            SIGSOCKRECV = 32
 
-            ALL = range(1, 33)
+            ALL = range(1, 32)
 
             KILLING_SIGNALS = {
                 SIGTERM,
@@ -649,3 +648,4 @@ class COMPUTER:
             BOUND = "BOUND"
             LISTENING = "LISTENING"
             ESTABLISHED = "ESTABLISHED"
+            CLOSED = "CLOSED"

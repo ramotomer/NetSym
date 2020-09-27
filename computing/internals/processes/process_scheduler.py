@@ -1,4 +1,5 @@
 from collections import namedtuple
+from contextlib import contextmanager
 
 from exceptions import NoSuchProcessError
 from gui.main_loop import MainLoop
@@ -13,25 +14,80 @@ class ProcessScheduler:
     Handles managing the runtime of each process in a computer
     """
     def __init__(self, computer):
+        """
+        self.waiting_processes: a list of `WaitingProcess` namedtuple-s. If the process is new, its `WaitingProcess.waiting_for` is None.
+        self.process_last_check: the last time that the waiting_processes were checked for 'can they run?'
+        self.startup_processes: a list of processes that will be run when the computer is booted
+        self.__running_process: the process that is currently being run in the computer
+        self.__ready_processes: processes that their conditions are met and so should be run
+            in this tick of the simulation
+        :param computer: The computer which the processes are running on.
+        """
         self.computer = computer
         self.waiting_processes = []
-        # ^ a list of `WaitingProcess` namedtuple-s. If the process is new, its `WaitingProcess.waiting_for` is None.
         self.process_last_check = MainLoop.instance.time()
-        # ^ the last time that the waiting_processes were checked for 'can they run?'
         self.startup_processes = []
+        self.__running_process = None
+        self.__ready_processes = []
 
-    @staticmethod
-    def _run_process(process):
+    @property
+    def running_process(self):
+        """
+        Allows for getting but not setting of the attribute
+        :return:
+        """
+        return self.__running_process
+
+    @property
+    def is_running_a_process(self):
+        """
+        Whether or not a process is currently running (that means all actions are indirectly performed by it)
+        :return:
+        """
+        return self.__running_process is not None
+    
+    @property
+    def process_count(self):
+        return len(self.waiting_processes) + int(self.is_running_a_process)
+
+    @property
+    def all_processes(self):
+        return [waiting_process.process for waiting_process in self.waiting_processes] + \
+               ([self.running_process] if self.is_running_a_process else []) + \
+               self.__ready_processes
+
+    @contextmanager
+    def process_is_currently_running(self, process):
+        """
+        This is a context manager that indicates that a process is currently being run by the
+        process scheduler (that means that any action that is performed in the program is run by it)
+        that also means it will not be in the `self.waiting_processes` list, and some actions rely on that.
+        :return:
+        """
+        self.__running_process = process
+        try:
+            yield None
+        finally:
+            self.__running_process = None
+
+    def _run_process(self, process):
         """
         This function receives a process and runs it until yielding a `WaitingForPacket` namedtuple.
         Returns the yielded `WaitingForPacket`.
         :param process: a `Process` object.
         :return: a `WaitingForPacket` namedtuple or if the process is done, None.
         """
-        try:
-            return next(process.process)
-        except StopIteration:
+        if process.process is None:
+            process.process = iter(process.code())
+
+        if process.kill_me:
             return None
+
+        with self.process_is_currently_running(process):
+            try:
+                return next(process.process)
+            except StopIteration:
+                return None
 
     def _start_new_processes(self):
         """
@@ -42,8 +98,7 @@ class ProcessScheduler:
         """
         new_processes = []
         for process, waiting_for in self.waiting_processes[:]:
-            if waiting_for is None:
-                # ^ that means the process was not yet run.
+            if waiting_for is None:  # that means the process was not yet run.
                 new_processes.append(process)
                 self.waiting_processes.remove((process, None))
         return new_processes
@@ -78,7 +133,7 @@ class ProcessScheduler:
         for waiting_process in self.waiting_processes[:]:
             process, _ = waiting_process
             if process.kill_me:
-                self.terminate_process(waiting_process)
+                self.terminate_process(waiting_process.process)
 
     def _decide_ready_processes_no_packet(self, ready_processes):
         """
@@ -116,7 +171,7 @@ class ProcessScheduler:
         if not hasattr(waiting_for, "value"):
             return False
 
-        if waiting_for.condition(packet) == True:
+        if waiting_for.condition(packet):
             waiting_for.value.packets[
                 packet] = receiving_interface  # this is the behaviour the `Process` object expects
 
@@ -147,30 +202,42 @@ class ProcessScheduler:
         :param raises
         :return:
         """
-        return get_the_one(self.waiting_processes,
-                           lambda wp: wp.process.pid == pid,
+        running_process = [self.running_process] if self.is_running_a_process else []
+
+        return get_the_one([wp.process for wp in self.waiting_processes] + self.__ready_processes + running_process,
+                           lambda process: process.pid == pid,
                            NoSuchProcessError if raises else None)
 
-    def terminate_process(self, waiting_process):
+    def terminate_process(self, process):
         """
         Handles closing all of the things the process was in charge of.
         (Potentially (though not implemented) file-descriptors, sockets, memory allocations etc....)
-        :param waiting_process: a WaitingProcess instance
+        :param process: a Process instance
         :return:
         """
         for socket in {**self.computer.sockets}:
-            if socket.pid == waiting_process.process.pid:
+            if socket.pid == process.pid:
                 self.computer.remove_socket(socket)
 
-        self.waiting_processes.remove(waiting_process)
+        if process in self.__ready_processes:
+            self.__ready_processes.remove(process)
+        elif process is self.running_process:
+            process.die()  # only occurs when a process calls `terminate_process` on itself
+        else:
+            self.waiting_processes.remove(
+                get_the_one(self.waiting_processes, lambda wp: wp.process == process, NoSuchProcessError)
+            )
 
     def terminate_all(self):
         """
         Terminates all processes
         :return:
         """
-        for waiting_process in self.waiting_processes:
-            self.terminate_process(waiting_process)
+        for process in [wp.process for wp in self.waiting_processes] + self.__ready_processes:
+            self.terminate_process(process)
+
+        if self.is_running_a_process:
+            self.running_process.die()
 
     def handle_processes(self):
         """
@@ -180,8 +247,9 @@ class ProcessScheduler:
         Read more about processes at 'process.py'
         :return: None
         """
-        ready_processes = self._get_ready_processes()
-        for process in ready_processes:
+        self.__ready_processes = self._get_ready_processes()
+        for process in self.__ready_processes:
             waiting_for = self._run_process(process)
             if waiting_for is not None:  # only None if the process is done!
                 self.waiting_processes.append(WaitingProcess(process, waiting_for))
+        self.__ready_processes.clear()

@@ -46,7 +46,7 @@ class Process(metaclass=ABCMeta):
         self.pid = pid
         self.computer = computer
         self.cwd = self.computer.filesystem.root
-        self.process = self.code()
+        self.process = None
         self.kill_me = False
 
         self.signal_handlers = defaultdict(

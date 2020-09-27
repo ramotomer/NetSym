@@ -108,7 +108,8 @@ class MainWindow(pyglet.window.Window):
         if self.user_interface.is_mouse_in_side_window() and self.user_interface.mode == MODES.VIEW:
             self.user_interface.scroll_view(scroll_y)
         if self.user_interface.selected_object is not None and \
-                hasattr(self.user_interface.selected_object, "resize"):
+                hasattr(self.user_interface.selected_object, "resize") and \
+                not self.user_interface.is_mouse_in_side_window():
             self.user_interface.selected_object.resize(10 * scroll_y, 10 * scroll_y, constrain_proportions=True)
 
     def on_mouse_press(self, x, y, button, modifiers):

@@ -44,7 +44,7 @@ class ServerFTPProcess(FTPProcess):
         received, = received_list
 
         if received.startswith("FTP: "):
-            filename = received.split()[received.split().index("FTP:")]
+            filename = received.split()[received.split().index("FTP:") + 1]
 
             with self.computer.filesystem.at_path(self.cwd, filename) as file:
                 self.socket.send(file.read())
@@ -70,10 +70,12 @@ class ClientFTPProcess(FTPProcess):
 
         data = ''
         data_list = []
-        while self.socket.is_connected:
+        while self.socket.is_connected and not self.socket.is_closed:
             yield from self.socket.blocking_recv(data_list)
             data += ''.join(data_list)
             data_list.clear()
 
         self.computer.filesystem.output_to_file(data, self.filename.split("/")[-1], self.cwd)
-        self.socket.close()
+
+        if not self.socket.is_closed:
+            self.socket.close()

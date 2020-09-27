@@ -28,15 +28,15 @@ class Socket(metaclass=ABCMeta):
         self.pid = None
 
         self.to_send = []
-        self.received = None
+        self.received = []
 
         self.is_connected = False
         self.is_closed = False
 
         self.listening_count = None
 
-        self.__class__.send = self.check_connected(self.check_not_broken(self.check_not_closed(self.__class__.send)))
-        self.__class__.recv = self.check_bound(self.check_connected(self.check_not_broken(self.check_not_closed(self.__class__.recv))))
+        self.__class__.send = self.check_not_closed(self.check_connected(self.check_not_broken(self.__class__.send)))
+        self.__class__.recv = self.check_not_closed(self.check_bound(self.check_connected(self.check_not_broken(self.__class__.recv))))
         self.__class__.listen = self.check_bound(self.check_not_closed(self.__class__.listen))
         self.__class__.accept = self.check_bound(self.check_not_closed(self.__class__.accept))
         self.__class__.connect = self.check_not_closed(self.__class__.connect)
@@ -48,8 +48,7 @@ class Socket(metaclass=ABCMeta):
 
     @property
     def process(self):
-        waiting_process = self.computer.process_scheduler.get_process(self.pid, raises=False)
-        return None if waiting_process is None else waiting_process.process
+        return self.computer.process_scheduler.get_process(self.pid, raises=False)
 
     @property
     def acquiring_process_pid(self):
@@ -162,9 +161,11 @@ class Socket(metaclass=ABCMeta):
         self.is_closed = True
         self.is_connected = False
         self.computer.send_process_signal(self.pid, COMPUTER.PROCESSES.SIGNALS.SIGTERM)
+        self.computer.sockets[self].state = COMPUTER.SOCKETS.STATES.CLOSED
+        # self.computer.remove_socket(self)
 
     def __repr__(self):
-        return f"TCP    " \
+        return f"       " \
             f"{':'.join(map(str, self.bound_address)): <23}" \
             f"{':'.join(map(str, self.foreign_address)): <23}" \
             f"{self.state: <16}" \
