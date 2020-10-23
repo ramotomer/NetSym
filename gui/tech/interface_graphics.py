@@ -12,7 +12,7 @@ class InterfaceGraphics(GraphicsObject):
     """
     This is the graphics of a network interface of a computer.
     It is the little square next to computers.
-    It allows the user much more control over their computers and to inspect the interfaces of their computers.
+    It allows the user much more control over their computers and to inspect the network interfaces of their computers.
     """
     def __init__(self, x, y, interface, computer_graphics):
         """

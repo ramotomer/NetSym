@@ -11,7 +11,8 @@ from pyglet.window import key
 
 from address.ip_address import IPAddress
 from computing.computer import Computer
-from computing.interface import Interface
+from computing.internals.frequency import Frequency
+from computing.internals.interface import Interface
 from computing.internals.processes.stp_process import STPProcess
 from computing.internals.processes.tcp_process import TCPProcess
 from computing.router import Router
@@ -148,6 +149,7 @@ class UserInterface:
         self.computers = []
         self.connection_data = []
         # ^ a list of `ConnectionData`-s (save information about all existing connections between computers.
+        self.frequencies = []  # a list of all Frequency objects that exist in the simulation!
 
         self.mode = MODES.NORMAL
         self.source_of_line_drag = None
@@ -659,16 +661,14 @@ class UserInterface:
                 computers[i] = device
                 interfaces[i] = device.available_interface()
             else:
-                # raise WrongUsageError(f"Only supply this function with computers or interfaces!!! ({device1, device2})")
+                # raise WrongUsageError(f"Only give this function computers or interfaces!!! ({device1, device2})")
                 return
 
         if computers[0] == computers[1]:
             return
 
-        is_wireless = all(computer.is_supporting_wireless_connections for computer in computers)
-
         try:
-            connection = interfaces[0].connect(interfaces[1], is_wireless=is_wireless)
+            connection = interfaces[0].connect(interfaces[1])
         except DeviceAlreadyConnectedError:
             PopupError("That interface is already connected :(", self)
             return
@@ -1486,3 +1486,18 @@ class UserInterface:
             for computer in subnets[subnet]:
                 computer.graphics.flush_colors()
                 computer.graphics.add_hue(color)
+
+    def get_frequency(self, frequency):
+        """
+        Receives a float indicating a frequency and returning a Frequency object to connect the wireless devices
+        that are listening to that frequency.
+        :param frequency: `float`
+        :return:
+        """
+        for freq in self.frequencies:
+            if freq.frequency == frequency:
+                return freq
+
+        new_freq = Frequency(frequency)
+        self.frequencies.append(new_freq)
+        return new_freq

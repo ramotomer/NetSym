@@ -358,7 +358,8 @@ class ANIMATIONS:
 class PACKET:
     class DIRECTION:
         RIGHT = 'R'
-        LEFT = 'L'
+        LEFT = 'L'  # do not change value! it is depended on
+        WIRELESS = 'W'
 
     TYPE_TO_IMAGE = {
         "Ethernet": IMAGES.PACKETS.ETHERNET,
@@ -432,6 +433,10 @@ class INTERFACES:
     BLOCKED_COLOR = COLORS.RED
     WIDTH, HEIGHT = 10, 10
     ANY_INTERFACE = None
+
+    class TYPE:
+        ETHERNET = "Ethernet"
+        WIFI = "Wifi"
 
 
 class TEXT:

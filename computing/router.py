@@ -1,6 +1,6 @@
 from computing.computer import Computer
-from computing.interface import Interface
 from computing.internals.filesystem.filesystem import Filesystem
+from computing.internals.interface import Interface
 from computing.internals.processes.dhcp_process import DHCPServer
 from computing.internals.processes.process import Process, WaitingFor
 from computing.internals.routing_table import RoutingTable

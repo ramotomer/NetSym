@@ -3,9 +3,9 @@ from collections import namedtuple
 
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
-from computing.interface import Interface
 from computing.internals.arp_cache import ArpCache
 from computing.internals.filesystem.filesystem import Filesystem
+from computing.internals.interface import Interface
 from computing.internals.processes.arp_process import ARPProcess, SendPacketWithArpsProcess
 from computing.internals.processes.daytime_process import DAYTIMEServerProcess
 from computing.internals.processes.dhcp_process import DHCPClient
