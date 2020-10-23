@@ -13,6 +13,7 @@ from computing.internals.processes.dhcp_process import DHCPServer
 from computing.internals.processes.ftp_process import FTPServerProcess
 from computing.internals.processes.ping_process import SendPing
 from computing.internals.routing_table import RoutingTable, RoutingTableItem
+from computing.internals.wireless_interface import WirelessInterface
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
@@ -208,18 +209,27 @@ class Computer:
         for process, args in self.startup_processes:
             self.start_process(process, *args)
 
-    def add_interface(self, name=None, mac=None):
+    def add_interface(self, name=None, mac=None, type_=INTERFACES.TYPE.ETHERNET):
         """
         Adds an interface to the computer with a given name.
         If the name already exists, raise a DeviceNameAlreadyExists.
         If no name is given, randomize.
         :param name:
         :param mac:
+        :param type_:
         :return:
         """
+        interface_type_to_object = {
+            INTERFACES.TYPE.ETHERNET: Interface,
+            INTERFACES.TYPE.WIFI: WirelessInterface,
+        }
+
         if any(interface.name == name for interface in self.all_interfaces):
             raise DeviceNameAlreadyExists("Cannot have two interfaces with the same name!!!")
-        new_interface = Interface((MACAddress.randomac() if mac is not None else mac), name=name)
+
+        interface_class = interface_type_to_object[type_]
+
+        new_interface = interface_class((MACAddress.randomac() if mac is not None else mac), name=name)
         self.interfaces.append(new_interface)
         self.graphics.add_interface(new_interface)
         return new_interface

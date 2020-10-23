@@ -54,12 +54,12 @@ class WirelessInterface(Interface):
             raise DeviceAlreadyConnectedError("The interface is connected already!!!")
         freq = MainWindow.main_window.user_interface.get_frequency(frequency)
         self.connection = freq.get_side(self)
+        self.frequency = frequency
         return freq
     
     def disconnect(self):
         """
         Disconnect an interface from its `Frequency`.
-
         :return: None
         """
         if not self.is_connected():
@@ -93,39 +93,12 @@ class WirelessInterface(Interface):
         """
         raise NotImplementedError()
 
-    def __eq__(self, other):
-        """Determines which interfaces are equal"""
-        return self is other
-
-    def __hash__(self):
-        """hash of the interface"""
-        return hash(id(self))
-
     def generate_view_text(self):
         """
         Generates the text for the side view of the interface
         :return: `str`
         """
-        linesep = '\n'
-        return f"""
-Interface: 
-{self.name}
-
-{str(self.mac) if not self.mac.is_no_mac() else ""} 
-{repr(self.ip) if self.has_ip() else ''}
-{"Connected" if self.is_connected() else "Disconnected"}
-{f"Promisc{linesep}" if self.is_promisc else ""}{f"Sniffing{linesep}" if self.is_sniffing else ""}{"Blocked" if 
-        self.is_blocked else ""}
-"""
-
-    def __str__(self):
-        """A shorter string representation of the Interface"""
-        mac = f"\n{self.mac}" if not self.mac.is_no_mac() else ""
-        return f"{self.name}: {mac}" + ('\n' + repr(self.ip) if self.has_ip() else '')
-
-    def __repr__(self):
-        """The string representation of the Interface"""
-        return f"Interface(name={self.name}, mac={self.mac}, ip={self.ip})"
+        return super(WirelessInterface, self).generate_view_text() + f"\nfrequency: {self.frequency}"
 
     @classmethod
     def from_dict_load(cls, dict_):
@@ -138,6 +111,7 @@ Interface:
             mac=dict_["mac"],
             ip=dict_["ip"],
             name=dict_["name"],
+            frequency=dict_["frequency"],
         )
 
         return loaded

@@ -1,10 +1,10 @@
-import random
 from collections import namedtuple
 from math import sqrt
 
 from pyautogui import size as get_screen_size
 
 from computing.connection import Connection, ConnectionSide
+from consts import CONNECTIONS
 from exceptions import NoSuchConnectionSideError
 from gui.main_loop import MainLoop
 from packets.packet import Packet
@@ -27,7 +27,7 @@ class Frequency(Connection):
         width, height = get_screen_size()
         longest_line_in_screen = sqrt((width ** 2) + (height ** 2))
 
-        super(Frequency, self).__init__(length=longest_line_in_screen)
+        super(Frequency, self).__init__(length=longest_line_in_screen, speed=CONNECTIONS.WIRELESS.DEFAULT_SPEED)
         self.frequency = frequency
 
         del self.left_side, self.right_side
@@ -37,8 +37,7 @@ class Frequency(Connection):
 
     @property
     def length(self):
-        """The length of the connection in pixels"""
-        raise NotImplementedError()
+        return self.initial_length
 
     def get_side(self, wireless_interface):
         """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""
@@ -165,20 +164,6 @@ class Frequency(Connection):
         for sent_packet in self.sent_packets[:]:  # we copy the list because we alter it during the run
             self._update_packet(sent_packet)
             self._reach_destinations(sent_packet)
-
-        self._drop_packets()  # drops the packets that were chosen by the random PL (packet loss)
-
-    def _drop_packets(self):
-        """
-        Goes through the packets that are being sent, When they reach the middle of the connection, check if they need
-        to be dropped (by PL) if so, remove them from the list, and do the animation.
-        :return: None
-        """
-        for sent_packet in self.sent_packets[:]:
-            packet_travel_percent = MainLoop.instance.time_since(sent_packet.sending_time) / self.deliver_time
-            if sent_packet.is_dropped and packet_travel_percent >= (random.random() + 0.3):
-                self.sent_packets.remove(sent_packet)
-                sent_packet.packet.graphics.drop()
 
     def stop_packets(self):
         """

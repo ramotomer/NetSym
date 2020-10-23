@@ -15,6 +15,7 @@ from computing.internals.frequency import Frequency
 from computing.internals.interface import Interface
 from computing.internals.processes.stp_process import STPProcess
 from computing.internals.processes.tcp_process import TCPProcess
+from computing.internals.wireless_interface import WirelessInterface
 from computing.router import Router
 from computing.switch import Switch, Hub, Antenna
 from consts import *
@@ -664,7 +665,11 @@ class UserInterface:
                 # raise WrongUsageError(f"Only give this function computers or interfaces!!! ({device1, device2})")
                 return
 
-        if computers[0] == computers[1]:
+        if len(set(computers)) == 1:
+            return
+
+        if any(isinstance(interface, WirelessInterface) for interface in interfaces):
+            #TODO: maybe add indicative message in the future
             return
 
         try:
@@ -777,18 +782,19 @@ class UserInterface:
                 connection.stop_packets()
                 self.connection_data.remove(connection_data)
 
-    def add_delete_interface(self, computer_graphics, interface_name):
+    def add_delete_interface(self, computer_graphics, interface_name, type_=INTERFACES.TYPE.ETHERNET):
         """
         Add an interface with a given name to a computer.
         If the interface already exists, remove it.
         :param computer_graphics: a `ComputerGraphics` object.
         :param interface_name: a string name of the interface.
+        :param type_: the type of the interface (ethernet / wireless / ...)
         :return: None
         """
         computer = computer_graphics.computer
         interface = get_the_one(computer.interfaces, lambda i: i.name == interface_name)
         try:
-            computer.add_interface(interface_name)
+            computer.add_interface(interface_name, type_=type_)
         except DeviceNameAlreadyExists:
             if interface.is_connected():
                 self.delete(interface.connection.connection.graphics)

@@ -5,7 +5,7 @@ from gui.abstracts.graphics_object import GraphicsObject
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rectangle
-from usefuls.funcs import distance, circular_coordinates, with_args, get_the_one
+from usefuls.funcs import distance, with_args, get_the_one
 
 
 class InterfaceGraphics(GraphicsObject):
@@ -62,6 +62,7 @@ class InterfaceGraphics(GraphicsObject):
 
         self.real_x, self.real_y = ((self.x - computer_x) / dist) + computer_x, ((self.y - computer_y) / dist) + computer_y
         self.x, self.y = self.real_x, self.real_y
+        # ^ keeps the interface in a fixed distance away from the computer despite being dragged.
 
     def draw(self):
         """
@@ -74,13 +75,13 @@ class InterfaceGraphics(GraphicsObject):
             color=self.color,
         )
 
-    def start_viewing(self, user_interface):
+    def _create_button_dict(self, user_interface):
         """
-        Starts the side-window-view of the interface.
-        :param user_interface: a `UserInterface` object to register the buttons in.
-        :return: `Sprite`, `str`, `int`
+        Creates the dict of the buttons that are displayed in the side window when this object is viewed.
+        :param user_interface:
+        :return:
         """
-        buttons = {
+        return {
             "config IP (i)": user_interface.ask_user_for_ip,
             "change MAC (^m)": with_args(
                 user_interface.ask_user_for,
@@ -102,6 +103,14 @@ class InterfaceGraphics(GraphicsObject):
                 is_promisc=True),
             "block (^b)": with_args(self.interface.toggle_block, "STP"),
         }
+
+    def start_viewing(self, user_interface):
+        """
+        Starts the side-window-view of the interface.
+        :param user_interface: a `UserInterface` object to register the buttons in.
+        :return: `Sprite`, `str`, `int`
+        """
+        buttons = self._create_button_dict(user_interface)
         self.buttons_id = user_interface.add_buttons(buttons)
         copied_sprite = ImageGraphics.get_image_sprite(os.path.join(DIRECTORIES.IMAGES, IMAGES.VIEW.INTERFACE))
         return copied_sprite, self.interface.generate_view_text(), self.buttons_id
@@ -146,69 +155,3 @@ class InterfaceGraphics(GraphicsObject):
             "color": self.color,
             "is_blocked": self.interface.is_blocked,
         }
-
-
-class InterfaceGraphicsList(GraphicsObject):
-    """
-    A graphics object that groups together all of the `InterfaceGraphics` objects.
-    Allows unregistering them, adding them and manipulating them together with an easy APIs
-    """
-    def __init__(self, computer_graphics):
-        """
-        Initiates the interfaces with a computer that owns them.
-        :param computer_graphics: `ComputerGraphics` object.
-        """
-        super(InterfaceGraphicsList, self).__init__(*computer_graphics.location, do_render=False)
-        interfaces = computer_graphics.computer.interfaces
-
-        self.child_graphics_objects = []
-        self.computer_graphics = computer_graphics
-
-        coords = circular_coordinates(computer_graphics.location, computer_graphics.interface_distance(), len(interfaces))
-        for i, coordinate in enumerate(coords):
-            self.add(interfaces[i], *coordinate)
-
-    def draw(self):
-        pass
-
-    def contains_interface(self, interface):
-        """
-        whether or not an interface is shown in this list.
-        :param interface: `Interface`
-        :return:
-        """
-        return any(interface_graphics.interface is interface for interface_graphics in self.child_graphics_objects)
-
-    def add(self, interface, ix=None, iy=None):
-        """
-        Adds an interface graphics object to the interface graphics list.
-        :return:
-        """
-        x, y = ix, iy
-        if ix is None and iy is None:
-            x, y = self.computer_graphics.x + self.computer_graphics.interface_distance(), self.computer_graphics.y
-
-        interface_graphics = InterfaceGraphics(x, y, interface, self.computer_graphics)
-        self.child_graphics_objects.append(interface_graphics)
-        interface.graphics = interface_graphics
-
-    def remove(self, interface):
-        """
-        Remove an interface from the list.
-        :param interface:
-        :return:
-        """
-        if not self.contains_interface(interface):
-            raise NoSuchInterfaceError(f"The interface graphics list does not contains this interface {interface}")
-
-        interface_graphics = None
-        for interface_graphics in self.child_graphics_objects:
-            if interface_graphics.interface is interface:
-                break
-        self.child_graphics_objects.remove(interface_graphics)
-
-    def __repr__(self):
-        return f"Interface Graphics list ({len(self.child_graphics_objects)})"
-
-    def dict_save(self):
-        return None
