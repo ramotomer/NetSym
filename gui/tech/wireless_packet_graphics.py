@@ -36,7 +36,7 @@ class WirelessPacketGraphics(GraphicsObject):
         return self.location
 
     def draw(self):
-        draw_circle(*self.location, self.distance)
+        draw_circle(*self.location, self.distance, outline_color=self.frequency_object.color)
 
     def drop(self):
         """

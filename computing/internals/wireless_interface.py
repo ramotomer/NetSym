@@ -56,6 +56,7 @@ class WirelessInterface(Interface):
         freq = MainWindow.main_window.user_interface.get_frequency(frequency)
         self.connection = freq.get_side(self)
         self.frequency = frequency
+        self.graphics.color = freq.color
         return freq
     
     def disconnect(self):
@@ -68,6 +69,7 @@ class WirelessInterface(Interface):
         self.frequency_object.remove_side(self.connection)
         self.connection = None
         self.frequency = None
+        self.graphics.color = INTERFACES.COLOR
 
     def block(self, accept=None):
         """

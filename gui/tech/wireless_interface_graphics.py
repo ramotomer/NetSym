@@ -19,6 +19,9 @@ class WirelessInterfaceGraphics(InterfaceGraphics):
         Draw the interface.
         :return:
         """
+        if self.interface.is_connected():
+            self.color = self.interface.frequency_object.color
+
         draw_circle(
             self.real_x, self.real_y,
             self.width,

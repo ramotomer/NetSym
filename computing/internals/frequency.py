@@ -1,3 +1,4 @@
+import random
 from collections import namedtuple
 from math import sqrt
 
@@ -34,6 +35,8 @@ class Frequency(Connection):
         self.connection_sides = []
 
         self.sent_packet_id = 0
+
+        self.color = (random.randint(0, 150), random.randint(0, 150), random.randint(0, 150))
 
     @property
     def length(self):
