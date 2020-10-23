@@ -111,7 +111,7 @@ class ComputerGraphics(ImageGraphics):
                 MESSAGES.INSERT.INTERFACE_INFO,
                 with_args(user_interface.add_delete_interface, self),
             ),
-            "add/delete wireless interface": with_args(
+            "add/delete wireless interface (alt+w)": with_args(
                 user_interface.ask_user_for,
                 str,
                 MESSAGES.INSERT.INTERFACE_INFO,

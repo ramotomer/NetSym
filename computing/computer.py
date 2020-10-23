@@ -134,6 +134,10 @@ class Computer:
         computer = cls(name, OS.WINDOWS, None, Interface(MACAddress.randomac(), IPAddress(ip_address)))
         return computer
 
+    @classmethod
+    def wireless_with_ip(cls, ip_address, frequency=CONNECTIONS.WIRELESS.DEFAULT_FREQUENCY, name=None):
+        return cls(name, OS.WINDOWS, None, WirelessInterface(MACAddress.randomac(), IPAddress(ip_address), frequency=frequency))
+
     @staticmethod
     def random_name():
         """

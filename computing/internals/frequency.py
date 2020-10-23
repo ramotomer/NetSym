@@ -33,7 +33,7 @@ class Frequency(Connection):
         del self.left_side, self.right_side
         self.connection_sides = []
 
-        self.last_sent_id = 0
+        self.sent_packet_id = 0
 
     @property
     def length(self):
@@ -90,8 +90,9 @@ class Frequency(Connection):
         :param sending_side: the connection side the packet was sent from
         """
         wireless_packet = WirelessPacket(packet.data)
-        self.sent_packets.append(SentWirelessPacket(wireless_packet, MainLoop.instance.time(), self.last_sent_id))
-        self.last_sent_id += 1
+        self.sent_packets.append(SentWirelessPacket(wireless_packet, MainLoop.instance.time(), self.sent_packet_id))
+        sending_side.received_packet_ids.append(self.sent_packet_id)
+        self.sent_packet_id += 1
         wireless_packet.show(self, sending_side.wireless_interface)
 
     def _reach_destinations(self, sent_packet):
@@ -107,7 +108,7 @@ class Frequency(Connection):
         for side in self.connection_sides:
             location = side.wireless_interface.graphics.location
 
-            if distance(location, wireless_packet.graphics.center_location) - wireless_packet.graphics.distance < 20:
+            if 0 != distance(location, wireless_packet.graphics.center_location) - wireless_packet.graphics.distance < 20:
                 if sent_packet.id not in side.received_packet_ids:  # dont get packets twice!
                     side.packets_to_receive.append(Packet(wireless_packet.data))
                     side.received_packet_ids.append(sent_packet.id)

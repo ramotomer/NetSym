@@ -51,7 +51,8 @@ class WirelessInterface(Interface):
         :return: The `Connection` object.
         """
         if self.is_connected():
-            raise DeviceAlreadyConnectedError("The interface is connected already!!!")
+            self.disconnect()
+
         freq = MainWindow.main_window.user_interface.get_frequency(frequency)
         self.connection = freq.get_side(self)
         self.frequency = frequency

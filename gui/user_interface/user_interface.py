@@ -95,6 +95,7 @@ class UserInterface:
         """
         self.key_to_action = {
             (key.N, KEYBOARD.MODIFIERS.CTRL): self.create_computer_with_ip,
+            (key.N, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT): with_args(self.create_computer_with_ip, True),
             (key.C, KEYBOARD.MODIFIERS.CTRL): self.smart_connect,
             (key.C, KEYBOARD.MODIFIERS.SHIFT): self.connect_all_to_all,
             (key.P, KEYBOARD.MODIFIERS.CTRL): self.send_random_ping,
@@ -191,6 +192,16 @@ class UserInterface:
         self.__selected_object = None
         # ^ the object that is currently dragged
         self.selected_object = None
+
+    @property
+    def all_marked_objects(self):
+        """
+        The `marked_objects` list with the selected_object together in one list
+        :return:
+        """
+        if self.selected_object in self.marked_objects:
+            return self.marked_objects
+        return self.marked_objects + ([self.selected_object] if self.selected_object is not None else [])
 
     @property
     def active_window(self):
@@ -955,7 +966,7 @@ class UserInterface:
 
         # self.set_all_connection_speeds(200)
 
-    def create_computer_with_ip(self):
+    def create_computer_with_ip(self, wireless=False):
         """
         Creates a computer with an IP fitting to the computers around it.
         It will look at the nearest computer's subnet, find the max address in that subnet and take the one above it.
@@ -969,7 +980,7 @@ class UserInterface:
         except (NoSuchComputerError, NoIPAddressError):      # if there are no computers with IP on the screen.
             given_ip = IPAddress(ADDRESSES.IP.DEFAULT)
 
-        new_computer = Computer.with_ip(given_ip)
+        new_computer = Computer.with_ip(given_ip) if not wireless else Computer.wireless_with_ip(given_ip)
         self.computers.append(new_computer)
         new_computer.show(x, y)
         return new_computer

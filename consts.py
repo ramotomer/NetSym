@@ -467,6 +467,7 @@ class CONNECTIONS:
     class WIRELESS:
         COLOR = COLORS.BLACK
         DEFAULT_SPEED = 400
+        DEFAULT_FREQUENCY = 13.37
 
     class LOOPBACK:
         RADIUS = 15
