@@ -1153,19 +1153,27 @@ class Computer:
 # ----------------------------------------- Other methods  ----------------------------------------
 
     @classmethod
+    def _interfaces_from_dict(cls, dict_):
+        """
+        Receives a dict from a json file and return a list of interfaces
+        :param dict_:
+        :return:
+        """
+        interface_classes = {INTERFACES.TYPE.ETHERNET: Interface, INTERFACES.TYPE.WIFI: WirelessInterface}
+        return [interface_classes[iface_dict["type_"]].from_dict_load(iface_dict) for iface_dict in dict_["interfaces"]]
+
+    @classmethod
     def from_dict_load(cls, dict_):
         """
         Load a computer from the dict that is saved into the files
         :param dict_:
         :return: Computer
         """
-        interfaces = [Interface.from_dict_load(interface_dict) for interface_dict in dict_["interfaces"] if interface_dict["type_"] == INTERFACES.TYPE.ETHERNET]
-        interfaces += [WirelessInterface.from_dict_load(interface_dict) for interface_dict in dict_["interfaces"] if interface_dict["type_"] == INTERFACES.TYPE.WIFI]
         returned = cls(
             dict_["name"],
             dict_["os"],
             None,
-            *interfaces
+            *cls._interfaces_from_dict(dict_)
         )
         returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])
         returned.filesystem = Filesystem.from_dict_load(dict_["filesystem"])

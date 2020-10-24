@@ -736,6 +736,7 @@ class UserInterface:
 
         self.computers.clear()
         self.connection_data.clear()
+        self.frequencies.clear()
         self.set_mode(MODES.NORMAL)
 
     def delete_all_packets(self):
@@ -792,6 +793,10 @@ class UserInterface:
                 MainLoop.instance.unregister_graphics_object(connection.graphics)
                 connection.stop_packets()
                 self.connection_data.remove(connection_data)
+
+        for interface in computer.interfaces:
+            if isinstance(interface, WirelessInterface):
+                interface.disconnect()
 
     def add_delete_interface(self, computer_graphics, interface_name, type_=INTERFACES.TYPE.ETHERNET):
         """
@@ -941,6 +946,8 @@ class UserInterface:
         :return: None
         """
         # print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
+        def gos():
+            return [go for go in MainLoop.instance.graphics_objects if not isinstance(go, UserInterfaceGraphicsObject)]
         print(MainWindow.main_window.get_mouse_location())
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
         goes = list(filter(lambda go: not isinstance(go, UserInterfaceGraphicsObject), MainLoop.instance.graphics_objects))

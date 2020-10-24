@@ -180,7 +180,7 @@ class Frequency(Connection):
 
     def __repr__(self):
         """The ip_layer representation of the connection"""
-        return f"Connection({self.length}, {self.speed})"
+        return f"Frequency({self.frequency}, connected: {len(self.connection_sides)})"
 
 
 class FrequencyConnectionSide(ConnectionSide):

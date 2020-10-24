@@ -118,3 +118,6 @@ class WirelessInterface(Interface):
         )
 
         return loaded
+
+    def __repr__(self):
+        return f"WirelessInterface(name={self.name}, mac='{self.mac.string_mac}', ip={self.ip})"

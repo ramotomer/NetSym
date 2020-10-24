@@ -144,7 +144,7 @@ class ComputerGraphics(ImageGraphics):
             "start DDOS process (ctrl+w)": with_args(
                 self.computer.start_process,
                 DDOSProcess,
-                1000,
+                100,
                 0.05
             ),
             "open console (shift+i)": with_args(
@@ -218,7 +218,7 @@ Name: {self.computer.name}
         self.update_text_location()
 
     def __str__(self):
-        return "ComputerGraphics"
+        return f"ComputerGraphics ({self.computer.name})"
 
     def __repr__(self):
         return f"ComputerGraphics of computer '{self.computer}'"
