@@ -265,7 +265,7 @@ class IMAGES:
     class SCALE_FACTORS:
         SPRITES = 0.5
         INTERNET = 8
-        PACKETS = 1.2
+        PACKETS = 1.35
         VIEWING_OBJECTS = 5 * SPRITES / 3
         PROCESSES = 1.3
 
