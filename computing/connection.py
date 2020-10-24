@@ -6,7 +6,6 @@ from exceptions import ConnectionsError
 from exceptions import WrongUsageError, NoSuchConnectionSideError, SomethingWentTerriblyWrongError
 from gui.main_loop import MainLoop
 from gui.tech.connection_graphics import ConnectionGraphics
-from gui.tech.wireless_connection_graphics import WirelessConnectionGraphics
 
 SentPacket = namedtuple("SentPacket", [
     "packet",

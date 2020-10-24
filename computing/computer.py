@@ -3,9 +3,9 @@ from collections import namedtuple
 
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
-from computing.interface import Interface
 from computing.internals.arp_cache import ArpCache
 from computing.internals.filesystem.filesystem import Filesystem
+from computing.internals.interface import Interface
 from computing.internals.processes.arp_process import ARPProcess, SendPacketWithArpsProcess
 from computing.internals.processes.daytime_process import DAYTIMEServerProcess
 from computing.internals.processes.dhcp_process import DHCPClient
@@ -13,6 +13,7 @@ from computing.internals.processes.dhcp_process import DHCPServer
 from computing.internals.processes.ftp_process import FTPServerProcess
 from computing.internals.processes.ping_process import SendPing
 from computing.internals.routing_table import RoutingTable, RoutingTableItem
+from computing.internals.wireless_interface import WirelessInterface
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
@@ -133,6 +134,10 @@ class Computer:
         computer = cls(name, OS.WINDOWS, None, Interface(MACAddress.randomac(), IPAddress(ip_address)))
         return computer
 
+    @classmethod
+    def wireless_with_ip(cls, ip_address, frequency=CONNECTIONS.WIRELESS.DEFAULT_FREQUENCY, name=None):
+        return cls(name, OS.WINDOWS, None, WirelessInterface(MACAddress.randomac(), IPAddress(ip_address), frequency=frequency))
+
     @staticmethod
     def random_name():
         """
@@ -208,18 +213,27 @@ class Computer:
         for process, args in self.startup_processes:
             self.start_process(process, *args)
 
-    def add_interface(self, name=None, mac=None):
+    def add_interface(self, name=None, mac=None, type_=INTERFACES.TYPE.ETHERNET):
         """
         Adds an interface to the computer with a given name.
         If the name already exists, raise a DeviceNameAlreadyExists.
         If no name is given, randomize.
         :param name:
         :param mac:
+        :param type_:
         :return:
         """
+        interface_type_to_object = {
+            INTERFACES.TYPE.ETHERNET: Interface,
+            INTERFACES.TYPE.WIFI: WirelessInterface,
+        }
+
         if any(interface.name == name for interface in self.all_interfaces):
             raise DeviceNameAlreadyExists("Cannot have two interfaces with the same name!!!")
-        new_interface = Interface((MACAddress.randomac() if mac is not None else mac), name=name)
+
+        interface_class = interface_type_to_object[type_]
+
+        new_interface = interface_class((MACAddress.randomac() if mac is not None else mac), name=name)
         self.interfaces.append(new_interface)
         self.graphics.add_interface(new_interface)
         return new_interface
@@ -1139,18 +1153,27 @@ class Computer:
 # ----------------------------------------- Other methods  ----------------------------------------
 
     @classmethod
+    def _interfaces_from_dict(cls, dict_):
+        """
+        Receives a dict from a json file and return a list of interfaces
+        :param dict_:
+        :return:
+        """
+        interface_classes = {INTERFACES.TYPE.ETHERNET: Interface, INTERFACES.TYPE.WIFI: WirelessInterface}
+        return [interface_classes[iface_dict["type_"]].from_dict_load(iface_dict) for iface_dict in dict_["interfaces"]]
+
+    @classmethod
     def from_dict_load(cls, dict_):
         """
         Load a computer from the dict that is saved into the files
         :param dict_:
         :return: Computer
         """
-        interfaces = [Interface.from_dict_load(interface_dict) for interface_dict in dict_["interfaces"]]
         returned = cls(
             dict_["name"],
             dict_["os"],
             None,
-            *interfaces
+            *cls._interfaces_from_dict(dict_)
         )
         returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])
         returned.filesystem = Filesystem.from_dict_load(dict_["filesystem"])

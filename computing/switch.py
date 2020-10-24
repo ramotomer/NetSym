@@ -1,11 +1,11 @@
 from address.mac_address import MACAddress
 from computing.computer import Computer
-from computing.interface import Interface
 from computing.internals.filesystem.filesystem import Filesystem
 from computing.internals.processes.stp_process import STPProcess
 from computing.internals.processes.switching_process import SwitchingProcess
 from computing.internals.routing_table import RoutingTable
-from consts import OS, PROTOCOLS, IMAGES
+from computing.internals.wireless_interface import WirelessInterface
+from consts import OS, PROTOCOLS, IMAGES, CONNECTIONS
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.stp import STP, LogicalLinkControl
 
@@ -83,7 +83,7 @@ class Switch(Computer):
         :return: Computer
         """
         returned = cls(dict_["name"])
-        returned.interfaces = [Interface.from_dict_load(interface_dict) for interface_dict in dict_["interfaces"]]
+        returned.interfaces = cls._interfaces_from_dict(dict_)
         returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])
         returned.filesystem = Filesystem.from_dict_load(dict_["filesystem"])
         returned.initial_size = dict_["size"]
@@ -116,10 +116,11 @@ class Antenna(Switch):
     """
     This class represents an Antenna, which is just a Switch that can send things over radio waves.
     """
-    def __init__(self, name=None):
+    def __init__(self, name=None, *interfaces):
         super(Antenna, self).__init__(name)
-        self.stp_enabled = True
+        self.stp_enabled = False
         self.is_supporting_wireless_connections = True
+        self.interfaces = [WirelessInterface(frequency=CONNECTIONS.WIRELESS.DEFAULT_FREQUENCY)] if not interfaces else list(interfaces)
 
     def show(self, x, y):
         """
@@ -130,3 +131,16 @@ class Antenna(Switch):
         """
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.ANTENNA)
         self.loopback.connection.connection.show(self.graphics)
+
+    @classmethod
+    def from_dict_load(cls, dict_):
+        """
+        Load a computer from the dict that is saved into the files
+        :param dict_:
+        :return: Computer
+        """
+        returned = cls(dict_["name"], *cls._interfaces_from_dict(dict_))
+        returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])
+        returned.filesystem = Filesystem.from_dict_load(dict_["filesystem"])
+        returned.initial_size = dict_["size"]
+        return returned

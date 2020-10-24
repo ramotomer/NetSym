@@ -358,7 +358,8 @@ class ANIMATIONS:
 class PACKET:
     class DIRECTION:
         RIGHT = 'R'
-        LEFT = 'L'
+        LEFT = 'L'  # do not change value! it is depended on
+        WIRELESS = 'W'
 
     TYPE_TO_IMAGE = {
         "Ethernet": IMAGES.PACKETS.ETHERNET,
@@ -433,6 +434,10 @@ class INTERFACES:
     WIDTH, HEIGHT = 10, 10
     ANY_INTERFACE = None
 
+    class TYPE:
+        ETHERNET = "Ethernet"
+        WIFI = "Wifi"
+
 
 class TEXT:
     DEFAULT_Y_PADDING = -10
@@ -461,6 +466,8 @@ class CONNECTIONS:
 
     class WIRELESS:
         COLOR = COLORS.BLACK
+        DEFAULT_SPEED = 400
+        DEFAULT_FREQUENCY = 13.37
 
     class LOOPBACK:
         RADIUS = 15

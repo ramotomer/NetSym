@@ -8,7 +8,7 @@ from computing.internals.processes.ftp_process import FTPClientProcess
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
-from gui.tech.interface_graphics import InterfaceGraphicsList
+from gui.tech.interface_graphics_list import InterfaceGraphicsList
 from gui.tech.output_console import OutputConsole
 from gui.tech.process_graphics import ProcessGraphicsList
 from gui.user_interface.popup_windows.popup_console import PopupConsole
@@ -109,7 +109,13 @@ class ComputerGraphics(ImageGraphics):
                 user_interface.ask_user_for,
                 str,
                 MESSAGES.INSERT.INTERFACE_INFO,
-                with_args(user_interface.add_delete_interface, self)
+                with_args(user_interface.add_delete_interface, self),
+            ),
+            "add/delete wireless interface (alt+w)": with_args(
+                user_interface.ask_user_for,
+                str,
+                MESSAGES.INSERT.INTERFACE_INFO,
+                with_args(user_interface.add_delete_interface, self, type_=INTERFACES.TYPE.WIFI),
             ),
             "open/close port (shift+o)": with_args(
                 user_interface.ask_user_for,
@@ -138,8 +144,8 @@ class ComputerGraphics(ImageGraphics):
             "start DDOS process (ctrl+w)": with_args(
                 self.computer.start_process,
                 DDOSProcess,
-                1000,
-                0.8
+                100,
+                0.05
             ),
             "open console (shift+i)": with_args(
                 self._open_shell,
@@ -212,7 +218,7 @@ Name: {self.computer.name}
         self.update_text_location()
 
     def __str__(self):
-        return "ComputerGraphics"
+        return f"ComputerGraphics ({self.computer.name})"
 
     def __repr__(self):
         return f"ComputerGraphics of computer '{self.computer}'"

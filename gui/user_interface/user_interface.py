@@ -11,9 +11,11 @@ from pyglet.window import key
 
 from address.ip_address import IPAddress
 from computing.computer import Computer
-from computing.interface import Interface
+from computing.internals.frequency import Frequency
+from computing.internals.interface import Interface
 from computing.internals.processes.stp_process import STPProcess
 from computing.internals.processes.tcp_process import TCPProcess
+from computing.internals.wireless_interface import WirelessInterface
 from computing.router import Router
 from computing.switch import Switch, Hub, Antenna
 from consts import *
@@ -93,6 +95,7 @@ class UserInterface:
         """
         self.key_to_action = {
             (key.N, KEYBOARD.MODIFIERS.CTRL): self.create_computer_with_ip,
+            (key.N, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT): with_args(self.create_computer_with_ip, True),
             (key.C, KEYBOARD.MODIFIERS.CTRL): self.smart_connect,
             (key.C, KEYBOARD.MODIFIERS.SHIFT): self.connect_all_to_all,
             (key.P, KEYBOARD.MODIFIERS.CTRL): self.send_random_ping,
@@ -148,6 +151,7 @@ class UserInterface:
         self.computers = []
         self.connection_data = []
         # ^ a list of `ConnectionData`-s (save information about all existing connections between computers.
+        self.frequencies = []  # a list of all Frequency objects that exist in the simulation!
 
         self.mode = MODES.NORMAL
         self.source_of_line_drag = None
@@ -188,6 +192,16 @@ class UserInterface:
         self.__selected_object = None
         # ^ the object that is currently dragged
         self.selected_object = None
+
+    @property
+    def all_marked_objects(self):
+        """
+        The `marked_objects` list with the selected_object together in one list
+        :return:
+        """
+        if self.selected_object in self.marked_objects:
+            return self.marked_objects
+        return self.marked_objects + ([self.selected_object] if self.selected_object is not None else [])
 
     @property
     def active_window(self):
@@ -659,16 +673,18 @@ class UserInterface:
                 computers[i] = device
                 interfaces[i] = device.available_interface()
             else:
-                # raise WrongUsageError(f"Only supply this function with computers or interfaces!!! ({device1, device2})")
+                # raise WrongUsageError(f"Only give this function computers or interfaces!!! ({device1, device2})")
                 return
 
-        if computers[0] == computers[1]:
+        if len(set(computers)) == 1:
             return
 
-        is_wireless = all(computer.is_supporting_wireless_connections for computer in computers)
+        if any(isinstance(interface, WirelessInterface) for interface in interfaces):
+            #TODO: maybe add indicative message in the future
+            return
 
         try:
-            connection = interfaces[0].connect(interfaces[1], is_wireless=is_wireless)
+            connection = interfaces[0].connect(interfaces[1])
         except DeviceAlreadyConnectedError:
             PopupError("That interface is already connected :(", self)
             return
@@ -720,6 +736,7 @@ class UserInterface:
 
         self.computers.clear()
         self.connection_data.clear()
+        self.frequencies.clear()
         self.set_mode(MODES.NORMAL)
 
     def delete_all_packets(self):
@@ -777,18 +794,23 @@ class UserInterface:
                 connection.stop_packets()
                 self.connection_data.remove(connection_data)
 
-    def add_delete_interface(self, computer_graphics, interface_name):
+        for interface in computer.interfaces:
+            if isinstance(interface, WirelessInterface):
+                interface.disconnect()
+
+    def add_delete_interface(self, computer_graphics, interface_name, type_=INTERFACES.TYPE.ETHERNET):
         """
         Add an interface with a given name to a computer.
         If the interface already exists, remove it.
         :param computer_graphics: a `ComputerGraphics` object.
         :param interface_name: a string name of the interface.
+        :param type_: the type of the interface (ethernet / wireless / ...)
         :return: None
         """
         computer = computer_graphics.computer
         interface = get_the_one(computer.interfaces, lambda i: i.name == interface_name)
         try:
-            computer.add_interface(interface_name)
+            computer.add_interface(interface_name, type_=type_)
         except DeviceNameAlreadyExists:
             if interface.is_connected():
                 self.delete(interface.connection.connection.graphics)
@@ -824,10 +846,11 @@ class UserInterface:
         :return:
         """
         all_connections = [connection_data[0] for connection_data in self.connection_data] +\
-                          [computer.loopback.connection.connection for computer in self.computers]
+                          [computer.loopback.connection.connection for computer in self.computers] + self.frequencies
         all_sent_packets = functools.reduce(operator.concat, map(operator.attrgetter("sent_packets"), all_connections))
 
-        for packet, _, _, _ in all_sent_packets:
+        for sent_packet in all_sent_packets:
+            packet = sent_packet[0]
             if packet.graphics is graphics_object:
                 return packet
         return None
@@ -923,6 +946,8 @@ class UserInterface:
         :return: None
         """
         # print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
+        def gos():
+            return [go for go in MainLoop.instance.graphics_objects if not isinstance(go, UserInterfaceGraphicsObject)]
         print(MainWindow.main_window.get_mouse_location())
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
         goes = list(filter(lambda go: not isinstance(go, UserInterfaceGraphicsObject), MainLoop.instance.graphics_objects))
@@ -949,7 +974,7 @@ class UserInterface:
 
         # self.set_all_connection_speeds(200)
 
-    def create_computer_with_ip(self):
+    def create_computer_with_ip(self, wireless=False):
         """
         Creates a computer with an IP fitting to the computers around it.
         It will look at the nearest computer's subnet, find the max address in that subnet and take the one above it.
@@ -963,7 +988,7 @@ class UserInterface:
         except (NoSuchComputerError, NoIPAddressError):      # if there are no computers with IP on the screen.
             given_ip = IPAddress(ADDRESSES.IP.DEFAULT)
 
-        new_computer = Computer.with_ip(given_ip)
+        new_computer = Computer.with_ip(given_ip) if not wireless else Computer.wireless_with_ip(given_ip)
         self.computers.append(new_computer)
         new_computer.show(x, y)
         return new_computer
@@ -1486,3 +1511,18 @@ class UserInterface:
             for computer in subnets[subnet]:
                 computer.graphics.flush_colors()
                 computer.graphics.add_hue(color)
+
+    def get_frequency(self, frequency):
+        """
+        Receives a float indicating a frequency and returning a Frequency object to connect the wireless devices
+        that are listening to that frequency.
+        :param frequency: `float`
+        :return:
+        """
+        for freq in self.frequencies:
+            if freq.frequency == frequency:
+                return freq
+
+        new_freq = Frequency(frequency)
+        self.frequencies.append(new_freq)
+        return new_freq
