@@ -1,4 +1,5 @@
 from address.mac_address import MACAddress
+from consts import INTERFACES
 from exceptions import NoSuchInterfaceError
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_circle
@@ -12,6 +13,7 @@ class WirelessInterfaceGraphics(InterfaceGraphics):
     """
     def __init__(self, x, y, interface, computer_graphics):
         super(WirelessInterfaceGraphics, self).__init__(x, y, interface, computer_graphics)
+        self.width = INTERFACES.WIDTH / 2
 
     @property
     def radius(self):
