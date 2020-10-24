@@ -5,7 +5,8 @@ from computing.internals.interface import Interface
 from computing.internals.processes.stp_process import STPProcess
 from computing.internals.processes.switching_process import SwitchingProcess
 from computing.internals.routing_table import RoutingTable
-from consts import OS, PROTOCOLS, IMAGES
+from computing.internals.wireless_interface import WirelessInterface
+from consts import OS, PROTOCOLS, IMAGES, CONNECTIONS
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.stp import STP, LogicalLinkControl
 
@@ -120,6 +121,7 @@ class Antenna(Switch):
         super(Antenna, self).__init__(name)
         self.stp_enabled = True
         self.is_supporting_wireless_connections = True
+        self.interfaces = [WirelessInterface(frequency=CONNECTIONS.WIRELESS.DEFAULT_FREQUENCY)]
 
     def show(self, x, y):
         """

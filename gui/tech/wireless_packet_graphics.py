@@ -1,6 +1,10 @@
 from consts import *
 from gui.abstracts.graphics_object import GraphicsObject
-from gui.shape_drawing import draw_circle
+from gui.abstracts.image_graphics import ImageGraphics
+from gui.main_window import MainWindow
+from gui.shape_drawing import draw_circle, draw_rectangle
+from gui.tech.packet_graphics import PacketGraphics
+from usefuls.funcs import distance
 
 
 class WirelessPacketGraphics(GraphicsObject):
@@ -11,6 +15,8 @@ class WirelessPacketGraphics(GraphicsObject):
     The packets know the connection's length, speed start and end, and so they can calculate where they should be at
     any given moment.
     """
+    end_viewing = PacketGraphics.end_viewing
+
     def __init__(self, center_x, center_y, deepest_layer, frequency_object):
         super(WirelessPacketGraphics, self).__init__(center_x, center_y)
 
@@ -20,8 +26,11 @@ class WirelessPacketGraphics(GraphicsObject):
         self.direction = PACKET.DIRECTION.WIRELESS
         self.distance = 0
         self.str = str(deepest_layer)
+        self.deepest_layer = deepest_layer
 
         self.buttons_id = None
+
+        self.image_from_packet = PacketGraphics.image_from_packet
 
     @property
     def center_x(self):
@@ -36,27 +45,12 @@ class WirelessPacketGraphics(GraphicsObject):
         return self.location
 
     def draw(self):
-        draw_circle(*self.location, self.distance, outline_color=self.frequency_object.color)
+        color = COLORS.WHITE if self.is_mouse_in() else self.frequency_object.color
+        draw_circle(*self.location, self.distance, outline_color=color)
 
-    def drop(self):
-        """
-        Displays the animation of the packet when it is dropped by PL in a connection.
-        :return: None
-        """
-        raise NotImplementedError()
-
-    @staticmethod
-    def image_from_packet(layer):
-        """
-        Returns an image name from the `layer` name it receives.
-        The `layer` will usually be the most inner layer in a packet.
-        :param layer: The `Protocol` instance that you wish to get an image for.
-        :return: a string of the corresponding image's location.
-        """
-        raise NotImplementedError()
-        # if hasattr(layer, "opcode"):
-        #     return PACKET.TYPE_TO_IMAGE[type(layer).__name__][layer.opcode]
-        # return PACKET.TYPE_TO_IMAGE[type(layer).__name__]
+    def is_mouse_in(self):
+        mouse_dist = distance(self.center_location, MainWindow.main_window.get_mouse_location())
+        return abs(mouse_dist - self.distance) < 5
 
     def start_viewing(self, user_interface):
         """
@@ -64,19 +58,21 @@ class WirelessPacketGraphics(GraphicsObject):
         :param user_interface: the `UserInterface` object we can use the methods of it.
         :return: a tuple <display sprite>, <display text>, <new button id>
         """
-        raise NotImplementedError()
-        # buttons = {
-        #     "Drop (alt+d)": with_args(user_interface.drop_packet, self),
-        # }
-        # self.buttons_id = user_interface.add_buttons(buttons)
-        # return self.copy_sprite(self.sprite), '', self.buttons_id
+        buttons = {}
+        self.buttons_id = user_interface.add_buttons(buttons)
 
-    def end_viewing(self, user_interface):
+        sprite = ImageGraphics.get_image_sprite(os.path.join(DIRECTORIES.IMAGES, self.image_from_packet(self.deepest_layer)))
+        return sprite, '', self.buttons_id
+
+    def mark_as_selected(self):
         """
-        Ends the viewing of the object in the side window
+        Marks the object as selected, but does not show the resizing dots :)
+        :return:
         """
-        raise NotImplementedError()
-        # user_interface.remove_buttons(self.buttons_id)
+        x, y = self.x, self.y
+
+        corner = self.center_x + self.distance - SELECTED_OBJECT.PADDING, y - SELECTED_OBJECT.PADDING
+        draw_rectangle(*corner, 20, 20, outline_color=SELECTED_OBJECT.COLOR)
 
     def __repr__(self):
         return self.str

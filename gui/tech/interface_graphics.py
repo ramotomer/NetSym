@@ -154,4 +154,5 @@ class InterfaceGraphics(GraphicsObject):
             "ip": repr(self.interface.ip) if self.interface.ip is not None else None,
             "color": self.color,
             "is_blocked": self.interface.is_blocked,
+            "type_": self.interface.type,
         }

@@ -841,10 +841,11 @@ class UserInterface:
         :return:
         """
         all_connections = [connection_data[0] for connection_data in self.connection_data] +\
-                          [computer.loopback.connection.connection for computer in self.computers]
+                          [computer.loopback.connection.connection for computer in self.computers] + self.frequencies
         all_sent_packets = functools.reduce(operator.concat, map(operator.attrgetter("sent_packets"), all_connections))
 
-        for packet, _, _, _ in all_sent_packets:
+        for sent_packet in all_sent_packets:
+            packet = sent_packet[0]
             if packet.graphics is graphics_object:
                 return packet
         return None

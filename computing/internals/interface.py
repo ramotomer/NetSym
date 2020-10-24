@@ -292,6 +292,7 @@ Interface:
             mac=dict_["mac"],
             ip=dict_["ip"],
             name=dict_["name"],
+            type_=dict_["type_"]
         )
 
         return loaded

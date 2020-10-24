@@ -1159,7 +1159,8 @@ class Computer:
         :param dict_:
         :return: Computer
         """
-        interfaces = [Interface.from_dict_load(interface_dict) for interface_dict in dict_["interfaces"]]
+        interfaces = [Interface.from_dict_load(interface_dict) for interface_dict in dict_["interfaces"] if interface_dict["type_"] == INTERFACES.TYPE.ETHERNET]
+        interfaces += [WirelessInterface.from_dict_load(interface_dict) for interface_dict in dict_["interfaces"] if interface_dict["type_"] == INTERFACES.TYPE.WIFI]
         returned = cls(
             dict_["name"],
             dict_["os"],

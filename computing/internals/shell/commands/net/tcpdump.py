@@ -33,6 +33,10 @@ class Tcpdump(Command):
             name = parsed_args.interface
             if not name:
                 name = self.computer.interfaces[0]
+
+            if not any(interface.name == name for interface in self.computer.all_interfaces):
+                return CommandOutput("", f"Interface {name} does not exist!")
+
             if parsed_args.stop:
                 self.computer.stop_sniff(name)
             else:

@@ -15,3 +15,4 @@ if __name__ == '__main__':
     # TODO: make sure no two computers or interfaces have the same name!
     # TODO: there are errors with removing connections and the routing table
     # TODO: loopback connection graphics are not deleted when the parent computer is.
+    # TODO: asking for DATETIME does not work!
