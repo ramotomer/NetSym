@@ -2,12 +2,11 @@ import random
 from collections import namedtuple
 from math import sqrt
 
-from pyautogui import size as get_screen_size
-
 from computing.connection import Connection, ConnectionSide
 from consts import CONNECTIONS
 from exceptions import NoSuchConnectionSideError
 from gui.main_loop import MainLoop
+from gui.main_window import MainWindow
 from packets.packet import Packet
 from packets.wireless_packet import WirelessPacket
 from usefuls.funcs import distance
@@ -25,7 +24,7 @@ class Frequency(Connection):
     It is a global object, since you do not need
     """
     def __init__(self, frequency):
-        width, height = get_screen_size()
+        width, height = MainWindow.main_window.width, MainWindow.main_window.height
         longest_line_in_screen = sqrt((width ** 2) + (height ** 2))
 
         super(Frequency, self).__init__(length=longest_line_in_screen, speed=CONNECTIONS.WIRELESS.DEFAULT_SPEED)

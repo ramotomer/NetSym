@@ -145,7 +145,7 @@ class ComputerGraphics(ImageGraphics):
                 self.computer.start_process,
                 DDOSProcess,
                 1000,
-                0.8
+                0.05
             ),
             "open console (shift+i)": with_args(
                 self._open_shell,
