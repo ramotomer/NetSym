@@ -44,6 +44,18 @@ class SomethingWentTerriblyWrongError(NetworkSimulationError):
     """
 
 
+class WrongUsageError(SomethingWentTerriblyWrongError):
+    """
+    Occurs when a function is used not in the way it was intended
+    """
+
+
+class ThisCodeShouldNotBeReached(SomethingWentTerriblyWrongError):
+    """
+    This should be raised in some code segment that should never be reached, but it is good practice to write it anyway.
+    """
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -99,7 +111,7 @@ class TCPDoneReceiving(TCPError):
 
 class TCPDataLargerThanMaxSegmentSize(TCPError):
     """
-    This is raised when some data is sent by TCP when it is larger than the MSS (max segment size) of that packet
+    This is raised when some ip_layer is sent by TCP when it is larger than the MSS (max segment size) of that packet
     """
 
 
@@ -134,6 +146,12 @@ class NoSuchInterfaceError(InterfaceError):
 class NotAnInterfaceError(InterfaceError):
     """
     Occurs when an interface is requested but another type of object is given.
+    """
+
+
+class DeviceNameAlreadyExists(InterfaceError):
+    """
+    Indicates a creation of an interface with a name that is taken.
     """
 
 
@@ -203,6 +221,12 @@ class PopupWindowWithThisError(GraphicsError):
     is opened.
     """
 
+
+class ObjectIsNotResizableError(GraphicsError):
+    """
+    When a resizing dot is assigned to a non-resizable object.
+    """
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -236,3 +260,105 @@ class NoSuchConnectionError(ConnectionsError):
     """
     Occurs when a connection that does not exist is requested or used.
     """
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class UserInterfaceError(NetworkSimulationError):
+    """
+    a problem with something that is related to an action that the user has performed.
+    """
+
+
+class KeyboardError(UserInterfaceError):
+    """
+    problem related to the keyboard.
+    """
+
+
+class KeyActionAlreadyExistsError(KeyboardError):
+    """
+    Trying to assign an action to a key that an action is already assigned to it...
+    """
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class FilesystemError(ComputerError):
+    """
+    An error with the filesystem of a computer.
+    """
+
+
+class NoSuchItemError(FilesystemError):
+    """
+    When a filesystem item is requested but does not exist!
+    """
+
+
+class NoSuchFileError(NoSuchItemError):
+    """
+    When a file that is accessed does not exist.
+    """
+
+
+class NoSuchDirectoryError(NoSuchItemError):
+    """
+    when dir no exist this happen
+    """
+
+
+class PathError(FilesystemError):
+    """
+    A problem with a path.
+    """
+
+
+class DirectoryAlreadyExistsError(FilesystemError):
+    """
+    Directory to be created already exists in dest location.
+    """
+
+
+class FileNotOpenError(FilesystemError):
+    """
+    Reading from a closed file.
+    """
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class ShellError(NetworkSimulationError):
+    """
+    An error in a shell
+    """
+
+
+class CommandError(ShellError):
+    """
+    Error with a command
+    """
+
+
+class CommandParsingError(CommandError):
+    """
+    Error in parsing a command in the shell
+    """
+
+
+class WrongArgumentsError(CommandParsingError):
+    """
+    Arguments that were given to the parsed command were not correct.
+    """
+
+
+class CannotBeUsedWithPiping(CommandError):
+    """
+    There are commands that cannot be used with piping (for example: `echo hi | rm` cannot be done!)
+    """
+
+
+class InvalidAliasCommand(CommandError):
+    pass

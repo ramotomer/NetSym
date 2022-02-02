@@ -2,6 +2,7 @@ import pyglet
 
 from consts import *
 from gui.main_loop import MainLoop
+from usefuls.funcs import normal_color_to_weird_gl_color
 
 
 class MainWindow(pyglet.window.Window):
@@ -25,17 +26,39 @@ class MainWindow(pyglet.window.Window):
         super().__init__(*args, **kwargs)
         MainWindow.main_window = self
 
-        self.set_location(*INITIAL_WINDOW_LOCATION)
+        self.set_location(*WINDOWS.MAIN.INITIAL_LOCATION)
         # ^ window initial location on the screen
 
-        self.mouse_x, self.mouse_y = 0, 0
+        self.mouse_x, self.mouse_y = WINDOWS.MAIN.WIDTH / 2, WINDOWS.MAIN.HEIGHT / 2
         self.mouse_pressed = False
 
         self.user_interface = user_interface
 
+        self.previous_width = self.width
+        self.previous_height = self.height
+
+        pyglet.gl.glClearColor(*normal_color_to_weird_gl_color(WINDOWS.MAIN.BACKGROUND))
+
+    @property
+    def location(self):
+        return self.width, self.height
+
+    @property
+    def center(self):
+        return self.width / 2 - WINDOWS.SIDE.WIDTH, self.height / 2
+
     def get_mouse_location(self):
         """Return the mouse's location as a tuple"""
         return self.mouse_x, self.mouse_y
+
+    def button_location_by_index(self, button_index):
+        """
+        Decides the location of the buttons by the index of the button in the button list.
+        :param button_index: `int`
+        :return:
+        """
+        return (self.width - WINDOWS.SIDE.WIDTH + 20), \
+               (self.height - 90 - (button_index * (BUTTONS.DEFAULT_HEIGHT + BUTTONS.Y_GAP)))
 
     def on_mouse_motion(self, x, y, dx, dy):
         """
@@ -82,8 +105,13 @@ class MainWindow(pyglet.window.Window):
         :param scroll_y:  The amount of scrolls in each direction
         :return: None
         """
-        if self.user_interface.is_mouse_in_side_window() and self.user_interface.mode == VIEW_MODE:
+        if self.user_interface.is_mouse_in_side_window() and self.user_interface.mode == MODES.VIEW:
             self.user_interface.scroll_view(scroll_y)
+
+        else:
+            for obj in self.user_interface.all_marked_objects:
+                if obj is not None and hasattr(obj, "resize"):
+                    obj.resize(10 * scroll_y, 10 * scroll_y, constrain_proportions=True)
 
     def on_mouse_press(self, x, y, button, modifiers):
         """
@@ -96,35 +124,8 @@ class MainWindow(pyglet.window.Window):
         :param modifiers:
         :return:
         """
-        try: # this try and except is done becauese for some reason it is done automatically in pyglet and it is very annoying!!!!!!
-
-            self.mouse_pressed = True
-            self._set_mouse_pressed_objects()
-
-            if self.user_interface.selected_object is None and self.user_interface.is_asking_for_string:  # if pressed outside a text-box.
-                self.user_interface.end_string_request()
-
-            self.user_interface.on_mouse_press()  # this should will be last!
-
-        except (TypeError, AttributeError) as err:
-            print(f"error in `on_mouse_press` {err}")
-            raise err
-
-    def _set_mouse_pressed_objects(self):
-        """
-        Sets the `selected_object` and `dragged_object` according to the mouse's press.
-        :return: None
-        """
-        if not self.user_interface.is_mouse_in_side_window():
-            object_the_mouse_is_on = MainLoop.instance.get_object_the_mouse_is_on()
-
-            self.user_interface.dragged_object = object_the_mouse_is_on
-            self.user_interface.selected_object = object_the_mouse_is_on
-
-            if object_the_mouse_is_on is not None:
-                mouse_x, mouse_y = self.get_mouse_location()
-                object_x, object_y = object_the_mouse_is_on.location
-                self.user_interface.dragging_point = object_x - mouse_x, object_y - mouse_y
+        self.mouse_pressed = True
+        self.user_interface.on_mouse_press()  # this should will be last!
 
     def on_mouse_release(self, x, y, button, modifiers):
         """
@@ -135,6 +136,7 @@ class MainWindow(pyglet.window.Window):
         :param modifiers:
         :return:
         """
+        self.user_interface.on_mouse_release()
         self.mouse_pressed = False
         self.user_interface.dragged_object = None
 
@@ -145,16 +147,16 @@ class MainWindow(pyglet.window.Window):
         :param modifiers:  additional keys that are pressed (ctrl, shift, caps lock, etc..)
         :return:  None
         """
-        try:  # this try and except is done becauese for some reason it is done automatically in pyglet and it is very annoying!!!!!!
+        self.user_interface.on_key_pressed(symbol, modifiers)
 
-            if not self.user_interface.is_asking_for_string:
-                self.user_interface.on_key_pressed(symbol, modifiers)
-            else:
-                self.user_interface.popup_window.pressed(symbol, modifiers)
-
-        except (TypeError, AttributeError) as err:
-            print(f"error in `on_key_press`: {err}")
-            raise err
+    def _on_resize(self):
+        """
+        The original on_resize does not work, so i wrote one of my own...
+        :return:
+        """
+        self.user_interface.set_mode(MODES.NORMAL)
+        self.previous_width = self.width
+        self.previous_height = self.height
 
     def on_draw(self):
         """
@@ -162,13 +164,10 @@ class MainWindow(pyglet.window.Window):
         The try and except here are because pyglet likes catching certain exceptions and it makes debugging practically
         impossible.
         """
-        try:
+        MainLoop.instance.main_loop()
 
-            MainLoop.instance.main_loop()
-
-        except (TypeError, AttributeError) as err:
-            print(f"exception in on_draw: {err}")
-            raise err
+        if self.width != self.previous_width or self.height != self.previous_height:
+            self._on_resize()  # `on_resize` does not work, I wrote `_on_resize` instead.
 
     def update(self, time_interval):
         """

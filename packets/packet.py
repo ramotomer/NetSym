@@ -12,7 +12,7 @@ class Packet:
     """
     def __init__(self, data=None):
         """
-        Initiates the packet object, data is the out-most layer of the packet (usually Ethernet).
+        Initiates the packet object, ip_layer is the out-most layer of the packet (usually Ethernet).
         `self.graphics` is a `PacketGraphics` object.
         :param data:
         """
@@ -56,7 +56,7 @@ class Packet:
         """
         This is a generator that runs over all of the layers in the packet not including the last one (if it is a string
         in ICMP for example)
-        :yield: a `Protocol` object usually but any object that is put in the `data` field of a protocol.
+        :yield: a `Protocol` object usually but any object that is put in the `ip_layer` field of a protocol.
         """
         layer = self.data
         while isinstance(layer, Protocol):
@@ -93,7 +93,7 @@ class Packet:
         for layer in self.get_layers():
             if layer.__class__.__name__ == item:
                 return layer
-        raise NoSuchLayerError('The packet does not contain that layer!')
+        raise NoSuchLayerError(f'The packet does not contain the layer {item}!')
 
     def __str__(self):
         """The shorter string representation of the packet"""

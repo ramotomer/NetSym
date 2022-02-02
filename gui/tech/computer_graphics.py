@@ -2,20 +2,24 @@ from collections import namedtuple
 from os import linesep
 
 from address.ip_address import IPAddress
+from computing.internals.processes.daytime_process import DAYTIMEClientProcess
+from computing.internals.processes.ddos_process import DDOSProcess
+from computing.internals.processes.ftp_process import FTPClientProcess
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
-from gui.tech.console import Console
+from gui.main_window import MainWindow
+from gui.tech.interface_graphics_list import InterfaceGraphicsList
+from gui.tech.output_console import OutputConsole
 from gui.tech.process_graphics import ProcessGraphicsList
+from gui.user_interface.popup_windows.popup_console import PopupConsole
 from gui.user_interface.text_graphics import Text
-from processes.daytime_process import DAYTIMEClientProcess
-from processes.ddos_process import DDOSProcess
-from processes.ftp_process import FTPClientProcess
-from usefuls import with_args
+from usefuls.funcs import with_args
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", [
     "text",
     "console",
-    "process_list"
+    "process_list",
+    "interface_list",
 ])
 
 
@@ -25,7 +29,7 @@ class ComputerGraphics(ImageGraphics):
     It inherits from `ImageGraphics` because there is an image of the computer that should just be drawn.
     This class adds to it the text that exists under a computer.
     """
-    def __init__(self, x, y, computer, image=COMPUTER_IMAGE):
+    def __init__(self, x, y, computer, image=IMAGES.COMPUTERS.COMPUTER, scale_factor=IMAGES.SCALE_FACTORS.SPRITES):
         """
         The graphics objects of computers.
         :param x:
@@ -33,16 +37,33 @@ class ComputerGraphics(ImageGraphics):
         :param computer: The computer object itself.
         :param image: the name of the image of the computer. (can be changed for different types of computers)
         """
-        super(ComputerGraphics, self).__init__(IMAGES.format(image), x, y, centered=True, is_in_background=True)
+        super(ComputerGraphics, self).__init__(
+            os.path.join(DIRECTORIES.IMAGES, image),
+            x, y,
+            centered=True,
+            is_in_background=True,
+            is_pressable=True,
+            scale_factor=scale_factor,
+        )
         self.is_computer = True
-        self.is_pressable = True
         self.computer = computer
+        self.class_name = self.computer.__class__.__name__
+
         self.child_graphics_objects = ChildGraphicsObjects(
             Text(self.generate_text(), self.x, self.y, self),
-            Console(CONSOLE_X, CONSOLE_Y),
+            OutputConsole(*self.console_location),
             ProcessGraphicsList(self),
+            InterfaceGraphicsList(self),
         )
+
         self.buttons_id = None
+
+        self.sprite.update(scale_x=self.computer.initial_size[0], scale_y=self.computer.initial_size[1])
+        self.update_text_location()
+
+    @property
+    def console_location(self):
+        return MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2) - (CONSOLE.WIDTH / 2), CONSOLE.Y
 
     def generate_text(self):
         """
@@ -52,7 +73,7 @@ class ComputerGraphics(ImageGraphics):
         return '\n'.join([self.computer.name] + [str(interface.ip) for interface in self.computer.interfaces if interface.has_ip()])
 
     def update_text(self):
-        """Sometimes the data of the computer is changed and we want to text to change as well"""
+        """Sometimes the ip_layer of the computer is changed and we want to text to change as well"""
         self.child_graphics_objects.text.set_text(self.generate_text())
 
     def update_image(self):
@@ -60,10 +81,10 @@ class ComputerGraphics(ImageGraphics):
         Updates the image according to the current computer state
         :return:
         """
-        self.image_name = IMAGES.format(SERVER_IMAGE if self.computer.open_ports else COMPUTER_IMAGE)
+        self.image_name = os.path.join(DIRECTORIES.IMAGES, IMAGES.COMPUTERS.SERVER if self.computer.open_tcp_ports else IMAGES.COMPUTERS.COMPUTER)
         self.load()
         self.child_graphics_objects.process_list.clear()
-        for port in self.computer.open_ports:
+        for port in self.computer.open_tcp_ports:
             self.child_graphics_objects.process_list.add(port)
 
     def start_viewing(self, user_interface):
@@ -72,40 +93,155 @@ class ComputerGraphics(ImageGraphics):
         :param user_interface: the `UserInterface` object we can use the methods of it.
         :return: a tuple <display sprite>, <display text>, <new button count>
         """
+        self.child_graphics_objects.console.location = self.console_location
+        self.child_graphics_objects.console.show()
+
         buttons = {
-            "open/close console (shift+o)": self.child_graphics_objects.console.toggle_showing,
+            "set ip (i)": user_interface.ask_user_for_ip,
+            "change name (shift+n)": with_args(
+                user_interface.ask_user_for,
+                str,
+                MESSAGES.INSERT.COMPUTER_NAME,
+                self.computer.set_name,
+            ),
             "power on/off (o)": self.computer.power,
-            "config IP (i)": user_interface.ask_user_for_ip,
-            "set default gateway (g)": with_args(user_interface.ask_user_for, IPAddress, INSERT_GATEWAY_MSG,
-                                                 self.computer.set_default_gateway),
-            "add/delete interface (^i)": with_args(user_interface.ask_user_for, str, INSERT_INTERFACE_INFO_MSG,
-                                                   with_args(user_interface.add_delete_interface, self)),
-            "sniffing start/stop (f)": with_args(self.computer.toggle_sniff, is_promisc=True),
-            "open/close port (^o)": with_args(user_interface.ask_user_for, int, INSERT_PORT_NUMBER,
-                                              self.computer.open_port),
-            "ask daytime (ctrl+a)": with_args(user_interface.ask_user_for, IPAddress, INSERT_IP_FOR_PROCESS,
-                                              with_args(self.computer.start_process, DAYTIMEClientProcess)),
-            "download file (alt+a)": with_args(user_interface.ask_user_for, IPAddress, INSERT_IP_FOR_PROCESS,
-                                               with_args(self.computer.start_process, FTPClientProcess)),
-            "start DDOS process (ctrl+w)": with_args(self.computer.start_process, DDOSProcess, 1000, 0.1),
+            "add/delete interface (^i)": with_args(
+                user_interface.ask_user_for,
+                str,
+                MESSAGES.INSERT.INTERFACE_INFO,
+                with_args(user_interface.add_delete_interface, self),
+            ),
+            "add/delete wireless interface (alt+w)": with_args(
+                user_interface.ask_user_for,
+                str,
+                MESSAGES.INSERT.INTERFACE_INFO,
+                with_args(user_interface.add_delete_interface, self, type_=INTERFACES.TYPE.WIFI),
+            ),
+            "open/close port (shift+o)": with_args(
+                user_interface.ask_user_for,
+                int,
+                MESSAGES.INSERT.PORT_NUMBER,
+                self.computer.open_tcp_port
+            ),
+            "set default gateway (g)": with_args(
+                user_interface.ask_user_for,
+                IPAddress,
+                MESSAGES.INSERT.GATEWAY,
+                self.computer.set_default_gateway
+            ),
+            "ask daytime (ctrl+alt+a)": with_args(
+                user_interface.ask_user_for,
+                IPAddress,
+                MESSAGES.INSERT.IP_FOR_PROCESS,
+                with_args(self.computer.start_process, DAYTIMEClientProcess)
+            ),
+            "download file (alt+a)": with_args(
+                user_interface.ask_user_for,
+                IPAddress,
+                MESSAGES.INSERT.IP_FOR_PROCESS,
+                with_args(self.computer.start_process, FTPClientProcess)
+            ),
+            "start DDOS process (ctrl+w)": with_args(
+                self.computer.start_process,
+                DDOSProcess,
+                100,
+                0.05
+            ),
+            "open console (shift+i)": with_args(
+                self._open_shell,
+                user_interface,
+            ),
+            "color (ctrl+alt+c)": with_args(
+                user_interface.ask_user_for,
+                str,
+                MESSAGES.INSERT.COLOR,
+                self.color_by_name,
+            ),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
-        return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), self.generate_view_text(), self.buttons_id
+        return self.copy_sprite(self.sprite), self.generate_view_text(), self.buttons_id
 
     def end_viewing(self, user_interface):
         """Ends the viewing of the object in the side window"""
         user_interface.remove_buttons(self.buttons_id)
+        self.child_graphics_objects.console.hide()
+
+    def _open_shell(self, user_interface):
+        """
+        Opens a shell window on the computer
+        :return:
+        """
+        if self.computer.is_powered_on:
+            PopupConsole(user_interface, self.computer)
 
     def generate_view_text(self):
         """
         Generates the text that will be shown in the side window when this computer is pressed.
         :return: a long string.
         """
-        return f" \nName:\n{self.computer.name}\n OS: {self.computer.os}\n gateway: {self.computer.routing_table.default_gateway.ip_address}\n\n " \
-            f"Interfaces:\n{str(self.computer.loopback)}\n{linesep.join(str(interface) for interface in self.computer.interfaces)}\n "
+        gateway = self.computer.routing_table.default_gateway.ip_address
+        addresses = linesep.join(str(interface.ip) for interface in self.computer.interfaces if interface.has_ip())
+
+        return f"""
+Computer:
+
+Name: {self.computer.name}
+{f'os: {self.computer.os}' if self.computer.os is not None else ""}
+{f'gateway: {gateway}' if gateway is not None else ""}
+{f'addresses: {linesep + addresses}' if addresses else ""}
+"""
+
+    def add_interface(self, interface):
+        """
+        Adds an interface to the viewed interfaces.
+        :param interface: `Interface`
+        :return:
+        """
+        self.child_graphics_objects.interface_list.add(interface)
+
+    def interface_distance(self):
+        """
+        Calculates the distance that the interface should be away from the computer.
+        :return:
+        """
+        return min(self.width, self.height) * INTERFACES.COMPUTER_DISTANCE_RATIO
+
+    def update_text_location(self):
+        """
+        updates the location of the text (the padding) according to the size of the computer
+        :return:
+        """
+        self.child_graphics_objects.text.padding = 0, (-self.height / 2) + TEXT.DEFAULT_Y_PADDING
+
+    def resize(self, width_diff, height_diff, constrain_proportions=False):
+        super(ComputerGraphics, self).resize(width_diff, height_diff, constrain_proportions)
+        self.update_text_location()
 
     def __str__(self):
-        return "ComputerGraphics"
+        return f"ComputerGraphics ({self.computer.name})"
 
     def __repr__(self):
         return f"ComputerGraphics of computer '{self.computer}'"
+
+    def dict_save(self):
+        """
+        Save the computer object with all of its attributes to tex
+        :return: str
+        """
+        dict_ = {
+            "class": self.class_name,
+            "location": self.location,
+            "name": self.computer.name,
+            "size": [self.sprite.scale_x, self.sprite.scale_y],
+            "os": self.computer.os,
+            "interfaces": [interface.graphics.dict_save() for interface in self.computer.interfaces],
+            "open_tcp_ports": self.computer.open_tcp_ports,
+            "open_udp_ports": self.computer.open_udp_ports,
+            "routing_table": self.computer.routing_table.dict_save(),
+            "filesystem": self.computer.filesystem.dict_save(),
+        }
+
+        if self.class_name == "Router":
+            dict_["is_dhcp_server"] = self.computer.is_dhcp_server
+
+        return dict_

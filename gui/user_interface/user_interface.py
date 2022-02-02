@@ -1,34 +1,45 @@
 import functools
+import json
 import operator
 import random
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from functools import reduce
-from operator import concat
+from operator import concat, attrgetter
 
+import pyglet
 from pyglet.window import key
 
 from address.ip_address import IPAddress
-from address.mac_address import MACAddress
 from computing.computer import Computer
-from computing.interface import Interface
+from computing.internals.frequency import Frequency
+from computing.internals.interface import Interface
+from computing.internals.processes.stp_process import STPProcess
+from computing.internals.processes.tcp_process import TCPProcess
+from computing.internals.wireless_interface import WirelessInterface
 from computing.router import Router
-from computing.switch import Switch, Hub
+from computing.switch import Switch, Hub, Antenna
 from consts import *
 from exceptions import *
+from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
-from gui.shape_drawing import draw_circle
-from gui.shape_drawing import draw_pause_rectangles, draw_rect
+from gui.shape_drawing import draw_circle, draw_line
+from gui.shape_drawing import draw_pause_rectangles, draw_rectangle
+from gui.tech.computer_graphics import ComputerGraphics
+from gui.tech.interface_graphics import InterfaceGraphics
+from gui.tech.packet_graphics import PacketGraphics
 from gui.user_interface.button import Button
-from gui.user_interface.popup_error import PopupError
-from gui.user_interface.text_box import TextBox
+from gui.user_interface.popup_windows.device_creation_window import DeviceCreationWindow
+from gui.user_interface.popup_windows.popup_console import PopupConsole
+from gui.user_interface.popup_windows.popup_error import PopupError
+from gui.user_interface.popup_windows.popup_help import PopupHelp
+from gui.user_interface.popup_windows.popup_text_box import PopupTextBox
+from gui.user_interface.popup_windows.popup_window import PopupWindow
+from gui.user_interface.popup_windows.yes_no_popup_window import YesNoPopupWindow
+from gui.user_interface.selecting_square import SelectingSquare
 from gui.user_interface.text_graphics import Text
-from processes.stp_process import STPProcess
-from processes.tcp_process import TCPProcess
-from usefuls import get_the_one, distance, with_args, called_in_order, circular_coordinates
-
-# from gui.animation_graphics import LogoAnimation
-
+from usefuls.funcs import get_the_one, distance, with_args, called_in_order, circular_coordinates, sum_tuples, \
+    scale_tuple
 
 ObjectView = namedtuple("ObjectView", [
     "sprite",
@@ -36,7 +47,7 @@ ObjectView = namedtuple("ObjectView", [
     "viewed_object",
 ])
 """
-A data structure to represent the current viewing of a GraphicsObject on the side window in VIEW_MODE
+A ip_layer structure to represent the current viewing of a GraphicsObject on the side window in VIEW_MODE
 - sprite is the little image that is shown
 - text is a `Text` object of the information about the object
 - viewed_object is a reference to the GraphicsObject that's viewed. 
@@ -64,15 +75,15 @@ class UserInterface:
     also save in this class.
 
     The `self.mode` variable determines in what mode the user interface is currently in.
-    if the mode is `SIMULATION_MODE`, the regular menu is presented.
-    if the mode is `CONNECTING_MODE` than the two next computers the user will press will become connected.
+    if the mode is `MODES.NORMAL`, the regular menu is presented.
+    if the mode is `MODES.CONNECTING` than the two next computers the user will press will become connected.
     the `VIEW_MODE` is when a computer's details are currently is_showing in the side window nicely.
     the `PINGING_MODE` is when we choose two computer to send a ping between.  (purple side window)
     the `DELETING_MODE` is when we delete a graphics object. (Brown side window)
 
     Only set the mode through the `set_mode` method!!!
     """
-    WIDTH = SIDE_WINDOW_WIDTH  # pixels
+    WIDTH = WINDOWS.SIDE.WIDTH  # pixels
 
     def __init__(self):
         """
@@ -81,124 +92,226 @@ class UserInterface:
         `button_arguments` is a list of arguments for `Button` objects that will be created after
         the `MainWindow` is initiated.
 
-        `is_asking_for_string` tells whether or not a popup window is currently up and asking the user for input
-        `popup_window` is that window.
         """
         self.key_to_action = {
-            (key.N, CTRL_MODIFIER): self.create_computer_with_ip,
-            (key.C, CTRL_MODIFIER): self.smart_connect,
-            (key.C, SHIFT_MODIFIER): self.connect_all_to_all,
-            (key.P, CTRL_MODIFIER): self.send_random_ping,
-            (key.P, SHIFT_MODIFIER): self.send_ping_to_self,
-            (key.R, CTRL_MODIFIER): with_args(self.create, Router),
-            (key.M, NO_MODIFIER): self.debugging_printer,
-            (key.W, NO_MODIFIER): self.add_tcp_test,
-            (key.SPACE, NO_MODIFIER): self.toggle_pause,
-            (key.TAB, NO_MODIFIER): self.tab_through_selected,
-            (key.TAB, SHIFT_MODIFIER): with_args(self.tab_through_selected, True),
-            (key.ESCAPE, NO_MODIFIER): with_args(self.set_mode, SIMULATION_MODE),
+            (key.N, KEYBOARD.MODIFIERS.CTRL): self.create_computer_with_ip,
+            (key.N, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT): with_args(self.create_computer_with_ip, True),
+            (key.C, KEYBOARD.MODIFIERS.CTRL): self.smart_connect,
+            (key.C, KEYBOARD.MODIFIERS.SHIFT): self.connect_all_to_all,
+            (key.P, KEYBOARD.MODIFIERS.CTRL): self.send_random_ping,
+            (key.P, KEYBOARD.MODIFIERS.SHIFT): self.send_ping_to_self,
+            (key.R, KEYBOARD.MODIFIERS.CTRL): with_args(self.create_device, Router),
+            (key.M, KEYBOARD.MODIFIERS.NONE): self.print_debugging_info,
+            (key.W, KEYBOARD.MODIFIERS.NONE): self.add_tcp_test,
+            (key.Q, KEYBOARD.MODIFIERS.CTRL): self.exit,
+            (key.A, KEYBOARD.MODIFIERS.CTRL): self.select_all,
+            (key.SPACE, KEYBOARD.MODIFIERS.NONE): self.toggle_pause,
+            (key.TAB, KEYBOARD.MODIFIERS.NONE): self.tab_through_selected,
+            (key.TAB, KEYBOARD.MODIFIERS.SHIFT): with_args(self.tab_through_selected, True),
+            (key.ESCAPE, KEYBOARD.MODIFIERS.NONE): with_args(self.set_mode, MODES.NORMAL),
+            (key.DELETE, KEYBOARD.MODIFIERS.NONE): self.delete_selected_and_marked,
+            (key.J, KEYBOARD.MODIFIERS.NONE): self.color_by_subnets,
         }
 
+        for direction in {key.UP, key.RIGHT, key.LEFT, key.DOWN}:
+            self.key_to_action[(direction, KEYBOARD.MODIFIERS.NONE)] = with_args(
+                self.move_selected_mark,
+                direction,
+            )
+            self.key_to_action[(direction, KEYBOARD.MODIFIERS.CTRL)] = with_args(
+                self.move_selected_object,
+                direction,
+            )
+            self.key_to_action[(direction, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT)] = with_args(
+                self.move_selected_object,
+                direction,
+                SELECTED_OBJECT.SMALL_STEP_SIZE,
+            )
+            self.key_to_action[(direction, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.ALT)] = with_args(
+                self.move_selected_object,
+                direction,
+                SELECTED_OBJECT.BIG_STEP_SIZE,
+            )
+
+        for device, (_, key_string) in DeviceCreationWindow.DEVICE_TO_IMAGE.items():
+            self.key_to_action[self.key_from_string(key_string)] = with_args(self.create_device, device)
+
         self.action_at_press_by_mode = {
-            SIMULATION_MODE: self.view_mode_at_press,
-            CONNECTING_MODE: with_args(self.two_pressed_computers, self.connect_computers),
-            VIEW_MODE: self.view_mode_at_press,
-            PINGING_MODE: with_args(self.two_pressed_computers, self.send_direct_ping),
-            DELETING_MODE: self.deleting_mode_at_press,
+            MODES.NORMAL: self.view_mode_at_press,
+            MODES.VIEW: self.view_mode_at_press,
+            MODES.CONNECTING: self.start_device_visual_connecting,
+            MODES.PINGING: self.start_device_visual_connecting,
         }
         # ^ maps what to do when the screen is pressed in each `mode`.
+
+        self.saving_file_class_name_to_class = {
+            class_.__name__: class_ for class_ in (Computer, Switch, Router, Hub, Antenna)
+        }
 
         self.computers = []
         self.connection_data = []
         # ^ a list of `ConnectionData`-s (save information about all existing connections between computers.
+        self.frequencies = []  # a list of all Frequency objects that exist in the simulation!
 
-        self.mode = SIMULATION_MODE
-        self.other_selected_object = None
+        self.mode = MODES.NORMAL
+        self.source_of_line_drag = None
         # ^ used if two items are selected one after the other for some purpose (connecting mode, pinging mode etc)
 
         self.dragged_object = None
         # ^ the object that is currently being dragged (by the courser)
-        self.dragging_point = 0, 0
-        # ^ the coordinates the mouse is at relative to the object it drags
-
-        self.selected_object = None
-        # ^ the object that is currently dragged
 
         self.object_view = None
         # ^ the `ObjectView` object that is currently is_showing in the side window.
 
-        self.is_asking_for_string = False
-        # ^ whether or not a popup window is currently open on the screen
-        self.popup_window = None
-        # ^ the popup window object. None if `self.is_asking_for_string` is False.
+        self.popup_windows = []
+        self.__active_window = None
 
         self.button_arguments = [
-            ((*DEFAULT_BUTTON_LOCATION(-1), lambda: None, "MAIN MENU:"), {}),
-
-            ((*DEFAULT_BUTTON_LOCATION(0), with_args(self.create, Computer),
-              "create a computer (n / ^n)"), {"key": (key.N, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(1), with_args(self.create, Switch),
-              "create a switch (s)"), {"key": (key.S, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(2), with_args(self.create, Hub),
-              "create a hub (h)"), {"key": (key.H, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(3), self.create_router,
-              "create a router (r / ^r)"), {"key": (key.R, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(4), with_args(self.toggle_mode, CONNECTING_MODE),
-              "connect (c / ^c / Shift+c)"), {"key": (key.C, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(5), with_args(self.toggle_mode, PINGING_MODE),
-              "ping (p / ^p / Shift+p)"), {"key": (key.P, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(6), self.ask_for_dhcp,
-              "ask for DHCP (a)"), {"key": (key.A, NO_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(7), self.start_all_stp,
-              "start STP (^s)"), {"key": (key.S, CTRL_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(8), self.delete_all_packets,
-              "delete all packets (Shift+d)"), {"key": (key.D, SHIFT_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(9), self.delete_all,
-              "delete all (^d)"), {"key": (key.D, CTRL_MODIFIER)}),
-            ((*DEFAULT_BUTTON_LOCATION(10), with_args(self.toggle_mode, DELETING_MODE),
-              "delete (d)"), {"key": (key.D, NO_MODIFIER)}),
+            ((with_args(DeviceCreationWindow, self), "create device (e)"), {"key": (key.E, KEYBOARD.MODIFIERS.NONE)}),
+            ((with_args(self.toggle_mode, MODES.CONNECTING), "connect (c / ^c / Shift+c)"), {"key": (key.C, KEYBOARD.MODIFIERS.NONE)}),
+            ((with_args(self.toggle_mode, MODES.PINGING), "ping (p / ^p / Shift+p)"), {"key": (key.P, KEYBOARD.MODIFIERS.NONE)}),
+            ((self.ask_for_dhcp, "ask for DHCP (shift+a)"), {"key": (key.A, KEYBOARD.MODIFIERS.SHIFT)}),
+            ((self.start_all_stp, "start STP (ctrl+shift+s)"), {"key": (key.S, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT)}),
+            ((self.delete_all_packets, "delete all packets (Shift+d)"), {"key": (key.D, KEYBOARD.MODIFIERS.SHIFT)}),
+            ((self.delete_all, "delete all (^d)"), {"key": (key.D, KEYBOARD.MODIFIERS.CTRL)}),
+            ((with_args(self.ask_user_for, str, "save file as:", self._save_to_file_with_override_safety), "save to file(^s)"), {"key": (key.S, KEYBOARD.MODIFIERS.CTRL)}),
+            ((self._ask_user_for_load_file, "load from file (^o)"), {"key": (key.O, KEYBOARD.MODIFIERS.CTRL)}),
+            ((self.open_help, "help (shift+/)"), {"key": (key.SLASH, KEYBOARD.MODIFIERS.SHIFT)}),
         ]
         self.buttons = {}
         # ^ a dictionary in the form, {button_id: [list of `Button` objects]}
-        self.showing_buttons_id = MAIN_BUTTONS_ID
+        self.showing_buttons_id = BUTTONS.MAIN_MENU.ID
         self.scrolled_view = None
         self.debug_counter = 0
+
+        self.selecting_square = None
+
+        self.marked_objects = []
+        self.dragging_points = defaultdict(lambda: (None, None))
+
+        self.__selected_object = None
+        # ^ the object that is currently dragged
+        self.selected_object = None
+
+    @property
+    def all_marked_objects(self):
+        """
+        The `marked_objects` list with the selected_object together in one list
+        :return:
+        """
+        if self.selected_object in self.marked_objects:
+            return self.marked_objects
+        return self.marked_objects + ([self.selected_object] if self.selected_object is not None else [])
+
+    @property
+    def active_window(self):
+        return self.__active_window
+
+    @active_window.setter
+    def active_window(self, window):
+        if self.active_window is not None:
+            self.active_window.deactivate()
+
+        if window is not None:
+            window.activate()
+        self.__active_window = window
+
+    @property
+    def selected_object(self):
+        return self.__selected_object
+
+    @selected_object.setter
+    def selected_object(self, graphics_object):
+        if isinstance(graphics_object, PopupWindow):
+            self.active_window = graphics_object
+        else:
+            self.__selected_object = graphics_object
+            self.active_window = None
 
     def show(self):
         """
         This is like the `draw` method of GraphicObject`s.
         :return: None
         """
-        draw_rect(WINDOW_WIDTH - self.WIDTH, 0, self.WIDTH, WINDOW_HEIGHT, MODES_TO_COLORS[self.mode])
-        # ^ the window rectangle itself
+        self._draw_side_window()
         if MainLoop.instance.is_paused:
             draw_pause_rectangles()
+        self.drag_objects()
+        self._stop_viewing_dead_packets()
+        self._showcase_running_stp()
 
-        if self.is_asking_for_string:
-            if self.popup_window is None or self.popup_window.is_done:
-                self.end_string_request()
-                # deletes the popup window if it is done with asking the string from the user.
+        if self.mode == MODES.CONNECTING:
+            self._draw_connection_to_mouse(CONNECTIONS.COLOR)
+        elif self.mode == MODES.PINGING:
+            self._draw_connection_to_mouse(COLORS.PURPLE)
 
+    def _draw_connection_to_mouse(self, color):
+        """
+        This draws the connection while connecting two computers in connecting mode.
+        (when they are not connected yet...)
+        :return:
+        """
+        if self.source_of_line_drag is None:
+            return
+
+        draw_line(self.source_of_line_drag.location, MainWindow.main_window.get_mouse_location(), color=color)
+        self.source_of_line_drag.mark_as_selected_non_resizable()
+
+        destination = MainLoop.instance.get_object_the_mouse_is_on()
+        if destination is not None:
+            destination.mark_as_selected_non_resizable()
+
+    def _stop_viewing_dead_packets(self):
+        """
+        Checks if a packet that is currently viewed has left the screen (reached the destination or dropped) and if so
+        stops viewing it.
+        :return:
+        """
         if self.selected_object is not None and \
                 self.selected_object.is_packet and \
                 self.packet_from_graphics_object(self.selected_object) is None:
-            self.set_mode(SIMULATION_MODE)
+            self.set_mode(MODES.NORMAL)
 
-    def drag_object(self):
+    def _draw_side_window(self):
+        """
+        Draws the side window
+        :return:
+        """
+        draw_rectangle(MainWindow.main_window.width - self.WIDTH, 0, self.WIDTH, MainWindow.main_window.height,
+                       color=MODES.TO_COLORS[self.mode])
+
+    def drag_objects(self):
         """
         Drags the object that should be dragged around the screen.
         Essentially sets the objects coordinates to be the ones of the mouse.
         :return: None
         """
-        if self.dragged_object is not None and not self.dragged_object.is_button:
-            drag_x, drag_y = self.dragging_point
-            mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
-            self.dragged_object.x, self.dragged_object.y = mouse_x + drag_x, mouse_y + drag_y
+        if self.selecting_square is not None:
+            return
+        dragging_objects = self.marked_objects + ([self.dragged_object] if self.dragged_object is not None else [])
+        for object_ in dragging_objects:
+            if not object_.is_button:
+                drag_x, drag_y = self.dragging_points[object_]
+                if drag_x is None:
+                    continue
+                mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
+                object_.location = mouse_x + drag_x, mouse_y + drag_y
+
+    @property
+    def viewing_image_location(self):
+        x = (MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2)) - (IMAGES.SIZE * IMAGES.SCALE_FACTORS.VIEWING_OBJECTS / 2)
+        y = MainWindow.main_window.height - ((IMAGES.SIZE * IMAGES.SCALE_FACTORS.VIEWING_OBJECTS) + 15)
+        return x, y
+    
+    @property
+    def viewing_text_location(self):
+        return (MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2)), \
+               self.viewing_image_location[1] + VIEW.TEXT_PADDING
 
     def start_object_view(self, graphics_object):
         """
         Starts viewing an object on the side window.
-        Creates an `ObjectView` namedtuple which packs together the data required to view an object.
+        Creates an `ObjectView` namedtuple which packs together the ip_layer required to view an object.
         :param graphics_object: A graphics object to view.
         :return: None
         """
@@ -206,14 +319,16 @@ class UserInterface:
 
         sprite, text, buttons_id = graphics_object.start_viewing(self)
         if sprite is not None:
-            sprite.update(*VIEWING_IMAGE_COORDINATES)
+            sprite.update(*self.viewing_image_location,
+                          scale_x=VIEW.IMAGE_SIZE / sprite.image.width,
+                          scale_y=VIEW.IMAGE_SIZE / sprite.image.height)
             MainLoop.instance.insert_to_loop(sprite.draw)
 
             if graphics_object.is_packet:
                 text = self.packet_from_graphics_object(graphics_object).multiline_repr()
 
-        x, y = VIEWING_TEXT_COORDINATES
-        self.object_view = ObjectView(sprite, Text(text, x, y, max_width=SIDE_WINDOW_WIDTH), graphics_object)
+        x, y = self.viewing_text_location
+        self.object_view = ObjectView(sprite, Text(text, x, y, max_width=WINDOWS.SIDE.WIDTH), graphics_object)
         self.adjust_viewed_text_to_buttons(buttons_id + 1)
 
     def adjust_viewed_text_to_buttons(self, buttons_id):
@@ -223,11 +338,12 @@ class UserInterface:
         :return:
         """
         if self.object_view is None:
-            raise SomethingWentTerriblyWrongError("Only call this in VIEW MODE")
+            raise WrongUsageError("Only call this in VIEW MODE")
 
         try:
-            self.object_view.text.y = VIEWING_TEXT_COORDINATES[1] - ((len(self.buttons[buttons_id]) + 0.5) *
-                                                                     DEFAULT_BUTTON_HEIGHT) - self.scrolled_view
+            self.object_view.text.y = self.viewing_text_location[1] - \
+                                      ((len(self.buttons[buttons_id]) + 0.5) *
+                                       (BUTTONS.DEFAULT_HEIGHT + BUTTONS.Y_GAP)) - self.scrolled_view
         except KeyError:
             pass
 
@@ -256,13 +372,14 @@ class UserInterface:
         """
         if self.object_view is None:
             raise SomethingWentTerriblyWrongError(
-                "Not supposed to get here!!! In VIEW_MODE the `self.object_view` is never None")
+                "Not supposed to get here!!! In MODES.VIEW the `self.object_view` is never None"
+            )
 
         sprite, text_graphics, viewed_object = self.object_view
-        if scroll_count < 0 or self.scrolled_view <= -scroll_count * PIXELS_PER_SCROLL:
-            self.scrolled_view += scroll_count * PIXELS_PER_SCROLL
+        if scroll_count < 0 or self.scrolled_view <= -scroll_count * VIEW.PIXELS_PER_SCROLL:
+            self.scrolled_view += scroll_count * VIEW.PIXELS_PER_SCROLL
 
-            sprite.y = VIEWING_IMAGE_COORDINATES[1] - self.scrolled_view
+            sprite.y = self.viewing_image_location[1] - self.scrolled_view
             self.adjust_viewed_text_to_buttons(self.showing_buttons_id)
 
             for buttons_id in self.buttons:
@@ -277,18 +394,20 @@ class UserInterface:
         Allows working without the mouse when there are not a lot of objects on the screen
         :return:
         """
-        available_graphics_objects = [object_ for object_ in MainLoop.instance.graphics_objects if object_.is_pressable]
+        available_graphics_objects = [object_ for object_ in MainLoop.instance.graphics_objects
+                                      if object_.is_pressable and object_.can_be_viewed]
         if not available_graphics_objects:
             return
         if reverse:
             available_graphics_objects = list(reversed(available_graphics_objects))
 
-        if self.selected_object is None:
-            self.selected_object = available_graphics_objects[-1]
-        else:
+        try:
             index = available_graphics_objects.index(self.selected_object)
             self.selected_object = available_graphics_objects[index - 1]
-        self.set_mode(VIEW_MODE)
+        except ValueError:
+            self.selected_object = available_graphics_objects[-1]
+
+        self.set_mode(MODES.VIEW)
 
     def initiate_buttons(self):
         """
@@ -297,39 +416,57 @@ class UserInterface:
         `MainWindow.main_window` is still uninitiated so it cannot register the graphics objects of the buttons.
         :return: None
         """
-        self.buttons[MAIN_BUTTONS_ID] = [Button(*args, **kwargs) for args, kwargs in self.button_arguments]
+        self.buttons[BUTTONS.MAIN_MENU.ID] = [
+            Button(
+                *MainWindow.main_window.button_location_by_index(i - 1),
+                *args,
+                **kwargs,
+            ) for i, (args, kwargs) in enumerate(self.button_arguments)
+        ]
 
-    def set_mode(self, mode):
+        for i, button in enumerate(self.buttons[BUTTONS.MAIN_MENU.ID]):
+            x, y = MainWindow.main_window.button_location_by_index(i - 1)
+            padding = x - WINDOWS.MAIN.WIDTH, y - WINDOWS.MAIN.HEIGHT
+            button.set_parent_graphics(MainWindow.main_window, padding)
+
+    def set_mode(self, new_mode):
         """
-        This is the correct way to set the `self.mode` trait of the side window.
+        This is the correct way to set the `self.new_mode` trait of the side window.
         it handles all of the things one needs to do when switching between different modes.
         (especially VIEW_MODE)
         :return: None
         """
-        if self.mode == CONNECTING_MODE and mode != CONNECTING_MODE:
-            self.other_selected_object = None
+        if self.mode == MODES.CONNECTING and new_mode != MODES.CONNECTING:
+            self.source_of_line_drag = None
 
-        if mode == VIEW_MODE:
+        if new_mode == MODES.VIEW:
             self.end_object_view()
-            self.mode = mode
-            self.hide_buttons(MAIN_BUTTONS_ID)
+            self.mode = new_mode
+            self.hide_buttons(BUTTONS.MAIN_MENU.ID)
+            if not self.selected_object.can_be_viewed:
+                raise WrongUsageError(
+                    "The new_mode should not be switched to view new_mode when the selected object cannot be viewed"
+                )
             self.start_object_view(self.selected_object)
 
         else:
-            self.mode = mode
+            self.source_of_line_drag = None
+            self.mode = new_mode
             self.end_object_view()
-            self.selected_object = None
-            self.show_buttons(MAIN_BUTTONS_ID)
+            if self.selected_object is not None:
+                self.selected_object = None
+            self.show_buttons(BUTTONS.MAIN_MENU.ID)
+            self.marked_objects.clear()
 
     def toggle_mode(self, mode):
         """
         Toggles to and from a mode!
-        If the mode is already the `mode` given, switch to `SIMULATION_MODE`.
-        :param mode: a mode to toggle to and from (SIMULATION_MODE, CONNECTING_MODE, etc...)
+        If the mode is already the `mode` given, switch to `MODES.NORMAL`.
+        :param mode: a mode to toggle to and from (MODES.NORMAL, MODES.CONNECTING, etc...)
         :return: None
         """
         if self.mode == mode:
-            self.set_mode(SIMULATION_MODE)
+            self.set_mode(MODES.NORMAL)
         else:
             self.set_mode(mode)
 
@@ -349,11 +486,43 @@ class UserInterface:
         The choosing of a selected and dragged objects should be performed BEFORE this is called!
         :return: None
         """
-        for button in reduce(concat, list(self.buttons.values())):
+        for button in reversed(reduce(concat, list(self.buttons.values()))):
             if not button.is_hidden and button.is_mouse_in():
                 button.action()
+                break
+        else:
+            self.action_at_press_by_mode[self.mode]()
 
-        self.action_at_press_by_mode[self.mode]()
+        if self.active_window is None:
+            self._create_selection_square()
+
+    def _create_selection_square(self):
+        """
+        Creates the selection square when the mouse is pressed and dragged around
+        :return:
+        """
+        if self.mode == MODES.NORMAL:
+            self.selecting_square = SelectingSquare(
+                *MainWindow.main_window.get_mouse_location(),
+                MainLoop.instance.graphics_objects_of_types(ComputerGraphics, PacketGraphics),
+                self,
+            )
+
+    def on_mouse_release(self):
+        """
+        this is called when the mouse is released
+        :return:
+        """
+        self.dragging_points.clear()
+        if self.selecting_square is not None:
+            MainLoop.instance.unregister_graphics_object(self.selecting_square)
+            self.selecting_square = None
+
+        elif self.mode == MODES.CONNECTING:
+            self.end_device_visual_connecting(self.connect_devices)
+
+        elif self.mode == MODES.PINGING:
+            self.end_device_visual_connecting(self.send_direct_ping)
 
     def on_key_pressed(self, symbol, modifiers):
         """
@@ -362,41 +531,44 @@ class UserInterface:
         :param modifiers:
         :return:
         """
-        modified_key = (symbol, int(bin(modifiers)[2:][-4:], base=2))
-        for button_id in sorted(list(self.buttons)):
-            for button in self.buttons[button_id]:
-                if button.key == modified_key:
-                    button.action()
-                    return
-        self.key_to_action.get(modified_key, lambda: None)()
+        modifiers = int(bin(modifiers)[2:][-4:], base=2)
+
+        if isinstance(self.active_window, PopupTextBox):
+            self.active_window.key_writer.pressed(symbol, modifiers)
+
+        elif isinstance(self.active_window, PopupConsole):
+            self.active_window.shell.key_writer.pressed(symbol, modifiers)
+
+        else:
+            modified_key = (symbol, modifiers)
+            for button_id in sorted(list(self.buttons)):
+                for button in self.buttons[button_id]:
+                    if button.key == modified_key:
+                        button.action()
+                        return
+            self.key_to_action.get(modified_key, lambda: None)()
 
     def view_mode_at_press(self):
         """
         Happens when we are in viewing mode (or simulation mode) and we press our mouse.
         decides whether to start viewing a new graphics object or finish a previous one.
         """
-        if not self.is_mouse_in_side_window():
-            if self.selected_object is not None:
-                self.set_mode(VIEW_MODE)
-            elif self.selected_object is None:
-                self.set_mode(SIMULATION_MODE)
+        self.set_mouse_pressed_objects()
 
-    def deleting_mode_at_press(self):
-        """
-        Happens when we press the screen in DELETING_MODE.
-        Decides if to step out of the mode or to delete an object.
-        :return: None
-        """
-        if self.selected_object is not None:
-            self.delete(self.selected_object)
-        self.set_mode(SIMULATION_MODE)
+        if not self.is_mouse_in_side_window():
+            if self.selected_object is not None and self.selected_object.can_be_viewed:
+                self.set_mode(MODES.VIEW)
+            elif self.selected_object is None:
+                self.set_mode(MODES.NORMAL)
+            else:  # if an an object that cannot be viewed is pressed
+                pass
 
     def is_mouse_in_side_window(self):
         """Return whether or not the mouse is currently in the side window."""
         mouse_x, _ = MainWindow.main_window.get_mouse_location()
-        return mouse_x > (WINDOW_WIDTH - self.WIDTH)
+        return mouse_x > (MainWindow.main_window.width - self.WIDTH)
 
-    def create(self, object_type):
+    def create_device(self, object_type):
         """
         Creates an object from a given type.
         :param object_type: an object type that will be created (Computer, Switch, Hub, etc...)
@@ -404,7 +576,7 @@ class UserInterface:
         """
         x, y = MainWindow.main_window.get_mouse_location()
         if self.is_mouse_in_side_window():
-            x, y = WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2
+            x, y = WINDOWS.MAIN.WIDTH / 2, WINDOWS.MAIN.HEIGHT / 2
 
         object_ = object_type()
         object_.show(x, y)
@@ -417,56 +589,119 @@ class UserInterface:
         """
         x, y = MainWindow.main_window.get_mouse_location()
         if self.is_mouse_in_side_window():
-            x, y = WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2
+            x, y = WINDOWS.MAIN.WIDTH / 2, WINDOWS.MAIN.HEIGHT / 2
 
-        router = Router("Router and DHCP Server", (
+        router = Router("Router and DHCP Server", [
                         Interface.with_ip('192.168.1.1'),
                         Interface.with_ip('10.10.10.1'),
-                        ))
+                        Interface.with_ip('172.3.10.1'),
+                        Interface.with_ip('1.1.1.1'),
+                        ])
+        # TODO: find out why this warning exists and fix it (if there is no warning here, delete this comment)
         router.show(x, y)
         self.computers.append(router)
 
-    def two_pressed_computers(self, action):
+    def two_pressed_objects(self, action, more_pressable_types=None):
         """
-        This operates the situation when two computers are required to be selected one after the other (like in
-        CONNECTING_MODE, PINGING_MODE, etc...)
+        This operates the situation when two things are required to be selected one after the other (like in
+        MODES.CONNECTING, MODES.PINGING, etc...)
+        Usually allows pressing just ComputerGraphics objects. This can be extended to more types using the
+        `more_pressable_types` list.
         :param action: a function that will be activated on the two computers once they are both selected.
             should receive two computers ane return nothing.
+        :param more_pressable_types: a list of other types that can be pressed using this method.
         :return: None
         """
-        if self.selected_object is not None and self.selected_object.is_computer:
-            if self.other_selected_object is None:
-                self.other_selected_object = self.selected_object
+        pressable_types = [ComputerGraphics] + ([] if more_pressable_types is None else more_pressable_types)
+        if self.selected_object is not None and type(self.selected_object) in pressable_types:
+            if self.source_of_line_drag is None:
+                self.source_of_line_drag = self.selected_object
             else:  # there is another computer to connect with that was already pressed.
-                action(self.other_selected_object.computer, self.selected_object.computer)
+                action(self.source_of_line_drag, self.selected_object)
 
-                self.other_selected_object = None
-                self.set_mode(SIMULATION_MODE)
+                self.source_of_line_drag = None
+                self.set_mode(MODES.NORMAL)
 
         elif not self.is_mouse_in_side_window() and self.selected_object is None:  # pressing the background
-            self.other_selected_object = None
-            self.set_mode(SIMULATION_MODE)
+            self.source_of_line_drag = None
+            self.set_mode(MODES.NORMAL)
 
-    def connect_computers(self, computer1, computer2):
+    def start_device_visual_connecting(self):
         """
-        Connect two computers to each other, show the connection and everything....
-        :param computer1:
-        :param computer2: the two `Computer` object.
+        This is called when we start to drag the connection from computer to the next in connecting mode
+        :return:
+        """
+        self.source_of_line_drag = MainLoop.instance.get_object_the_mouse_is_on()
+        if self.source_of_line_drag is None or self.is_mouse_in_side_window():
+            self.set_mode(MODES.NORMAL)
+
+    def end_device_visual_connecting(self, action):
+        """
+        This is called when the the line was dragged between the two devices and now the action can be performed.
+        :param action: a function that is called with the two devices.
+        :return:
+        """
+        connected = MainLoop.instance.get_object_the_mouse_is_on()
+        if self.is_mouse_in_side_window() or connected is None:
+            self.set_mode(MODES.NORMAL)
+            return
+        action(self.source_of_line_drag, connected)
+        self.set_mode(MODES.NORMAL)
+
+    def connect_devices(self, device1, device2):
+        """
+        Connect two devices to each other, show the connection and everything....
+        The devices can be computers or interfaces. Works either way
+        :param device1:
+        :param device2: the two `Computer` object or `Interface` objects. Could also be their graphics objects.
         :return: None
         """
-        connection = computer1.connect(computer2)
-        connection.show(computer1.graphics, computer2.graphics)
-        self.connection_data.append(ConnectionData(connection, computer1, computer2))
+        devices = device1, device2
+        computers = [device1, device2]  # `Computer`-s
+        interfaces = [device1, device2]  # `Interface`-s
+
+        for i, device in enumerate(devices):
+            if isinstance(device, InterfaceGraphics):
+                device = device.interface
+            elif isinstance(device, ComputerGraphics):
+                device = device.computer
+
+            if isinstance(device, Interface):
+                computers[i] = get_the_one(self.computers, lambda c: device in c.interfaces, NoSuchInterfaceError)
+                interfaces[i] = device
+            elif isinstance(device, Computer):
+                computers[i] = device
+                interfaces[i] = device.available_interface()
+            else:
+                # raise WrongUsageError(f"Only give this function computers or interfaces!!! ({device1, device2})")
+                return
+
+        if len(set(computers)) == 1:
+            return
+
+        if any(isinstance(interface, WirelessInterface) for interface in interfaces):
+            #TODO: maybe add indicative message in the future
+            return
+
+        try:
+            connection = interfaces[0].connect(interfaces[1])
+        except DeviceAlreadyConnectedError:
+            PopupError("That interface is already connected :(", self)
+            return
+        self.connection_data.append(ConnectionData(connection, *computers))
+        connection.show(computers[0].graphics, computers[1].graphics)
+        return connection
 
     @staticmethod
-    def send_direct_ping(computer1, computer2):
+    def send_direct_ping(computer_graphics1, computer_graphics2):
         """
         Send a ping from `computer1` to `computer2`.
         If one of them does not have an IP address, do nothing.
-        :param computer1:
-        :param computer2: The `Computer` objects to send a ping betwecomputer1en.
+        :param computer_graphics1:
+        :param computer_graphics2: The `ComputerGraphics` objects to send a ping between computers.
         :return: None
         """
+        computer1, computer2 = computer_graphics1.computer, computer_graphics2.computer
         if computer1.has_ip() and computer2.has_ip():
             computer1.start_ping_process(computer2.get_ip())
 
@@ -477,7 +712,8 @@ class UserInterface:
         """
         try:
             sending_computer = random.choice([computer for computer in self.computers if computer.has_ip()])
-            receiving_computer = random.choice([computer for computer in self.computers if computer.has_ip()])
+            receiving_computer = random.choice([computer for computer in self.computers
+                                                if computer.has_ip() and computer is not sending_computer])
             sending_computer.start_ping_process(receiving_computer.get_ip())
         except IndexError:
             pass
@@ -492,9 +728,6 @@ class UserInterface:
         self.selected_object = None
         self.dragged_object = None
 
-        if self.is_asking_for_string:
-            self.end_string_request()
-
         for connection, _, _ in self.connection_data:
             MainLoop.instance.remove_from_loop(connection.move_packets)
 
@@ -503,6 +736,8 @@ class UserInterface:
 
         self.computers.clear()
         self.connection_data.clear()
+        self.frequencies.clear()
+        self.set_mode(MODES.NORMAL)
 
     def delete_all_packets(self):
         """
@@ -523,6 +758,7 @@ class UserInterface:
         self.selected_object = None
         self.dragged_object = None
 
+        # TODO: get rid of all this `is_computer` and replace with isinstance please
         if graphics_object.is_computer:
             self.computers.remove(graphics_object.computer)
             self._delete_connections_to(graphics_object.computer)
@@ -533,6 +769,13 @@ class UserInterface:
                     computer1.disconnect(connection)
                     computer2.disconnect(connection)
                     break
+
+        elif isinstance(graphics_object, InterfaceGraphics):
+            interface = graphics_object.interface
+            computer = get_the_one(self.computers, lambda c: interface in c.interfaces, NoSuchInterfaceError)
+            connection = interface.connection.connection
+            self.delete(connection.graphics)
+            computer.add_remove_interface(interface.name)
 
     def _delete_connections_to(self, computer):
         """
@@ -551,25 +794,27 @@ class UserInterface:
                 connection.stop_packets()
                 self.connection_data.remove(connection_data)
 
-    def add_delete_interface(self, computer_graphics, interface_name):
+        for interface in computer.interfaces:
+            if isinstance(interface, WirelessInterface):
+                interface.disconnect()
+
+    def add_delete_interface(self, computer_graphics, interface_name, type_=INTERFACES.TYPE.ETHERNET):
         """
         Add an interface with a given name to a computer.
         If the interface already exists, remove it.
         :param computer_graphics: a `ComputerGraphics` object.
         :param interface_name: a string name of the interface.
+        :param type_: the type of the interface (ethernet / wireless / ...)
         :return: None
         """
         computer = computer_graphics.computer
         interface = get_the_one(computer.interfaces, lambda i: i.name == interface_name)
-        if interface is None:
-            computer.interfaces.append(Interface(MACAddress.randomac(), name=interface_name))
-            return
-
-        if interface.is_connected():
-            self.delete(interface.connection.connection.graphics)
-        if interface.has_ip():
-            computer.routing_table.remove_interface(interface)
-        computer.interfaces.remove(interface)
+        try:
+            computer.add_interface(interface_name, type_=type_)
+        except DeviceNameAlreadyExists:
+            if interface.is_connected():
+                self.delete(interface.connection.connection.graphics)
+            computer.remove_interface(interface_name)
 
     def hide_buttons(self, buttons_id=None):
         """
@@ -601,10 +846,11 @@ class UserInterface:
         :return:
         """
         all_connections = [connection_data[0] for connection_data in self.connection_data] +\
-                          [computer.loopback.connection.connection for computer in self.computers]
+                          [computer.loopback.connection.connection for computer in self.computers] + self.frequencies
         all_sent_packets = functools.reduce(operator.concat, map(operator.attrgetter("sent_packets"), all_connections))
 
-        for packet, _, _, _ in all_sent_packets:
+        for sent_packet in all_sent_packets:
+            packet = sent_packet[0]
             if packet.graphics is graphics_object:
                 return packet
         return None
@@ -622,61 +868,33 @@ class UserInterface:
             for sent_packet in connection.sent_packets[:]:
                 if sent_packet.packet.graphics is packet_graphics:
                     self.selected_object = None
-                    self.set_mode(SIMULATION_MODE)
+                    self.set_mode(MODES.NORMAL)
                     connection.sent_packets.remove(sent_packet)
                     packet_graphics.drop()
                     return
         raise NoSuchPacketError("That packet cannot be found!")
 
-    def config_ip(self, computer, user_input):
-        """
-        Config the IP of a computer to be one according to a given user input.
-        The user input should be of the syntax '<INTERFACE NAME>, <IP ADDRESS>' or just '<IP ADDRESS>'.
-        :param computer: a `Computer` object.
-        :param user_input: a tuple of (string,
-        :return: None
-        """
-        if len(user_input) == 1:
-            ip, = user_input
-            computer.set_ip(computer.interfaces[0].name, ip)
-        elif len(user_input) == 2:
-            interface_name, new_ip = user_input
-            try:
-                computer.set_ip(interface_name, new_ip)
-            except NoSuchInterfaceError:
-                PopupError("no such interface!!!", self)
-        else:
-            raise SomethingWentTerriblyWrongError(f'not get here please thanks {user_input!r}')
-
     def ask_user_for_ip(self):
         """
-        Asks the user for interface name and ip input and sets the computer's IP to be that.
-        Does that using popup window in the `TextBox` class.
+        Asks user for an IP address for an interface.
+        Does that using popup window in the `PopupTextBox` class.
         :return: None
         """
-        if self.selected_object is not None and self.selected_object.is_computer:
-            computer = self.selected_object.computer
+        computer, interface = None, None
+        if self.selected_object is not None:
+            if isinstance(self.selected_object, InterfaceGraphics):
+                interface = self.selected_object.interface
+                computer = get_the_one(self.computers, lambda c: interface in c.interfaces, NoSuchInterfaceError)
 
-            def validate_format(string):
-                if string.count(', ') == 1:
-                    interface_name, ip_string = string.split(', ')
-                    ip_address = IPAddress(ip_string)
-                    return interface_name, ip_address
-                return IPAddress(string),
+            elif isinstance(self.selected_object, ComputerGraphics):
+                computer = self.selected_object.computer
+                if computer.interfaces:
+                    interface = computer.interfaces[0]
 
-            self.ask_user_for(validate_format,
-                              INSERT_IP_MSG,
-                              with_args(self.config_ip, computer),
-                              "This format is incorrect")
-
-    def end_string_request(self):
-        """
-        If the `UserInterface` Object currently is asking for user input (via the popup window), end that request,
-        unregister the asking `TextBox` popup window and set all variables accordingly.
-        :return: None
-        """
-        self.is_asking_for_string = False
-        self.popup_window = None
+            self.ask_user_for(IPAddress,
+                              MESSAGES.INSERT.IP,
+                              with_args(computer.set_ip, interface),
+                              "Invalid IP Address!!!")
 
     def smart_connect(self):
         """
@@ -691,15 +909,15 @@ class UserInterface:
                 if isinstance(computer, Switch):
                     continue
                 nearest_switch = min(switches, key=lambda s: distance(s.graphics.location, computer.graphics.location))
-                if not computer.interfaces[0].is_connected():
-                    self.connect_computers(computer, nearest_switch)
+                if not computer.interfaces or not computer.interfaces[0].is_connected():
+                    self.connect_devices(computer, nearest_switch)
         elif routers:
             for computer in self.computers:
                 if isinstance(computer, Router):
                     continue
                 nearest_router = min(routers, key=lambda s: distance(s.graphics.location, computer.graphics.location))
-                if not computer.interfaces[0].is_connected():
-                    self.connect_computers(computer, nearest_router)
+                if not computer.interfaces or not computer.interfaces[0].is_connected():
+                    self.connect_devices(computer, nearest_router)
         else:
             self.connect_all_to_all()
 
@@ -722,24 +940,25 @@ class UserInterface:
             if not isinstance(computer, Switch) and not isinstance(computer, Router) and not computer.has_ip():
                 computer.ask_dhcp()
 
-    def debugging_printer(self):
+    def print_debugging_info(self):
         """
         Prints out lots of useful information for debugging.
         :return: None
         """
         # print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
-        self.debug_counter = self.debug_counter+1 if hasattr(self, "debug_counter") else 0
-        goes = [go for go in MainLoop.instance.graphics_objects
-                if not isinstance(go, Button) and not isinstance(go, Text)]
+        def gos():
+            return [go for go in MainLoop.instance.graphics_objects if not isinstance(go, UserInterfaceGraphicsObject)]
+        print(MainWindow.main_window.get_mouse_location())
+        self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
+        goes = list(filter(lambda go: not isinstance(go, UserInterfaceGraphicsObject), MainLoop.instance.graphics_objects))
         print(f"graphicsObject-s (no buttons or texts): {goes}")
-        print(f"selected object: {self.selected_object}, dragged: {self.dragged_object}")
-        print(f"mouse: {MainWindow.main_window.get_mouse_location()}")
-        print(f"""computers, {len(self.computers)}, connections, {len(self.connection_data)},
-        packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}""")
+        print(f"computers, {len(self.computers)}, connections, {len(self.connection_data)},"
+              f"packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}")
         print(f"running processes: ", end='')
         for computer in self.computers:
-            processes = [f"{wp.process} of {computer}" for wp in computer.waiting_processes]
-            print(processes if processes else '', end=' ')
+            processes = [f"{waiting_process.process} of {computer}" for waiting_process in computer.waiting_processes]
+            if processes:
+                print(processes, end=' ')
         print()
         if self.selected_object is not None and self.selected_object.is_computer:
             computer = self.selected_object.computer
@@ -753,7 +972,9 @@ class UserInterface:
                 process = computer.get_running_process(TCPProcess)
                 print(f"window (of {process}): {process.sending_window}")
 
-    def create_computer_with_ip(self):
+        # self.set_all_connection_speeds(200)
+
+    def create_computer_with_ip(self, wireless=False):
         """
         Creates a computer with an IP fitting to the computers around it.
         It will look at the nearest computer's subnet, find the max address in that subnet and take the one above it.
@@ -765,9 +986,9 @@ class UserInterface:
         try:
             given_ip = self._get_largest_ip_in_nearest_subnet(x, y)
         except (NoSuchComputerError, NoIPAddressError):      # if there are no computers with IP on the screen.
-            given_ip = IPAddress(DEFAULT_COMPUTER_IP)
+            given_ip = IPAddress(ADDRESSES.IP.DEFAULT)
 
-        new_computer = Computer.with_ip(given_ip)
+        new_computer = Computer.with_ip(given_ip) if not wireless else Computer.wireless_with_ip(given_ip)
         self.computers.append(new_computer)
         new_computer.show(x, y)
         return new_computer
@@ -786,7 +1007,7 @@ class UserInterface:
         try:
             nearest_ip_address = nearest_computers_with_ip[0].get_ip()
         except IndexError:
-            raise NoSuchComputerError("There is no such computers!")
+            raise NoSuchComputerError("There is no such computer!")
 
         all_ips_in_that_subnet = [
             IPAddress.copy(computer.get_ip())
@@ -827,7 +1048,7 @@ class UserInterface:
         for computer in self.computers:
             for other_computer in self.computers:
                 if computer is not other_computer and not self.are_connected(computer, other_computer):
-                    self.connect_computers(computer, other_computer)
+                    self.connect_devices(computer, other_computer)
 
     def send_ping_to_self(self):
         """
@@ -839,7 +1060,7 @@ class UserInterface:
         computer = self.selected_object.computer
         self.send_direct_ping(computer, computer)
 
-    def showcase_running_stp(self):
+    def _showcase_running_stp(self):
         """
         Displays the roots of all STP processes that are running. (circles the roots with a yellow circle)
         :return: None
@@ -848,7 +1069,7 @@ class UserInterface:
         roots = [computer.get_running_process(STPProcess).root_bid for computer in stp_runners]
         for computer in stp_runners:
             if computer.get_running_process(STPProcess).my_bid in roots:
-                draw_circle(*computer.graphics.location, 60, YELLOW)
+                draw_circle(*computer.graphics.location, 60, COLORS.YELLOW)
 
     def ask_user_for(self, type_, window_text, action, error_msg="invalid input!!!"):
         """
@@ -863,26 +1084,25 @@ class UserInterface:
         """
         def try_casting_with_action(string):
             try:
-                arg = type_(string)
+                user_input_object = type_(string)
             except (ValueError, InvalidAddressError):
-                self.end_string_request()
                 PopupError(error_msg, self)
                 return
+
             try:
-                action(arg)
-            except PopupWindowWithThisError as e:
-                PopupError(str(e), self)
+                action(user_input_object)
+            except PopupWindowWithThisError as err:
+                PopupError(str(err), self)
                 return
 
-        self.is_asking_for_string = True
-        self.popup_window = TextBox(window_text, self, try_casting_with_action)
+        PopupTextBox(window_text, self, try_casting_with_action)
 
     @staticmethod
     def key_from_string(string):
         """
         Receives a button-string and returns the key that should be pressed to activate that button
         for example:
-         'connect all (^c)' -> `key_from_string` -> `(key.C, CTRL_MODIFIER)`
+         'connect all (^c)' -> `key_from_string` -> `(key.C, KEYBOARD.MODIFIERS.CTRL)`
         :param string:
         :return:
         """
@@ -892,15 +1112,15 @@ class UserInterface:
         _, modified_key = string.lower().split('(')
         modified_key, _ = modified_key.split(')')
         if modified_key.startswith('^'):
-            return ord(modified_key[-1]), CTRL_MODIFIER
+            return ord(modified_key[-1]), KEYBOARD.MODIFIERS.CTRL
 
-        modifiers = NO_MODIFIER
+        modifiers = KEYBOARD.MODIFIERS.NONE
         if 'ctrl' in modified_key.split('+'):
-            modifiers |= CTRL_MODIFIER
+            modifiers |= KEYBOARD.MODIFIERS.CTRL
         if 'shift' in modified_key.split('+'):
-            modifiers |= SHIFT_MODIFIER
+            modifiers |= KEYBOARD.MODIFIERS.SHIFT
         if 'alt' in modified_key.split('+'):
-            modifiers |= ALT_MODIFIER
+            modifiers |= KEYBOARD.MODIFIERS.ALT
         return ord(modified_key[-1]), modifiers
 
     def add_buttons(self, dictionary):
@@ -913,20 +1133,20 @@ class UserInterface:
         buttons_id = 0 if not self.buttons else max(self.buttons.keys()) + 1
         self.buttons[buttons_id] = [
             Button(
-                *DEFAULT_BUTTON_LOCATION(len(dictionary) + 1),
+                *MainWindow.main_window.button_location_by_index(len(dictionary) + 1),
                 called_in_order(
                     with_args(self.hide_buttons, buttons_id),
                     with_args(self.show_buttons, buttons_id + 1),
                     with_args(self.adjust_viewed_text_to_buttons, buttons_id + 1),
                 ),
                 "back (backspace)",
-                key=(key.BACKSPACE, NO_MODIFIER),
+                key=(key.BACKSPACE, KEYBOARD.MODIFIERS.NONE),
                 start_hidden=True,
             ),
 
             *[
                 Button(
-                    *DEFAULT_BUTTON_LOCATION(i+1),
+                    *MainWindow.main_window.button_location_by_index(i + 1),
                     action,
                     string,
                     key=self.key_from_string(string),
@@ -938,14 +1158,14 @@ class UserInterface:
 
         self.buttons[buttons_id + 1] = [
             Button(
-                *DEFAULT_BUTTON_LOCATION(1),
+                *MainWindow.main_window.button_location_by_index(1),
                 called_in_order(
                     with_args(self.hide_buttons, buttons_id + 1),
                     with_args(self.show_buttons, buttons_id),
                     with_args(self.adjust_viewed_text_to_buttons, buttons_id),
                 ),
                 "options (enter)",
-                key=(key.ENTER, NO_MODIFIER),
+                key=(key.ENTER, KEYBOARD.MODIFIERS.NONE),
             ),
         ]
         self.showing_buttons_id = buttons_id + 1
@@ -968,21 +1188,341 @@ class UserInterface:
         :return:
         """
         new_computers = [self.create_computer_with_ip() for _ in range(6)]
-        self.create(Switch)
+        self.create_device(Switch)
         self.smart_connect()
-        for i, (x, y) in enumerate(
+        for i, location in enumerate(
                 circular_coordinates(MainWindow.main_window.get_mouse_location(), 150, len(new_computers))):
-            new_computers[i].graphics.x = x
-            new_computers[i].graphics.y = y
+            new_computers[i].graphics.location = location
 
         self.tab_through_selected()
-        self.selected_object.computer.open_port(21)
+        self.selected_object.computer.open_tcp_port(21)
         self.tab_through_selected()
 
-    # @staticmethod
-    # def init_logo_animation():
-    #     """
-    #     Initiates the logo animation in the start of the simulation
-    #     :return:
-    #     """
-    #     return LogoAnimation((WINDOW_WIDTH / 2) - 30, WINDOW_HEIGHT / 2)
+    def register_window(self, window, *buttons):
+        """
+        Receives a window and adds it to the window list and make it known to the user interface
+        object.
+        :param window: a PopupWindow object
+        :param buttons: the buttons that the
+        window contains
+        :return:
+        """
+        if self.popup_windows:
+            window.x, window.y = map(sum, zip(self.popup_windows[-1].location, WINDOWS.POPUP.STACKING_PADDING))
+
+        self.popup_windows.append(window)
+        self.active_window = window
+        self.selected_object = window
+        self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID] = self.buttons.get(BUTTONS.ON_POPUP_WINDOWS.ID, []) + list(buttons)
+
+        for button in buttons:
+            MainLoop.instance.move_to_front(button)
+
+        def remove_buttons():
+            for button in buttons:
+                self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID].remove(button)
+                MainLoop.instance.unregister_graphics_object(button)
+        window.remove_buttons = remove_buttons
+
+    def unregister_window(self, window):
+        """
+        receives a window that is registered in the UI object and removes it, it will be ready to be deleted afterwards
+        :param window: a `PopupWindow` object
+        :return: None
+        """
+        if self.active_window is window:
+            self.active_window = None
+        if self.selected_object is window:
+            self.selected_object = None
+
+        try:
+            self.popup_windows.remove(window)
+        except ValueError:
+            raise WrongUsageError("The window is not registered in the UserInterface!!!")
+
+    def open_device_creation_window(self):
+        """
+        Creates the device creation window
+        :return:
+        """
+        DeviceCreationWindow(self)
+
+    def _connect_interfaces_by_name(self, start_computer_name,
+                                    end_computer_name,
+                                    start_interface_name,
+                                    end_interface_name,
+                                    connection_packet_loss=0,
+                                    connection_speed=CONNECTIONS.DEFAULT_SPEED):
+        """
+        Connects two computers' interfaces by names of the computers and the interfaces
+        """
+        computers = [
+            get_the_one(
+                self.computers,
+                lambda c: c.name == name,
+                NoSuchComputerError,
+            ) for name in (start_computer_name, end_computer_name)
+        ]
+        interfaces = [
+            get_the_one(
+                computer.interfaces,
+                lambda i: i.name == name,
+                NoSuchInterfaceError,
+            ) for computer, name in zip(computers, (start_interface_name, end_interface_name))
+        ]
+        connection = self.connect_devices(*interfaces)
+        connection.set_pl(connection_packet_loss)
+        connection.set_speed(connection_speed)
+
+    def _save_to_file_with_override_safety(self, filename):
+        """
+        Saves all of the state of the simulation at the moment into a file, that we can
+        later load into an empty simulation, and get all of the computers, interface, and connections.
+        :return: None
+        """
+        if os.path.isfile(os.path.join(DIRECTORIES.SAVES, f"{filename}.json")):
+            YesNoPopupWindow("file exists! override?", self, yes_action=with_args(self.save_to_file, filename))
+        else:
+            self.save_to_file(filename)
+
+    def save_to_file(self, filename):
+        """
+        Save the state of the simulation to a file named filename
+        :param filename:
+        :return:
+        """
+        dict_to_file = {
+            "computers": [
+                computer.graphics.dict_save() for computer in self.computers
+            ],
+            "connections": [
+                connection_data.connection.graphics.dict_save() for connection_data in self.connection_data
+            ],
+        }
+
+        json.dump(dict_to_file, open(os.path.join(DIRECTORIES.SAVES, f"{filename}.json"), "w"), indent=4)
+
+    def load_from_file(self, filename):
+        """
+        Loads the state of the simulation from a file
+        :return:
+        """
+        try:
+            dict_from_file = json.load(open(os.path.join(DIRECTORIES.SAVES, f"{filename}.json"), "r"))
+        except FileNotFoundError:
+            raise PopupWindowWithThisError("There is not such file!!!")
+
+        self._create_map_from_file_dict(dict_from_file)
+
+    def _create_map_from_file_dict(self, dict_from_file):
+        """
+        Creates the simulation state from a file
+        :param dict_from_file:
+        :return:
+        """
+        self.delete_all()
+
+        for computer_dict in dict_from_file["computers"]:
+            class_ = self.saving_file_class_name_to_class[computer_dict["class"]]
+            computer = class_.from_dict_load(computer_dict)
+            computer.show(*computer_dict["location"])
+            self.computers.append(computer)
+            for port in computer_dict["open_tcp_ports"]:
+                computer.open_tcp_port(port)
+            for port in computer_dict["open_udp_ports"]:
+                computer.open_udp_port(port)
+
+        for connection_dict in dict_from_file["connections"]:
+            self._connect_interfaces_by_name(
+                connection_dict["start"]["computer"],
+                connection_dict["end"]["computer"],
+                connection_dict["start"]["interface"],
+                connection_dict["end"]["interface"],
+                connection_dict["packet_loss"],
+                connection_dict["speed"],
+            )
+
+    @staticmethod
+    def _list_saved_files():
+        """
+        Returns a string of all of the files that are saved already
+        :return:
+        """
+        file_list = os.listdir(DIRECTORIES.SAVES)
+        return ", ".join(map(lambda f: f.split('.')[0], file_list))
+
+    def _ask_user_for_load_file(self):
+        """
+        asks the user for a filename to open, while offering him the names that exist
+        :return:
+        """
+        self.ask_user_for(
+            str,
+            f"insert file name to open: [options: {self._list_saved_files()}]",
+            self.load_from_file
+        )
+
+    def delete_selected_and_marked(self):
+        """
+        Deletes the selected and marked objects
+        This is called when one presses the delete button
+        :return:
+        """
+        if self.selected_object is not None:
+            self.delete(self.selected_object)
+            self.selected_object = None
+            self.set_mode(MODES.NORMAL)
+
+        for object_ in self.marked_objects:
+            self.delete(object_)
+        self.marked_objects.clear()
+
+    def move_selected_mark(self, direction):
+        """
+        Moves the square that marks the selected computer to a given direction.
+        (pressing an arrow key calls this)
+        :param direction: one of {key.UP, key.DOWN, key.RIGHT, key.LEFT}
+        :return:
+        """
+        if self.selected_object is None:
+            self.tab_through_selected()
+            return
+
+        try:
+            computer_distance_in_direction = {
+                key.RIGHT: (lambda c: c.graphics.x - self.selected_object.x),
+                key.LEFT: (lambda c: self.selected_object.x - c.graphics.x),
+                key.UP: (lambda c: c.graphics.y - self.selected_object.y),
+                key.DOWN: (lambda c: self.selected_object.y - c.graphics.y),
+            }[direction]
+        except KeyError:
+            raise WrongUsageError("direction must be one of {key.UP, key.DOWN, key.RIGHT, key.LEFT}")
+
+        optional_computers = list(filter(lambda c: computer_distance_in_direction(c) > 0, self.computers))
+        if not optional_computers:
+            return
+
+        def weighted_distance(computer):
+            x, y = computer.graphics.location
+            sx, sy = self.selected_object.location
+
+            if direction in {key.UP, key.DOWN}:
+                return sqrt((x - sx) ** 50 + (y - sy) ** 2)
+            return sqrt((x - sx) ** 2 + (y - sy) ** 50)
+
+        new_selected = min(optional_computers, key=weighted_distance)
+        self.selected_object = new_selected.graphics
+        self.set_mode(MODES.VIEW)
+
+    def move_selected_object(self, direction, step_size=SELECTED_OBJECT.STEP_SIZE):
+        """
+        Moves the computer that is selected a little bit in the direction given.
+        :param direction:
+        :param step_size: how many pixels the object will move in each step
+        :return:
+        """
+        try:
+            step = scale_tuple(step_size, {
+                key.UP: (0, 1),
+                key.DOWN: (0, -1),
+                key.RIGHT: (1, 0),
+                key.LEFT: (-1, 0),
+            }[direction])
+        except KeyError:
+            raise WrongUsageError("direction must be one of {key.UP, key.DOWN, key.RIGHT, key.LEFT}")
+
+        moved_objects = self.marked_objects + ([] if self.selected_object is None else [self.selected_object])
+        for object_ in moved_objects:
+            object_.location = sum_tuples(object_.location, step)
+
+    def exit(self):
+        """
+        Closes the simulation
+        :return:
+        """
+        YesNoPopupWindow("Are you sure you want to exit?", self, yes_action=pyglet.app.exit)
+
+    def select_all(self):
+        """
+        Mark all of the computers on the screen.
+        :return:
+        """
+        self.marked_objects.clear()
+        self.selected_object = None
+        self.marked_objects += list(map(attrgetter("graphics"), self.computers))
+
+    def open_help(self):
+        """
+        Opens the help window.
+        :return:
+        """
+        PopupHelp(self)
+
+    def set_mouse_pressed_objects(self):
+        """
+        Sets the `selected_object` and `dragged_object` according to the mouse's press.
+        :return: None
+        """
+        if not self.is_mouse_in_side_window():
+            object_the_mouse_is_on = MainLoop.instance.get_object_the_mouse_is_on()
+
+            self.dragged_object = object_the_mouse_is_on
+            if not isinstance(object_the_mouse_is_on, UserInterfaceGraphicsObject):
+                self.selected_object = object_the_mouse_is_on
+
+            if object_the_mouse_is_on is not None:  # this block is in charge of dragging the marked objects
+                mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
+                for object_ in self.marked_objects + [object_the_mouse_is_on]:
+                    object_x, object_y = object_.location
+                    self.dragging_points[object_] = object_x - mouse_x, object_y - mouse_y
+            else:
+                self.marked_objects.clear()
+
+    def set_all_connection_speeds(self, new_speed):
+        """
+        Sets the speed of all of the connections
+        :param new_speed:
+        :return:
+        """
+        for connection, _, _ in self.connection_data:
+            connection.set_speed(new_speed)
+
+    def color_by_subnets(self):
+        """
+        randomly colors the computers on the screen based on their subnet
+        :return:
+        """
+        subnets = {}
+        for computer in self.computers:
+            if not computer.has_ip():
+                continue
+
+            for ip in computer.ips:
+                subnet = get_the_one(subnets, lambda net: net.is_same_subnet(ip))
+                if subnet is None:
+                    subnets[ip.subnet()] = [computer]
+                else:
+                    subnets[subnet].append(computer)
+
+        for subnet in subnets:
+            color = (random.randint(0, 255),
+                     random.randint(0, 255),
+                     random.randint(0, 255))
+            for computer in subnets[subnet]:
+                computer.graphics.flush_colors()
+                computer.graphics.add_hue(color)
+
+    def get_frequency(self, frequency):
+        """
+        Receives a float indicating a frequency and returning a Frequency object to connect the wireless devices
+        that are listening to that frequency.
+        :param frequency: `float`
+        :return:
+        """
+        for freq in self.frequencies:
+            if freq.frequency == frequency:
+                return freq
+
+        new_freq = Frequency(frequency)
+        self.frequencies.append(new_freq)
+        return new_freq

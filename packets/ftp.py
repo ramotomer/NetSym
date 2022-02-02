@@ -1,11 +1,11 @@
-from consts import FTP_REQUEST_PACKET, FTP_DATA_PACKET
+from consts import OPCODES
 from packets.protocol import Protocol
 
 
 class FTP(Protocol):
     """
     A Packet of the FTP protocol.
-    Contains (for now) data string for the FTP client and server processes
+    Contains (for now) ip_layer string for the FTP client and server processes
     """
     def __init__(self, data, is_request=False):
         """
@@ -21,8 +21,8 @@ class FTP(Protocol):
         :return:
         """
         if self.is_request:
-            return FTP_REQUEST_PACKET
-        return FTP_DATA_PACKET
+            return OPCODES.FTP.REQUEST_PACKET
+        return OPCODES.FTP.DATA_PACKET
 
     def copy(self):
         """
@@ -48,7 +48,7 @@ class FTP(Protocol):
         """
         return f"""
 FTP: {"(request)" if self.is_request else ""}
-data:
+ip_layer:
 {self.data}
 """
 

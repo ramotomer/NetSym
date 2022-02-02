@@ -14,8 +14,8 @@ class Protocol(metaclass=ABCMeta):
     def __init__(self, layer_index, data):
         """
         Initiates the protocol instance.
-        The only requirement is a `data` attribute.
-        :param data: The data of the protocol (usually, another `Protocol` instance)
+        The only requirement is a `ip_layer` attribute.
+        :param data: The ip_layer of the protocol (usually, another `Protocol` instance)
         """
         self.layer_index = layer_index
         self.data = data
@@ -28,7 +28,7 @@ class Protocol(metaclass=ABCMeta):
     @abstractmethod
     def copy(self):
         """
-        Copy this specific protocol layer. (Not its data)
+        Copy this specific protocol layer. (Not its ip_layer)
         :return: a new `Protocol` instance
         """
         pass

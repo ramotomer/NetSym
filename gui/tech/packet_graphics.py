@@ -2,7 +2,7 @@ from consts import *
 from gui.abstracts.animation_graphics import AnimationGraphics
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_loop import MainLoop
-from usefuls import with_args
+from usefuls.funcs import with_args
 
 
 class PacketGraphics(ImageGraphics):
@@ -19,24 +19,27 @@ class PacketGraphics(ImageGraphics):
         :param deepest_layer: The deepest packet layer in the packet.
         :param connection_graphics: The `ConnectionGraphics` object which is the graphics of the `Connection` this packet
             is sent through. It is used for the start and end coordinates.
-
+            
         The self.progress variable is how much of the connection the packet has passed already. That information comes
         from the `Connection` class that sent the packet. It updates it in the `Connection.move_packets` method.
         """
         super(PacketGraphics, self).__init__(
-                            IMAGES.format(self.image_from_packet(deepest_layer)),
-                            connection_graphics.get_coordinates(direction)[0],
-                            connection_graphics.get_coordinates(direction)[1],
-                            centered=True,
-                            scale_factor=PACKET_SCALE_FACTOR,
-                            is_opaque=is_opaque)
+            os.path.join(DIRECTORIES.IMAGES, self.image_from_packet(deepest_layer)),
+            connection_graphics.get_computer_coordinates(direction)[0],
+            connection_graphics.get_computer_coordinates(direction)[1],
+            centered=True,
+            scale_factor=IMAGES.SCALE_FACTORS.PACKETS,
+            is_opaque=is_opaque,
+            is_pressable=True,
+        )
+
         self.is_packet = True
-        self.is_pressable = True
 
         self.connection_graphics = connection_graphics
         self.direction = direction
         self.progress = 0
         self.str = str(deepest_layer)
+        self.deepest_layer = deepest_layer
 
         self.drop_animation = None
 
@@ -61,7 +64,7 @@ class PacketGraphics(ImageGraphics):
         :return: None
         """
         MainLoop.instance.unregister_graphics_object(self)
-        AnimationGraphics(EXPLOSION_ANIMATION, self.x, self.y)
+        AnimationGraphics(ANIMATIONS.EXPLOSION, self.x, self.y)
 
     @staticmethod
     def image_from_packet(layer):
@@ -73,8 +76,8 @@ class PacketGraphics(ImageGraphics):
         """
 
         if hasattr(layer, "opcode"):
-            return PACKET_TYPE_TO_IMAGE[type(layer).__name__][layer.opcode]
-        return PACKET_TYPE_TO_IMAGE[type(layer).__name__]
+            return PACKET.TYPE_TO_IMAGE[type(layer).__name__][layer.opcode]
+        return PACKET.TYPE_TO_IMAGE[type(layer).__name__]
 
     def start_viewing(self, user_interface):
         """
@@ -86,7 +89,7 @@ class PacketGraphics(ImageGraphics):
             "Drop (alt+d)": with_args(user_interface.drop_packet, self),
         }
         self.buttons_id = user_interface.add_buttons(buttons)
-        return self.copy_sprite(self.sprite, VIEWING_OBJECT_SCALE_FACTOR), '', self.buttons_id
+        return self.copy_sprite(self.sprite), '', self.buttons_id
 
     def end_viewing(self, user_interface):
         """
@@ -96,3 +99,10 @@ class PacketGraphics(ImageGraphics):
 
     def __repr__(self):
         return self.str
+
+    def dict_save(self):
+        """
+        The packets cannot be saved into the file.
+        :return:
+        """
+        return None

@@ -1,24 +1,26 @@
 from collections import namedtuple
 
 from consts import *
-from gui.abstracts.graphics_object import GraphicsObject
+from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_window import MainWindow
-from gui.shape_drawing import draw_rect
+from gui.shape_drawing import draw_button
 from gui.user_interface.text_graphics import Text
+from usefuls.funcs import sum_tuples
 
 ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "text")
 
 
-class Button(GraphicsObject):
+class Button(UserInterfaceGraphicsObject):
     """
     A class of a button which you can press and assign text and an action to.
     """
-    def __init__(self, x, y, action=lambda: None, text=DEFAULT_BUTTON_TEXT, start_hidden=False,
-                 width=DEFAULT_BUTTON_WIDTH, height=DEFAULT_BUTTON_HEIGHT, key=None, color=GRAY, text_color=PINK):
+    def __init__(self, x, y, action=lambda: None, text=BUTTONS.DEFAULT_TEXT, start_hidden=False,
+                 width=BUTTONS.DEFAULT_WIDTH, height=BUTTONS.DEFAULT_HEIGHT, key=None,
+                 color=BUTTONS.COLOR, text_color=BUTTONS.TEXT_COLOR, is_outlined=True):
         """
         Initiates the button.
         :param x:
-        :param y: coordinates of the left
+        :param y: coordinates of the bottom left
         :param action: a function that will be called when the button is pressed.
         :param text: a string that will be written on the button.
             in the same group.
@@ -34,30 +36,17 @@ class Button(GraphicsObject):
         self.width, self.height = width, height
         self.action = action
         self.child_graphics_objects = ChildGraphicsObjects(
-            Text(text, x, y, self, (self.width / 2, self.height / 2 + BUTTON_TEXT_PADDING),
+            Text(text, x, y, self, (self.width / 2, self.height / 2 + BUTTONS.TEXT_PADDING),
                  is_button=True,
                  start_hidden=start_hidden,
-                 max_width=SIDE_WINDOW_WIDTH,
+                 max_width=WINDOWS.SIDE.WIDTH,
                  color=text_color),
         )
         self.key = key
 
-        self.parent_graphics = None  # see 'text_graphics.py' for documentation
-        self.padding = None
-
         self.color = color
-        self.light_color = tuple(rgb + LIGHT_COLOR_DIFF for rgb in color)
-
-    def set_parent_graphics(self, parent, padding=(0, 0)):
-        """
-        Sets the parent graphics object of the button
-        :param parent: a `GraphicsObject` to follow
-        :param padding: a tuple of integers
-        :return: None
-        """
-        self.parent_graphics = parent
-        self.padding = padding
-        self.move()
+        self.light_color = tuple(rgb + COLORS.COLOR_DIFF for rgb in color)
+        self.is_outlined = is_outlined
 
     def is_mouse_in(self):
         """Returns whether or not the mouse is located inside of the button."""
@@ -93,7 +82,9 @@ class Button(GraphicsObject):
         :return: None
         """
         if not self.is_hidden:
-            draw_rect(self.x, self.y, self.width, self.height, (self.light_color if self.is_mouse_in() else self.color))
+            draw_button(self.x, self.y, self.width, self.height,
+                        color=(self.light_color if self.is_mouse_in() else self.color),
+                        outline_width=(BUTTONS.OUTLINE_WIDTH if self.is_outlined else 0))
 
     def move(self):
         """
@@ -101,10 +92,10 @@ class Button(GraphicsObject):
         :return: None
         """
         if self.parent_graphics is not None:
-            self.x, self.y = map(sum, zip(self.parent_graphics.location, self.padding))
+            self.x, self.y = sum_tuples(self.parent_graphics.location, self.padding)
 
     def __str__(self):
-        state = "HIDDEN" if self.is_hidden else "SHOWING"
+        state = "[HIDDEN]" if self.is_hidden else "[SHOWING]"
         return f"{state} '{self.child_graphics_objects.text.text}'"
 
     def __repr__(self):
