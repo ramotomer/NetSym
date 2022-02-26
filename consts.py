@@ -85,6 +85,14 @@ class OPCODES:
         REQUEST = 'request'
         REPLY = 'reply'
 
+    class OSPF:
+        class MESSAGE_TYPES:
+            HELLO = 'Hello'
+            DATABASE_DESCRIPTION = 'DBD'
+            LINK_STATE_REQUEST = 'LSR'
+            LINK_STATE_UPDATE = 'LSU'
+            LINK_STATE_ACKNOWLEDGEMENT = 'LSAck'
+
 
 class PROTOCOLS:
     class ARP:
@@ -122,6 +130,11 @@ class PROTOCOLS:
         DESIGNATED_PORT = "DESIGNATED"
         BLOCKED_PORT = "BLOCKED"
         NO_STATE = "no state!"
+
+    class OSPF:
+        DEFAULT_HELLO_INTERVAL = 10
+        DEFAULT_ROUTER_DEAD_INTERVAL = 4 * DEFAULT_HELLO_INTERVAL
+        DEFAULT_ROUTER_PRIORITY = 1
 
 
 class PORTS:
@@ -433,6 +446,8 @@ class INTERFACES:
     BLOCKED_COLOR = COLORS.RED
     WIDTH, HEIGHT = 10, 10
     ANY_INTERFACE = None
+
+    MAX_MTU = 1500
 
     class TYPE:
         ETHERNET = "Ethernet"

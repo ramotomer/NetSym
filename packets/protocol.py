@@ -40,3 +40,6 @@ class Protocol(metaclass=ABCMeta):
         :return: a string.
         """
         pass
+
+    def get_all_interesting_attributes(self):
+        return [(attr, getattr(self, attr)) for attr in dir(self) if not (attr.startswith("__") and attr.endswith("__"))]
