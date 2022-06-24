@@ -61,8 +61,12 @@ link:
         :param args:
         :return:
         """
-        name = args[args.index('add') + 1]
-        mac = args[args.index('mac') + 1] if 'mac' in args else None
+        try:
+            name = args[args.index('add') + 1]
+            mac = args[args.index('mac') + 1] if 'mac' in args else None
+        except IndexError:
+            return CommandOutput('', "Syntax error! use: 'ip link add <name> [mac <mac>]")
+
         if name in [nic.name for nic in self.computer.interfaces]:
             return CommandOutput('', f'An interface named {name} already exists')
         self.computer.add_interface(name, mac)
@@ -74,7 +78,11 @@ link:
         :param args:
         :return:
         """
-        name = args[args.index('del') + 1]
+        try:
+            name = args[args.index('del') + 1]
+        except IndexError:
+            return CommandOutput('', "Syntax error! use: 'ip link del <name> [mac <mac>]")
+
         if name not in [nic.name for nic in self.computer.interfaces]:
             return CommandOutput('', f'An interface named {name} does not exist!')
         try:

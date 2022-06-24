@@ -45,7 +45,7 @@ class LoopbackConnectionGraphics(ConnectionGraphics):
         x, y = self.computer_graphics.location
         y = y + self.radius
 
-        return x + (self.radius * cos(angle - (pi / 2))), y + (self.radius* sin(angle - (pi / 2)))
+        return x + (self.radius * cos(angle - (pi / 2))), y + (self.radius * sin(angle - (pi / 2)))
 
     def show(self):
         self.is_showing = True
@@ -61,6 +61,16 @@ class LoopbackConnectionGraphics(ConnectionGraphics):
         if self.is_showing:
             x, y = self.computer_graphics.location
             draw_circle(x, y + self.radius, self.radius, self.color)
+
+    def get_computer_coordinates(self, direction=PACKET.DIRECTION.RIGHT):
+        """
+        Return a tuple of the coordinates at the start and the end of the connection.
+        Receives a `direction` that we look at the connection from (to know which is the end and which is the start)
+        If the connection is opposite the coordinates will also be flipped.
+        :param direction: `PACKET.DIRECTION.RIGHT` or `PACKET.DIRECTION.LEFT`.
+        :return: (self.computers.start.x, self.computers.start.y, self.computers.end.x, self.computers.end.y)
+        """
+        return self.computer_graphics.x, self.computer_graphics.y, self.computer_graphics.x, self.computer_graphics.y
 
     def __repr__(self):
         return "loopback connection graphics"
