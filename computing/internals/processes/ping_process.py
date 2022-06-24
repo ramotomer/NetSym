@@ -3,6 +3,7 @@ from itertools import cycle
 from computing.internals.processes.process import Process, WaitingForPacket, ReturnedPacket, WaitingFor
 from consts import OPCODES, PROTOCOLS
 from exceptions import NoIPAddressError
+from usefuls.funcs import my_range
 
 
 class SendPing(Process):
@@ -48,7 +49,7 @@ class SendPing(Process):
 
     def _print_output(self, returned_packet):
         """
-        Receives the `ReturnedOutput` object that was received and prints out to the `OutputConsole` an appropriate message
+        Receives the `ReturnedPacket` object that was received and prints out to the `OutputConsole` an appropriate message
         """
         packet = returned_packet.packet
         if packet["ICMP"].opcode == OPCODES.ICMP.UNREACHABLE:
@@ -65,7 +66,7 @@ class SendPing(Process):
         if self.ping_opcode == OPCODES.ICMP.REQUEST:
             self.computer.print(f"pinging {self.dst_ip} with some bytes")
 
-        for _ in (range(self.count) if self.count is not PROTOCOLS.ICMP.INFINITY else cycle(['_'])):
+        for _ in my_range(self.count):
             ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip, self)
             yield WaitingFor(done_searching)
 

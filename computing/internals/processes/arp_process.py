@@ -1,6 +1,7 @@
 from computing.internals.processes.process import Process, ReturnedPacket, WaitingForPacketWithTimeout, Timeout, \
     WaitingFor
 from consts import OPCODES, PROTOCOLS
+from usefuls.funcs import my_range
 
 
 def arp_reply_from(ip_address):
@@ -14,7 +15,11 @@ class ARPProcess(Process):
     """
     This is the process of the computer asking for an IP address using ARPs.
     """
-    def __init__(self, pid, computer, address, requesting_process=None):
+    def __init__(self, pid, computer, address,
+                 requesting_process=None,
+                 send_even_if_known=False,
+                 resend_count=PROTOCOLS.ARP.RESEND_COUNT,
+                 resend_even_on_success=False):
         """
         Initiates the process with the address to request.
         :param computer:
@@ -23,22 +28,26 @@ class ARPProcess(Process):
         super(ARPProcess, self).__init__(pid, computer)
         self.address = address
         self.requesting_process = requesting_process
+        self.send_even_if_known = send_even_if_known
+        self.resend_count = resend_count
+        self.resend_even_on_success = resend_even_on_success
 
     def code(self):
         """The code of the process"""
         if self.address is None:
             return
 
-        if self.address in self.computer.arp_cache:
+        if self.address in self.computer.arp_cache and not self.send_even_if_known:
             return
 
         returned_packets = ReturnedPacket()
-        for _ in range(PROTOCOLS.ARP.RESEND_COUNT):
+        for _ in my_range(self.resend_count):
             self.computer.send_arp_to(self.address)
             yield WaitingForPacketWithTimeout(arp_reply_from(self.address), returned_packets, Timeout(PROTOCOLS.ARP.RESEND_TIME))
-            if returned_packets.has_packets():  # if this was not timed-out, so we got an arp reply.
+            if not returned_packets.has_packets():
+                self.computer.print("Destination is unreachable :(")
+            elif not self.resend_even_on_success:
                 return
-        self.computer.print("Destination unreachable :(")
 
         if self.requesting_process is not None:
             self.computer.kill_process_by_type(type(self.requesting_process))

@@ -730,8 +730,6 @@ class Computer:
         :return: None
         """
         interface_ip = self.routing_table[ip_address].interface_ip
-        if self.name == "test":
-            pass
         interface = self.get_interface_with_ip(interface_ip)
         arp = ARP(OPCODES.ARP.REQUEST, interface.ip, ip_address, interface.mac)
         if interface.ip is None:
@@ -889,7 +887,7 @@ class Computer:
 
     # ------------------------- v process related methods v ----------------------------------------------------
 
-    def start_process(self, process_type, *args):
+    def start_process(self, process_type, *args, **kwargs):
         """
         Receive a `Process` subclass class, and the arguments for it
         (not including the default Computer argument that all processes receive.)
@@ -902,7 +900,7 @@ class Computer:
         :return: None
         """
         pid = len(self.waiting_processes) + 2
-        self.waiting_processes.append((process_type(pid, self, *args), None))
+        self.waiting_processes.append((process_type(pid, self, *args, **kwargs), None))
 
     def waiting_process_from_pid(self, pid):
         """
