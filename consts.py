@@ -92,7 +92,7 @@ class PROTOCOLS:
         RESEND_COUNT = 3  # seconds
 
     class ICMP:
-        INFINITY = None
+        INFINITY = float("inf")  # the builtin infinity
 
     class TCP:
         MAX_SEQUENCE_NUMBER = 2**32 - 1

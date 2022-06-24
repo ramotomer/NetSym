@@ -2,6 +2,7 @@ from collections import namedtuple
 
 from address.ip_address import IPAddress
 from consts import COMPUTER
+from exceptions import InvalidAddressError
 from gui.main_loop import MainLoop
 
 ARPCacheItem = namedtuple("ARPCacheItem", [
@@ -66,6 +67,9 @@ class ArpCache:
             del self.__cache[key]
 
     def __contains__(self, item):
+        if not isinstance(item, IPAddress):
+            raise InvalidAddressError(f"Key of an arp cache must be an IPAddress object!!! not {type(item)} like {repr(item)}")
+
         return item.string_ip in {ip.string_ip: value for ip, value in self.__cache.items()}
 
     def __getitem__(self, item):
