@@ -26,6 +26,7 @@ class SendPing(Process):
         :return: None
         """
         if not self.computer.has_ip():
+            self.computer.print("Could not send ICMP packets without an IP address!")
             raise NoIPAddressError("The sending computer has no IP address!!!")
 
         dst_mac = self.computer.arp_cache[ip_for_the_mac].mac
@@ -70,7 +71,10 @@ class SendPing(Process):
             ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip, self)
             yield WaitingFor(done_searching)
 
-            self._send_the_ping(ip_for_the_mac)
+            try:
+                self._send_the_ping(ip_for_the_mac)
+            except NoIPAddressError:
+                return
 
             if self.ping_opcode == OPCODES.ICMP.REQUEST:
                 returned_packet = ReturnedPacket()
