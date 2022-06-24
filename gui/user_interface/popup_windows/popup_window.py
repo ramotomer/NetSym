@@ -49,6 +49,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
             text_color=COLORS.BLACK,
             key=(key.ESCAPE, KEYBOARD.MODIFIERS.NONE),
             is_outlined=False,
+            custom_active_color=COLORS.LIGHT_RED
         )
         self.exit_button.set_parent_graphics(self, (self.width - WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT, self.height))
 
