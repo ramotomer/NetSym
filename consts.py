@@ -201,9 +201,10 @@ class COLORS:
     TURQUOISE = (10, 255, 255)
     ORANGE = (255, 215, 0)
 
+    VERY_LIGHT_GRAY = (200, 200, 200)
+    SOMEWHAT_LIGHT_GRAY = (170, 170, 170)
     LIGHT_GRAY = (150, 150, 150)
     DARK_GRAY = (20, 20, 20)
-    VERY_LIGHT_GRAY = (200, 200, 200)
     LIGHT_BLUE = (100, 100, 255)
     VERY_LIGHT_BLUE = (180, 180, 255)
     LIGHT_GREEN = (50, 255, 50)
@@ -230,13 +231,14 @@ class WINDOWS:
 
     class POPUP:
         STACKING_PADDING = 10, -10
+        DEACTIVATED_COLOR = COLORS.LIGHT_GRAY
 
         class TEXTBOX:
             WIDTH = 400
             HEIGHT = 170
             COORDINATES = (437.5, 215.0)
             UPPER_PART_HEIGHT = 30
-            COLOR = COLORS.LIGHT_GRAY
+            COLOR = COLORS.SOMEWHAT_LIGHT_GRAY
             OUTLINE_COLOR = COLORS.LIGHT_BLUE
 
         class SUBMIT_BUTTON:

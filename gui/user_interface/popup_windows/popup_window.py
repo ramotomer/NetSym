@@ -17,7 +17,8 @@ class PopupWindow(UserInterfaceGraphicsObject):
     """
     def __init__(self, x, y, text, user_interface, buttons,
                  width=WINDOWS.POPUP.TEXTBOX.WIDTH, height=WINDOWS.POPUP.TEXTBOX.HEIGHT,
-                 color=WINDOWS.POPUP.TEXTBOX.OUTLINE_COLOR, title="window!"):
+                 color=WINDOWS.POPUP.TEXTBOX.OUTLINE_COLOR, title="window!",
+                 outline_width=SHAPES.RECT.DEFAULT_OUTLINE_WIDTH):
         """
         Initiates the `PopupWindow` object.
         :param x, y: the location of the bottom left corner of the window
@@ -29,6 +30,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.width, self.height = width, height
         self.__is_active = False
         self.outline_color = color
+        self.outline_width = outline_width
 
         title_text = Text(title, self.x, self.y, self, ((self.width / 2) + 2, self.height + 22),
                           color=COLORS.BLACK, align='left', max_width=self.width)
@@ -37,7 +39,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         for button in buttons:
             button.set_parent_graphics(self, (button.x - self.x, button.y - self.y))
 
-        exit_button = Button(
+        self.exit_button = Button(
             *WINDOWS.POPUP.SUBMIT_BUTTON.COORDINATES,
             action=self.delete,
             text="X",
@@ -48,18 +50,17 @@ class PopupWindow(UserInterfaceGraphicsObject):
             key=(key.ESCAPE, KEYBOARD.MODIFIERS.NONE),
             is_outlined=False,
         )
-        exit_button.set_parent_graphics(self, (self.width - WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT, self.height))
+        self.exit_button.set_parent_graphics(self, (self.width - WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT, self.height))
 
         self.remove_buttons = None
-        user_interface.register_window(self, exit_button, *buttons)
-        self.unregister_from_user_interface = with_args(user_interface.unregister_window, self)
-
         self.child_graphics_objects = [
             title_text,
             information_text,
-            exit_button,
+            self.exit_button,
             *buttons,
         ]
+        user_interface.register_window(self, self.exit_button, *buttons)
+        self.unregister_from_user_interface = with_args(user_interface.unregister_window, self)
 
     def is_mouse_in(self):
         """
@@ -92,18 +93,18 @@ class PopupWindow(UserInterfaceGraphicsObject):
         Basically a rectangle.
         :return: None
         """
+        outline_color = self.outline_color if self.__is_active else WINDOWS.POPUP.DEACTIVATED_COLOR
         draw_rectangle(self.x, self.y,
                        self.width,
                        self.height,
                        WINDOWS.POPUP.TEXTBOX.COLOR,
-                       self.outline_color,
-                       SHAPES.RECT.DEFAULT_OUTLINE_WIDTH - (0 if self.__is_active else 2))
-        # TODO: make self.outline_width a thing instead of the const
+                       outline_color,
+                       self.outline_width)
 
         draw_rectangle(
-            self.x - (SHAPES.RECT.DEFAULT_OUTLINE_WIDTH / 2), self.y + self.height,
-            self.width + SHAPES.RECT.DEFAULT_OUTLINE_WIDTH, WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT,
-            color=self.outline_color,
+            self.x - (self.outline_width / 2), self.y + self.height,
+            self.width + self.outline_width, WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT,
+            color=outline_color,
         )
 
     def activate(self):
@@ -111,6 +112,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         Marks the window as activated
         :return:
         """
+        self.exit_button.color = self.outline_color
         self.__is_active = True
 
     def deactivate(self):
@@ -118,6 +120,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         Marks the window as deactivated
         :return:
         """
+        self.exit_button.color = WINDOWS.POPUP.DEACTIVATED_COLOR
         self.__is_active = False
 
     def __str__(self):

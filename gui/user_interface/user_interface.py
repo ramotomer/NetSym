@@ -216,6 +216,9 @@ class UserInterface:
             window.activate()
         self.__active_window = window
 
+        if MainLoop.instance is not None and window is not None:
+            MainLoop.instance.move_to_front(window)
+
     @property
     def selected_object(self):
         return self.__selected_object
@@ -449,7 +452,7 @@ class UserInterface:
                 )
             self.start_object_view(self.selected_object)
 
-        else:
+        else:  # new_mode == MODES.NORMAL
             self.source_of_line_drag = None
             self.mode = new_mode
             self.end_object_view()
@@ -494,9 +497,9 @@ class UserInterface:
             self.action_at_press_by_mode[self.mode]()
 
         if self.active_window is None:
-            self._create_selection_square()
+            self._create_selecting_square()
 
-    def _create_selection_square(self):
+    def _create_selecting_square(self):
         """
         Creates the selection square when the mouse is pressed and dragged around
         :return:
@@ -555,13 +558,15 @@ class UserInterface:
         """
         self.set_mouse_pressed_objects()
 
-        if not self.is_mouse_in_side_window():
-            if self.selected_object is not None and self.selected_object.can_be_viewed:
-                self.set_mode(MODES.VIEW)
-            elif self.selected_object is None:
-                self.set_mode(MODES.NORMAL)
-            else:  # if an an object that cannot be viewed is pressed
-                pass
+        if self.is_mouse_in_side_window():
+            return
+
+        if self.selected_object is not None and self.selected_object.can_be_viewed:
+            self.set_mode(MODES.VIEW)
+        elif self.selected_object is None:
+            self.set_mode(MODES.NORMAL)
+
+        # we only get here if an an object that cannot be viewed is pressed - do nothing
 
     def is_mouse_in_side_window(self):
         """Return whether or not the mouse is currently in the side window."""
@@ -1211,17 +1216,13 @@ class UserInterface:
             window.x, window.y = map(sum, zip(self.popup_windows[-1].location, WINDOWS.POPUP.STACKING_PADDING))
 
         self.popup_windows.append(window)
-        self.active_window = window
         self.selected_object = window
         self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID] = self.buttons.get(BUTTONS.ON_POPUP_WINDOWS.ID, []) + list(buttons)
 
-        for button in buttons:
-            MainLoop.instance.move_to_front(button)
-
         def remove_buttons():
-            for button in buttons:
-                self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID].remove(button)
-                MainLoop.instance.unregister_graphics_object(button)
+            for button_ in buttons:
+                self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID].remove(button_)
+                MainLoop.instance.unregister_graphics_object(button_)
         window.remove_buttons = remove_buttons
 
     def unregister_window(self, window):
@@ -1463,20 +1464,24 @@ class UserInterface:
         Sets the `selected_object` and `dragged_object` according to the mouse's press.
         :return: None
         """
-        if not self.is_mouse_in_side_window():
-            object_the_mouse_is_on = MainLoop.instance.get_object_the_mouse_is_on()
+        if self.is_mouse_in_side_window():
+            return
 
-            self.dragged_object = object_the_mouse_is_on
-            if not isinstance(object_the_mouse_is_on, UserInterfaceGraphicsObject):
-                self.selected_object = object_the_mouse_is_on
+        object_the_mouse_is_on = MainLoop.instance.get_object_the_mouse_is_on()
 
-            if object_the_mouse_is_on is not None:  # this block is in charge of dragging the marked objects
-                mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
-                for object_ in self.marked_objects + [object_the_mouse_is_on]:
-                    object_x, object_y = object_.location
-                    self.dragging_points[object_] = object_x - mouse_x, object_y - mouse_y
-            else:
-                self.marked_objects.clear()
+        self.dragged_object = object_the_mouse_is_on
+        if (not isinstance(object_the_mouse_is_on, UserInterfaceGraphicsObject)) or isinstance(object_the_mouse_is_on, PopupWindow):
+            self.selected_object = object_the_mouse_is_on
+
+        if object_the_mouse_is_on is None:
+            self.marked_objects.clear()
+            return
+
+        # vv this block is in charge of dragging the marked objects vv
+        mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
+        for object_ in self.marked_objects + [object_the_mouse_is_on]:
+            object_x, object_y = object_.location
+            self.dragging_points[object_] = object_x - mouse_x, object_y - mouse_y
 
     def set_all_connection_speeds(self, new_speed):
         """
