@@ -77,6 +77,7 @@ class MainLoop:
         try:
             self.graphics_objects.remove(graphics_object)
         except ValueError:
+            # object is not registered
             pass
 
         self.remove_from_loop(graphics_object.draw)
@@ -173,14 +174,6 @@ class MainLoop:
 
         for marked_object in self.main_window.user_interface.marked_objects:
             marked_object.mark_as_selected_non_resizable()
-
-    def delete_all_graphics(self):
-        """
-        Deletes and unregisters all of the graphics objects on the screen. (not buttons)
-        :return: None
-        """
-        for object_ in list(filter(lambda go: not go.is_button, self.graphics_objects)):
-            self.unregister_graphics_object(object_)
 
     def get_object_the_mouse_is_on(self):
         """

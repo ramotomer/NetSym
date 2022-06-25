@@ -14,12 +14,15 @@ from gui.tech.process_graphics import ProcessGraphicsList
 from gui.user_interface.popup_windows.popup_console import PopupConsole
 from gui.user_interface.text_graphics import Text
 from usefuls.funcs import with_args
+from recordclass import recordclass
 
-ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", [
+
+ChildGraphicsObjects = recordclass("ChildGraphicsObjects", [
     "text",
     "console",
     "process_list",
     "interface_list",
+    "loopback",
 ])
 
 
@@ -54,6 +57,7 @@ class ComputerGraphics(ImageGraphics):
             OutputConsole(*self.console_location),
             ProcessGraphicsList(self),
             InterfaceGraphicsList(self),
+            None,                        # This is the loopback graphics. It will be set once the LoopbackGraphicsObject is initiated
         )
 
         self.buttons_id = None

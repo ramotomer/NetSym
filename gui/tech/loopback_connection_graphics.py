@@ -22,6 +22,8 @@ class LoopbackConnectionGraphics(ConnectionGraphics):
         self.is_showing = False
         self.is_pressable = False
 
+        computer_graphics.child_graphics_objects.loopback = self
+
     @property
     def length(self):
         return circle_parameter(self.radius)
