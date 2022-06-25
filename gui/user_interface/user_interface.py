@@ -26,6 +26,7 @@ from gui.main_window import MainWindow
 from gui.shape_drawing import draw_circle, draw_line
 from gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from gui.tech.computer_graphics import ComputerGraphics
+from gui.tech.connection_graphics import ConnectionGraphics
 from gui.tech.interface_graphics import InterfaceGraphics
 from gui.tech.packet_graphics import PacketGraphics
 from gui.user_interface.button import Button
@@ -293,7 +294,7 @@ class UserInterface:
             return
         dragging_objects = self.marked_objects + ([self.dragged_object] if self.dragged_object is not None else [])
         for object_ in dragging_objects:
-            if not object_.is_button:
+            if not isinstance(object_, Button):
                 drag_x, drag_y = self.dragging_points[object_]
                 if drag_x is None:
                     continue
@@ -361,7 +362,7 @@ class UserInterface:
             if self.object_view.sprite is not None:  # if the viewed graphics object is an image graphics object.
                 MainLoop.instance.remove_from_loop(self.object_view.sprite.draw)
 
-            if self.object_view.viewed_object.is_computer:
+            if isinstance(self.object_view.viewed_object, ComputerGraphics):
                 self.object_view.viewed_object.child_graphics_objects.console.hide()
 
             self.object_view = None
@@ -685,7 +686,10 @@ class UserInterface:
             return
 
         if any(isinstance(interface, WirelessInterface) for interface in interfaces):
-            #TODO: maybe add indicative message in the future
+            PopupError(
+                "Wireless interfaces do not connect peer-to-peer! They just need to be on the same frequency and then they can communicate :)",
+                self
+            )
             return
 
         try:
@@ -729,7 +733,9 @@ class UserInterface:
         Totally clears the screen.
         :return: None
         """
-        MainLoop.instance.delete_all_graphics()
+        for object_ in list(filter(lambda go: not go.is_button, MainLoop.instance.graphics_objects)):
+            MainLoop.instance.unregister_graphics_object(object_)
+
         self.selected_object = None
         self.dragged_object = None
 
@@ -763,12 +769,11 @@ class UserInterface:
         self.selected_object = None
         self.dragged_object = None
 
-        # TODO: get rid of all this `is_computer` and replace with isinstance please
-        if graphics_object.is_computer:
+        if isinstance(graphics_object, ComputerGraphics):
             self.computers.remove(graphics_object.computer)
             self._delete_connections_to(graphics_object.computer)
 
-        elif graphics_object.is_connection:
+        elif isinstance(graphics_object, ConnectionGraphics):
             for connection, computer1, computer2 in self.connection_data:
                 if connection is graphics_object.connection:
                     computer1.disconnect(connection)
@@ -777,7 +782,7 @@ class UserInterface:
 
         elif isinstance(graphics_object, InterfaceGraphics):
             interface = graphics_object.interface
-            computer = get_the_one(self.computers, lambda c: interface in c.interfaces, NoSuchInterfaceError)
+            computer = get_the_one(self.computers, (lambda c: interface in c.interfaces), NoSuchInterfaceError)
             connection = interface.connection.connection
             self.delete(connection.graphics)
             computer.add_remove_interface(interface.name)
@@ -965,7 +970,7 @@ class UserInterface:
             if processes:
                 print(processes, end=' ')
         print()
-        if self.selected_object is not None and self.selected_object.is_computer:
+        if self.selected_object is not None and isinstance(self.selected_object, ComputerGraphics):
             computer = self.selected_object.computer
             computer.print(f"{'DEBUG':^20}{self.debug_counter}")
             if not isinstance(computer, Switch):
@@ -1060,10 +1065,9 @@ class UserInterface:
         The selected computer sends a ping to himself on the loopback.
         :return: None
         """
-        if self.selected_object is None or not self.selected_object.is_computer:
+        if self.selected_object is None or not isinstance(self.selected_object, ComputerGraphics):
             return
-        computer = self.selected_object.computer
-        self.send_direct_ping(computer, computer)
+        self.send_direct_ping(self.selected_object, self.selected_object)
 
     def _showcase_running_stp(self):
         """
