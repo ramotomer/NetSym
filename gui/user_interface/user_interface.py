@@ -1305,6 +1305,7 @@ class UserInterface:
             ],
         }
 
+        os.makedirs(DIRECTORIES.SAVES, exist_ok=True)
         json.dump(dict_to_file, open(os.path.join(DIRECTORIES.SAVES, f"{filename}.json"), "w"), indent=4)
 
     def load_from_file(self, filename):
@@ -1361,9 +1362,10 @@ class UserInterface:
         asks the user for a filename to open, while offering him the names that exist
         :return:
         """
+        saved_files = self._list_saved_files()
         self.ask_user_for(
             str,
-            f"insert file name to open: [options: {self._list_saved_files()}]",
+            f"insert file name to open:" + (f"[options: {saved_files}]" if saved_files else ""),
             self.load_from_file
         )
 
