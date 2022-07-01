@@ -206,6 +206,7 @@ class Computer:
             self.on_startup()
         else:
             self.on_shutdown()
+            # TODO: delete all sockets
 
     def on_shutdown(self):
         """
@@ -221,8 +222,7 @@ class Computer:
         :return:
         """
         self.process_scheduler.terminate_all()
-        for process, args in self.process_scheduler.startup_usermode_processes:
-            self.process_scheduler.start_process(process, *args)
+        self.process_scheduler.run_startup_processes()
 
     def add_interface(self, name=None, mac=None):
         """
@@ -440,7 +440,7 @@ class Computer:
         :param count: how many pings to send
         :return: None
         """
-        self.process_scheduler.start_process(SendPing, ip_address, opcode, count)
+        self.process_scheduler.start_usermode_process(SendPing, ip_address, opcode, count)
 
     def is_for_me(self, packet):
         """
@@ -465,8 +465,8 @@ class Computer:
         One can read more at the 'dhcp_process.py' file.
         :return: None
         """
-        self.kill_process_by_type(DHCPClient)  # if currently asking for dhcp, stop it
-        self.process_scheduler.start_process(DHCPClient)
+        self.kill_usermode_process_by_type(DHCPClient)  # if currently asking for dhcp, stop it
+        self.process_scheduler.start_usermode_process(DHCPClient)
 
     def open_tcp_port(self, port_number):
         """
@@ -480,10 +480,10 @@ class Computer:
         process = self.TCP_PORTS_TO_PROCESSES[port_number]
         if port_number in self.open_tcp_ports:
             if process is not None:
-                self.kill_process_by_type(process)
+                self.kill_usermode_process_by_type(process)
         else:
             if process is not None:
-                self.process_scheduler.start_process(self.TCP_PORTS_TO_PROCESSES[port_number])
+                self.process_scheduler.start_usermode_process(self.TCP_PORTS_TO_PROCESSES[port_number])
 
         self.graphics.update_image()
 
@@ -529,7 +529,7 @@ class Computer:
         self.remove_ip(interface)
         interface.ip = IPAddress(string_ip)
 
-        if self.is_process_running(DHCPServer):
+        if self.is_usermode_process_running(DHCPServer):
             dhcp_server_process = self.get_waiting_process(DHCPServer)
             dhcp_server_process.update_server_data()
 
@@ -680,8 +680,8 @@ class Computer:
         :param data: the ip_layer to send (fourth layer and above)
         :return: None
         """
-        self.process_scheduler.start_process(SendPacketWithArpsProcess,
-                           IP(
+        self.process_scheduler.start_usermode_process(SendPacketWithArpsProcess,
+                                                      IP(
                                self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip),
                                dst_ip,
                                TTL.BY_OS[self.os],
@@ -886,7 +886,7 @@ class Computer:
         """
         ip_for_the_mac = self.routing_table[ip_address].ip_address
         kill_process = requesting_process if kill_process_if_not_found else None
-        self.process_scheduler.start_process(ARPProcess, ip_for_the_mac, kill_process)
+        self.process_scheduler.start_kernelmode_process(ARPProcess, ip_for_the_mac, kill_process)
         return ip_for_the_mac, lambda: ip_for_the_mac in self.arp_cache
 
     # ------------------------- v process related methods v ----------------------------------------------------
@@ -904,8 +904,8 @@ class Computer:
         """
         self.process_scheduler.startup_usermode_processes.append((process_type, args))
 
-        if not self.is_process_running(process_type):
-            self.process_scheduler.start_process(process_type, *args)
+        if not self.is_usermode_process_running(process_type):
+            self.process_scheduler.start_usermode_process(process_type, *args)
 
     def remove_startup_process(self, process_type):
         """
@@ -919,7 +919,7 @@ class Computer:
             NoSuchProcessError)
         self.process_scheduler.startup_usermode_processes.remove(removed)
 
-    def kill_process_by_type(self, process_type, force=False):
+    def kill_usermode_process_by_type(self, process_type, force=False):
         """
         Takes in a process type and kills all of the waiting processes of that type in this `Computer`.
         They are killed by a signal, unless specified specifically with the `force` param
@@ -929,9 +929,9 @@ class Computer:
         """
         for waiting_process in self.process_scheduler.waiting_usermode_processes:
             if isinstance(waiting_process.process, process_type):
-                self.kill_process(waiting_process.process.pid, force)
+                self.kill_usermode_process(waiting_process.process.pid, force)
 
-    def kill_process(self, pid, force=False):
+    def kill_usermode_process(self, pid, force=False):
         """
         Receives a pid and kills that process
         :param pid:
@@ -941,9 +941,12 @@ class Computer:
         if force:
             self.process_scheduler.terminate_process(self.process_scheduler.get_usermode_process(pid), COMPUTER.PROCESSES.MODES.USERMODE)
         else:
-            self.send_process_signal(pid, COMPUTER.PROCESSES.SIGNALS.SIGTERM)
+            self.send_usermode_process_signal(pid, COMPUTER.PROCESSES.SIGNALS.SIGTERM)
 
-    def send_process_signal(self, pid, signum):
+    def kill_kernelmode_process(self, pid):
+        self.process_scheduler.terminate_process_by_pid(pid, COMPUTER.PROCESSES.MODES.KERNELMODE)
+
+    def send_usermode_process_signal(self, pid, signum):
         """
         Send a signal to a process based on the signals defined in
         COMPUTER.PROCESSES.SIGNALS
@@ -952,21 +955,19 @@ class Computer:
         :return:
         """
         if signum in COMPUTER.PROCESSES.SIGNALS.UNIGNORABLE_KILLING_SIGNALS:
-            self.kill_process(pid, force=True)
+            self.kill_usermode_process(pid, force=True)
         else:
             self.process_scheduler.get_usermode_process(pid).signal_handlers[signum](signum)
 
-    def is_process_running(self, process_type):
+    def is_usermode_process_running(self, process_type):
         """
         Receives a type of a `Process` subclass and returns whether or not there is a process of that type that
         is running.
         :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
         :return: `bool`
         """
-        for process, _ in self.process_scheduler.waiting_usermode_processes:
-            if isinstance(process, process_type):
-                return True
-        return False
+        return self.process_scheduler.is_process_running_by_type(process_type, COMPUTER.PROCESSES.MODES.USERMODE)
+        # TODO: delete this function - it is not necessary
 
     def get_waiting_process(self, process_type):
         """
@@ -974,7 +975,7 @@ class Computer:
         running in the computer.
         If no such process is running in the computer, raise NoSuchProcessError
         :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
-        :return: `bool`
+        :return: `WaitingProcess` namedtuple
         """
         for process, _ in self.process_scheduler.waiting_usermode_processes:
             if isinstance(process, process_type):

@@ -29,7 +29,6 @@ class TCPSocket(Socket):
         :return:
         """
         self.to_send.append(data)
-        self.computer.send_process_signal(self.pid, COMPUTER.PROCESSES.SIGNALS.SIGSOCKSEND)
         return len(data)
 
     def recv(self, count=1024):
@@ -48,7 +47,7 @@ class TCPSocket(Socket):
         :param address:
         :return:
         """
-        self.pid = self.computer.process_scheduler.start_process(ConnectingTCPSocketProcess, self, address)
+        self.pid = self.computer.process_scheduler.start_kernelmode_process(ConnectingTCPSocketProcess, self, address)
 
     def bind(self, address: Tuple[IPAddress, int]):
         """
@@ -73,7 +72,7 @@ class TCPSocket(Socket):
         Accept connections to this socket.
         :return:
         """
-        self.pid = self.computer.process_scheduler.start_process(ListeningTCPSocketProcess, self, self.bound_address)
+        self.pid = self.computer.process_scheduler.start_kernelmode_process(ListeningTCPSocketProcess, self, self.bound_address)
 
     def blocking_recv(self, received_list):
         """
@@ -98,6 +97,10 @@ class TCPSocket(Socket):
         """
         self.accept()
         yield WaitingFor(lambda: self.is_connected)
+
+    def close(self):
+        super(TCPSocket, self).close()
+        self.process.close_socket_when_done_transmitting = True
 
     def __str__(self):
         return f"socket of {self.computer.name}"

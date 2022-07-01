@@ -48,7 +48,7 @@ class Socket(metaclass=ABCMeta):
 
     @property
     def process(self):
-        return self.computer.process_scheduler.get_process(self.pid, raises=False)
+        return self.computer.process_scheduler.get_process(self.pid, COMPUTER.PROCESSES.MODES.KERNELMODE, raises=False)
 
     @property
     def acquiring_process_pid(self):
@@ -92,7 +92,7 @@ class Socket(metaclass=ABCMeta):
         def wrapper(self, *args, **kwargs):
             if self.pid is None or \
                     self.process is None:
-                raise SocketIsBrokenError(f"The socket is broken and cannot be used!!! pid: {self.pid}, process: {self.process}")
+                raise SocketIsBrokenError(f"The socket is broken and cannot be used!!! pid: {self.pid}, process: {self.process}, computer: {self.computer}")
             return func(self, *args, **kwargs)
         return wrapper
 
@@ -160,9 +160,7 @@ class Socket(metaclass=ABCMeta):
         """
         self.is_closed = True
         self.is_connected = False
-        self.computer.send_process_signal(self.pid, COMPUTER.PROCESSES.SIGNALS.SIGTERM)
         self.computer.sockets[self].state = COMPUTER.SOCKETS.STATES.CLOSED
-        # self.computer.remove_socket(self)
 
     def __repr__(self):
         return f"       " \

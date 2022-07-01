@@ -1,13 +1,27 @@
 from collections import namedtuple
 from contextlib import contextmanager
 
+from recordclass import recordclass
+
 from consts import COMPUTER
-from exceptions import NoSuchProcessError, UnknownProcessTypeError
+from exceptions import NoSuchProcessError
 from gui.main_loop import MainLoop
 from usefuls.funcs import get_the_one
 
-WaitingProcess = namedtuple("WaitingProcess", "process waiting_for")
+WaitingProcess = namedtuple("WaitingProcess", [
+    "process",
+    "waiting_for",
+])
 # ^ a process that is currently waiting for a certain packet.
+
+SchedulerDetails = recordclass("SchedulerDetails", [
+    "startup_processes",
+    "currently_running_process",
+    "ready_processes",
+    "waiting_processes",
+    "process_last_check_time",
+])
+# ^ for doc see the ProcessScheduler doc below
 
 
 class ProcessScheduler:
@@ -16,81 +30,87 @@ class ProcessScheduler:
     """
     def __init__(self, computer):
         """
-        self.waiting_usermode_processes: a list of `WaitingProcess` namedtuple-s. If the process is new, its `WaitingProcess.waiting_for` is None.
-        self.process_last_check: the last time that the waiting_processes were checked for 'can they run?'
-        self.startup_usermode_processes: a list of usermode_processes that will be run when the computer is booted
-        self.__running_usermode_process : the process that is currently being run in the computer
-        self.__ready_usermode_processes: usermode_processes that their conditions are met and so should be run
-            in this tick of the simulation
+        The scheduler can know the difference between different process "modes".
+            for now there are only USERMODE and KERNELMODE but more can be added easily.
+
+            Each mode of processes run separately. Only USERMODE processes should be visible to a normal user (by the `ps` or `kill` commands etc)
+            The scheduler manages several different lists of processes - one for each process "mode"
+
+            Each mode has a separate SchedulerDetails object. Each object contains the following attributes:
+
+                startup_processes: a list containing processes that will be run when the computer is booted
+                    the format is [(PROCESS_CLASS, (PROCESS_ARGUMENTS...))...]
+
+                currently_running_process : The process that is currently being run in the computer
+                    That means the currently running code is all indirectly called from within that process
+                    If you go out enough of the stack - you will end up in the `code` method of the process
+
+                ready_processes: processes that their conditions were met and so should be run in this tick of the simulation
+
+                waiting_processes: a list of `WaitingProcess` namedtuple-s. If the process is new, its `WaitingProcess.waiting_for` is None.
+                    These are all processes that are waiting for a certain packet or condition - which is not yet met.
+
+                process_last_check_time: the last time that the `waiting_processes` were tested for 'can they run?'
+
         :param computer: The computer which the processes are running on.
         """
         self.computer = computer
-        self.process_last_check = MainLoop.instance.time()
 
-        self.waiting_usermode_processes = []
-        self.startup_usermode_processes = []
-        self.__running_usermode_process = None
-        self.__ready_usermode_processes = []
-
-        self.waiting_kernelmode_processes = []
-        self.__running_kernelmode_process = None
-        self.__ready_kernelmode_processes = []
-
-        self.process_mode_to_waiting_processes_list = {
-            COMPUTER.PROCESSES.MODES.USERMODE:   self.waiting_usermode_processes,
-            COMPUTER.PROCESSES.MODES.KERNELMODE: self.waiting_kernelmode_processes,
-        }
-
-        self.process_mode_to_ready_processes_list = {
-            COMPUTER.PROCESSES.MODES.USERMODE:   self.__ready_usermode_processes,
-            COMPUTER.PROCESSES.MODES.KERNELMODE: self.__ready_kernelmode_processes,
+        self.__details_by_mode = {
+            COMPUTER.PROCESSES.MODES.USERMODE: SchedulerDetails(
+                startup_processes=[],
+                currently_running_process=None,
+                ready_processes=[],
+                waiting_processes=[],
+                process_last_check_time=MainLoop.instance.time(),
+            ),
+            COMPUTER.PROCESSES.MODES.KERNELMODE: SchedulerDetails(
+                startup_processes=[],
+                currently_running_process=None,
+                ready_processes=[],
+                waiting_processes=[],
+                process_last_check_time=MainLoop.instance.time(),
+            ),
         }
 
     @property
-    def running_usermode_process(self):
+    def waiting_usermode_processes(self):
+        return self.__details_by_mode[COMPUTER.PROCESSES.MODES.USERMODE].waiting_processes
+
+    @property
+    def startup_usermode_processes(self):
+        return self.__details_by_mode[COMPUTER.PROCESSES.MODES.USERMODE].startup_processes
+
+    def get_currently_running_process(self, mode):
         """
-        Allows for getting but not setting of the attribute
+        returns the process that is currently being run (this means that it is the one that is indirectly calling this function)
+        :param mode: one of COMPUTER.PROCESSES.MODES.ALL_MODES
         :return:
         """
-        return self.__running_usermode_process
+        return self.__details_by_mode[mode].currently_running_process
 
-    @property
-    def is_running_a_usermode_process(self):
+    def is_running_a_process_in_this_mode(self, mode):
         """
         Whether or not a process is currently running (that means all actions are indirectly performed by it)
         :return:
         """
-        return self.__running_usermode_process is not None
+        return self.__details_by_mode[mode].currently_running_process is not None
 
-    @property
-    def is_running_a_kernelmode_process(self):
-        """
-        Whether or not a process is currently running (that means all actions are indirectly performed by it)
-        :return:
-        """
-        return self.__running_kernelmode_process is not None
-
-    @property
     def is_running_a_process(self):
-        return self.is_running_a_kernelmode_process or self.is_running_a_usermode_process
+        return any(self.is_running_a_process_in_this_mode(mode) for mode in COMPUTER.PROCESSES.MODES.ALL_MODES)
 
-    @property
-    def usermode_process_count(self):
-        return len(self.waiting_usermode_processes) + int(self.is_running_a_usermode_process)
+    def get_process_count(self, mode):
+        return len(self.__details_by_mode[mode].waiting_processes) + int(self.is_running_a_process_in_this_mode(mode))
 
-    @property
-    def all_usermode_processes(self):
-        return [waiting_process.process for waiting_process in self.waiting_usermode_processes] + \
-               ([self.running_usermode_process] if self.is_running_a_usermode_process else []) + \
-               self.__ready_usermode_processes
-
-    def __set_running_process(self, process, mode):
-        if mode == COMPUTER.PROCESSES.MODES.USERMODE:
-            self.__running_usermode_process = process
-        elif mode == COMPUTER.PROCESSES.MODES.KERNELMODE:
-            self.__running_kernelmode_process = process
-        else:
-            raise UnknownProcessTypeError(mode)
+    def get_all_processes(self, mode=COMPUTER.PROCESSES.MODES.USERMODE):
+        """
+        Returns all of the processes in the specified mode running on the computer
+        :param mode: one of COMPUTER.PROCESSES.MODES.ALL_MODES
+        :return: `list` of `Process` objects
+        """
+        return [waiting_process.process for waiting_process in self.__details_by_mode[mode].waiting_processes] + \
+               ([self.get_currently_running_process(mode)] if self.is_running_a_process_in_this_mode(mode) else []) + \
+               self.__details_by_mode[mode].ready_processes
 
     @contextmanager
     def process_is_currently_running(self, process, mode):
@@ -100,11 +120,11 @@ class ProcessScheduler:
         that also means it will not be in the `self.waiting_processes` list, and some actions rely on that.
         :return:
         """
-        self.__set_running_process(process, mode)
+        self.__details_by_mode[mode].currently_running_process = process
         try:
             yield None
         finally:
-            self.__set_running_process(None, mode)
+            self.__details_by_mode[mode].currently_running_process = None
 
     def _run_process(self, process, mode):
         """
@@ -132,7 +152,7 @@ class ProcessScheduler:
         New processes - that means that they were started by `start_process` but did not run at all yet.
         :return: a list of ready `Process`-s.
         """
-        waiting_processes = self.process_mode_to_waiting_processes_list[mode]
+        waiting_processes = self.__details_by_mode[mode].waiting_processes
 
         new_processes = []
         for process, waiting_for in waiting_processes[:]:
@@ -147,14 +167,14 @@ class ProcessScheduler:
         :return: a list of `Process` objects that are ready to run. (they will run in the next call to
         `self._handle_processes`
         """
-        new_packets = self.computer.new_packets_since(self.process_last_check)
-        self.process_last_check = MainLoop.instance.time()
+        new_packets = self.computer.new_packets_since(self.__details_by_mode[mode].process_last_check_time)
+        self.__details_by_mode[mode].process_last_check_time = MainLoop.instance.time()
 
         self._kill_dead_processes(mode)
         ready_processes = self._start_new_processes(mode)
         self._decide_ready_processes_no_packet(ready_processes, mode)
 
-        waiting_processes = self.process_mode_to_waiting_processes_list[mode][:]
+        waiting_processes = self.__details_by_mode[mode].waiting_processes[:]
         for received_packet in new_packets[:]:
             for waiting_process in waiting_processes:
                 self._decide_if_process_ready_by_packet(waiting_process, received_packet, ready_processes, mode)
@@ -168,7 +188,7 @@ class ProcessScheduler:
         This allows them to terminate themselves from anywhere inside them
         :return: None
         """
-        waiting_processes = self.process_mode_to_waiting_processes_list[mode]
+        waiting_processes = self.__details_by_mode[mode].waiting_processes
         for waiting_process in waiting_processes[:]:
             process, _ = waiting_process
             if process.kill_me:
@@ -183,7 +203,7 @@ class ProcessScheduler:
         removes it from the `waiting_processes` list.
         :return: None
         """
-        waiting_processes = self.process_mode_to_waiting_processes_list[mode]
+        waiting_processes = self.__details_by_mode[mode].waiting_processes
         for waiting_process in waiting_processes[:]:
             if not hasattr(waiting_process.waiting_for, "value"):
                 if waiting_process.waiting_for.condition():
@@ -205,7 +225,7 @@ class ProcessScheduler:
         `self._handle_processes`.
         :return: whether or not the process is ready and was added to `ready_processes`
         """
-        waiting_processes = self.process_mode_to_waiting_processes_list[mode]
+        waiting_processes = self.__details_by_mode[mode].waiting_processes
 
         process, waiting_for = waiting_process
         packet, _, receiving_interface = received_packet
@@ -231,25 +251,28 @@ class ProcessScheduler:
         :param ready_processes: a list of the ready processes to run.
         :return: None
         """
-        waiting_processes = self.process_mode_to_waiting_processes_list[mode]
+        waiting_processes = self.__details_by_mode[mode].waiting_processes
         for waiting_process in waiting_processes:
             if hasattr(waiting_process.waiting_for, "timeout"):
                 if waiting_process.waiting_for.timeout:
                     ready_processes.append(waiting_process.process)
                     waiting_processes.remove(waiting_process)
 
-    def get_usermode_process(self, pid, raises=True):
+    def get_process(self, pid, mode, raises=True):
         """
         Returns a process class from its process ID
-        :param pid:
-        :param raises
-        :return:
+        :param pid: `int` the process ID
+        :param mode: one of COMPUTER.PROCESSES.MODES.ALL_MODES
+        :param raises: whether or not to raise an exception if no such process exists
+        :return: `Process` object
         """
-        running_usermode_process = [self.running_usermode_process] if self.is_running_a_usermode_process else []
+        return get_the_one(self.get_all_processes(mode), lambda process: process.pid == pid, NoSuchProcessError if raises else None)
 
-        return get_the_one([wp.process for wp in self.waiting_usermode_processes] + self.__ready_usermode_processes + running_usermode_process,
-                           lambda process: process.pid == pid,
-                           NoSuchProcessError if raises else None)
+    def get_usermode_process(self, pid, raises=True):
+        """
+        exactly like `get_process` only the for the usermode
+        """
+        return self.get_process(pid, COMPUTER.PROCESSES.MODES.USERMODE, raises)
 
     def terminate_process(self, process, mode):
         """
@@ -259,46 +282,62 @@ class ProcessScheduler:
         :param mode: the mode of process to terminate (one of COMPUTER.PROCESS.MODES.ALL_MODES)
         :return:
         """
-        waiting_processes = self.process_mode_to_waiting_processes_list[mode]
-        ready_processes = self.process_mode_to_ready_processes_list[mode]
+        modes = COMPUTER.PROCESSES.MODES.ALL_MODES
+        if mode is not None:
+            modes = [mode]
 
-        for socket in {**self.computer.sockets}:
-            if socket.pid == process.pid:
-                self.computer.remove_socket(socket)
+        found_the_process = False
+        for mode in modes:
+            waiting_processes = self.__details_by_mode[mode].waiting_processes
+            ready_processes = self.__details_by_mode[mode].ready_processes
 
-        if process in ready_processes:
-            ready_processes.remove(process)
-        elif process is self.__running_usermode_process or process is self.__running_kernelmode_process:
-            process.die()  # only occurs when a process calls `terminate_process` on itself
-        else:
-            waiting_processes.remove(
-                get_the_one(waiting_processes, lambda wp: wp.process == process, NoSuchProcessError)
-            )
+            # for socket in {**self.computer.sockets}:
+            #     if socket.pid == process.pid:
+            #         self.computer.remove_socket(socket)
+
+            if process in ready_processes:
+                found_the_process = True
+                ready_processes.remove(process)
+            elif process is self.__details_by_mode[mode].currently_running_process:
+                found_the_process = True
+                process.die()  # only occurs when a process calls `terminate_process` on itself
+            else:
+                process = get_the_one(waiting_processes, lambda wp: wp.process == process)
+                if process is not None:
+                    found_the_process = True
+                    waiting_processes.remove(process)
+        if not found_the_process:
+            raise NoSuchProcessError(f"Could not find process {process} in {modes}! Thus termination failed")
+
+    def terminate_process_by_pid(self, pid, mode):
+        """
+        just like `terminate_process` only receives a process ID
+        :param pid: `int` - the process ID
+        :param mode: one of COMPUTER.PROCESSES.MODES.ALL_MODES
+        """
+        self.terminate_process(self.get_process(pid, mode, raises=True), mode)
 
     def terminate_all(self):
         """
         Terminates all processes
         :return:
         """
-        for mode_ in COMPUTER.PROCESSES.MODES.ALL_MODES:
-            waiting_processes = self.process_mode_to_waiting_processes_list[mode_]
+        for mode in COMPUTER.PROCESSES.MODES.ALL_MODES:
+            waiting_processes = self.__details_by_mode[mode].waiting_processes
 
-            for process in [wp.process for wp in waiting_processes] + self.process_mode_to_ready_processes_list[mode_]:
-                self.terminate_process(process, mode_)
+            for process in [wp.process for wp in waiting_processes] + self.__details_by_mode[mode].ready_processes:
+                self.terminate_process(process, mode)
 
-        if self.is_running_a_usermode_process:
-            self.__running_usermode_process.die()
-        if self.is_running_a_kernelmode_process:
-            self.__running_kernelmode_process.die()
-        # ^ this code needs improvement - what if we add a new process mode? make better maybe one day
+            if self.__details_by_mode[mode].currently_running_process is not None:
+                self.__details_by_mode[mode].currently_running_process.die()
 
-    def __get_next_usermode_pid(self):
+    def __get_next_pid(self, mode):
         """
         :return: `int` - the next PID a new process should receive
         """
-        return max([process.pid for process in self.all_usermode_processes] + [COMPUTER.PROCESSES.INIT_PID]) + 1
+        return max([process.pid for process in self.get_all_processes(mode)] + [COMPUTER.PROCESSES.INIT_PID]) + 1
 
-    def start_process(self, process_type, *args):
+    def start_process(self, mode, process_type, *args):
         """
         Receive a `Process` subclass class, and the arguments for it
         (not including the default Computer argument that all processes receive.)
@@ -306,13 +345,61 @@ class ProcessScheduler:
         for example: start_process(SendPing, '1.1.1.1/24')
 
         For more information about processes read the documentation at 'process.py'
+        :param mode: one of COMPUTER.PROCESSES.MODES.ALL_MODES
         :param process_type: The `type` of the process to run.
         :param args: The arguments that the `Process` subclass constructor requires.
-        :return: None
+        :return: `int` the process ID of the process that was started
         """
-        pid = self.__get_next_usermode_pid()
-        self.waiting_usermode_processes.append(WaitingProcess(process_type(pid, self.computer, *args), None))
+        pid = self.__get_next_pid(mode)
+        waiting_processes = self.__details_by_mode[mode].waiting_processes
+        waiting_processes.append(WaitingProcess(process_type(pid, self.computer, *args), None))
         return pid
+
+    def start_usermode_process(self, process_type, *args):
+        """
+        same as `start_process` - but for usermode processes
+        """
+        return self.start_process(COMPUTER.PROCESSES.MODES.USERMODE, process_type, *args)
+
+    def start_kernelmode_process(self, process_type, *args):
+        """
+        same as `start_process` - but for kernelmode processes
+        """
+        return self.start_process(COMPUTER.PROCESSES.MODES.KERNELMODE, process_type, *args)
+
+    def is_process_running_by_type(self, process_type, mode):
+        """
+        Receives a type of a `Process` subclass and returns whether or not there is a process of that type that
+        is running.
+        :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
+        :param mode: one of COMPUTER.PROCESSES.MODES.ALL_MODES
+        :return: `bool`
+        """
+        for process, _ in self.__details_by_mode[mode].waiting_processes:
+            if isinstance(process, process_type):
+                return True
+        return False
+
+    def add_startup_process(self, mode, process_type, *args):
+        """
+        This function adds a process to the `startup_processes` list, These processes are run right when the computer is turned on.
+        :param process_type: The process that one wishes to run
+        :param args: its arguments
+        :param mode: one of COMPUTER.PROCESSES.MODES.ALL_MODES
+        """
+        self.__details_by_mode[mode].startup_processes.append((process_type, args))
+
+        if not self.is_process_running_by_type(process_type, mode):
+            self.start_process(mode, process_type, *args)
+
+    def run_startup_processes(self):
+        """
+        Runs all of the startup processes - in all modes
+        :return:
+        """
+        for mode in self.__details_by_mode:
+            for process, args in self.__details_by_mode[mode].startup_processes:
+                self.start_process(mode, process, *args)
 
     def handle_processes(self):
         """
@@ -323,8 +410,8 @@ class ProcessScheduler:
         :return: None
         """
         for mode in COMPUTER.PROCESSES.MODES.ALL_MODES:
-            ready_processes = self.process_mode_to_ready_processes_list[mode]
-            waiting_processes = self.process_mode_to_waiting_processes_list[mode]
+            ready_processes = self.__details_by_mode[mode].ready_processes
+            waiting_processes = self.__details_by_mode[mode].waiting_processes
 
             ready_processes[:] = self._get_ready_processes(mode)
             for process in ready_processes:

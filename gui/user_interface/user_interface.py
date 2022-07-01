@@ -12,7 +12,6 @@ from pyglet.window import key
 from address.ip_address import IPAddress
 from computing.computer import Computer
 from computing.interface import Interface
-from computing.internals.processes.abstracts.tcp_process import TCPProcess
 from computing.internals.processes.stp_process import STPProcess
 from computing.router import Router
 from computing.switch import Switch, Hub, Antenna
@@ -940,12 +939,8 @@ class UserInterface:
             computer.print(f"{'DEBUG':^20}{self.debug_counter}")
             if not isinstance(computer, Switch):
                 print(repr(computer.routing_table))
-            elif computer.stp_enabled and computer.is_process_running(STPProcess):  # computer is a Switch
+            elif computer.stp_enabled and computer.is_usermode_process_running(STPProcess):  # computer is a Switch
                 print(computer.get_waiting_process(STPProcess).get_info())
-
-            if computer.is_process_running(TCPProcess):
-                process = computer.get_waiting_process(TCPProcess)
-                print(f"window (of {process}): {process.sending_window}")
 
         # self.set_all_connection_speeds(200)
 
@@ -1040,7 +1035,7 @@ class UserInterface:
         Displays the roots of all STP processes that are running. (circles the roots with a yellow circle)
         :return: None
         """
-        stp_runners = [computer for computer in self.computers if computer.is_process_running(STPProcess)]
+        stp_runners = [computer for computer in self.computers if computer.is_usermode_process_running(STPProcess)]
         roots = [computer.get_waiting_process(STPProcess).root_bid for computer in stp_runners]
         for computer in stp_runners:
             if computer.get_waiting_process(STPProcess).my_bid in roots:

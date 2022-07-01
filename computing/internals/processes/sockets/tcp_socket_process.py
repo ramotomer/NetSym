@@ -18,31 +18,21 @@ class TCPSocketProcess(TCPProcess, metaclass=ABCMeta):
         super(TCPSocketProcess, self).__init__(pid, computer, dst_ip, dst_port, src_port, is_client)
         self.socket = socket
         self.received = []
-        self.closing_the_socket = False
+        self.close_socket_when_done_transmitting = False
 
-        self.signal_handlers[COMPUTER.PROCESSES.SIGNALS.SIGSOCKSEND] = self.handle_signal_for_sending
-        self.set_killing_signals_handler(self.handle_process_kill)
-
-    def handle_signal_for_sending(self, signum):
+    def __unload_socket_sending_queue(self):
         """
-        When this signal is received, the process reads from the socket what it needs to send
+        reads from the socket what it needs to send
         and sends it
-        :param signum:
-        :return:
         """
+        if not self.socket.to_send:
+            return
+
         for data in self.socket.to_send:
             self.send(data)
-
         self.socket.to_send.clear()
 
-    def handle_process_kill(self, signum):
-        """
-        Handling of process being killed (closing the connection)
-        :return:
-        """
-        self.closing_the_socket = True
-
-    def _set_socket_connected(self):
+    def __set_socket_connected(self):
         """
         Sets the connection of the socket as established, defines the foreign address and port etc...
         :return:
@@ -52,12 +42,18 @@ class TCPSocketProcess(TCPProcess, metaclass=ABCMeta):
         self.computer.sockets[self.socket].remote_port = self.dst_port
         self.computer.sockets[self.socket].state = COMPUTER.SOCKETS.STATES.ESTABLISHED
 
+    def on_connection_reset(self):
+        self.socket.close()
+
     def code(self):
         """"""
         yield from self.hello_handshake()  # halts until receiving a syn to the port
-        self._set_socket_connected()
+        if self.kill_me:
+            return
+        self.__set_socket_connected()
 
-        while not (self.closing_the_socket and self.is_done_transmitting()):
+        while not (self.close_socket_when_done_transmitting and self.is_done_transmitting()):
+            self.__unload_socket_sending_queue()
             yield from self.handle_tcp_and_receive(self.socket.received)
 
     def _end_session(self):

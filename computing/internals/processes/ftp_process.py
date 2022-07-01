@@ -50,6 +50,7 @@ class ServerFTPProcess(FTPProcess):
 
         yield WaitingFor(lambda: self.socket.process.is_done_transmitting())
         self.socket.close()
+        # TODO: once we connect once to a server - we cannot do it again because the socket is closed now :) LOL
 
 
 class ClientFTPProcess(FTPProcess):
@@ -63,7 +64,12 @@ class ClientFTPProcess(FTPProcess):
 
     def code(self):
         self.socket.connect((self.server_ip, PORTS.FTP))
-        yield WaitingFor(lambda: self.socket.is_connected)
+        yield WaitingFor(lambda: self.socket.is_connected or self.socket.is_closed)
+
+        if self.socket.is_closed:
+            self.computer.print(f"FTP process({self.pid}) ended unexpectedly :(")
+            self.kill_me = True
+            return
 
         self.socket.send(f"FTP: {self.filename}")
 

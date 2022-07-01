@@ -223,6 +223,14 @@ class TCPProcess(Process, metaclass=ABCMeta):
                         is_number_acking_packet(right, not_acked_packet.packet):
                     self.sending_window.window.remove(not_acked_packet)
 
+    def on_connection_reset(self):
+        """
+        This function should be overridden
+        Specify what should be done once received an RST packet
+        :return:
+        """
+        pass
+
     def hello_handshake(self):
         """
         Starts the TCP handshake by sending a SYN packet to the destination.
@@ -457,6 +465,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
 
         if OPCODES.TCP.RST in tcp_layer.flags:
             self.kill_me = True
+            self.on_connection_reset()
             return
 
     def kill_signal_handler(self, signum):

@@ -41,7 +41,7 @@ class ARPProcess(Process):
         self.computer.print("Destination unreachable :(")
 
         if self.requesting_process is not None:
-            self.computer.kill_process_by_type(type(self.requesting_process))
+            self.computer.process_scheduler.terminate_process(self.requesting_process, None)
 
     def __repr__(self):
         return "Address Resolution (ARP) Process "

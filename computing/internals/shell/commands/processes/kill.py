@@ -26,7 +26,7 @@ class Kill(Command):
 
         # TODO: learn how to make it so a custom signal can be sent using this command not just to kill
         try:
-            self.computer.kill_process(parsed_args.PID, force=parsed_args.force)
+            self.computer.kill_usermode_process(parsed_args.PID, force=parsed_args.force)
         except NoSuchProcessError:
             return CommandOutput('', "There is no such process!!!")
 
