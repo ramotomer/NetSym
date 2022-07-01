@@ -16,7 +16,8 @@ class Button(UserInterfaceGraphicsObject):
     """
     def __init__(self, x, y, action=lambda: None, text=BUTTONS.DEFAULT_TEXT, start_hidden=False,
                  width=BUTTONS.DEFAULT_WIDTH, height=BUTTONS.DEFAULT_HEIGHT, key=None,
-                 color=BUTTONS.COLOR, text_color=BUTTONS.TEXT_COLOR, is_outlined=True):
+                 color=BUTTONS.COLOR, text_color=BUTTONS.TEXT_COLOR, is_outlined=True,
+                 custom_active_color=None):
         """
         Initiates the button.
         :param x:
@@ -27,6 +28,7 @@ class Button(UserInterfaceGraphicsObject):
         :param start_hidden: whether or not this button should be created hidden, and only later shown.
         :param width: the button's width.
         :param height: the button's height.
+        :param custom_active_color: the color the button will be once it is hovered. If None - will be the same color but a little lighter
         """
         super(Button, self).__init__(x, y)
         self.initial_location = x, y
@@ -45,8 +47,16 @@ class Button(UserInterfaceGraphicsObject):
         self.key = key
 
         self.color = color
-        self.light_color = tuple(rgb + COLORS.COLOR_DIFF for rgb in color)
         self.is_outlined = is_outlined
+        self.__custom_active_color = custom_active_color
+
+    @property
+    def light_color(self):
+        return tuple(rgb + COLORS.COLOR_DIFF for rgb in self.color)
+    
+    @property
+    def active_color(self):
+        return self.__custom_active_color if self.__custom_active_color is not None else self.light_color
 
     def is_mouse_in(self):
         """Returns whether or not the mouse is located inside of the button."""
@@ -83,7 +93,7 @@ class Button(UserInterfaceGraphicsObject):
         """
         if not self.is_hidden:
             draw_button(self.x, self.y, self.width, self.height,
-                        color=(self.light_color if self.is_mouse_in() else self.color),
+                        color=(self.active_color if self.is_mouse_in() else self.color),
                         outline_width=(BUTTONS.OUTLINE_WIDTH if self.is_outlined else 0))
 
     def move(self):

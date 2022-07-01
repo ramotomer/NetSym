@@ -39,6 +39,7 @@ class PacketGraphics(ImageGraphics):
         self.direction = direction
         self.progress = 0
         self.str = str(deepest_layer)
+        self.deepest_layer = deepest_layer
 
         self.drop_animation = None
 

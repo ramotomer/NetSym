@@ -115,7 +115,7 @@ class ConnectionGraphics(GraphicsObject):
     def get_computer_coordinates(self, direction=PACKET.DIRECTION.RIGHT):
         """
         Return a tuple of the coordinates at the start and the end of the connection.
-        Receives a `direction` that the we look at the connection from (to know which is the end and which is the start)
+        Receives a `direction` that we look at the connection from (to know which is the end and which is the start)
         If the connection is opposite the coordinates will also be flipped.
         :param direction: `PACKET.DIRECTION.RIGHT` or `PACKET.DIRECTION.LEFT`.
         :return: (self.computers.start.x, self.computers.start.y, self.computers.end.x, self.computers.end.y)

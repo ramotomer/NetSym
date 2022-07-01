@@ -21,6 +21,7 @@ from computing.internals.shell.commands.misc.man import Man
 from computing.internals.shell.commands.misc.unalias import Unalias
 from computing.internals.shell.commands.misc.uname import Uname
 from computing.internals.shell.commands.net.arp import Arp
+from computing.internals.shell.commands.net.arping import Arping
 from computing.internals.shell.commands.net.ip import Ip
 from computing.internals.shell.commands.net.ip_address import IpAddressCommand
 from computing.internals.shell.commands.net.ip_route import IpRouteCommand
@@ -47,7 +48,7 @@ class Shell:
         self.shell_graphics = shell_graphics
 
         self.commands = [Echo, Ls, Cd, Pwd, Touch, Cat, Mkdir, Rm, Uname, Grep,
-                         Ip, Arp, Ps, Ping, Tcpdump, Kill, Hostname, Netstat, Cp,
+                         Ip, Arp, Ps, Ping, Arping, Tcpdump, Kill, Hostname, Netstat, Cp,
                          Mv, Alias, Unalias, Help, Head, Tail, Man]
         self.commands = [command(computer, self) for command in self.commands]
 

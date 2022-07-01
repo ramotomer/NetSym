@@ -190,12 +190,17 @@ def draw_button(x, y, width, height, color=BUTTONS.COLOR, outline_width=BUTTONS.
     :param outline_width:
     :return:
     """
+    # button outline
     draw_rectangle(x - outline_width, y - outline_width,
                    width + (2 * outline_width), height + (2 * outline_width), color=BUTTONS.OUTLINE_COLOR)
-    draw_rectangle(x, y, width, height, color=color)
-    draw_rectangle(x, y + BUTTONS.SHADOW_WIDTH,
-                   width - BUTTONS.SHADOW_WIDTH, height - BUTTONS.SHADOW_WIDTH, color=lighten_color(color))
+
+    # button light (left) shadow
+    draw_rectangle(x, y, width, height, color=lighten_color(color))
+
+    # button dark (right) shadow
     draw_rectangle(x + BUTTONS.SHADOW_WIDTH, y, width - BUTTONS.SHADOW_WIDTH,
                    height - BUTTONS.SHADOW_WIDTH, color=darken_color(color))
+
+    # button middle
     draw_rectangle(x + BUTTONS.SHADOW_WIDTH, y + BUTTONS.SHADOW_WIDTH,
                    width - (2 * BUTTONS.SHADOW_WIDTH), height - (2 * BUTTONS.SHADOW_WIDTH), color=color)

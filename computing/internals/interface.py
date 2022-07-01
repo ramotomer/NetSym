@@ -20,7 +20,7 @@ class Interface:
     down the connection further.
     """
     def __init__(self, mac=None, ip=None, name=None, connection=None,
-                 display_color=INTERFACES.COLOR):
+                 display_color=INTERFACES.COLOR, type_=INTERFACES.TYPE.ETHERNET):
         """
         Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
         :param mac: a string MAC address ('aa:bb:cc:11:22:76' for example)
@@ -44,6 +44,7 @@ class Interface:
         self.accepting = None  # This is the only type of packet that is accepted when the interface is blocked.
 
         self.is_powered_on = True
+        self.type = type_
 
         self.graphics = None
         self.display_color = display_color
@@ -132,20 +133,19 @@ class Interface:
 
         self.name = name
 
-    def connect(self, other, is_wireless=False):
+    def connect(self, other):
         """
         Connects this interface to another interface, return the `Connection` object.
         If grat arps are enabled, each interface sends a gratuitous arp.
         :param other: The other `Interface` object to connect to.
-        :param is_wireless: whether or not the connection is a wireless connection.
         :return: The `Connection` object.
         """
         if self.is_connected() or other.is_connected():
             raise DeviceAlreadyConnectedError("The interface is connected already!!!")
-        connection = Connection(is_wireless=is_wireless)
+        connection = Connection()
         self.connection, other.connection = connection.get_sides()
         return connection
-
+    
     def disconnect(self):
         """
         Disconnect an interface from its `Connection`.
@@ -292,6 +292,7 @@ Interface:
             mac=dict_["mac"],
             ip=dict_["ip"],
             name=dict_["name"],
+            type_=dict_["type_"]
         )
 
         return loaded
