@@ -9,13 +9,13 @@ from address.mac_address import MACAddress
 from computing.interface import Interface
 from computing.internals.arp_cache import ArpCache
 from computing.internals.filesystem.filesystem import Filesystem
-from computing.internals.processes.arp_process import ARPProcess, SendPacketWithArpsProcess
-from computing.internals.processes.daytime_process import DAYTIMEServerProcess
-from computing.internals.processes.dhcp_process import DHCPClient
-from computing.internals.processes.dhcp_process import DHCPServer
-from computing.internals.processes.ftp_process import ServerFTPProcess
-from computing.internals.processes.ping_process import SendPing
 from computing.internals.processes.process_scheduler import ProcessScheduler
+from computing.internals.processes.usermode_processes.arp_process import ARPProcess
+from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEServerProcess
+from computing.internals.processes.usermode_processes.dhcp_process import DHCPClient
+from computing.internals.processes.usermode_processes.dhcp_process import DHCPServer
+from computing.internals.processes.usermode_processes.ftp_process import ServerFTPProcess
+from computing.internals.processes.usermode_processes.ping_process import SendPing
 from computing.internals.routing_table import RoutingTable, RoutingTableItem
 from computing.internals.sockets.tcp_socket import TCPSocket
 from consts import *
@@ -386,7 +386,8 @@ class Computer:
         :return: None
         """
         if (packet["ICMP"].opcode == OPCODES.ICMP.REQUEST) and (self.is_for_me(packet)):
-            if interface.has_this_ip(packet["IP"].dst_ip) or (interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):  # only if the packet is for me also on the third layer!
+            if interface.has_this_ip(packet["IP"].dst_ip) or (interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):
+                # ^ only if the packet is for me also on the third layer!
                 dst_ip = packet["IP"].src_ip
                 self.start_ping_process(dst_ip, OPCODES.ICMP.REPLY)
 
@@ -465,7 +466,7 @@ class Computer:
         One can read more at the 'dhcp_process.py' file.
         :return: None
         """
-        self.kill_usermode_process_by_type(DHCPClient)  # if currently asking for dhcp, stop it
+        self.process_scheduler.kill_usermode_process_by_type(DHCPClient)  # if currently asking for dhcp, stop it
         self.process_scheduler.start_usermode_process(DHCPClient)
 
     def open_tcp_port(self, port_number):
@@ -480,7 +481,7 @@ class Computer:
         process = self.TCP_PORTS_TO_PROCESSES[port_number]
         if port_number in self.open_tcp_ports:
             if process is not None:
-                self.kill_usermode_process_by_type(process)
+                self.process_scheduler.kill_usermode_process_by_type(process)
         else:
             if process is not None:
                 self.process_scheduler.start_usermode_process(self.TCP_PORTS_TO_PROCESSES[port_number])
@@ -529,8 +530,8 @@ class Computer:
         self.remove_ip(interface)
         interface.ip = IPAddress(string_ip)
 
-        if self.is_usermode_process_running(DHCPServer):
-            dhcp_server_process = self.get_waiting_process(DHCPServer)
+        if self.process_scheduler.is_usermode_process_running_by_type(DHCPServer):
+            dhcp_server_process = self.process_scheduler.get_usermode_process_by_type(DHCPServer)
             dhcp_server_process.update_server_data()
 
         self.routing_table.add_interface(interface.ip)
@@ -671,22 +672,6 @@ class Computer:
             interface.send(packet)
             if interface.is_sniffing:
                 self._sniff_packet(packet)
-
-    def start_sending_process(self, dst_ip, data):
-        """
-        Sends out a packet, If it does not know its MAC address, starts a process that finds out
-        the address (sends out ARPs) and sends out the packet.
-        :param dst_ip: the destination IP address
-        :param data: the ip_layer to send (fourth layer and above)
-        :return: None
-        """
-        self.process_scheduler.start_usermode_process(SendPacketWithArpsProcess,
-                                                      IP(
-                               self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip),
-                               dst_ip,
-                               TTL.BY_OS[self.os],
-                               data,
-                           ))
 
     def send_with_ethernet(self, dst_mac, dst_ip, data):
         """
@@ -889,99 +874,6 @@ class Computer:
         self.process_scheduler.start_kernelmode_process(ARPProcess, ip_for_the_mac, kill_process)
         return ip_for_the_mac, lambda: ip_for_the_mac in self.arp_cache
 
-    # ------------------------- v process related methods v ----------------------------------------------------
-
-    def start_process(self, process_type, *args):
-        raise NotImplementedError("this does not exist anymore! Did you mean `computer.process_scheduler.start_process` ?")
-
-    def add_startup_process(self, process_type, *args):
-        """
-        This function adds a process to the `startup_processes` list, These processes are run right after the computer is
-        turned on.
-        :param process_type: The process that one wishes to run
-        :param args: its arguments
-        :return:
-        """
-        self.process_scheduler.startup_usermode_processes.append((process_type, args))
-
-        if not self.is_usermode_process_running(process_type):
-            self.process_scheduler.start_usermode_process(process_type, *args)
-
-    def remove_startup_process(self, process_type):
-        """
-        Removes a process from from the startup_processes list.
-        :param process_type: a process class that will be removed
-        :return: None
-        """
-        removed = get_the_one(
-            self.process_scheduler.startup_usermode_processes,
-            lambda startup_process_tuple: startup_process_tuple[0] is process_type,
-            NoSuchProcessError)
-        self.process_scheduler.startup_usermode_processes.remove(removed)
-
-    def kill_usermode_process_by_type(self, process_type, force=False):
-        """
-        Takes in a process type and kills all of the waiting processes of that type in this `Computer`.
-        They are killed by a signal, unless specified specifically with the `force` param
-        :param process_type: a `Process` subclass type (for example `SendPing` or `DHCPClient`)
-        :param force:
-        :return: None
-        """
-        for waiting_process in self.process_scheduler.waiting_usermode_processes:
-            if isinstance(waiting_process.process, process_type):
-                self.kill_usermode_process(waiting_process.process.pid, force)
-
-    def kill_usermode_process(self, pid, force=False):
-        """
-        Receives a pid and kills that process
-        :param pid:
-        :param force: whether or not to kill the process nicely
-        :return:
-        """
-        if force:
-            self.process_scheduler.terminate_process(self.process_scheduler.get_usermode_process(pid), COMPUTER.PROCESSES.MODES.USERMODE)
-        else:
-            self.send_usermode_process_signal(pid, COMPUTER.PROCESSES.SIGNALS.SIGTERM)
-
-    def kill_kernelmode_process(self, pid):
-        self.process_scheduler.terminate_process_by_pid(pid, COMPUTER.PROCESSES.MODES.KERNELMODE)
-
-    def send_usermode_process_signal(self, pid, signum):
-        """
-        Send a signal to a process based on the signals defined in
-        COMPUTER.PROCESSES.SIGNALS
-        :param pid: the process ID
-        :param signum:
-        :return:
-        """
-        if signum in COMPUTER.PROCESSES.SIGNALS.UNIGNORABLE_KILLING_SIGNALS:
-            self.kill_usermode_process(pid, force=True)
-        else:
-            self.process_scheduler.get_usermode_process(pid).signal_handlers[signum](signum)
-
-    def is_usermode_process_running(self, process_type):
-        """
-        Receives a type of a `Process` subclass and returns whether or not there is a process of that type that
-        is running.
-        :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
-        :return: `bool`
-        """
-        return self.process_scheduler.is_process_running_by_type(process_type, COMPUTER.PROCESSES.MODES.USERMODE)
-        # TODO: delete this function - it is not necessary
-
-    def get_waiting_process(self, process_type):
-        """
-        Receives a type of a `Process` subclass and returns the process object of the `Process` that is currently
-        running in the computer.
-        If no such process is running in the computer, raise NoSuchProcessError
-        :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
-        :return: `WaitingProcess` namedtuple
-        """
-        for process, _ in self.process_scheduler.waiting_usermode_processes:
-            if isinstance(process, process_type):
-                return process
-        raise NoSuchProcessError(f"'{process_type}' is not currently running!")
-
     # ------------------------------- v Sockets v ----------------------------------------------------------------------
 
     def get_socket(self, requesting_process_pid,
@@ -1050,15 +942,6 @@ class Computer:
                                            f"It was probably not acquired using the `computer.get_socket` method! "
                                            f"The socket: {socket}")
 
-    def handle_sockets(self):
-        """
-        Handles all sending and receiving for sockets of the computer.
-        Sends out and receives packets that they require
-        :return: None
-        """
-        for socket in self.sockets:
-            pass
-
     # ------------------------------- v The main `logic` method of the computer's main loop v --------------------------
 
     def logic(self):
@@ -1074,7 +957,6 @@ class Computer:
             return
 
         self.received.clear()
-        self.handle_sockets()
         for interface in self.all_interfaces:
             if not interface.is_connected():
                 continue

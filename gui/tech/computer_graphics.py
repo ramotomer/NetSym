@@ -2,9 +2,9 @@ from collections import namedtuple
 from os import linesep
 
 from address.ip_address import IPAddress
-from computing.internals.processes.daytime_process import DAYTIMEClientProcess
-from computing.internals.processes.ddos_process import DDOSProcess
-from computing.internals.processes.ftp_process import ClientFTPProcess
+from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEClientProcess
+from computing.internals.processes.usermode_processes.ddos_process import DDOSProcess
+from computing.internals.processes.usermode_processes.ftp_process import ClientFTPProcess
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow

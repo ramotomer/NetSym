@@ -268,6 +268,21 @@ class ProcessScheduler:
         """
         return get_the_one(self.get_all_processes(mode), lambda process: process.pid == pid, NoSuchProcessError if raises else None)
 
+    def get_process_by_type(self, process_type, mode, raises=True):
+        """
+        Receives a type of a `Process` subclass and returns the process object of the `Process` that is currently
+        running in the computer.
+        If no such process is running in the computer, raise NoSuchProcessError
+        :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
+        :param mode: the mode of the process (one of COMPUTER.PROCESS.MODES.ALL_MODES)
+        :param raises: whether or not to raise an exception if no such process exists
+        :return: `WaitingProcess` namedtuple
+        """
+        return get_the_one(self.get_all_processes(mode), lambda process: isinstance(process, process_type), NoSuchProcessError if raises else None)
+
+    def get_usermode_process_by_type(self, process_type, raises=True):
+        return self.get_process_by_type(process_type, COMPUTER.PROCESSES.MODES.USERMODE, raises)
+
     def get_usermode_process(self, pid, raises=True):
         """
         exactly like `get_process` only the for the usermode
@@ -380,6 +395,15 @@ class ProcessScheduler:
                 return True
         return False
 
+    def is_usermode_process_running_by_type(self, process_type):
+        """
+        Receives a type of a `Process` subclass and returns whether or not there is a process of that type that
+        is running.
+        :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
+        :return: `bool`
+        """
+        return self.is_process_running_by_type(process_type, COMPUTER.PROCESSES.MODES.USERMODE)
+
     def add_startup_process(self, mode, process_type, *args):
         """
         This function adds a process to the `startup_processes` list, These processes are run right when the computer is turned on.
@@ -400,6 +424,43 @@ class ProcessScheduler:
         for mode in self.__details_by_mode:
             for process, args in self.__details_by_mode[mode].startup_processes:
                 self.start_process(mode, process, *args)
+
+    def send_process_signal(self, pid, signum, mode):
+        """
+        Send a signal to a process based on the signals defined in
+        COMPUTER.PROCESSES.SIGNALS
+        :param pid: the process ID
+        :param signum:
+        :return:
+        """
+        if signum in COMPUTER.PROCESSES.SIGNALS.UNIGNORABLE_KILLING_SIGNALS:
+            self.terminate_process_by_pid(pid, mode)
+        else:
+            self.get_process(pid, mode).signal_handlers[signum](signum)
+
+    def kill_usermode_process(self, pid, force=False):
+        """
+        Receives a pid and kills that process
+        :param pid:
+        :param force: whether or not to kill the process nicely
+        :return:
+        """
+        if force:
+            self.terminate_process(self.get_usermode_process(pid), COMPUTER.PROCESSES.MODES.USERMODE)
+        else:
+            self.send_process_signal(pid, COMPUTER.PROCESSES.SIGNALS.SIGTERM, COMPUTER.PROCESSES.MODES.USERMODE)
+
+    def kill_usermode_process_by_type(self, process_type, force=False):
+        """
+        Takes in a process type and kills all of the waiting processes of that type in this `Computer`.
+        They are killed by a signal, unless specified specifically with the `force` param
+        :param process_type: a `Process` subclass type (for example `SendPing` or `DHCPClient`)
+        :param force:
+        :return: None
+        """
+        for waiting_process in self.waiting_usermode_processes:
+            if isinstance(waiting_process.process, process_type):
+                self.kill_usermode_process(waiting_process.process.pid, force)
 
     def handle_processes(self):
         """

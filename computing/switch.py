@@ -2,8 +2,8 @@ from address.mac_address import MACAddress
 from computing.computer import Computer, COMPUTER
 from computing.interface import Interface
 from computing.internals.filesystem.filesystem import Filesystem
-from computing.internals.processes.stp_process import STPProcess
-from computing.internals.processes.switching_process import SwitchingProcess
+from computing.internals.processes.kernelmode_processes.switching_process import SwitchingProcess
+from computing.internals.processes.usermode_processes.stp_process import STPProcess
 from computing.internals.routing_table import RoutingTable
 from consts import OS, PROTOCOLS, IMAGES
 from gui.tech.computer_graphics import ComputerGraphics
@@ -59,7 +59,7 @@ class Switch(Computer):
         Starts the process of STP sending and receiving.
         :return: None
         """
-        if not self.is_usermode_process_running(STPProcess) and self.interfaces:
+        if not self.process_scheduler.is_usermode_process_running_by_type(STPProcess) and self.interfaces:
             self.process_scheduler.start_usermode_process(STPProcess)
 
     def send_stp(self, sender_bid, root_bid, distance_to_root, root_declaration_time):

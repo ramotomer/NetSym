@@ -12,7 +12,7 @@ from pyglet.window import key
 from address.ip_address import IPAddress
 from computing.computer import Computer
 from computing.interface import Interface
-from computing.internals.processes.stp_process import STPProcess
+from computing.internals.processes.usermode_processes.stp_process import STPProcess
 from computing.router import Router
 from computing.switch import Switch, Hub, Antenna
 from consts import *
@@ -939,8 +939,8 @@ class UserInterface:
             computer.print(f"{'DEBUG':^20}{self.debug_counter}")
             if not isinstance(computer, Switch):
                 print(repr(computer.routing_table))
-            elif computer.stp_enabled and computer.is_usermode_process_running(STPProcess):  # computer is a Switch
-                print(computer.get_waiting_process(STPProcess).get_info())
+            elif computer.stp_enabled and computer.process_scheduler.is_usermode_process_running_by_type(STPProcess):  # computer is a Switch
+                print(computer.process_scheduler.get_usermode_process_by_type(STPProcess).get_info())
 
         # self.set_all_connection_speeds(200)
 
@@ -1035,10 +1035,10 @@ class UserInterface:
         Displays the roots of all STP processes that are running. (circles the roots with a yellow circle)
         :return: None
         """
-        stp_runners = [computer for computer in self.computers if computer.is_usermode_process_running(STPProcess)]
-        roots = [computer.get_waiting_process(STPProcess).root_bid for computer in stp_runners]
+        stp_runners = [computer for computer in self.computers if computer.process_scheduler.is_usermode_process_running_by_type(STPProcess)]
+        roots = [computer.process_scheduler.get_usermode_process_by_type(STPProcess).root_bid for computer in stp_runners]
         for computer in stp_runners:
-            if computer.get_waiting_process(STPProcess).my_bid in roots:
+            if computer.process_scheduler.get_usermode_process_by_type(STPProcess).my_bid in roots:
                 draw_circle(*computer.graphics.location, 60, COLORS.YELLOW)
 
     def ask_user_for(self, type_, window_text, action, error_msg="invalid input!!!"):

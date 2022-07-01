@@ -2,7 +2,7 @@ from typing import Tuple
 
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import WaitingFor
-from computing.internals.processes.sockets.tcp_socket_process import ListeningTCPSocketProcess, \
+from computing.internals.processes.kernelmode_processes.sockets.tcp_socket_process import ListeningTCPSocketProcess, \
     ConnectingTCPSocketProcess
 from computing.internals.sockets.socket import Socket
 from consts import COMPUTER
