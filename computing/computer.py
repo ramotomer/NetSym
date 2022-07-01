@@ -1069,7 +1069,7 @@ class Computer:
         :return: None
         """
         for socket in self.sockets:
-
+            pass
 
     # ------------------------------- v The main `logic` method of the computer's main loop v --------------------------
 
