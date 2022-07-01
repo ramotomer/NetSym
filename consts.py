@@ -435,6 +435,7 @@ class INTERFACES:
     BLOCKED_COLOR = COLORS.RED
     WIDTH, HEIGHT = 10, 10
     ANY_INTERFACE = None
+    NO_INTERFACE = ''
 
     class TYPE:
         ETHERNET = "Ethernet"
@@ -614,8 +615,6 @@ class COMPUTER:
             SIGWINCH = 28  # Window size change (4.3 BSD, Sun)
             SIGIO = 29  # I / O now possible (4.2 BSD)
             SIGPWR = 30  # Power failure restart (System V)
-
-            SIGSOCKSEND = 31  # does not exist in real life, just for NetSym's implementation of sockets
 
             ALL = range(1, 32)
 

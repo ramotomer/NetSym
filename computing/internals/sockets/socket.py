@@ -32,13 +32,16 @@ class Socket(metaclass=ABCMeta):
 
         self.is_connected = False
         self.is_closed = False
+        self.is_bound = False
+
+        self.allow_being_broken = False
 
         self.listening_count = None
 
-        self.__class__.send = self.check_not_closed(self.check_connected(self.check_not_broken(self.__class__.send)))
-        self.__class__.recv = self.check_not_closed(self.check_bound(self.check_connected(self.check_not_broken(self.__class__.recv))))
-        self.__class__.listen = self.check_bound(self.check_not_closed(self.__class__.listen))
-        self.__class__.accept = self.check_bound(self.check_not_closed(self.__class__.accept))
+        self.__class__.send =    self.check_not_closed(self.check_connected(self.check_not_broken(self.__class__.send)))
+        self.__class__.recv =    self.check_not_closed(self.check_bound(self.check_connected(self.check_not_broken(self.__class__.recv))))
+        self.__class__.listen =  self.check_bound(self.check_not_closed(self.__class__.listen))
+        self.__class__.accept =  self.check_bound(self.check_not_closed(self.__class__.accept))
         self.__class__.connect = self.check_not_closed(self.__class__.connect)
         # ^ decorators that survive inheritance
 
@@ -72,7 +75,7 @@ class Socket(metaclass=ABCMeta):
     def check_bound(func):
         @wraps(func)
         def wrapper(self, *args, **kwargs):
-            if self.computer.sockets[self].local_port is None:
+            if not self.is_bound:
                 raise SocketNotBoundError("The socket is not bound to any address or port!!!")
             return func(self, *args, **kwargs)
         return wrapper
@@ -90,8 +93,7 @@ class Socket(metaclass=ABCMeta):
     def check_not_broken(func):
         @wraps(func)
         def wrapper(self, *args, **kwargs):
-            if self.pid is None or \
-                    self.process is None:
+            if (self.pid is None or self.process is None) and not self.allow_being_broken:
                 raise SocketIsBrokenError(f"The socket is broken and cannot be used!!! pid: {self.pid}, process: {self.process}, computer: {self.computer}")
             return func(self, *args, **kwargs)
         return wrapper

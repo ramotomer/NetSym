@@ -25,21 +25,22 @@ class Tcpdump(Command):
             if parsed_args.is_promisc:
                 return CommandOutput('', "Cannot sniff on promisc on all interfaces!")
             if parsed_args.stop:
-                self.computer.stop_sniff()
+                self.computer.stop_sniffing()
             else:
-                self.computer.start_sniff()
+                self.computer.start_sniffing()
 
         else:
             name = parsed_args.interface
             if not name:
-                name = self.computer.interfaces[0]
+                name = self.computer.interfaces[0].name
 
             if not any(interface.name == name for interface in self.computer.all_interfaces):
                 return CommandOutput("", f"Interface {name} does not exist!")
 
             if parsed_args.stop:
-                self.computer.stop_sniff(name)
+                self.computer.stop_sniffing()
             else:
-                self.computer.start_sniff(name, is_promisc=parsed_args.is_promisc)
+                self.computer.start_sniffing(name, is_promisc=parsed_args.is_promisc)
+            # TODO: this does not work yet that well!!!
 
         return CommandOutput('', '')

@@ -413,3 +413,15 @@ class SocketIsClosedError(SocketError):
     """
     Trying to use a closed socket.
     """
+
+
+class RawSocketError(SocketError):
+    """
+    an exception related to raw sockets specifically
+    """
+
+
+class ActionNotSupportedInARawSocket(RawSocketError):
+    """
+    The action you were trying to perform should not be done on a socket of type raw
+    """
