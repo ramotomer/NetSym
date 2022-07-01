@@ -1,4 +1,4 @@
-from computing.internals.processes.process import Process, ReturnedPacket, WaitingForPacketWithTimeout, Timeout, \
+from computing.internals.processes.abstracts.process import Process, ReturnedPacket, WaitingForPacketWithTimeout, Timeout, \
     WaitingFor
 from consts import OPCODES, PROTOCOLS
 from usefuls.funcs import my_range
@@ -50,7 +50,7 @@ class ARPProcess(Process):
                 return
 
         if self.requesting_process is not None:
-            self.computer.kill_process_by_type(type(self.requesting_process))
+            self.computer.process_scheduler.terminate_process(self.requesting_process, None)
 
     def __repr__(self):
         return "Address Resolution (ARP) Process "

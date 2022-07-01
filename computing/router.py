@@ -1,114 +1,12 @@
 from computing.computer import Computer
 from computing.internals.filesystem.filesystem import Filesystem
+from computing.internals.processes.kernelmode_processes.route_packet_process import RoutePacket
+from computing.internals.processes.usermode_processes.dhcp_process import DHCPServer
 from computing.internals.interface import Interface
-from computing.internals.processes.dhcp_process import DHCPServer
-from computing.internals.processes.process import Process, WaitingFor
 from computing.internals.routing_table import RoutingTable
 from consts import *
 from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
-
-
-class RoutePacket(Process):
-    """
-    This is a process which when run, takes in a packet and routes over the running router, using the
-    `decide_routing_interfaces` method.
-    The process is of routing a single packet over the router.
-    """
-    def __init__(self, pid, computer, packet):
-        """
-        Initiates the process with the given packet to route and the routing computer.
-        """
-        super(RoutePacket, self).__init__(pid, computer)
-        self.packet = packet
-
-    def _is_packet_routable(self):
-        """
-        Checks the given packet and make sure that it is valid and can be routed.
-        :return:
-        """
-        if not self.packet.is_valid() or "IP" not in self.packet:
-            return False
-
-        if self.packet["IP"].dst_ip is None or self.packet["IP"].src_ip is None:
-            return False
-
-        if "0.0.0.0" in [self.packet["IP"].dst_ip.string_ip, self.packet["IP"].src_ip.string_ip]:
-            return False
-
-        if self.packet["IP"].src_ip.is_broadcast() or self.packet["Ethernet"].dst_mac.is_broadcast():
-            return False
-
-        return True
-
-    def _decrease_ttl(self):
-        """
-        Decrease the TTL of the packet, if it is 0, sends an ICMP Time Exceeded
-        :return: a bool telling whether the time (TTL) of the packet was exceeded (reached 0).
-        """
-        sender_ip = self.packet["IP"].src_ip
-        if self.packet["IP"].ttl == 0:
-            self.computer.send_time_exceeded(self.computer.arp_cache[sender_ip].mac, sender_ip)
-            return True
-
-        self.packet["IP"].ttl -= 1
-        return False
-
-    def _destination_unreachable(self):
-        """
-        Tests if the destination of the packet is unreachable. If it is, send an `ICMP_UNREACHABLE` and return True.
-        If not, return False
-        :return: `bool`
-        """
-        dst_ip = self.packet["IP"].dst_ip
-        routing_interface = self.computer.routing_table[dst_ip].ip_address
-        gateway = self.computer.routing_table.default_gateway.ip_address
-
-        if routing_interface == gateway and gateway is None:
-            self._send_icmp_unreachable()
-            return True
-        return False
-
-    def _send_icmp_unreachable(self):
-        """Sends to the sender of the routed packet, an ICMP unreachable"""
-        sender_ip = self.packet["IP"].src_ip
-        dst_ip = self.packet["IP"].dst_ip
-
-        self.computer.send_ping_to(self.computer.arp_cache[sender_ip].mac,
-                                   self.packet["IP"].src_ip,
-                                   OPCODES.ICMP.UNREACHABLE,
-                                   f"Unreachable: {dst_ip}")
-
-    def code(self):
-        """
-        Receives the packet in the constructor, routes it to the correct subnet (the correct interface of the router).
-        It has to send ARPs first sometimes. Does all of that.
-
-        :return: a generator that yields `WaitingForPacket` namedtuple-s.
-        """
-        if not self._is_packet_routable():
-            return
-
-        if self._destination_unreachable():
-            return
-
-        dst_ip = self.packet["IP"].dst_ip
-        time_exceeded = self._decrease_ttl()
-
-        assert dst_ip is not None, "error!"
-
-        if not time_exceeded:
-            ip_for_the_mac, done_searching = self.computer.request_address(dst_ip, self, False)
-            yield WaitingFor(done_searching)
-            if ip_for_the_mac not in self.computer.arp_cache:          # if no one answered the arp
-                self._send_icmp_unreachable()
-                return
-
-            self.computer.send_with_ethernet(self.computer.arp_cache[ip_for_the_mac].mac, dst_ip, self.packet["IP"])
-
-    def __repr__(self):
-        """The string representation of the process"""
-        return "Routing Process"
 
 
 class Router(Computer):
@@ -153,7 +51,7 @@ class Router(Computer):
 
         for packet, _, _ in new_packets:
             if "IP" in packet and not self.has_this_ip(packet["IP"].dst_ip) and "DHCP" not in packet:
-                self.start_process(RoutePacket, packet)
+                self.process_scheduler.start_kernelmode_process(RoutePacket, packet)
 
     def logic(self):
         """Adds to the original logic of the Computer the ability to route packets."""
@@ -161,9 +59,9 @@ class Router(Computer):
 
         self.route_new_packets()
 
-        if self.is_dhcp_server and not self.is_process_running(DHCPServer):
+        if self.is_dhcp_server and not self.process_scheduler.is_usermode_process_running_by_type(DHCPServer):
             self.print("Started serving DHCP...")
-            self.start_process(DHCPServer, self)
+            self.process_scheduler.start_usermode_process(DHCPServer, self)
 
     def __repr__(self):
         """The string representation of the Router"""

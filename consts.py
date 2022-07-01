@@ -220,10 +220,10 @@ class WINDOWS:
     class MAIN:
         NAME = "NetSym"
         WIDTH = 1275
-        HEIGHT = 600
+        HEIGHT = 600  # if not __debug__ else 350
         INITIAL_LOCATION = 4, 50
         FRAME_RATE = 1 / 60.0
-        BACKGROUND = COLORS.VERY_LIGHT_GRAY
+        BACKGROUND = COLORS.VERY_LIGHT_GRAY  # if not __debug__ else COLORS.WHITE
 
     class SIDE:
         WIDTH = 230
@@ -267,7 +267,7 @@ class IMAGES:
     class SCALE_FACTORS:
         SPRITES = 0.5
         INTERNET = 8
-        PACKETS = 1.2
+        PACKETS = 1.35
         VIEWING_OBJECTS = 5 * SPRITES / 3
         PROCESSES = 1.3
 
@@ -528,7 +528,7 @@ class SHAPES:
 
         class RESIZE_DOT:
             RADIUS = 5
-            MINIMAL_RESIZE_SIZE = 30
+            MINIMAL_RESIZE_SIZE = 15
             COLOR_WHEN_SELECTED = COLORS.LIGHT_GREEN
 
     class SINE_WAVE:
@@ -583,6 +583,62 @@ class COMPUTER:
     class PROCESSES:
         INIT_PID = 1
 
+        class SIGNALS:
+            SIGHUP = 1  # Hangup(POSIX)
+            SIGINT = 2  # Terminal interrupt(ANSI)
+            SIGQUIT = 3  # Terminal quit(POSIX)
+            SIGILL = 4  # Illegal instruction(ANSI)
+            SIGTRAP = 5  # Trace trap(POSIX)
+            SIGIOT = 6  # IOT Trap(4.2 BSD)
+            SIGBUS = 7  # BUS error(4.2 BSD)
+            SIGFPE = 8  # Floating point exception(ANSI)
+            SIGKILL = 9  # Kill(can 't be caught or ignored) (POSIX)
+            SIGUSR1 = 10  # User defined signal 1(POSIX)
+            SIGSEGV = 11  # Invalid memory segment access(ANSI)
+            SIGUSR2 = 12  # User defined signal 2(POSIX)
+            SIGPIPE = 13  # Write on a pipe with no reader, Broken pipe (POSIX)
+            SIGALRM = 14  # Alarm clock (POSIX)
+            SIGTERM = 15  # Termination (ANSI)
+            SIGSTKFLT = 16  # Stack fault
+            SIGCHLD = 17  # Child process has stopped or exited, changed (POSIX)
+            SIGCONTv = 18  # Continue executing, if stopped (POSIX)
+            SIGSTOP = 19  # Stop executing(can't be caught or ignored) (POSIX)
+            SIGTSTP = 20  # Terminal stop signal (POSIX)
+            SIGTTIN = 21  # Background process trying to read, from TTY (POSIX)
+            SIGTTOU = 22  # Background process trying to write, to TTY (POSIX)
+            SIGURG = 23  # Urgent condition on socket (4.2 BSD)
+            SIGXCPU = 24  # CPU limit exceeded (4.2 BSD)
+            SIGXFSZ = 25  # File size limit exceeded (4.2 BSD)
+            SIGVTALRM = 26  # Virtual alarm clock (4.2 BSD)
+            SIGPROF = 27  # Profiling alarm clock (4.2 BSD)
+            SIGWINCH = 28  # Window size change (4.3 BSD, Sun)
+            SIGIO = 29  # I / O now possible (4.2 BSD)
+            SIGPWR = 30  # Power failure restart (System V)
+
+            SIGSOCKSEND = 31  # does not exist in real life, just for NetSym's implementation of sockets
+
+            ALL = range(1, 32)
+
+            KILLING_SIGNALS = {
+                SIGTERM,
+                SIGINT,
+                SIGKILL,
+                SIGQUIT,
+                SIGSTOP,
+                SIGTSTP,
+            }
+
+            UNIGNORABLE_KILLING_SIGNALS = {
+                SIGKILL,
+                SIGSTOP,
+            }
+
+        class MODES:
+            USERMODE = 'usermode'
+            KERNELMODE = 'kernelmode'
+
+            ALL_MODES = [USERMODE, KERNELMODE]
+
     class ARP_CACHE:
         DYNAMIC = "dynamic"
         STATIC = "static"
@@ -590,3 +646,20 @@ class COMPUTER:
 
     class SWITCH_TABLE:
         ITEM_LIFETIME = 300  # seconds
+
+    class SOCKETS:
+        class TYPES:
+            SOCK_STREAM = 1
+            SOCK_DGRAM = 2
+            SOCK_RAW = 3
+
+        class ADDRESS_FAMILIES:
+            AF_INET = 2
+            AF_INET6 = 23
+
+        class STATES:
+            UNBOUND = "UNBOUND"
+            BOUND = "BOUND"
+            LISTENING = "LISTENING"
+            ESTABLISHED = "ESTABLISHED"
+            CLOSED = "CLOSED"

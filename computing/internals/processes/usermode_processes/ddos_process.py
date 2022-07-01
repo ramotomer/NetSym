@@ -1,6 +1,6 @@
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
-from computing.internals.processes.process import Process, WaitingFor, Timeout
+from computing.internals.processes.abstracts.process import Process, WaitingFor, Timeout
 from packets.udp import UDP
 
 

@@ -241,6 +241,12 @@ class NoSuchProcessError(ProcessError):
     Occurs when a process that does not exist is required.
     """
 
+
+class UnknownProcessTypeError(ProcessError):
+    """
+    only known types are USERMODE and KERNELMODE - the others are unknown :/
+    """
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -362,3 +368,48 @@ class CannotBeUsedWithPiping(CommandError):
 
 class InvalidAliasCommand(CommandError):
     pass
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class SocketError(ComputerError):
+    """
+    An error in a computer socket in the simulations
+    """
+
+
+class SocketIsBrokenError(SocketError):
+    """
+    Trying to send or recv through a broken socket
+    """
+
+
+class SocketNotBoundError(SocketError):
+    """
+    Trying to use an un-bound socket
+    """
+
+
+class SocketNotConnectedError(SocketError):
+    """
+    Trying to receive or send using a disconnected socket
+    """
+
+
+class SocketNotRegisteredError(SocketError):
+    """
+    Occurs when one tries to bind a socket that is not known to the operation system.
+    """
+
+
+class PortAlreadyBoundError(SocketError):
+    """
+    Trying to bind a port on an already bound port.
+    """
+
+
+class SocketIsClosedError(SocketError):
+    """
+    Trying to use a closed socket.
+    """

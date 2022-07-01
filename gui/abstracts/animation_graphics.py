@@ -7,6 +7,9 @@ from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_loop import MainLoop
 
 
+# TODO: fix explosion animation!
+
+
 class AnimationGraphics(ImageGraphics):
     """
     A GraphicsObject of an animation. An image that is made out of little images and the animation if looped through them.
@@ -77,6 +80,9 @@ class AnimationGraphics(ImageGraphics):
 
         if self.is_done:
             MainLoop.instance.unregister_graphics_object(self)
+
+    def dict_save(self):
+        pass
 
 
 # class LogoAnimation(AnimationGraphics):

@@ -1,5 +1,5 @@
 from address.ip_address import IPAddress
-from computing.internals.processes.process import Process, WaitingForPacket, ReturnedPacket
+from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket
 from consts import OPCODES
 from exceptions import *
 from packets.dhcp import DHCPData
@@ -94,7 +94,8 @@ class DHCPServer(Process):
         """
         super(DHCPServer, self).__init__(pid, computer)
 
-        self.default_gateway = default_gateway  # a `Computer` that is the default gateway of the subnets this server serves.
+        self.default_gateway = default_gateway
+        # ^ a `Computer` that is the default gateway of the subnets this server serves.
 
         self.interface_to_dhcp_data = {} # interface : DHCPData
         # ^ a mapping for each interface of the server to a ip_layer that it packs for its clients.
@@ -107,7 +108,7 @@ class DHCPServer(Process):
 
     def update_server_data(self):
         """
-        It updates the `self.interface_to_dhcp_data` dictionary according to this comptuer's interfaces.
+        It updates the `self.interface_to_dhcp_data` dictionary according to this computer's interfaces.
         This is called if for example one of the computer's interfaces is updated in the middle of the process.
         :return: None
         """

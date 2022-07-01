@@ -1,6 +1,8 @@
+import os
+
 from computing.internals.filesystem.directory import Directory
 from computing.internals.filesystem.file import File, PipingFile
-from consts import FILESYSTEM
+from consts import FILESYSTEM, DIRECTORIES, TRANSFER_FILE
 from exceptions import PathError, NoSuchItemError, CannotBeUsedWithPiping, WrongUsageError
 
 
@@ -32,6 +34,7 @@ class Filesystem:
         filesystem.make_dir('/etc')
         filesystem.make_dir('/tmp', mount=FILESYSTEM.TYPE.TMPFS)
         filesystem.make_dir(FILESYSTEM.HOME_DIR)
+        filesystem.at_absolute_path('/bin').add_item(File("cat", open(os.path.join(DIRECTORIES.FILES, TRANSFER_FILE)).read()))
         return filesystem
 
     @classmethod
@@ -46,7 +49,7 @@ class Filesystem:
     @classmethod
     def absolute_from_relative(cls, parent: Directory, path: str):
         """
-        receives relative path and prent dir and return absolute path.
+        receives relative path and parent dir and return absolute path.
         If already absolute, returns the path.
         :param parent:
         :param path:

@@ -107,7 +107,6 @@ class MainWindow(pyglet.window.Window):
         """
         if self.user_interface.is_mouse_in_side_window() and self.user_interface.mode == MODES.VIEW:
             self.user_interface.scroll_view(scroll_y)
-
         else:
             for obj in self.user_interface.all_marked_objects:
                 if obj is not None and hasattr(obj, "resize"):

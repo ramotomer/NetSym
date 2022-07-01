@@ -2,9 +2,9 @@ from collections import namedtuple
 from os import linesep
 
 from address.ip_address import IPAddress
-from computing.internals.processes.daytime_process import DAYTIMEClientProcess
-from computing.internals.processes.ddos_process import DDOSProcess
-from computing.internals.processes.ftp_process import FTPClientProcess
+from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEClientProcess
+from computing.internals.processes.usermode_processes.ddos_process import DDOSProcess
+from computing.internals.processes.usermode_processes.ftp_process import ClientFTPProcess
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
@@ -137,16 +137,16 @@ class ComputerGraphics(ImageGraphics):
                 user_interface.ask_user_for,
                 IPAddress,
                 MESSAGES.INSERT.IP_FOR_PROCESS,
-                with_args(self.computer.start_process, DAYTIMEClientProcess)
+                with_args(self.computer.process_scheduler.start_usermode_process, DAYTIMEClientProcess)
             ),
             "download file (alt+a)": with_args(
                 user_interface.ask_user_for,
                 IPAddress,
                 MESSAGES.INSERT.IP_FOR_PROCESS,
-                with_args(self.computer.start_process, FTPClientProcess)
+                with_args(self.computer.process_scheduler.start_usermode_process, ClientFTPProcess)
             ),
             "start DDOS process (ctrl+w)": with_args(
-                self.computer.start_process,
+                self.computer.process_scheduler.start_usermode_process,
                 DDOSProcess,
                 100,
                 0.05

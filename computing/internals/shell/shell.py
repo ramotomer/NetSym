@@ -160,8 +160,9 @@ class Shell:
         else:
             self.history_index = min(self.history_index + 1, len(self.history) - 1)
 
-        self.shell_graphics.clear_line()
-        self.shell_graphics.write_to_line(self.history[::-1][self.history_index])
+        if self.history:
+            self.shell_graphics.clear_line()
+            self.shell_graphics.write_to_line(self.history[::-1][self.history_index])
 
     def scroll_down_history(self):
         """

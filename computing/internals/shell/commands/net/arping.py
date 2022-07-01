@@ -1,5 +1,5 @@
 from address.ip_address import IPAddress
-from computing.internals.processes.arp_process import ARPProcess
+from computing.internals.processes.kernelmode_processes.arp_process import ARPProcess
 from computing.internals.shell.commands.command import Command, CommandOutput
 from consts import PROTOCOLS
 
