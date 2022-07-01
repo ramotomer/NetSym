@@ -241,6 +241,12 @@ class NoSuchProcessError(ProcessError):
     Occurs when a process that does not exist is required.
     """
 
+
+class UnknownProcessTypeError(ProcessError):
+    """
+    only known types are USERMODE and KERNELMODE - the others are unknown :/
+    """
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 

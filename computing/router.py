@@ -153,7 +153,7 @@ class Router(Computer):
 
         for packet, _, _ in new_packets:
             if "IP" in packet and not self.has_this_ip(packet["IP"].dst_ip) and "DHCP" not in packet:
-                self.start_process(RoutePacket, packet)
+                self.process_scheduler.start_process(RoutePacket, packet)
 
     def logic(self):
         """Adds to the original logic of the Computer the ability to route packets."""
@@ -163,7 +163,7 @@ class Router(Computer):
 
         if self.is_dhcp_server and not self.is_process_running(DHCPServer):
             self.print("Started serving DHCP...")
-            self.start_process(DHCPServer, self)
+            self.process_scheduler.start_process(DHCPServer, self)
 
     def __repr__(self):
         """The string representation of the Router"""

@@ -48,7 +48,7 @@ class TCPSocket(Socket):
         :param address:
         :return:
         """
-        self.pid = self.computer.start_process(ConnectingTCPSocketProcess, self, address)
+        self.pid = self.computer.process_scheduler.start_process(ConnectingTCPSocketProcess, self, address)
 
     def bind(self, address: Tuple[IPAddress, int]):
         """
@@ -73,7 +73,7 @@ class TCPSocket(Socket):
         Accept connections to this socket.
         :return:
         """
-        self.pid = self.computer.start_process(ListeningTCPSocketProcess, self, self.bound_address)
+        self.pid = self.computer.process_scheduler.start_process(ListeningTCPSocketProcess, self, self.bound_address)
 
     def blocking_recv(self, received_list):
         """

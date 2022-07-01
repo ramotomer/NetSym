@@ -127,16 +127,16 @@ class ComputerGraphics(ImageGraphics):
                 user_interface.ask_user_for,
                 IPAddress,
                 MESSAGES.INSERT.IP_FOR_PROCESS,
-                with_args(self.computer.start_process, DAYTIMEClientProcess)
+                with_args(self.computer.process_scheduler.start_process, DAYTIMEClientProcess)
             ),
             "download file (alt+a)": with_args(
                 user_interface.ask_user_for,
                 IPAddress,
                 MESSAGES.INSERT.IP_FOR_PROCESS,
-                with_args(self.computer.start_process, ClientFTPProcess)
+                with_args(self.computer.process_scheduler.start_process, ClientFTPProcess)
             ),
             "start DDOS process (ctrl+w)": with_args(
-                self.computer.start_process,
+                self.computer.process_scheduler.start_process,
                 DDOSProcess,
                 1000,
                 0.8

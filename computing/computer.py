@@ -15,7 +15,7 @@ from computing.internals.processes.dhcp_process import DHCPClient
 from computing.internals.processes.dhcp_process import DHCPServer
 from computing.internals.processes.ftp_process import ServerFTPProcess
 from computing.internals.processes.ping_process import SendPing
-from computing.internals.processes.process_scheduler import ProcessScheduler, WaitingProcess
+from computing.internals.processes.process_scheduler import ProcessScheduler
 from computing.internals.routing_table import RoutingTable, RoutingTableItem
 from computing.internals.sockets.tcp_socket import TCPSocket
 from consts import *
@@ -221,8 +221,8 @@ class Computer:
         :return:
         """
         self.process_scheduler.terminate_all()
-        for process, args in self.process_scheduler.startup_processes:
-            self.start_process(process, *args)
+        for process, args in self.process_scheduler.startup_usermode_processes:
+            self.process_scheduler.start_process(process, *args)
 
     def add_interface(self, name=None, mac=None):
         """
@@ -440,7 +440,7 @@ class Computer:
         :param count: how many pings to send
         :return: None
         """
-        self.start_process(SendPing, ip_address, opcode, count)
+        self.process_scheduler.start_process(SendPing, ip_address, opcode, count)
 
     def is_for_me(self, packet):
         """
@@ -466,7 +466,7 @@ class Computer:
         :return: None
         """
         self.kill_process_by_type(DHCPClient)  # if currently asking for dhcp, stop it
-        self.start_process(DHCPClient)
+        self.process_scheduler.start_process(DHCPClient)
 
     def open_tcp_port(self, port_number):
         """
@@ -483,7 +483,7 @@ class Computer:
                 self.kill_process_by_type(process)
         else:
             if process is not None:
-                self.start_process(self.TCP_PORTS_TO_PROCESSES[port_number])
+                self.process_scheduler.start_process(self.TCP_PORTS_TO_PROCESSES[port_number])
 
         self.graphics.update_image()
 
@@ -680,7 +680,7 @@ class Computer:
         :param data: the ip_layer to send (fourth layer and above)
         :return: None
         """
-        self.start_process(SendPacketWithArpsProcess,
+        self.process_scheduler.start_process(SendPacketWithArpsProcess,
                            IP(
                                self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip),
                                dst_ip,
@@ -886,26 +886,13 @@ class Computer:
         """
         ip_for_the_mac = self.routing_table[ip_address].ip_address
         kill_process = requesting_process if kill_process_if_not_found else None
-        self.start_process(ARPProcess, ip_for_the_mac, kill_process)
+        self.process_scheduler.start_process(ARPProcess, ip_for_the_mac, kill_process)
         return ip_for_the_mac, lambda: ip_for_the_mac in self.arp_cache
 
     # ------------------------- v process related methods v ----------------------------------------------------
 
     def start_process(self, process_type, *args):
-        """
-        Receive a `Process` subclass class, and the arguments for it
-        (not including the default Computer argument that all processes receive.)
-
-        for example: start_process(SendPing, '1.1.1.1/24')
-
-        For more information about processes read the documentation at 'process.py'
-        :param process_type: The `type` of the process to run.
-        :param args: The arguments that the `Process` subclass constructor requires.
-        :return: None
-        """
-        pid = max([process.pid for process in self.process_scheduler.all_processes] + [1]) + 1
-        self.process_scheduler.waiting_processes.append(WaitingProcess(process_type(pid, self, *args), None))
-        return pid
+        raise NotImplementedError("this does not exist anymore! Did you mean `computer.process_scheduler.start_process` ?")
 
     def add_startup_process(self, process_type, *args):
         """
@@ -915,10 +902,10 @@ class Computer:
         :param args: its arguments
         :return:
         """
-        self.process_scheduler.startup_processes.append((process_type, args))
+        self.process_scheduler.startup_usermode_processes.append((process_type, args))
 
         if not self.is_process_running(process_type):
-            self.start_process(process_type, *args)
+            self.process_scheduler.start_process(process_type, *args)
 
     def remove_startup_process(self, process_type):
         """
@@ -927,10 +914,10 @@ class Computer:
         :return: None
         """
         removed = get_the_one(
-            self.process_scheduler.startup_processes,
+            self.process_scheduler.startup_usermode_processes,
             lambda startup_process_tuple: startup_process_tuple[0] is process_type,
             NoSuchProcessError)
-        self.process_scheduler.startup_processes.remove(removed)
+        self.process_scheduler.startup_usermode_processes.remove(removed)
 
     def kill_process_by_type(self, process_type, force=False):
         """
@@ -940,7 +927,7 @@ class Computer:
         :param force:
         :return: None
         """
-        for waiting_process in self.process_scheduler.waiting_processes:
+        for waiting_process in self.process_scheduler.waiting_usermode_processes:
             if isinstance(waiting_process.process, process_type):
                 self.kill_process(waiting_process.process.pid, force)
 
@@ -952,7 +939,7 @@ class Computer:
         :return:
         """
         if force:
-            self.process_scheduler.terminate_process(self.process_scheduler.get_process(pid))
+            self.process_scheduler.terminate_process(self.process_scheduler.get_usermode_process(pid), COMPUTER.PROCESSES.MODES.USERMODE)
         else:
             self.send_process_signal(pid, COMPUTER.PROCESSES.SIGNALS.SIGTERM)
 
@@ -967,7 +954,7 @@ class Computer:
         if signum in COMPUTER.PROCESSES.SIGNALS.UNIGNORABLE_KILLING_SIGNALS:
             self.kill_process(pid, force=True)
         else:
-            self.process_scheduler.get_process(pid).signal_handlers[signum](signum)
+            self.process_scheduler.get_usermode_process(pid).signal_handlers[signum](signum)
 
     def is_process_running(self, process_type):
         """
@@ -976,7 +963,7 @@ class Computer:
         :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
         :return: `bool`
         """
-        for process, _ in self.process_scheduler.waiting_processes:
+        for process, _ in self.process_scheduler.waiting_usermode_processes:
             if isinstance(process, process_type):
                 return True
         return False
@@ -989,7 +976,7 @@ class Computer:
         :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
         :return: `bool`
         """
-        for process, _ in self.process_scheduler.waiting_processes:
+        for process, _ in self.process_scheduler.waiting_usermode_processes:
             if isinstance(process, process_type):
                 return process
         raise NoSuchProcessError(f"'{process_type}' is not currently running!")
@@ -1004,7 +991,7 @@ class Computer:
         """
         socket = {
             COMPUTER.SOCKETS.TYPES.SOCK_STREAM: TCPSocket,
-            # COMPUTER.SOCKETS.TYPES.SOCK_DGRAM:
+            # COMPUTER.SOCKETS.MODES.SOCK_DGRAM:
         }[kind](self, address_family)
 
         self.sockets[socket] = SocketData(kind=kind,

@@ -60,7 +60,7 @@ class Switch(Computer):
         :return: None
         """
         if not self.is_process_running(STPProcess) and self.interfaces:
-            self.start_process(STPProcess)
+            self.process_scheduler.start_process(STPProcess)
 
     def send_stp(self, sender_bid, root_bid, distance_to_root, root_declaration_time):
         """

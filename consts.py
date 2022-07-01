@@ -624,6 +624,11 @@ class COMPUTER:
                 SIGSTOP,
             }
 
+        class MODES:
+            USERMODE = 'usermode'
+            KERNELMODE = 'kernelmode'
+
+            ALL_MODES = [USERMODE, KERNELMODE]
 
     class ARP_CACHE:
         DYNAMIC = "dynamic"
