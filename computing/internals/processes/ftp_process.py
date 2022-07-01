@@ -36,8 +36,7 @@ class ServerFTPProcess(FTPProcess):
     def code(self):
         self.socket.bind((self.computer.get_ip(), PORTS.FTP))
         self.socket.listen(1)
-        self.socket.accept()
-        yield WaitingFor(lambda: self.socket.is_connected)
+        yield from self.socket.blocking_accept()
 
         received_list = []
         yield from self.socket.blocking_recv(received_list)

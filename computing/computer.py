@@ -1062,6 +1062,15 @@ class Computer:
                                            f"It was probably not acquired using the `computer.get_socket` method! "
                                            f"The socket: {socket}")
 
+    def handle_sockets(self):
+        """
+        Handles all sending and receiving for sockets of the computer.
+        Sends out and receives packets that they require
+        :return: None
+        """
+        for socket in self.sockets:
+
+
     # ------------------------------- v The main `logic` method of the computer's main loop v --------------------------
 
     def logic(self):
@@ -1077,6 +1086,7 @@ class Computer:
             return
 
         self.received.clear()
+        self.handle_sockets()
         for interface in self.all_interfaces:
             if not interface.is_connected():
                 continue

@@ -91,6 +91,14 @@ class TCPSocket(Socket):
         except SocketIsClosedError:
             return
 
+    def blocking_accept(self):
+        """
+        Just like `self.accept` - only processes can use `yield from` to block until the socket is connected :)
+        :return:
+        """
+        self.accept()
+        yield WaitingFor(lambda: self.is_connected)
+
     def __str__(self):
         return f"socket of {self.computer.name}"
 

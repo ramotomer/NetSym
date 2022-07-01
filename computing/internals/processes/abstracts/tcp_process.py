@@ -533,10 +533,10 @@ class SendingWindow:
         Only does that to NotAckedPackets where the `is_sent` attribute is False.
         :return:
         """
-        for not_acked_packet in self.window:
-            if not not_acked_packet.is_sent:
-                self.sent.append(not_acked_packet.packet.copy())
-                not_acked_packet.is_sent = True
+        for non_acked_packet in self.window:
+            if not non_acked_packet.is_sent:
+                self.sent.append(non_acked_packet.packet.copy())
+                non_acked_packet.is_sent = True
 
     def add_waiting(self, packet):
         """
@@ -566,11 +566,11 @@ class SendingWindow:
         Retransmits all of the packets that were not ACKed for too long!
         :return: None
         """
-        for not_acked_packet in list(self.window):
-            if MainLoop.instance.time_since(not_acked_packet.sending_time) > PROTOCOLS.TCP.RESEND_TIME:
-                not_acked_packet.packet["TCP"].is_retransmission = True
-                self.add_no_wait(not_acked_packet.packet)
-                not_acked_packet.sending_time = MainLoop.instance.time()
+        for non_acked_packet in list(self.window):
+            if MainLoop.instance.time_since(non_acked_packet.sending_time) > PROTOCOLS.TCP.RESEND_TIME:
+                non_acked_packet.packet["TCP"].is_retransmission = True
+                self.add_no_wait(non_acked_packet.packet)
+                non_acked_packet.sending_time = MainLoop.instance.time()
 
     def __repr__(self):
         """
