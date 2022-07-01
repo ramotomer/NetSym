@@ -9,8 +9,8 @@ from address.mac_address import MACAddress
 from computing.interface import Interface
 from computing.internals.arp_cache import ArpCache
 from computing.internals.filesystem.filesystem import Filesystem
+from computing.internals.processes.kernelmode_processes.arp_process import ARPProcess
 from computing.internals.processes.process_scheduler import ProcessScheduler
-from computing.internals.processes.usermode_processes.arp_process import ARPProcess
 from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEServerProcess
 from computing.internals.processes.usermode_processes.dhcp_process import DHCPClient
 from computing.internals.processes.usermode_processes.dhcp_process import DHCPServer
