@@ -3,6 +3,7 @@ from functools import wraps
 from typing import Tuple
 
 from address.ip_address import IPAddress
+from computing.internals.processes.abstracts.process import WaitingFor
 from consts import COMPUTER
 from exceptions import SocketNotBoundError, SocketNotConnectedError, SocketIsBrokenError, SocketIsClosedError
 
@@ -39,7 +40,7 @@ class Socket(metaclass=ABCMeta):
         self.listening_count = None
 
         self.__class__.send =    self.check_not_closed(self.check_connected(self.check_not_broken(self.__class__.send)))
-        self.__class__.recv =    self.check_not_closed(self.check_bound(self.check_connected(self.check_not_broken(self.__class__.recv))))
+        self.__class__.receive =    self.check_not_closed(self.check_bound(self.check_connected(self.check_not_broken(self.__class__.receive))))
         self.__class__.listen =  self.check_bound(self.check_not_closed(self.__class__.listen))
         self.__class__.accept =  self.check_bound(self.check_not_closed(self.__class__.accept))
         self.__class__.connect = self.check_not_closed(self.__class__.connect)
@@ -70,6 +71,10 @@ class Socket(metaclass=ABCMeta):
         port = port if port is not None else 0
 
         return address, port
+
+    @property
+    def has_data_to_receive(self):
+        return bool(self.received)
 
     @staticmethod
     def check_bound(func):
@@ -117,9 +122,9 @@ class Socket(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def recv(self, count):
+    def receive(self, count):
         """
-        Recv the information from the other side of the socket
+        receive the information from the other side of the socket
         :param count: how many bytes to receive
         :return:
         """
@@ -154,6 +159,14 @@ class Socket(metaclass=ABCMeta):
         Accept connections to this socket.
         :return:
         """
+
+    def block_until_received(self):
+        """
+        Like `self.receive` but is a generator that process can use `yield from` upon.
+        takes in a list, appends it with the received data when the generator is over.
+        :return:
+        """
+        yield WaitingFor(lambda: self.has_data_to_receive)
 
     def close(self):
         """

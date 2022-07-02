@@ -17,6 +17,7 @@ class RawSocket(Socket):
         Generates a socket
 
         filter: a function that takes in a packet and returns a `bool`. Tells us whether or not the socket wishes to take that packet in
+        interface: The interface to listen on. Can be set to INTERFACES.ANY_INTERFACE for all interfaces
 
         :param computer: the computer that contains the socket
         """
@@ -26,6 +27,7 @@ class RawSocket(Socket):
 
         self.filter = None
         self.interface = INTERFACES.NO_INTERFACE
+        self.is_promisc = False
 
     @property
     def bound_address(self):
@@ -51,9 +53,9 @@ class RawSocket(Socket):
             raise RawSocketError("Cannot send on a raw socket that is bound to all interfaces!")
         self.computer.send(packet, self.interface)
 
-    def recv(self, count=None):
+    def receive(self, count=None):
         """
-        Recv the information as specified in the BPF that was configured when the socket was bound
+        receive the information as specified in the BPF that was configured when the socket was bound
         :param count: is ignored
         """
         returned = self.received[:]
@@ -62,7 +64,8 @@ class RawSocket(Socket):
 
     def bind(self, filter, interface=INTERFACES.ANY_INTERFACE, promisc=False):
         """
-
+        Binds the socket to an interface and filter.
+        This is necessary for sniffing and sending using it.
         """
         self.is_bound = True
 
@@ -72,6 +75,7 @@ class RawSocket(Socket):
             if interface is INTERFACES.ANY_INTERFACE:
                 raise RawSocketError(f"Cannot use promiscuous mode when the socket is on all interfaces!!! socket: {self}, computer: {self.computer}")
             interface.is_promisc = True
+        self.is_promisc = promisc
 
     def connect(self, address: Tuple[IPAddress, int]):
         """

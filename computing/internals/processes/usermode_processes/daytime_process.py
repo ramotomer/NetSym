@@ -32,7 +32,7 @@ class DAYTIMEServerProcess(TCPProcess):
 
     def __repr__(self):
         """String representation of the process"""
-        return "DAYTIME server process"
+        return "daytimesd"
 
 
 class DAYTIMEClientProcess(TCPProcess):
@@ -63,4 +63,4 @@ class DAYTIMEClientProcess(TCPProcess):
 
     def __repr__(self):
         """String representation of the process"""
-        return "DAYTIME client process"
+        return "daytimecd"

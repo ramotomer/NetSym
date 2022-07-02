@@ -6,7 +6,6 @@ from computing.internals.processes.kernelmode_processes.sockets.tcp_socket_proce
     ConnectingTCPSocketProcess
 from computing.internals.sockets.socket import Socket
 from consts import COMPUTER
-from exceptions import SocketIsClosedError
 
 
 class TCPSocket(Socket):
@@ -31,9 +30,9 @@ class TCPSocket(Socket):
         self.to_send.append(data)
         return len(data)
 
-    def recv(self, count=1024):
+    def receive(self, count=1024):
         """
-        Recv the information from the other side of the socket
+        receive the information from the other side of the socket
         :param count: how many bytes to receive
         :return:
         """
@@ -73,22 +72,6 @@ class TCPSocket(Socket):
         :return:
         """
         self.pid = self.computer.process_scheduler.start_kernelmode_process(ListeningTCPSocketProcess, self, self.bound_address)
-
-    def blocking_recv(self, received_list):
-        """
-        Like `self.recv` but is a generator that process can use `yield from` upon.
-        takes in a list, appends it with the received data when the generator is over.
-        :return:
-        """
-        received = self.recv()
-        try:
-            while received is None:
-                received = self.recv()
-                yield WaitingFor(lambda: True)
-
-            received_list.append(received)
-        except SocketIsClosedError:
-            return
 
     def blocking_accept(self):
         """

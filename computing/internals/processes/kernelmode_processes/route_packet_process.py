@@ -101,4 +101,4 @@ class RoutePacket(Process):
 
     def __repr__(self):
         """The string representation of the process"""
-        return "Routing Process"
+        return "[kroute]"

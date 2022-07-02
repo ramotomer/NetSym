@@ -485,7 +485,7 @@ class Computer:
         One can read more at the 'dhcp_process.py' file.
         :return: None
         """
-        self.process_scheduler.kill_usermode_process_by_type(DHCPClient)  # if currently asking for dhcp, stop it
+        self.process_scheduler.kill_all_usermode_processes_by_type(DHCPClient)  # if currently asking for dhcp, stop it
         self.process_scheduler.start_usermode_process(DHCPClient)
 
     def open_tcp_port(self, port_number):
@@ -500,7 +500,7 @@ class Computer:
         process = self.TCP_PORTS_TO_PROCESSES[port_number]
         if port_number in self.open_tcp_ports:
             if process is not None:
-                self.process_scheduler.kill_usermode_process_by_type(process)
+                self.process_scheduler.kill_all_usermode_processes_by_type(process)
         else:
             if process is not None:
                 self.process_scheduler.start_usermode_process(self.TCP_PORTS_TO_PROCESSES[port_number])
@@ -587,26 +587,23 @@ class Computer:
 
     def start_sniffing(self, interface_name=INTERFACES.ANY_INTERFACE, is_promisc=False):
         """
-
-        :param interface_name:
-        :param is_promisc:
-        :return:
+        Starts a sniffing process on a supplied interface
         """
         self.process_scheduler.start_usermode_process(SniffingProcess, lambda packet: True, self.interface_by_name(interface_name), is_promisc)
 
-    def stop_sniffing(self):
+    def stop_all_sniffing(self):
         """
-
-        :return:
+        Kill all tcpdump processes currently running on the computer
         """
-        self.process_scheduler.kill_usermode_process(self.process_scheduler.get_usermode_process_by_type(SniffingProcess).pid)
+        self.process_scheduler.kill_all_usermode_processes_by_type(SniffingProcess)
 
     def toggle_sniff(self, interface_name=INTERFACES.ANY_INTERFACE, is_promisc=False):
         """
-        Toggles sniffing on the given interface
+        Toggles sniffing.
+        TODO: if the sniffing is already on - the toggle will turn off ALL sniffing on the computer :( - not only on the specific interface requested
         """
         if self.process_scheduler.is_usermode_process_running_by_type(SniffingProcess):
-            self.stop_sniffing()
+            self.stop_all_sniffing()
         else:
             self.start_sniffing(interface_name, is_promisc)
 

@@ -246,7 +246,7 @@ class STPProcess(Process):
     def _tree_unstable_again(self):
         """
         This is called if the tree was thought to be stable but then the root was updated, Takes the STP process
-        back to the ustable state
+        back to the unstable state
         :return: None
         """
         self.computer.print("STP Tree unstable!")
@@ -328,4 +328,4 @@ class STPProcess(Process):
 
     def __repr__(self):
         """The string representation of the STP process"""
-        return "STP process"
+        return "stpd"

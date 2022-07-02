@@ -102,4 +102,4 @@ class SwitchingProcess(Process):
             self.delete_old_switch_table_items()
 
     def __repr__(self):
-        return "Switching process"
+        return "[kswitch]"

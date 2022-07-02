@@ -39,7 +39,6 @@ class Interface:
         self.ip = IPAddress(ip) if ip is not None else None
 
         self.is_promisc = True
-        self.is_sniffing = False
         self.is_blocked = False
         self.accepting = None  # This is the only type of packet that is accepted when the interface is blocked.
 
@@ -268,7 +267,7 @@ Interface:
 {str(self.mac) if not self.mac.is_no_mac() else ""} 
 {repr(self.ip) if self.has_ip() else ''}
 {"Connected" if self.is_connected() else "Disconnected"}
-{f"Promisc{linesep}" if self.is_promisc else ""}{f"Sniffing{linesep}" if self.is_sniffing else ""}{"Blocked" if 
+{f"Promisc{linesep}" if self.is_promisc else ""}{"Blocked" if 
         self.is_blocked else ""}
 """
 

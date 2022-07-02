@@ -25,7 +25,7 @@ class FTPProcess(Process, metaclass=ABCMeta):
         self.die()
 
     def __repr__(self):
-        return "ftp process"
+        return "ftp"
 
 
 class ServerFTPProcess(FTPProcess):
@@ -38,9 +38,8 @@ class ServerFTPProcess(FTPProcess):
         self.socket.listen(1)
         yield from self.socket.blocking_accept()
 
-        received_list = []
-        yield from self.socket.blocking_recv(received_list)
-        received, = received_list
+        yield from self.socket.block_until_received()
+        received = self.socket.receive()
 
         if received.startswith("FTP: "):
             filename = received.split()[received.split().index("FTP:") + 1]
@@ -74,11 +73,9 @@ class ClientFTPProcess(FTPProcess):
         self.socket.send(f"FTP: {self.filename}")
 
         data = ''
-        data_list = []
         while self.socket.is_connected and not self.socket.is_closed:
-            yield from self.socket.blocking_recv(data_list)
-            data += ''.join(data_list)
-            data_list.clear()
+            yield from self.socket.block_until_received()
+            data += self.socket.receive()
 
         self.computer.filesystem.output_to_file(data, self.filename.split("/")[-1], self.cwd)
 

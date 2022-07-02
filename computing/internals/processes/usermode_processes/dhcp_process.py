@@ -76,7 +76,7 @@ class DHCPClient(Process):
 
     def __repr__(self):
         """The string representation of the the process"""
-        return "DHCP client process"
+        return "dhcpcd"
 
 
 class DHCPServer(Process):
@@ -183,4 +183,4 @@ class DHCPServer(Process):
 
     def __repr__(self):
         """The string representation of the the process"""
-        return "DHCP server process"
+        return "dhcpsd"

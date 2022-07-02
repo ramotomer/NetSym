@@ -450,7 +450,7 @@ class ProcessScheduler:
         else:
             self.send_process_signal(pid, COMPUTER.PROCESSES.SIGNALS.SIGTERM, COMPUTER.PROCESSES.MODES.USERMODE)
 
-    def kill_usermode_process_by_type(self, process_type, force=False):
+    def kill_all_usermode_processes_by_type(self, process_type, force=False):
         """
         Takes in a process type and kills all of the waiting processes of that type in this `Computer`.
         They are killed by a signal, unless specified specifically with the `force` param

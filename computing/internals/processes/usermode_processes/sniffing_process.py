@@ -1,9 +1,11 @@
-from computing.internals.processes.abstracts.process import Process, WaitingFor
+from computing.internals.processes.abstracts.process import Process
 from consts import COMPUTER, INTERFACES, OPCODES
+from exceptions import SocketIsClosedError
 
 
 class SniffingProcess(Process):
     """
+    This is a process object. The process it represents is one that sniffs packets and prints the results to the screen.
 
     """
     def __init__(self, pid, computer, filter, interface=INTERFACES.ANY_INTERFACE, promisc=False):
@@ -43,17 +45,19 @@ class SniffingProcess(Process):
         return f"{line} {src_ip!s} > {dst_ip!s}"
 
     def code(self):
-        """
-
-        :return:
-        """
         self.computer.print(f"started sniffing on {self.socket.interface.name or 'All interfaces'}")
         while True:
-            yield WaitingFor(lambda: bool(self.socket.received))
+            yield from self.socket.block_until_received()
 
-            for packet in self.socket.recv():
-                self.computer.print(f"({self.packet_count}) {self._get_sniffed_packet_info_line(packet)}")
-                self.packet_count += 1
+            try:
+                for packet in self.socket.receive():
+                    self.computer.print(f"({self.packet_count}) {self._get_sniffed_packet_info_line(packet)}")
+                    self.packet_count += 1
+            except SocketIsClosedError:
+                self.die()
+                return
 
     def __repr__(self):
-        return "sniffing"
+        return f"tcpdump " \
+            f"{f'-A' if self.socket.interface == INTERFACES.ANY_INTERFACE else f'-i {self.socket.interface.name}'} " \
+            f"{'-p' if self.socket.is_promisc else ''}"

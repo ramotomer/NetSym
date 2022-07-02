@@ -381,7 +381,7 @@ class SocketError(ComputerError):
 
 class SocketIsBrokenError(SocketError):
     """
-    Trying to send or recv through a broken socket
+    Trying to send or receive through a broken socket
     """
 
 
