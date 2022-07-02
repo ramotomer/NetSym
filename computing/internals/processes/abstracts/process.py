@@ -1,6 +1,8 @@
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple, defaultdict
 
+from recordclass import recordclass
+
 from consts import COMPUTER
 from exceptions import *
 from gui.main_loop import MainLoop
@@ -122,14 +124,24 @@ class Timeout:
         self.init_time = MainLoop.instance.time()
 
 
+PacketMetadata = recordclass("PacketMetadata", [
+    "interface",
+    "time",
+    "direction",
+])
+
+
 class ReturnedPacket:
     """
     The proper way to get received packets back from the running computer.
-    `self.packets` is a dictionary with `Packet` keys and the values are the interfaces they were received from.
+    `self.packets` is a dictionary with `Packet` keys and the values are `PacketMetadata` objects
     """
-    def __init__(self):
+    def __init__(self, packet=None, metadata=None):
         self.packets = {}
         self.packet_iterator = None
+
+        if packet is not None and metadata is not None:
+            self.packets[packet] = metadata
 
     @property
     def packet(self):
@@ -138,6 +150,9 @@ class ReturnedPacket:
         result. If there are no more packets left to return, raise `NoSuchPacketError`
         :return: a `Packet` object that was not yet used.
         """
+        if len(self.packets) == 1:
+            return list(self.packets)[0]
+
         if self.packet_iterator is None:
             self.packet_iterator = iter(self.packets)
 
@@ -149,8 +164,15 @@ class ReturnedPacket:
     @property
     def packet_and_interface(self):
         """
-        just like `self.packet` but returns a tuple of (packet, interface) [actually (packet, self.packets[packet])
-        :return:
+        just like `self.packet` but returns a tuple of (packet, interface)
+        """
+        packet = self.packet
+        return packet, self.packets[packet].interface
+
+    @property
+    def packet_and_metadata(self):
+        """
+        just like `self.packet` but returns a tuple of (packet, PacketMetadata) [actually (packet, self.packets[packet])
         """
         packet = self.packet
         return packet, self.packets[packet]

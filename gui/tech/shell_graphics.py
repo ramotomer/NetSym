@@ -3,7 +3,7 @@ from collections import namedtuple
 from pyglet.window import key
 
 from computing.internals.shell.shell import Shell
-from consts import CONSOLE, TEXT, KEYBOARD, debugp
+from consts import CONSOLE, TEXT, KEYBOARD
 from gui.tech.output_console import OutputConsole
 from gui.user_interface.key_writer import KeyWriter
 from gui.user_interface.text_graphics import Text
@@ -149,7 +149,6 @@ class ShellGraphics(OutputConsole):
         Closes the shell and the window that carries it.
         :return:
         """
-        debugp(f"exit!")
         self.carrying_window.delete()
 
     def move_caret(self, amount):

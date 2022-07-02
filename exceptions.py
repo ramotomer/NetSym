@@ -50,6 +50,12 @@ class WrongUsageError(SomethingWentTerriblyWrongError):
     """
 
 
+class WrongIPRouteUsageError(WrongUsageError):
+    """
+    Wrong usage of the `ip route` command
+    """
+
+
 class ThisCodeShouldNotBeReached(SomethingWentTerriblyWrongError):
     """
     This should be raised in some code segment that should never be reached, but it is good practice to write it anyway.

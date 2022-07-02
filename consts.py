@@ -363,6 +363,9 @@ class PACKET:
         LEFT = 'L'  # do not change value! it is depended on
         WIRELESS = 'W'
 
+        INCOMING = 'INCOMING'
+        OUTGOING = 'OUTGOING'
+
     TYPE_TO_IMAGE = {
         "Ethernet": IMAGES.PACKETS.ETHERNET,
         "IP": IMAGES.PACKETS.IP,

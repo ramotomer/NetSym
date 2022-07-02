@@ -311,8 +311,8 @@ class STPProcess(Process):
             yield WaitingForPacketWithTimeout(lambda p: ("STP" in p), stp_packets, Timeout(0))
             self._update_disconnected_ports()
 
-            for packet, port in stp_packets.packets.items():
-                self._learn_from_packet(packet, port)
+            for packet, packet_metadata in stp_packets.packets.items():
+                self._learn_from_packet(packet, receiving_port=packet_metadata.interface)
 
             self._set_interface_states()
 

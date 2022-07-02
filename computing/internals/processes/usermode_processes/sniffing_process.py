@@ -18,17 +18,23 @@ class SniffingProcess(Process):
 
         self.set_killing_signals_handler(self.close_socket)
 
+    @property
+    def interface_name(self):
+        return getattr(self.socket.interface, 'name', '') or 'All interfaces'
+
     def close_socket(self, signum):
-        self.computer.print(f"Stopped sniffing on {self.socket.interface.name or 'All interfaces'}")
+        self.computer.print(f"Stopped sniffing on {self.interface_name}")
         self.socket.close()
 
     @staticmethod
-    def _get_sniffed_packet_info_line(packet):
+    def _get_sniffed_packet_info_line(returned_packet):
         """
         Return the line that is printed when the packet is sniffed.
-        :param packet:
+        :param returned_packet: a `ReturnedPacket` object
         :return:
         """
+        packet, packet_metadata = returned_packet.packet_and_metadata
+
         deepest = packet.deepest_layer()
         line = deepest.opcode if hasattr(deepest, "opcode") else type(deepest).__name__
         if 'TCP' in packet:
@@ -42,16 +48,16 @@ class SniffingProcess(Process):
             return line
 
         src_ip, dst_ip = packet[l3_protocol].src_ip, packet[l3_protocol].dst_ip
-        return f"{line} {src_ip!s} > {dst_ip!s}"
+        return f"{line} {packet_metadata.direction} {src_ip!s} > {dst_ip!s}"
 
     def code(self):
-        self.computer.print(f"started sniffing on {self.socket.interface.name or 'All interfaces'}")
+        self.computer.print(f"started sniffing on {self.interface_name}")
         while True:
             yield from self.socket.block_until_received()
 
             try:
-                for packet in self.socket.receive():
-                    self.computer.print(f"({self.packet_count}) {self._get_sniffed_packet_info_line(packet)}")
+                for returned_packet in self.socket.receive():
+                    self.computer.print(f"({self.packet_count}) {self._get_sniffed_packet_info_line(returned_packet)}")
                     self.packet_count += 1
             except SocketIsClosedError:
                 self.die()
