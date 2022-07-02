@@ -86,6 +86,7 @@ class Computer:
         if not interfaces:
             self.interfaces = []  # a list of all of the interfaces without the loopback
         self.loopback = Interface.loopback()
+        self.boot_time = MainLoop.instance.time()
 
         self.received = []
         self.arp_cache = ArpCache()
@@ -201,6 +202,21 @@ class Computer:
         for shell in self.active_shells:
             shell.write(string)
 
+    def _close_all_shells(self):
+        """
+        Close all shells of the computer.
+        Occurs on shutdown
+        """
+        deleted_any_shells = False
+        for shell in self.active_shells[:]:
+            deleted_any_shells = True
+            shell.exit()
+
+        if deleted_any_shells:
+            message = f"{self.name} was shutdown! Relevant shells were closed"
+            # PopupError(message, user_interface)  # Impossible - you need the UserInterface object
+            print(message)
+
     def power(self):
         """
         Powers the computer on or off.
@@ -223,14 +239,17 @@ class Computer:
         Things the computer should perform as it is shut down.
         :return:
         """
+        self.boot_time = None
         self.process_scheduler.terminate_all()
         self.filesystem.wipe_temporary_directories()
+        self._close_all_shells()
 
     def on_startup(self):
         """
         Things the computer should do when it is turned on
         :return:
         """
+        self.boot_time = MainLoop.instance.time()
         self.process_scheduler.terminate_all()
         self.process_scheduler.run_startup_processes()
 

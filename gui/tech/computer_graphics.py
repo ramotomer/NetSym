@@ -1,5 +1,6 @@
-from collections import namedtuple
 from os import linesep
+
+from recordclass import recordclass
 
 from address.ip_address import IPAddress
 from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEClientProcess
@@ -12,10 +13,9 @@ from gui.tech.interface_graphics_list import InterfaceGraphicsList
 from gui.tech.output_console import OutputConsole
 from gui.tech.process_graphics import ProcessGraphicsList
 from gui.user_interface.popup_windows.popup_console import PopupConsole
+from gui.user_interface.popup_windows.popup_error import PopupError
 from gui.user_interface.text_graphics import Text
 from usefuls.funcs import with_args
-from recordclass import recordclass
-
 
 ChildGraphicsObjects = recordclass("ChildGraphicsObjects", [
     "text",
@@ -175,8 +175,10 @@ class ComputerGraphics(ImageGraphics):
         Opens a shell window on the computer
         :return:
         """
-        if self.computer.is_powered_on:
-            PopupConsole(user_interface, self.computer)
+        if not self.computer.is_powered_on:
+            PopupError(f"{self.computer.name} is turned off! \nCannot open console", user_interface)
+            return
+        PopupConsole(user_interface, self.computer)
 
     def generate_view_text(self):
         """
