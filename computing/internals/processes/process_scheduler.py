@@ -228,14 +228,13 @@ class ProcessScheduler:
         waiting_processes = self.__details_by_mode[mode].waiting_processes
 
         process, waiting_for = waiting_process
-        packet, _, receiving_interface = received_packet
+        packet, packet_metadata = received_packet.packet_and_metadata
 
         if not hasattr(waiting_for, "value"):
             return False
 
         if waiting_for.condition(packet):
-            waiting_for.value.packets[
-                packet] = receiving_interface  # this is the behaviour the `Process` object expects
+            waiting_for.value.packets[packet] = packet_metadata  # this is the behaviour the `Process` object expects
 
             if process not in ready_processes:  # if this is the first packet that the process received in this loop
                 ready_processes.append(process)
@@ -450,7 +449,7 @@ class ProcessScheduler:
         else:
             self.send_process_signal(pid, COMPUTER.PROCESSES.SIGNALS.SIGTERM, COMPUTER.PROCESSES.MODES.USERMODE)
 
-    def kill_usermode_process_by_type(self, process_type, force=False):
+    def kill_all_usermode_processes_by_type(self, process_type, force=False):
         """
         Takes in a process type and kills all of the waiting processes of that type in this `Computer`.
         They are killed by a signal, unless specified specifically with the `force` param

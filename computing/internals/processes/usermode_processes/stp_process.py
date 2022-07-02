@@ -246,7 +246,7 @@ class STPProcess(Process):
     def _tree_unstable_again(self):
         """
         This is called if the tree was thought to be stable but then the root was updated, Takes the STP process
-        back to the ustable state
+        back to the unstable state
         :return: None
         """
         self.computer.print("STP Tree unstable!")
@@ -311,8 +311,8 @@ class STPProcess(Process):
             yield WaitingForPacketWithTimeout(lambda p: ("STP" in p), stp_packets, Timeout(0))
             self._update_disconnected_ports()
 
-            for packet, port in stp_packets.packets.items():
-                self._learn_from_packet(packet, port)
+            for packet, packet_metadata in stp_packets.packets.items():
+                self._learn_from_packet(packet, receiving_port=packet_metadata.interface)
 
             self._set_interface_states()
 
@@ -328,4 +328,4 @@ class STPProcess(Process):
 
     def __repr__(self):
         """The string representation of the STP process"""
-        return "STP process"
+        return "stpd"

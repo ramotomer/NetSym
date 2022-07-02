@@ -76,7 +76,7 @@ class DHCPClient(Process):
 
     def __repr__(self):
         """The string representation of the the process"""
-        return "DHCP client process"
+        return "dhcpcd"
 
 
 class DHCPServer(Process):
@@ -175,7 +175,8 @@ class DHCPServer(Process):
             received_packets = ReturnedPacket()
             yield WaitingForPacket(lambda p: "DHCP" in p, received_packets)
 
-            for packet, interface in received_packets.packets.items():
+            for packet, packet_metadata in received_packets.packets.items():
+                interface = packet_metadata.interface
                 if not interface.has_ip():
                     self.computer.print("Cannot server DHCP without an IP address!")
                     continue
@@ -183,4 +184,4 @@ class DHCPServer(Process):
 
     def __repr__(self):
         """The string representation of the the process"""
-        return "DHCP server process"
+        return "dhcpsd"

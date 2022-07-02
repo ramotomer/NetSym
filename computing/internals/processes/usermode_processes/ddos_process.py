@@ -41,4 +41,4 @@ class DDOSProcess(Process):
 
     def __repr__(self):
         """A string representation of the process"""
-        return "DDOS process"
+        return f"my_attack.py -c {self.count} -i {self.sending_interval}"

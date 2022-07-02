@@ -65,7 +65,7 @@ class TCPSocketProcess(TCPProcess, metaclass=ABCMeta):
         The string representation of the process (also the process name in `ps`)
         :return:
         """
-        return "[ksockworker]"
+        return "[ktcpsock]"
 
 
 class ListeningTCPSocketProcess(TCPSocketProcess):

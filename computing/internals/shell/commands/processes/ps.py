@@ -27,8 +27,7 @@ class Ps(Command):
         :param process:
         :return:
         """
-        name = ' '.join(repr(process).lower().split()).title().replace(' ', '')
-        return f"{process.pid: >3}\t{name}\n"
+        return f"{process.pid: >3}\t{repr(process)}\n"
 
     def _list_processes(self, process_mode=COMPUTER.PROCESSES.MODES.USERMODE):
         """

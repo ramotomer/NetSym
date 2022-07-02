@@ -216,6 +216,8 @@ class Shell:
         self.history_index = None
 
         string = string.split(CONSOLE.SHELL.COMMENT_SIGN)[0]
+        if not string:  # all of the line is comment
+            return
 
         if self._does_string_require_split_by_command_enders(string):
             for inline_command in self._split_by_command_enders_outside_of_quotes(string):  # split by ;-s

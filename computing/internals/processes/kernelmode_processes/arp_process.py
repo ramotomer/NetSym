@@ -53,7 +53,7 @@ class ARPProcess(Process):
             self.computer.process_scheduler.terminate_process(self.requesting_process, None)
 
     def __repr__(self):
-        return "Address Resolution (ARP) Process "
+        return f"[karp] {self.address}"
 
 
 class SendPacketWithArpsProcess(Process):
@@ -85,4 +85,4 @@ class SendPacketWithArpsProcess(Process):
         )
 
     def __repr__(self):
-        return "Address Resolution Protocol (ARP) process "
+        return f"[kwarp]"

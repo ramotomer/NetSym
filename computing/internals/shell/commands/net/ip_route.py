@@ -1,7 +1,7 @@
 from address.ip_address import IPAddress
 from computing.internals.shell.commands.command import Command, CommandOutput
 from consts import ADDRESSES
-from exceptions import RoutingTableError
+from exceptions import RoutingTableError, WrongIPRouteUsageError
 from usefuls.funcs import get_the_one
 
 
@@ -31,9 +31,13 @@ class IpRouteCommand(Command):
         :param args:
         :return:
         """
-        net = IPAddress(args[args.index('add') + 1])
-        gateway = IPAddress(args[args.index('via') + 1]) if 'via' in args else ADDRESSES.IP.ON_LINK
-        interface_name = args[args.index('dev') + 1]
+        try:
+            net = IPAddress(args[args.index('add') + 1])
+            gateway = IPAddress(args[args.index('via') + 1]) if 'via' in args else ADDRESSES.IP.ON_LINK
+            interface_name = args[args.index('dev') + 1]
+        except IndexError:
+            raise WrongIPRouteUsageError()
+
         interface_ip = get_the_one(self.computer.all_interfaces, lambda c: c.name == interface_name).ip
         if interface_ip is None:
             return CommandOutput('', "The interface does not have an IP address!!!")
@@ -47,7 +51,11 @@ class IpRouteCommand(Command):
         :param args:
         :return:
         """
-        net = args[args.index('del') + 1]
+        try:
+            net = args[args.index('del') + 1]
+        except IndexError:
+            raise WrongIPRouteUsageError()
+
         try:
             self.computer.routing_table.route_delete(IPAddress(net))
         except RoutingTableError:
@@ -67,19 +75,22 @@ class IpRouteCommand(Command):
         """
         prints out the arguments.
         """
-        if not parsed_args.args:
-            return self._list_routes(parsed_args.args)
+        try:
+            if not parsed_args.args:
+                return self._list_routes(parsed_args.args)
 
-        elif parsed_args.args[0] in self.commands:
-            return self.commands[parsed_args.args[0]](parsed_args.args)
+            elif parsed_args.args[0] in self.commands:
+                return self.commands[parsed_args.args[0]](parsed_args.args)
+        except WrongIPRouteUsageError:
+            pass  # vv  print the usage  vv
 
-        else:
-            return CommandOutput(
-                '', """
-Unknown command! the syntax is `ip route add <net> via <gateway_ip> dev <interface_name>
+        return CommandOutput(
+            '', """
+Wrong Usage! 
+The syntax is `ip route add <net> via <gateway_ip> dev <interface_name>
 You can drop the `via` to create `On-Link` routes :)
 Or if you want to remove a route, `ip route del <net>`
 List routes by typing `ip route list` or just `ip route`"""
-            )
+        )
 
         # syntax: `ip route add 1.1.1.1/24 via 10.0.0.20 dev ens33` for example.

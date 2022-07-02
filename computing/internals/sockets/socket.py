@@ -3,6 +3,7 @@ from functools import wraps
 from typing import Tuple
 
 from address.ip_address import IPAddress
+from computing.internals.processes.abstracts.process import WaitingFor
 from consts import COMPUTER
 from exceptions import SocketNotBoundError, SocketNotConnectedError, SocketIsBrokenError, SocketIsClosedError
 
@@ -32,13 +33,16 @@ class Socket(metaclass=ABCMeta):
 
         self.is_connected = False
         self.is_closed = False
+        self.is_bound = False
+
+        self.allow_being_broken = False
 
         self.listening_count = None
 
-        self.__class__.send = self.check_not_closed(self.check_connected(self.check_not_broken(self.__class__.send)))
-        self.__class__.recv = self.check_not_closed(self.check_bound(self.check_connected(self.check_not_broken(self.__class__.recv))))
-        self.__class__.listen = self.check_bound(self.check_not_closed(self.__class__.listen))
-        self.__class__.accept = self.check_bound(self.check_not_closed(self.__class__.accept))
+        self.__class__.send =    self.check_not_closed(self.check_connected(self.check_not_broken(self.__class__.send)))
+        self.__class__.receive =    self.check_not_closed(self.check_bound(self.check_connected(self.check_not_broken(self.__class__.receive))))
+        self.__class__.listen =  self.check_bound(self.check_not_closed(self.__class__.listen))
+        self.__class__.accept =  self.check_bound(self.check_not_closed(self.__class__.accept))
         self.__class__.connect = self.check_not_closed(self.__class__.connect)
         # ^ decorators that survive inheritance
 
@@ -68,11 +72,15 @@ class Socket(metaclass=ABCMeta):
 
         return address, port
 
+    @property
+    def has_data_to_receive(self):
+        return bool(self.received)
+
     @staticmethod
     def check_bound(func):
         @wraps(func)
         def wrapper(self, *args, **kwargs):
-            if self.computer.sockets[self].local_port is None:
+            if not self.is_bound:
                 raise SocketNotBoundError("The socket is not bound to any address or port!!!")
             return func(self, *args, **kwargs)
         return wrapper
@@ -90,8 +98,7 @@ class Socket(metaclass=ABCMeta):
     def check_not_broken(func):
         @wraps(func)
         def wrapper(self, *args, **kwargs):
-            if self.pid is None or \
-                    self.process is None:
+            if (self.pid is None or self.process is None) and not self.allow_being_broken:
                 raise SocketIsBrokenError(f"The socket is broken and cannot be used!!! pid: {self.pid}, process: {self.process}, computer: {self.computer}")
             return func(self, *args, **kwargs)
         return wrapper
@@ -115,9 +122,9 @@ class Socket(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def recv(self, count):
+    def receive(self, count):
         """
-        Recv the information from the other side of the socket
+        receive the information from the other side of the socket
         :param count: how many bytes to receive
         :return:
         """
@@ -152,6 +159,14 @@ class Socket(metaclass=ABCMeta):
         Accept connections to this socket.
         :return:
         """
+
+    def block_until_received(self):
+        """
+        Like `self.receive` but is a generator that process can use `yield from` upon.
+        takes in a list, appends it with the received data when the generator is over.
+        :return:
+        """
+        yield WaitingFor(lambda: self.has_data_to_receive)
 
     def close(self):
         """

@@ -50,6 +50,12 @@ class WrongUsageError(SomethingWentTerriblyWrongError):
     """
 
 
+class WrongIPRouteUsageError(WrongUsageError):
+    """
+    Wrong usage of the `ip route` command
+    """
+
+
 class ThisCodeShouldNotBeReached(SomethingWentTerriblyWrongError):
     """
     This should be raised in some code segment that should never be reached, but it is good practice to write it anyway.
@@ -381,7 +387,7 @@ class SocketError(ComputerError):
 
 class SocketIsBrokenError(SocketError):
     """
-    Trying to send or recv through a broken socket
+    Trying to send or receive through a broken socket
     """
 
 
@@ -412,4 +418,16 @@ class PortAlreadyBoundError(SocketError):
 class SocketIsClosedError(SocketError):
     """
     Trying to use a closed socket.
+    """
+
+
+class RawSocketError(SocketError):
+    """
+    an exception related to raw sockets specifically
+    """
+
+
+class ActionNotSupportedInARawSocket(RawSocketError):
+    """
+    The action you were trying to perform should not be done on a socket of type raw
     """

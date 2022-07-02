@@ -1,5 +1,3 @@
-from itertools import cycle
-
 from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket, WaitingFor
 from consts import OPCODES, PROTOCOLS
 from exceptions import NoIPAddressError
@@ -39,7 +37,7 @@ class SendPing(Process):
         def tester(packet):
             if "ICMP" in packet:
                 if packet["ICMP"].opcode == OPCODES.ICMP.REPLY:
-                    if packet["IP"].src_ip == ip_address:
+                    if packet["IP"].src_ip == ip_address and self.computer.has_this_ip(packet["IP"].dst_ip):
                         return True
                     if self.computer.has_this_ip(self.dst_ip) and packet["IP"].src_ip == self.computer.loopback.ip:
                         return True
@@ -83,4 +81,4 @@ class SendPing(Process):
 
     def __repr__(self):
         """The string representation of the SendPing process"""
-        return "Ping process"
+        return f"ping {self.dst_ip} {f'-n {self.count}' if self.count != PROTOCOLS.ICMP.INFINITY else '-t'}"

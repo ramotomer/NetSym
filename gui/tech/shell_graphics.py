@@ -54,7 +54,11 @@ class ShellGraphics(OutputConsole):
         self.key_writer = KeyWriter(self.write_to_line, self.delete_last_char, self.submit_line)
         self.key_writer.add_key_combination(key.C, KEYBOARD.MODIFIERS.CTRL, self.clear_line)
         self.key_writer.add_key_combination(key.L, KEYBOARD.MODIFIERS.CTRL, self.clear_screen)
-        self.key_writer.add_key_combination(key.Q, KEYBOARD.MODIFIERS.CTRL, self.exit)
+        self.key_writer.add_key_combination([key.Q, key.D], KEYBOARD.MODIFIERS.CTRL, self.exit)
+        self.key_writer.add_key_combination(key.A, KEYBOARD.MODIFIERS.CTRL, with_args(self.move_caret, chr(key.HOME)))
+        self.key_writer.add_key_combination(key.E, KEYBOARD.MODIFIERS.CTRL, with_args(self.move_caret, chr(key.END)))
+        self.key_writer.add_key_combination(key.K, KEYBOARD.MODIFIERS.CTRL, self.delete_from_caret_until_the_end)
+        self.key_writer.add_key_combination(key.U, KEYBOARD.MODIFIERS.CTRL, self.delete_from_the_start_up_to_caret)
 
         self.key_writer.add_key_mapping(key.UP, self.command_parser.scroll_up_history)
         self.key_writer.add_key_mapping(key.DOWN, self.command_parser.scroll_down_history)
@@ -91,6 +95,26 @@ class ShellGraphics(OutputConsole):
         text = self.input_line_content
         text = text[:self.caret_index - 1] + CONSOLE.SHELL.CARET + text[self.caret_index:]
         self.caret_index = max(self.caret_index - 1, 0)
+        self.child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + text)
+
+    def delete_from_caret_until_the_end(self):
+        """
+        Delete all of the text until the end of the line
+        :return:
+        """
+        text = self.input_line_content
+        text = text[:self.caret_index] + CONSOLE.SHELL.CARET
+        # self.caret_index = max(self.caret_index - 1, 0)
+        self.child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + text)
+
+    def delete_from_the_start_up_to_caret(self):
+        """
+        Delete all of the text until the end of the line
+        :return:
+        """
+        text = self.input_line_content
+        text = CONSOLE.SHELL.CARET + text[self.caret_index:]
+        self.caret_index = 0
         self.child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + text)
 
     def submit_line(self):

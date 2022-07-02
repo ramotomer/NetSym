@@ -30,12 +30,12 @@ class SwitchingProcess(Process):
         :param packets: a list of `ReceivedPackets` which are tuples (packet,time,leg)
         :return: None
         """
-        for packet, leg in packets:
+        for packet, packet_metadata in packets:
             try:
                 src_mac = packet["Ethernet"].src_mac
             except KeyError:
                 raise UnknownPacketTypeError("The packet contains no Ethernet layer!!!")
-            self.switching_table[src_mac] = SwitchTableItem(leg, MainLoop.instance.time())
+            self.switching_table[src_mac] = SwitchTableItem(leg=packet_metadata.interface, time=MainLoop.instance.time())
 
     def delete_old_switch_table_items(self):
         """
@@ -54,12 +54,12 @@ class SwitchingProcess(Process):
         :param packets: a list of `ReceivedPackets` which are tuples (packet,time,leg)
         :return: None
         """
-        for packet, source_leg in packets:
+        for packet, packet_metadata in packets:
             if self.computer.is_directly_for_me(packet) or self.computer.is_arp_for_me(packet):
                 continue  # do not switch packets that are for you!
             if self.computer.stp_enabled and "STP" in packet:
                 continue   # do not switch STP packets (unless you do not know what STP is (== Hub))
-            destination_legs = self.where_to_send(packet, source_leg)
+            destination_legs = self.where_to_send(packet, source_leg=packet_metadata.interface)
             for leg in destination_legs:
                 packet.graphics = None
                 leg.send(packet.copy())
@@ -75,7 +75,7 @@ class SwitchingProcess(Process):
         dst_mac = packet["Ethernet"].dst_mac
 
         if self.computer.is_hub or dst_mac.is_broadcast() or (dst_mac not in self.switching_table):
-            return [leg for leg in self.computer.interfaces if leg is not source_leg and leg.is_connected()] # flood!!!
+            return [leg for leg in self.computer.interfaces if leg is not source_leg and leg.is_connected()]  # flood!!!
         destination_leg = self.switching_table[dst_mac].leg
         return [destination_leg] if destination_leg is not source_leg else []
         # ^ making sure the packet does not return on the destination leg
@@ -102,4 +102,4 @@ class SwitchingProcess(Process):
             self.delete_old_switch_table_items()
 
     def __repr__(self):
-        return "Switching process"
+        return "[kswitch]"

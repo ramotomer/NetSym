@@ -9,6 +9,7 @@ from address.mac_address import MACAddress
 from computing.internals.arp_cache import ArpCache
 from computing.internals.filesystem.filesystem import Filesystem
 from computing.internals.interface import Interface
+from computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket
 from computing.internals.processes.kernelmode_processes.arp_process import ARPProcess
 from computing.internals.processes.process_scheduler import ProcessScheduler
 from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEServerProcess
@@ -16,7 +17,9 @@ from computing.internals.processes.usermode_processes.dhcp_process import DHCPCl
 from computing.internals.processes.usermode_processes.dhcp_process import DHCPServer
 from computing.internals.processes.usermode_processes.ftp_process import ServerFTPProcess
 from computing.internals.processes.usermode_processes.ping_process import SendPing
+from computing.internals.processes.usermode_processes.sniffing_process import SniffingProcess
 from computing.internals.routing_table import RoutingTable, RoutingTableItem
+from computing.internals.sockets.raw_socket import RawSocket
 from computing.internals.sockets.tcp_socket import TCPSocket
 from computing.internals.wireless_interface import WirelessInterface
 from consts import *
@@ -31,7 +34,7 @@ from packets.tcp import TCP
 from packets.udp import UDP
 from usefuls.funcs import get_the_one
 
-ReceivedPacket = namedtuple("ReceivedPacket", "packet time interface")
+ReceivedPacket = namedtuple("ReceivedPacket", "packet metadata")
 # ^ a packet that was received in this computer  (packet object, receiving time, interface packet is received on)
 
 
@@ -83,7 +86,6 @@ class Computer:
         self.interfaces = list(interfaces)
         if not interfaces:
             self.interfaces = []  # a list of all of the interfaces without the loopback
-        self.packets_sniffed = 0
         self.loopback = Interface.loopback()
         self.boot_time = MainLoop.instance.time()
 
@@ -139,6 +141,10 @@ class Computer:
     def open_tcp_ports(self):
         return [socket_data.local_port for socket, socket_data in self.sockets.items()
                 if socket_data.state == COMPUTER.SOCKETS.STATES.LISTENING]
+
+    @property
+    def raw_sockets(self):
+        return [socket for socket in self.sockets if self.sockets[socket].kind == COMPUTER.SOCKETS.TYPES.SOCK_RAW]
 
     @classmethod
     def with_ip(cls, ip_address, name=None):
@@ -499,7 +505,7 @@ class Computer:
         One can read more at the 'dhcp_process.py' file.
         :return: None
         """
-        self.process_scheduler.kill_usermode_process_by_type(DHCPClient)  # if currently asking for dhcp, stop it
+        self.process_scheduler.kill_all_usermode_processes_by_type(DHCPClient)  # if currently asking for dhcp, stop it
         self.process_scheduler.start_usermode_process(DHCPClient)
 
     def open_tcp_port(self, port_number):
@@ -514,7 +520,7 @@ class Computer:
         process = self.TCP_PORTS_TO_PROCESSES[port_number]
         if port_number in self.open_tcp_ports:
             if process is not None:
-                self.process_scheduler.kill_usermode_process_by_type(process)
+                self.process_scheduler.kill_all_usermode_processes_by_type(process)
         else:
             if process is not None:
                 self.process_scheduler.start_usermode_process(self.TCP_PORTS_TO_PROCESSES[port_number])
@@ -599,87 +605,32 @@ class Computer:
         self.name = name
         self.graphics.update_text()
 
-    def start_sniff(self, interface_name=INTERFACES.ANY_INTERFACE, is_promisc=False):
+    def start_sniffing(self, interface_name=INTERFACES.ANY_INTERFACE, is_promisc=False):
         """
-        Starts sniffing on the interface with the given name.
-        If no such interface exists, raises NoSuchInterfaceError.
-        If the interface is sniffing already, stops sniffing on it.
-        :param interface_name: ... the interface name
-        :param is_promisc: whether or not the interface should be in promisc while sniffing.
-        :return: None
+        Starts a sniffing process on a supplied interface
         """
-        if interface_name == INTERFACES.ANY_INTERFACE:
-            for interface in self.interfaces:
-                self.start_sniff(interface.name, is_promisc)
-            return
+        self.process_scheduler.start_usermode_process(
+            SniffingProcess,
+            lambda packet: True,
+            self.interface_by_name(interface_name) if interface_name != INTERFACES.ANY_INTERFACE else INTERFACES.ANY_INTERFACE,
+            is_promisc
+        )
 
-        interface = self.interface_by_name(interface_name)
-        if interface.is_sniffing:
-            return
-
-        interface.is_promisc = is_promisc
-        interface.is_sniffing = True
-        self.print(f"started sniffing on {interface_name}")
-
-    def stop_sniff(self, interface_name=INTERFACES.ANY_INTERFACE):
+    def stop_all_sniffing(self):
         """
-        Stops sniffing on the given interface
-        :param interface_name:
-        :return:
+        Kill all tcpdump processes currently running on the computer
         """
-        if interface_name == INTERFACES.ANY_INTERFACE:
-            for interface in self.interfaces:
-                self.stop_sniff(interface.name)
-            return
-
-        interface = self.interface_by_name(interface_name)
-        if not interface.is_sniffing:
-            return
-
-        interface.is_sniffing = False
-        self.print(f"stopped sniffing on {interface_name}")
+        self.process_scheduler.kill_all_usermode_processes_by_type(SniffingProcess)
 
     def toggle_sniff(self, interface_name=INTERFACES.ANY_INTERFACE, is_promisc=False):
         """
-        Toggles sniffing on the given interface
+        Toggles sniffing.
+        TODO: if the sniffing is already on - the toggle will turn off ALL sniffing on the computer :( - not only on the specific interface requested
         """
-        if interface_name == INTERFACES.ANY_INTERFACE:
-            for interface in self.interfaces:
-                self.toggle_sniff(interface.name, is_promisc)
-            return
-        interface = self.interface_by_name(interface_name)
-        if interface.is_sniffing:
-            self.start_sniff(interface.name, is_promisc)
+        if self.process_scheduler.is_usermode_process_running_by_type(SniffingProcess):
+            self.stop_all_sniffing()
         else:
-            self.stop_sniff(interface.name)
-
-    def _sniff_packet(self, packet):
-        """
-        Receives a `Packet` and prints it out to the computer's console. should be called only if the packet was sniffed
-        """
-        self.print(f"({self.packets_sniffed}) {self._get_sniffed_packet_info_line(packet)}")
-        self.packets_sniffed += 1
-
-    def _get_sniffed_packet_info_line(self, packet):
-        """
-        Return the line that is printed when the packet is sniffed.
-        :param packet:
-        :return:
-        """
-        deepest = packet.deepest_layer()
-        line = deepest.opcode if hasattr(deepest, "opcode") else type(deepest).__name__
-        if 'TCP' in packet:
-            line = f"TCP {' '.join([f for f in OPCODES.TCP.FLAGS_DISPLAY_PRIORITY if f in packet['TCP'].flags])}"
-
-        if 'IP' in packet:
-            protocol = 'IP'
-        elif 'ARP' in packet:
-            protocol = 'ARP'
-        else:
-            return line
-
-        src_ip, dst_ip = packet[protocol].src_ip, packet[protocol].dst_ip
-        return f"{line} {src_ip!s} > {dst_ip!s}"
+            self.start_sniffing(interface_name, is_promisc)
 
     def new_packets_since(self, time_):
         """
@@ -687,9 +638,22 @@ class Computer:
         :param time_: a number of seconds.
         :return: a list of `ReceivedPacket`s
         """
-        return list(filter(lambda rp: rp.time > time_, self.received))
+        return list(filter(lambda rp: rp.packets[rp.packet].time > time_, self.received))
 
 # -------------------------v packet sending and wrapping related methods v ---------------------------------------------
+
+    def _sniff_packet_on_relevant_raw_sockets(self, packet, interface, direction):
+        """
+        Receive a packet on all raw sockets that this packet fits their filter
+
+        :param packet:    The packet object that is sniffed
+        :param interface: The `Interface` object that the packet was received from
+        :param direction: The direction the packet is going (INCOMING/OUTGOING)
+        """
+        for raw_socket in self.raw_sockets:
+            if raw_socket.is_bound and raw_socket.filter(packet) and \
+                    (raw_socket.interface == interface or raw_socket.interface is INTERFACES.ANY_INTERFACE):
+                raw_socket.received.append(ReturnedPacket(packet, PacketMetadata(interface, MainLoop.instance.time(), direction)))
 
     def send(self, packet, interface=None):
         """
@@ -703,8 +667,8 @@ class Computer:
 
         if packet.is_valid():
             interface.send(packet)
-            if interface.is_sniffing:
-                self._sniff_packet(packet)
+
+            self._sniff_packet_on_relevant_raw_sockets(packet, interface, PACKET.DIRECTION.OUTGOING)
 
     def send_with_ethernet(self, dst_mac, dst_ip, data):
         """
@@ -915,6 +879,7 @@ class Computer:
         """
         socket = {
             COMPUTER.SOCKETS.TYPES.SOCK_STREAM: TCPSocket,
+            COMPUTER.SOCKETS.TYPES.SOCK_RAW: RawSocket,
             # COMPUTER.SOCKETS.MODES.SOCK_DGRAM:
         }[kind](self, address_family)
         self.sockets[socket] = SocketData(kind=kind,
@@ -958,6 +923,8 @@ class Computer:
             raise SocketNotRegisteredError(f"The socket that was provided is not known to the operation system! "
                                            f"It was probably not acquired using the `computer.get_socket` method! "
                                            f"The socket: {socket}")
+
+        socket.is_bound = True
         
     def remove_socket(self, socket):
         """
@@ -991,12 +958,9 @@ class Computer:
             if not interface.is_connected():
                 continue
             for packet in interface.receive():
-                self.received.append(ReceivedPacket(packet, MainLoop.instance.time(), interface))
-
-                if interface.is_sniffing:
-                    self._sniff_packet(packet)
-
+                self.received.append(ReturnedPacket(packet, PacketMetadata(interface, MainLoop.instance.time(), PACKET.DIRECTION.INCOMING)))
                 self._handle_special_packet(packet, interface)
+                self._sniff_packet_on_relevant_raw_sockets(packet, interface, PACKET.DIRECTION.INCOMING)
 
         self.process_scheduler.handle_processes()
         self.arp_cache.forget_old_items()  # deletes just the required items in the arp cache....
