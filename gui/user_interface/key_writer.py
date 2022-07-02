@@ -43,14 +43,20 @@ class KeyWriter:
         }
 
         self.key_combination_dict = {}  # {(key, modifiers): action}
+        # TODO: maybe we do not need 2 dicts - only the key_combination where normal presses are simply without modifiers?
 
     def add_key_mapping(self, symbol, action):
         """
         Adds a new action to occur when a given key is pressed.
-        :param symbol: `key.*`
+        :param symbol: `key.*` or a list of them
         :param action: function
         :return:
         """
+        if isinstance(symbol, list):
+            for inner_symbol in symbol:
+                self.add_key_mapping(inner_symbol, action)
+                return
+
         if symbol in self.key_dict:
             raise KeyActionAlreadyExistsError("you are overriding and action in the key dict!!!")
 
@@ -60,11 +66,16 @@ class KeyWriter:
         """
         Adds a combination of key and modifiers to the mapping.
         This is checked first!
-        :param symbol:
+        :param symbol: `key.*` or a list of them
         :param modifiers:
         :param action:
         :return:
         """
+        if isinstance(symbol, list):
+            for inner_symbol in symbol:
+                self.add_key_combination(inner_symbol, modifiers, action)
+            return
+
         if (symbol, modifiers) in self.key_dict:
             raise KeyActionAlreadyExistsError("you are overriding and action in the key dict!!!")
 

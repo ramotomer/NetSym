@@ -234,8 +234,7 @@ class ProcessScheduler:
             return False
 
         if waiting_for.condition(packet):
-            waiting_for.value.packets[
-                packet] = receiving_interface  # this is the behaviour the `Process` object expects
+            waiting_for.value.packets[packet] = receiving_interface  # this is the behaviour the `Process` object expects
 
             if process not in ready_processes:  # if this is the first packet that the process received in this loop
                 ready_processes.append(process)
