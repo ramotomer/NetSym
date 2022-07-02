@@ -1,13 +1,14 @@
 import random
 from collections import namedtuple
+from typing import Tuple
 
 from recordclass import recordclass
-from typing import Tuple
 
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
 from computing.internals.arp_cache import ArpCache
 from computing.internals.filesystem.filesystem import Filesystem
+from computing.internals.interface import Interface
 from computing.internals.processes.kernelmode_processes.arp_process import ARPProcess
 from computing.internals.processes.process_scheduler import ProcessScheduler
 from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEServerProcess
@@ -17,7 +18,6 @@ from computing.internals.processes.usermode_processes.ftp_process import ServerF
 from computing.internals.processes.usermode_processes.ping_process import SendPing
 from computing.internals.routing_table import RoutingTable, RoutingTableItem
 from computing.internals.sockets.tcp_socket import TCPSocket
-from computing.internals.interface import Interface
 from computing.internals.wireless_interface import WirelessInterface
 from consts import *
 from exceptions import *
@@ -85,6 +85,7 @@ class Computer:
             self.interfaces = []  # a list of all of the interfaces without the loopback
         self.packets_sniffed = 0
         self.loopback = Interface.loopback()
+        self.boot_time = MainLoop.instance.time()
 
         self.received = []
         self.arp_cache = ArpCache()
@@ -196,6 +197,21 @@ class Computer:
         for shell in self.active_shells:
             shell.write(string)
 
+    def _close_all_shells(self):
+        """
+        Close all shells of the computer.
+        Occurs on shutdown
+        """
+        deleted_any_shells = False
+        for shell in self.active_shells[:]:
+            deleted_any_shells = True
+            shell.exit()
+
+        if deleted_any_shells:
+            message = f"{self.name} was shutdown! Relevant shells were closed"
+            # PopupError(message, user_interface)  # Impossible - you need the UserInterface object
+            print(message)
+
     def power(self):
         """
         Powers the computer on or off.
@@ -218,14 +234,17 @@ class Computer:
         Things the computer should perform as it is shut down.
         :return:
         """
+        self.boot_time = None
         self.process_scheduler.terminate_all()
         self.filesystem.wipe_temporary_directories()
+        self._close_all_shells()
 
     def on_startup(self):
         """
         Things the computer should do when it is turned on
         :return:
         """
+        self.boot_time = MainLoop.instance.time()
         self.process_scheduler.terminate_all()
         self.process_scheduler.run_startup_processes()
 
