@@ -56,7 +56,7 @@ class ARPProcess(Process):
         return f"[karp] {self.address}"
 
 
-class SendPacketWithArpsProcess(Process):
+class SendPacketWithARPProcess(Process):
     """
     This is a process that starts a complete sending of a packet.
     It checks the routing table and asks for the address and does whatever is necessary.
@@ -66,7 +66,7 @@ class SendPacketWithArpsProcess(Process):
         Initiates the process with the running computer
         the ip_layer will be wrapped in ethernet
         """
-        super(SendPacketWithArpsProcess, self).__init__(pid, computer)
+        super(SendPacketWithARPProcess, self).__init__(pid, computer)
         self.ip_layer = ip_layer
 
     def code(self):

@@ -10,7 +10,7 @@ from computing.internals.arp_cache import ArpCache
 from computing.internals.filesystem.filesystem import Filesystem
 from computing.internals.interface import Interface
 from computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket
-from computing.internals.processes.kernelmode_processes.arp_process import ARPProcess
+from computing.internals.processes.kernelmode_processes.arp_process import ARPProcess, SendPacketWithARPProcess
 from computing.internals.processes.process_scheduler import ProcessScheduler
 from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEServerProcess
 from computing.internals.processes.usermode_processes.dhcp_process import DHCPClient
@@ -61,15 +61,18 @@ class Computer:
     The computer runs many `Process`-s that are all either currently running or waiting for a certain packet to arrive.
     """
 
-    TCP_PORTS_TO_PROCESSES = {
-        PORTS.DAYTIME: DAYTIMEServerProcess,
-        PORTS.FTP: ServerFTPProcess,
-        PORTS.SSH: None,
-        PORTS.HTTP: None,
-        PORTS.HTTPS: None,
+    PORTS_TO_PROCESSES = {
+        "TCP": {
+            PORTS.DAYTIME: DAYTIMEServerProcess,
+            PORTS.FTP: ServerFTPProcess,
+            PORTS.SSH: None,
+            PORTS.HTTP: None,
+            PORTS.HTTPS: None,
+        },
+        "UDP": {
+            PORTS.DHCP_SERVER: DHCPServer,
+        },
     }
-
-    UDP_PORTS_TO_PROCESSES = {}
 
     def __init__(self, name=None, os=OS.WINDOWS, gateway=None, *interfaces):
         """
@@ -508,33 +511,28 @@ class Computer:
         self.process_scheduler.kill_all_usermode_processes_by_type(DHCPClient)  # if currently asking for dhcp, stop it
         self.process_scheduler.start_usermode_process(DHCPClient)
 
-    def open_tcp_port(self, port_number):
+    def open_port(self, port_number, protocol="TCP"):
         """
         Opens a port on the computer. Starts the process that is behind it.
         :param port_number:
+        :param protocol:
         :return:
         """
-        if port_number not in self.TCP_PORTS_TO_PROCESSES:
+        if protocol not in self.PORTS_TO_PROCESSES:
+            raise UnknownPacketTypeError(f"Protocol type must be one of {list(self.PORTS_TO_PROCESSES.keys())} not {protocol!r}")
+
+        if port_number not in self.PORTS_TO_PROCESSES[protocol]:
             raise PopupWindowWithThisError(f"{port_number} is an unknown port!!!")
 
-        process = self.TCP_PORTS_TO_PROCESSES[port_number]
+        process = self.PORTS_TO_PROCESSES[protocol][port_number]
         if port_number in self.open_tcp_ports:
             if process is not None:
                 self.process_scheduler.kill_all_usermode_processes_by_type(process)
         else:
             if process is not None:
-                self.process_scheduler.start_usermode_process(self.TCP_PORTS_TO_PROCESSES[port_number])
+                self.process_scheduler.start_usermode_process(self.PORTS_TO_PROCESSES[port_number])
 
         self.graphics.update_image()
-
-    def open_udp_port(self, port_number):
-        """
-        Opens a UDP port on the computer
-        :param port_number:
-        :return:
-        """
-        raise NotImplementedError()
-        #TODO: implement this
 
     def update_routing_table(self):
         """updates the routing table according to the interfaces at the moment"""
@@ -706,6 +704,27 @@ class Computer:
         """
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
         return interface.ethernet_wrap(dst_mac, IP(interface.ip, dst_ip, TTL.BY_OS[self.os], protocol))
+
+    def udp_wrap(self, dst_mac, dst_ip, src_port, dst_port, protocol):
+        """
+        Takes in some protocol and wraps it up in Ethernet and IP with the appropriate MAC and IP addresses and TTL and UDP with the supplied ports
+        all ready to be sent
+        """
+        return self.ip_wrap(dst_mac, dst_ip, UDP(src_port, dst_port, protocol))
+
+    def start_sending_udp_packet(self, dst_ip, src_port, dst_port, data):
+        """
+        Takes in some protocol and wraps it up in IP with the appropriate IP addresses and TTL.
+        Starts a process to resolve the MAC and once resolved - construct the packet and send it.
+        :param dst_ip:
+        :param dst_port:
+        :param src_port:
+        :param data: The thing to wrap in IP
+        """
+        interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
+        self.process_scheduler.start_kernelmode_process(SendPacketWithARPProcess,
+                                                        IP(interface.ip, dst_ip, TTL.BY_OS[self.os],
+                                                           UDP(src_port, dst_port, data)))
 
     def send_arp_to(self, ip_address):
         """

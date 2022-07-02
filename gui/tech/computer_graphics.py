@@ -125,7 +125,7 @@ class ComputerGraphics(ImageGraphics):
                 user_interface.ask_user_for,
                 int,
                 MESSAGES.INSERT.PORT_NUMBER,
-                self.computer.open_tcp_port
+                self.computer.open_port
             ),
             "set default gateway (g)": with_args(
                 user_interface.ask_user_for,

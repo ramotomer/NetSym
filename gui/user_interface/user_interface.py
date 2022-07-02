@@ -11,9 +11,9 @@ from pyglet.window import key
 
 from address.ip_address import IPAddress
 from computing.computer import Computer
-from computing.internals.processes.usermode_processes.stp_process import STPProcess
 from computing.internals.frequency import Frequency
 from computing.internals.interface import Interface
+from computing.internals.processes.usermode_processes.stp_process import STPProcess
 from computing.internals.wireless_interface import WirelessInterface
 from computing.router import Router
 from computing.switch import Switch, Hub, Antenna
@@ -1199,7 +1199,7 @@ class UserInterface:
             new_computers[i].graphics.location = location
 
         self.tab_through_selected()
-        self.selected_object.computer.open_tcp_port(21)
+        self.selected_object.computer.open_port(21, "TCP")
         self.tab_through_selected()
 
     def register_window(self, window, *buttons):
