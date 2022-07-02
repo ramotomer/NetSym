@@ -9,6 +9,7 @@ from address.mac_address import MACAddress
 from computing.internals.arp_cache import ArpCache
 from computing.internals.filesystem.filesystem import Filesystem
 from computing.internals.interface import Interface
+from computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket
 from computing.internals.processes.kernelmode_processes.arp_process import ARPProcess
 from computing.internals.processes.process_scheduler import ProcessScheduler
 from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEServerProcess
@@ -33,7 +34,7 @@ from packets.tcp import TCP
 from packets.udp import UDP
 from usefuls.funcs import get_the_one
 
-ReceivedPacket = namedtuple("ReceivedPacket", "packet time interface")
+ReceivedPacket = namedtuple("ReceivedPacket", "packet metadata")
 # ^ a packet that was received in this computer  (packet object, receiving time, interface packet is received on)
 
 
@@ -608,7 +609,12 @@ class Computer:
         """
         Starts a sniffing process on a supplied interface
         """
-        self.process_scheduler.start_usermode_process(SniffingProcess, lambda packet: True, self.interface_by_name(interface_name), is_promisc)
+        self.process_scheduler.start_usermode_process(
+            SniffingProcess,
+            lambda packet: True,
+            self.interface_by_name(interface_name) if interface_name != INTERFACES.ANY_INTERFACE else INTERFACES.ANY_INTERFACE,
+            is_promisc
+        )
 
     def stop_all_sniffing(self):
         """
@@ -632,21 +638,22 @@ class Computer:
         :param time_: a number of seconds.
         :return: a list of `ReceivedPacket`s
         """
-        return list(filter(lambda rp: rp.time > time_, self.received))
+        return list(filter(lambda rp: rp.packets[rp.packet].time > time_, self.received))
 
 # -------------------------v packet sending and wrapping related methods v ---------------------------------------------
 
-    def _sniff_packet_on_relevant_raw_sockets(self, packet, interface):
+    def _sniff_packet_on_relevant_raw_sockets(self, packet, interface, direction):
         """
-        Receive a packet on all raw sockets
-        :param packet:
-        :return:
+        Receive a packet on all raw sockets that this packet fits their filter
+
+        :param packet:    The packet object that is sniffed
+        :param interface: The `Interface` object that the packet was received from
+        :param direction: The direction the packet is going (INCOMING/OUTGOING)
         """
         for raw_socket in self.raw_sockets:
             if raw_socket.is_bound and raw_socket.filter(packet) and \
                     (raw_socket.interface == interface or raw_socket.interface is INTERFACES.ANY_INTERFACE):
-                raw_socket.received.append(packet)
-                # TODO: add direction (INCOMING/OUTGOING)?
+                raw_socket.received.append(ReturnedPacket(packet, PacketMetadata(interface, MainLoop.instance.time(), direction)))
 
     def send(self, packet, interface=None):
         """
@@ -661,7 +668,7 @@ class Computer:
         if packet.is_valid():
             interface.send(packet)
 
-            self._sniff_packet_on_relevant_raw_sockets(packet, interface)
+            self._sniff_packet_on_relevant_raw_sockets(packet, interface, PACKET.DIRECTION.OUTGOING)
 
     def send_with_ethernet(self, dst_mac, dst_ip, data):
         """
@@ -951,9 +958,9 @@ class Computer:
             if not interface.is_connected():
                 continue
             for packet in interface.receive():
-                self.received.append(ReceivedPacket(packet, MainLoop.instance.time(), interface))
+                self.received.append(ReturnedPacket(packet, PacketMetadata(interface, MainLoop.instance.time(), PACKET.DIRECTION.INCOMING)))
                 self._handle_special_packet(packet, interface)
-                self._sniff_packet_on_relevant_raw_sockets(packet, interface)
+                self._sniff_packet_on_relevant_raw_sockets(packet, interface, PACKET.DIRECTION.INCOMING)
 
         self.process_scheduler.handle_processes()
         self.arp_cache.forget_old_items()  # deletes just the required items in the arp cache....

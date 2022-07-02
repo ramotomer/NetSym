@@ -1,8 +1,8 @@
 from computing.computer import Computer
 from computing.internals.filesystem.filesystem import Filesystem
+from computing.internals.interface import Interface
 from computing.internals.processes.kernelmode_processes.route_packet_process import RoutePacket
 from computing.internals.processes.usermode_processes.dhcp_process import DHCPServer
-from computing.internals.interface import Interface
 from computing.internals.routing_table import RoutingTable
 from consts import *
 from gui.main_loop import MainLoop
@@ -49,7 +49,8 @@ class Router(Computer):
         new_packets = self.new_packets_since(self.last_route_check)
         self.last_route_check = MainLoop.instance.time()
 
-        for packet, _, _ in new_packets:
+        for received_packet in new_packets:
+            packet = received_packet.packet
             if "IP" in packet and not self.has_this_ip(packet["IP"].dst_ip) and "DHCP" not in packet:
                 self.process_scheduler.start_kernelmode_process(RoutePacket, packet)
 

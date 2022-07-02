@@ -55,8 +55,9 @@ class RawSocket(Socket):
 
     def receive(self, count=None):
         """
-        receive the information as specified in the BPF that was configured when the socket was bound
+        Receive the information as specified in the BPF that was configured when the socket was bound
         :param count: is ignored
+        :return `list[ReturnedPacket]`
         """
         returned = self.received[:]
         self.received.clear()
