@@ -1,8 +1,11 @@
 from address.ip_address import IPAddress
+from address.mac_address import MACAddress
 from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket
-from consts import OPCODES
+from consts import OPCODES, TTL, PORTS, COMPUTER
 from exceptions import *
-from packets.dhcp import DHCPData
+from packets.dhcp import DHCPData, DHCP
+from packets.ip import IP
+from packets.udp import UDP
 
 
 def dhcp_for(mac_addresses):
@@ -27,6 +30,10 @@ class DHCPClient(Process):
     """
 
     # __init__ is inherited from the parent class
+
+    def __init__(self, pid, computer):
+        super(DHCPClient, self).__init__(pid, computer)
+        self.socket = None
 
     def update_routing_table(self, session_interface, dhcp_pack):
         """
@@ -53,13 +60,28 @@ class DHCPClient(Process):
             raise AddressError("did not validate IP from DHCP server!!! (probably two interfaces have the same address)")
         return server_mac
 
+    def _send_dhcp_discover(self):
+        """Sends out a `DHCP_DISCOVER` packet (This is sent by a DHCP client)"""
+        dst_ip = IPAddress.broadcast()
+        src_ip = IPAddress.no_address()
+        for interface in self.interfaces:
+            self.socket.send(
+                interface.ethernet_wrap(MACAddress.broadcast(),
+                                        IP(src_ip, dst_ip, TTL.BY_OS[self.os],
+                                           UDP(PORTS.DHCP_CLIENT, PORTS.DHCP_SERVER,
+                                               DHCP(OPCODES.DHCP.DISCOVER, DHCPData(None, None, None))))),
+                interface
+            )
+
     def code(self):
         """
         This is main code of the DHCP client.
         :return: None
         """
+        self.socket = self.computer.get_socket(kind=COMPUTER.SOCKETS.TYPES.SOCK_DGRAM)
+        self.socket.bind(,,,)
         self.computer.print("Asking For DHCP...")
-        self.computer.send_dhcp_discover()
+        self._send_dhcp_discover()
         dhcp_offer = ReturnedPacket()
         yield WaitingForPacket(dhcp_for(self.computer.macs), dhcp_offer)
 

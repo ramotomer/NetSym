@@ -799,19 +799,6 @@ class Computer:
             interface
         )
 
-    def send_dhcp_discover(self):
-        """Sends out a `DHCP_DISCOVER` packet (This is sent by a DHCP client)"""
-        dst_ip = IPAddress.broadcast()
-        src_ip = IPAddress.no_address()
-        for interface in self.interfaces:
-            self.send(
-                interface.ethernet_wrap(MACAddress.broadcast(),
-                                        IP(src_ip, dst_ip, TTL.BY_OS[self.os],
-                                           UDP(PORTS.DHCP_CLIENT, PORTS.DHCP_SERVER,
-                                               DHCP(OPCODES.DHCP.DISCOVER, DHCPData(None, None, None))))),
-                interface
-            )
-
     def send_dhcp_offer(self, client_mac, offer_ip, session_interface):
         """
         Sends a `DHCP_OFFER` request with an `offer_ip` offered to the `dst_mac`. (This is sent by the DHCP server)
