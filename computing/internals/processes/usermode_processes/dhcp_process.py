@@ -1,11 +1,8 @@
 from address.ip_address import IPAddress
-from address.mac_address import MACAddress
 from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket
-from consts import OPCODES, TTL, PORTS, COMPUTER
+from consts import OPCODES
 from exceptions import *
-from packets.dhcp import DHCPData, DHCP
-from packets.ip import IP
-from packets.udp import UDP
+from packets.dhcp import DHCPData
 
 
 def dhcp_for(mac_addresses):
@@ -60,28 +57,13 @@ class DHCPClient(Process):
             raise AddressError("did not validate IP from DHCP server!!! (probably two interfaces have the same address)")
         return server_mac
 
-    def _send_dhcp_discover(self):
-        """Sends out a `DHCP_DISCOVER` packet (This is sent by a DHCP client)"""
-        dst_ip = IPAddress.broadcast()
-        src_ip = IPAddress.no_address()
-        for interface in self.interfaces:
-            self.socket.send(
-                interface.ethernet_wrap(MACAddress.broadcast(),
-                                        IP(src_ip, dst_ip, TTL.BY_OS[self.os],
-                                           UDP(PORTS.DHCP_CLIENT, PORTS.DHCP_SERVER,
-                                               DHCP(OPCODES.DHCP.DISCOVER, DHCPData(None, None, None))))),
-                interface
-            )
-
     def code(self):
         """
         This is main code of the DHCP client.
         :return: None
         """
-        self.socket = self.computer.get_socket(kind=COMPUTER.SOCKETS.TYPES.SOCK_DGRAM)
-        self.socket.bind(,,,)
         self.computer.print("Asking For DHCP...")
-        self._send_dhcp_discover()
+        self.computer.send_dhcp_discover()
         dhcp_offer = ReturnedPacket()
         yield WaitingForPacket(dhcp_for(self.computer.macs), dhcp_offer)
 
@@ -119,7 +101,7 @@ class DHCPServer(Process):
         self.default_gateway = default_gateway
         # ^ a `Computer` that is the default gateway of the subnets this server serves.
 
-        self.interface_to_dhcp_data = {} # interface : DHCPData
+        self.interface_to_dhcp_data = {}  # interface : DHCPData
         # ^ a mapping for each interface of the server to a ip_layer that it packs for its clients.
         self.update_server_data()
 
@@ -190,7 +172,7 @@ class DHCPServer(Process):
     def code(self):
         """
         This is main code of the DHCP server.
-        Waits for a DHCP packet for the running computer and runs sthe appropriate command as a DHCP Server.
+        Waits for a DHCP packet for the running computer and runs the appropriate command as a DHCP Server.
         :return: None
         """
         while True:

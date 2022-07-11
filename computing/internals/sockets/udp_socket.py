@@ -1,13 +1,22 @@
-from typing import Tuple
+from collections import namedtuple
+from typing import Tuple, List
 
 from address.ip_address import IPAddress
 from computing.internals.sockets.l4_socket import L4Socket
 from consts import COMPUTER
+from exceptions import *
+
+ReturnedUDPPacket = namedtuple("ReturnedUDPPacket", [
+    "data",
+    "src_ip",
+    "src_port",
+])
 
 
 class UDPSocket(L4Socket):
     """
-    A socket is an operation-system object that allows for an abstraction of network access
+    A socket is an operation-system
+    em object that allows for an abstraction of network access
     and sessions
     """
     def __init__(self, computer, address_family=COMPUTER.SOCKETS.ADDRESS_FAMILIES.AF_INET):
@@ -21,15 +30,36 @@ class UDPSocket(L4Socket):
         self.is_connected = True
         self.allow_being_broken = True
 
-    def send(self, data):
+    def sendto(self, data, address: Tuple[IPAddress, int]):
         """
         Sends down the socket some data
-        :param data: string
-        :return:
         """
         _, src_port = self.bound_address
-        dst_ip, dst_port = self.foreign_address
+        dst_ip, dst_port = address
         self.computer.start_sending_udp_packet(dst_ip, src_port, dst_port, data)
+
+    def receivefrom(self) -> List[ReturnedUDPPacket]:
+        return [self.received.pop(0) for _ in range(len(self.received))]
+
+    def receive(self, count=1024) -> List[str]:
+        dst_ip, dst_port = self.remote_address
+        if dst_ip is None:
+            raise SocketNotConnectedError("If you want to receive data using a disconnected socket use the `receivefrom` method, "
+                                          "or connect your socket!")
+
+        return [self.received.pop(0) for _ in range(len(self.received))]
+
+    def send(self, data):
+        """
+        Send data to the other party. Only works for connected sockets
+        :param data:
+        :return:
+        """
+        dst_ip, dst_port = self.remote_address
+        if dst_ip is None:
+            raise SocketNotConnectedError("If you want to send data using a disconnected socket use the `sendto` method, or connect your socket!")
+
+        self.sendto(data, (dst_ip, dst_port))
 
     def connect(self, address: Tuple[IPAddress, int]):
         """
@@ -37,7 +67,16 @@ class UDPSocket(L4Socket):
         :param address:
         :return:
         """
-        raise NotImplementedError
+        dst_ip, dst_port = self.remote_address
+        if dst_ip is not None:
+            raise SocketAlreadyConnectedError(f"{self} is already connected to {dst_ip, dst_port}")
+        self.computer.sockets[self].remote_address, self.computer.sockets[self].remote_port = address
+
+    def bind(self, address: Tuple[IPAddress, int]):
+        ip, port = address
+        if not self.computer.has_this_ip(ip) and ip != IPAddress.no_address():
+            raise InvalidAddressError(f"computer {self.computer} does not have the address {ip} so socket {self} cannot be bound to it")
+        super(UDPSocket, self).bind(address)
 
     def listen(self, count: int):
         """

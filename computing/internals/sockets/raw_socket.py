@@ -34,7 +34,7 @@ class RawSocket(Socket):
         raise ActionNotSupportedInARawSocket(f"It is meaningless to bind a raw socket to an address! socket: {self}, computer: {self.computer}")
 
     @property
-    def foreign_address(self):
+    def remote_address(self):
         raise ActionNotSupportedInARawSocket(f"Raw sockets are not connected! they are just ")
 
     @property

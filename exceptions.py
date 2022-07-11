@@ -403,6 +403,13 @@ class SocketNotConnectedError(SocketError):
     """
 
 
+class SocketAlreadyConnectedError(SocketError):
+    """
+    Raises when trying to connect a socket that is already connected :)
+    """
+    pass
+
+
 class SocketNotRegisteredError(SocketError):
     """
     Occurs when one tries to bind a socket that is not known to the operation system.

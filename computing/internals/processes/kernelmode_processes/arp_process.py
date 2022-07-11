@@ -1,3 +1,4 @@
+from address.mac_address import MACAddress
 from computing.internals.processes.abstracts.process import Process, ReturnedPacket, WaitingForPacketWithTimeout, Timeout, \
     WaitingFor
 from consts import OPCODES, PROTOCOLS
@@ -75,8 +76,11 @@ class SendPacketWithARPProcess(Process):
         :return:
         """
         dst_ip = self.ip_layer.dst_ip
-        ip_for_the_mac, done_searching = self.computer.request_address(dst_ip, self, True)
-        yield WaitingFor(done_searching)
+        if not dst_ip.is_broadcast():
+            ip_for_the_mac, done_searching = self.computer.request_address(dst_ip, self, True)
+            yield WaitingFor(done_searching)
+        else:
+            ip_for_the_mac = MACAddress.broadcast()
 
         self.computer.send_with_ethernet(
             self.computer.arp_cache[ip_for_the_mac].mac,

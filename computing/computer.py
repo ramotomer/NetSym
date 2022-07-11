@@ -21,6 +21,7 @@ from computing.internals.processes.usermode_processes.sniffing_process import Sn
 from computing.internals.routing_table import RoutingTable, RoutingTableItem
 from computing.internals.sockets.raw_socket import RawSocket
 from computing.internals.sockets.tcp_socket import TCPSocket
+from computing.internals.sockets.udp_socket import ReturnedUDPPacket
 from computing.internals.wireless_interface import WirelessInterface
 from consts import *
 from exceptions import *
@@ -400,15 +401,15 @@ class Computer:
             NoSuchInterfaceError
         )
 
-    def _handle_arp(self, packet, interface):
+    def _handle_arp(self, returned_packet):
         """
         Receives a `Packet` object and if it contains an ARP request layer, sends back
         an ARP reply. If the packet contains no ARP layer raises `NoArpLayerError`.
         Anyway learns the IP and MAC from the ARP (even if it is a reply or a grat-arp).
-        :param packet: the `Packet` that contains the ARP we handle
-        :param interface: The `Interface` the packet was received on.
+        :param returned_packet: the `ReturnedPacket` that contains the ARP we handle and its metadata
         :return: None
         """
+        packet, packet_metadata = returned_packet.packet_and_metadata
         try:
             arp = packet["ARP"]
         except KeyError:
@@ -416,31 +417,31 @@ class Computer:
 
         self.arp_cache.add_dynamic(arp.src_ip, arp.src_mac)
 
-        if arp.opcode == OPCODES.ARP.REQUEST and interface.has_this_ip(arp.dst_ip):
+        if arp.opcode == OPCODES.ARP.REQUEST and packet_metadata.interface.has_this_ip(arp.dst_ip):
             self.send_arp_reply(packet)                     # Answer if request
 
-    def _handle_ping(self, packet, interface):
+    def _handle_ping(self, returned_packet):
         """
         Receives a `Packet` object which contains an ICMP layer with ICMP request
         handles everything related to the ping and sends a ping reply.
-        :param packet: a `Packet` object to reply on.
-        :param interface: The `Interface` the packet was received on.
+        :param returned_packet: the `ReturnedPacket` that contains the ICMP we handle and its metadata
         :return: None
         """
+        packet, packet_metadata = returned_packet.packet_and_metadata
         if (packet["ICMP"].opcode == OPCODES.ICMP.REQUEST) and (self.is_for_me(packet)):
-            if interface.has_this_ip(packet["IP"].dst_ip) or (interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):
+            if packet_metadata.interface.has_this_ip(packet["IP"].dst_ip) or (packet_metadata.interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):
                 # ^ only if the packet is for me also on the third layer!
                 dst_ip = packet["IP"].src_ip
                 self.start_ping_process(dst_ip, OPCODES.ICMP.REPLY)
 
-    def _handle_tcp(self, packet, interface):
+    def _handle_tcp(self, returned_packet):
         """
         Receives a TCP packet and decides if it is a TCP SYN to an open port, starts a server process or sends a TCP RST
         accordingly
-        :param packet: a `Packet` object to test
-        :param interface: the `Interface` that received it.
+        :param returned_packet: the `ReturnedPacket` that contains the TCP we handle and its metadata
         :return: None
         """
+        packet, packet_metadata = returned_packet.packet_and_metadata
         if not self.has_ip() or not self.has_this_ip(packet["IP"].dst_ip):
             return
 
@@ -451,29 +452,41 @@ class Computer:
                              TCP(packet["TCP"].dst_port, packet["TCP"].src_port, 0,
                                  {OPCODES.TCP.RST}))
 
-    def _handle_udp(self, packet, interface):
+    def _handle_udp(self, returned_packet):
         """
         Handles a UDP packet that is received on the computer
-        :param packet: the `Packet`
+        :param returned_packet: the `ReturnedPacket` that contains the UDP we handle and its metadata
         :return:
         """
-        if not self.has_ip() or not interface.has_this_ip(packet["IP"].dst_ip):
+        packet, packet_metadata = returned_packet.packet_and_metadata
+        if not self.has_ip() or not packet_metadata.interface.has_this_ip(packet["IP"].dst_ip):
             return
 
         if packet["UDP"].dst_port not in self.open_udp_ports:
             self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip, ICMP(OPCODES.ICMP.PORT_UNREACHABLE))
+            # TODO: add the original packet to the ICMP port unreachable packet
+            return
 
-    def _handle_special_packet(self, packet, receiving_interface):
+        for socket, socket_metadata in self.sockets.items():
+            if socket_metadata.kind == COMPUTER.SOCKETS.TYPES.SOCK_DGRAM and \
+                    socket_metadata.local_port == packet["UDP"].dst_port and \
+                    socket_metadata.remote_port == packet["UDP"].src_port and \
+                    socket_metadata.remote_ip == packet["IP"].src_ip and \
+                    socket_metadata.local_ip == packet["IP"].dst_ip:
+                socket.received.append(ReturnedUDPPacket(packet["UDP"].data, packet["IP"].src_ip, packet["UDP"].src_port))
+
+    def _handle_special_packet(self, returned_packet):
         """
         Checks if the packet that was received is of some special type that requires handling (ARP, ICMP, TPC-SYN) and
         if so, calls the appropriate handler.
-        :param packet: a `Packet` object that was received
-        :param receiving_interface: an `Interface` object that received that packet.s
+        :param returned_packet: a `ReturnedPacket` of a packet object that was received with its metadata
         :return: None
         """
+        packet, packet_metadata = returned_packet.packet_and_metadata
         for packet_type in self.packet_types_and_handlers:
             if packet_type in packet:
-                self.packet_types_and_handlers[packet_type](packet, receiving_interface)
+                self.packet_types_and_handlers[packet_type](returned_packet)
+                continue
 
     def start_ping_process(self, ip_address, opcode=OPCODES.ICMP.REQUEST, count=1):
         """
@@ -640,18 +653,17 @@ class Computer:
 
 # -------------------------v packet sending and wrapping related methods v ---------------------------------------------
 
-    def _sniff_packet_on_relevant_raw_sockets(self, packet, interface, direction):
+    def _sniff_packet_on_relevant_raw_sockets(self, returned_packet):
         """
         Receive a packet on all raw sockets that this packet fits their filter
 
-        :param packet:    The packet object that is sniffed
-        :param interface: The `Interface` object that the packet was received from
-        :param direction: The direction the packet is going (INCOMING/OUTGOING)
+        :param returned_packet:    The ReturnedPacket object that is sniffed
         """
+        packet, packet_metadata = returned_packet.packet_and_metadata
         for raw_socket in self.raw_sockets:
             if raw_socket.is_bound and raw_socket.filter(packet) and \
-                    (raw_socket.interface == interface or raw_socket.interface is INTERFACES.ANY_INTERFACE):
-                raw_socket.received.append(ReturnedPacket(packet, PacketMetadata(interface, MainLoop.instance.time(), direction)))
+                    (raw_socket.interface == packet_metadata.interface or raw_socket.interface is INTERFACES.ANY_INTERFACE):
+                raw_socket.received.append(returned_packet)
 
     def send(self, packet, interface=None):
         """
@@ -666,7 +678,13 @@ class Computer:
         if packet.is_valid():
             interface.send(packet)
 
-            self._sniff_packet_on_relevant_raw_sockets(packet, interface, PACKET.DIRECTION.OUTGOING)
+            self._sniff_packet_on_relevant_raw_sockets(
+                ReturnedPacket(packet, PacketMetadata(
+                    interface,
+                    MainLoop.instance.time(),
+                    PACKET.DIRECTION.OUTGOING
+                ))
+            )
 
     def send_with_ethernet(self, dst_mac, dst_ip, data):
         """
@@ -798,6 +816,19 @@ class Computer:
                                        ICMP(OPCODES.ICMP.TIME_EXCEEDED, data))),
             interface
         )
+
+    def send_dhcp_discover(self):
+        """Sends out a `DHCP_DISCOVER` packet (This is sent by a DHCP client)"""
+        dst_ip = IPAddress.broadcast()
+        src_ip = IPAddress.no_address()
+        for interface in self.interfaces:
+            self.send(
+                interface.ethernet_wrap(MACAddress.broadcast(),
+                                        IP(src_ip, dst_ip, TTL.BY_OS[self.os],
+                                           UDP(PORTS.DHCP_CLIENT, PORTS.DHCP_SERVER,
+                                               DHCP(OPCODES.DHCP.DISCOVER, DHCPData(None, None, None))))),
+                interface
+            )
 
     def send_dhcp_offer(self, client_mac, offer_ip, session_interface):
         """
@@ -964,9 +995,10 @@ class Computer:
             if not interface.is_connected():
                 continue
             for packet in interface.receive():
-                self.received.append(ReturnedPacket(packet, PacketMetadata(interface, MainLoop.instance.time(), PACKET.DIRECTION.INCOMING)))
-                self._handle_special_packet(packet, interface)
-                self._sniff_packet_on_relevant_raw_sockets(packet, interface, PACKET.DIRECTION.INCOMING)
+                packet_with_metadata = ReturnedPacket(packet, PacketMetadata(interface, MainLoop.instance.time(), PACKET.DIRECTION.INCOMING))
+                self.received.append(packet_with_metadata)
+                self._handle_special_packet(packet_with_metadata)
+                self._sniff_packet_on_relevant_raw_sockets(packet_with_metadata)
 
         self.process_scheduler.handle_processes()
         self.arp_cache.forget_old_items()  # deletes just the required items in the arp cache....

@@ -46,6 +46,8 @@ class Socket(metaclass=ABCMeta):
         self.__class__.connect = self.check_not_closed(self.__class__.connect)
         # ^ decorators that survive inheritance
 
+        # TODO: there is much code here that is relevant only to tcp socket - move it please
+
     @property
     def bound_address(self):
         return self.computer.sockets[self].local_ip_address, self.computer.sockets[self].local_port
@@ -63,7 +65,7 @@ class Socket(metaclass=ABCMeta):
         return self.computer.sockets[self].state
     
     @property
-    def foreign_address(self):
+    def remote_address(self):
         address = self.computer.sockets[self].remote_ip_address
         port = self.computer.sockets[self].remote_port
 
@@ -180,6 +182,6 @@ class Socket(metaclass=ABCMeta):
     def __repr__(self):
         return f"       " \
             f"{':'.join(map(str, self.bound_address)): <23}" \
-            f"{':'.join(map(str, self.foreign_address)): <23}" \
+            f"{':'.join(map(str, self.remote_address)): <23}" \
             f"{self.state: <16}" \
             f"{self.acquiring_process_pid}"
