@@ -94,6 +94,9 @@ class PROTOCOLS:
     class ICMP:
         INFINITY = float("inf")  # the builtin infinity
 
+    class DHCP:
+        DEFAULT_TTL = 0
+
     class TCP:
         MAX_SEQUENCE_NUMBER = 2**32 - 1
         RESEND_TIME = 15  # seconds

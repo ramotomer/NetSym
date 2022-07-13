@@ -1,15 +1,12 @@
 from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket
-from consts import OPCODES
+from address.mac_address import MACAddress
+from computing.internals.processes.abstracts.process import Process
+from consts import OPCODES, COMPUTER, PORTS, PROTOCOLS
 from exceptions import *
-from packets.dhcp import DHCPData
-
-
-def dhcp_for(mac_addresses):
-    """Returns a function that receives a packet and returns whether it is a dhcp packet for any of the `mac_addresses`"""
-    def tester(packet):
-        return ("DHCP" in packet) and any(packet["Ethernet"].dst_mac == mac for mac in mac_addresses)
-    return tester
+from packets.dhcp import DHCPData, DHCP
+from packets.ip import IP
+from packets.udp import UDP
+from usefuls.funcs import get_the_one
 
 
 class DHCPClient(Process):
@@ -30,7 +27,7 @@ class DHCPClient(Process):
 
     def __init__(self, pid, computer):
         super(DHCPClient, self).__init__(pid, computer)
-        self.socket = None
+        self.sockets = []
 
     def update_routing_table(self, session_interface, dhcp_pack):
         """
@@ -57,22 +54,50 @@ class DHCPClient(Process):
             raise AddressError("did not validate IP from DHCP server!!! (probably two interfaces have the same address)")
         return server_mac
 
+    @staticmethod
+    def build_dhcp_discover(interface):
+        return interface.ethernet_wrap(MACAddress.broadcast(),
+                                       IP(IPAddress.no_address(), IPAddress.broadcast(), PROTOCOLS.DHCP.DEFAULT_TTL,
+                                          UDP(PORTS.DHCP_CLIENT, PORTS.DHCP_SERVER,
+                                              DHCP(OPCODES.DHCP.DISCOVER, DHCPData(None, None, None)))))
+
+    @staticmethod
+    def build_dhcp_request(server_mac, session_interface):
+        """
+        Sends a `DHCP_REQUEST` that confirms the address that the server had offered.
+        This is sent by the DHCP client.
+        :param server_mac: The `MACAddress` of the DHCP server.
+        :param session_interface: The `Interface` that is running the session with the server.
+        :return: None
+        """
+        dst_ip = IPAddress.broadcast()
+        src_ip = IPAddress.no_address()
+        return session_interface.ethernet_wrap(server_mac,
+                                               IP(src_ip, dst_ip, PROTOCOLS.DHCP.DEFAULT_TTL,
+                                                  UDP(PORTS.DHCP_CLIENT, PORTS.DHCP_SERVER,
+                                                      DHCP(OPCODES.DHCP.REQUEST, DHCPData(None, None, None)))))
+
     def code(self):
         """
         This is main code of the DHCP client.
         :return: None
         """
+        for interface in self.computer.interfaces:
+            socket = self.computer.get_socket(self.pid, kind=COMPUTER.SOCKETS.TYPES.SOCK_RAW)
+            socket.bind(lambda p: "DHCP" in p and p["Ethernet"].dst_mac in self.computer.macs, interface)
+            self.sockets.append(socket)
         self.computer.print("Asking For DHCP...")
-        self.computer.send_dhcp_discover()
-        dhcp_offer = ReturnedPacket()
-        yield WaitingForPacket(dhcp_for(self.computer.macs), dhcp_offer)
+        for socket in self.sockets:
+            socket.send(self.build_dhcp_discover(socket.interface))
 
-        packet, session_interface = dhcp_offer.packet_and_interface
-        server_mac = self.validate_offer(packet)
+        yield from self.computer.select(self.sockets)
+        dhcp_offer, session_interface = self.computer.ready_socket.receive()[0].packet_and_interface
+        server_mac = self.validate_offer(dhcp_offer)
+        session_socket = get_the_one(self.sockets, lambda s: s.interface == session_interface, ThisCodeShouldNotBeReached)
 
-        self.computer.send_dhcp_request(server_mac, session_interface)
-        dhcp_pack = ReturnedPacket()
-        yield WaitingForPacket(dhcp_for([session_interface.mac]), dhcp_pack)
+        session_socket.send(self.build_dhcp_request(server_mac, session_interface))
+        yield from session_socket.block_until_received()
+        dhcp_pack = session_socket.receive()[0]
 
         self.update_routing_table(session_interface, dhcp_pack.packet)
         self.computer.arp_grat(session_interface)
@@ -91,6 +116,7 @@ class DHCPServer(Process):
 
     The stages of DHCP are: discover, offer, request and pack
     """
+
     def __init__(self, pid, computer, default_gateway):
         """
         Initiates the process
@@ -107,8 +133,7 @@ class DHCPServer(Process):
 
         self.in_session_with = {}  # {mac : offered_ip}
 
-        self.actions = {OPCODES.DHCP.DISCOVER: self.send_offer, OPCODES.DHCP.REQUEST: self.send_pack}
-        # ^ a dictionary of what to do with any packet that is received to this process.
+        self.sockets = []
 
     def update_server_data(self):
         """
@@ -122,14 +147,28 @@ class DHCPServer(Process):
             for interface in self.computer.interfaces if interface.has_ip()
         }
 
-    def unknown_packet(self, packet, interface):
+    def raise_on_unknown_packet(self, packet, interface):
         """When a DHCP packet with an unknown opcode is received"""
         raise UnknownPacketTypeError("DHCP type unknown")
+
+    @staticmethod
+    def build_dhcp_pack(client_mac, dhcp_data, session_interface):
+        """
+        Sends a `DHCP_PACK` that tells the DHCP client all of the new ip_layer it needs to update (IP, gateway, DNS)
+        :param client_mac: The `MACAddress` of the client.
+        :param dhcp_data:  a `DHCPData` namedtuple (from 'dhcp_process.py') that is sent in the DHCP pack.
+        :param session_interface: The `Interface` that is running the session with the client.
+        :return: None
+        """
+        dst_ip = dhcp_data.given_ip
+        return session_interface.ethernet_wrap(client_mac,
+                                               IP(session_interface.ip, dst_ip, PROTOCOLS.DHCP.DEFAULT_TTL,
+                                                  UDP(PORTS.DHCP_SERVER, PORTS.DHCP_CLIENT,
+                                                      DHCP(OPCODES.DHCP.PACK, dhcp_data))))
 
     def send_pack(self, request_packet, interface):
         """
         Sends the `DHCP_PACK` packet to the destination with all of the details the client had requested.
-        :param request_packet: a `ReturnedPacket` with the packet.
         """
         client_mac = request_packet["Ethernet"].src_mac
 
@@ -137,8 +176,16 @@ class DHCPServer(Process):
         gateway = self.interface_to_dhcp_data[interface].given_gateway
         dns_server = None
 
-        self.computer.send_dhcp_pack(client_mac, DHCPData(ip, gateway, dns_server), interface)
+        socket = get_the_one(self.sockets, lambda s: s.interface == interface, ThisCodeShouldNotBeReached)
+        socket.send(self.build_dhcp_pack(client_mac, DHCPData(ip, gateway, dns_server), interface))
         del self.in_session_with[client_mac]
+
+    @staticmethod
+    def build_dhcp_offer(client_mac, offered_ip, interface):
+        return interface.ethernet_wrap(client_mac,
+                                       IP(interface.ip, offered_ip, PROTOCOLS.DHCP.DEFAULT_TTL,
+                                          UDP(PORTS.DHCP_SERVER, PORTS.DHCP_CLIENT,
+                                              DHCP(OPCODES.DHCP.OFFER, DHCPData(offered_ip, None, None)))))
 
     def send_offer(self, discover_packet, interface):
         """
@@ -151,7 +198,8 @@ class DHCPServer(Process):
         offered = self.offer_ip(interface)
 
         self.in_session_with[client_mac] = IPAddress.copy(offered)
-        self.computer.send_dhcp_offer(client_mac, offered, interface)
+        socket = get_the_one(self.sockets, lambda s: s.interface == interface, ThisCodeShouldNotBeReached)
+        socket.send(self.build_dhcp_offer(client_mac, offered, interface))
 
     def offer_ip(self, interface):
         """
@@ -166,7 +214,9 @@ class DHCPServer(Process):
         except KeyError:  # if the interface was created after the start of this process.
             if not interface.has_ip():
                 raise AddressError("The interface cannot serve DHCP because it has no IP address!")
-            self.interface_to_dhcp_data[interface] = DHCPData(IPAddress.copy(interface.ip), self.default_gateway.same_subnet_interfaces(interface.ip)[0].ip, None)
+            self.interface_to_dhcp_data[interface] = DHCPData(IPAddress.copy(interface.ip),
+                                                              self.default_gateway.same_subnet_interfaces(interface.ip)[0].ip, None)
+            self._bind_interface_to_socket(interface)
             return self.offer_ip(interface)
 
     def code(self):
@@ -175,16 +225,47 @@ class DHCPServer(Process):
         Waits for a DHCP packet for the running computer and runs the appropriate command as a DHCP Server.
         :return: None
         """
-        while True:
-            received_packets = ReturnedPacket()
-            yield WaitingForPacket(lambda p: "DHCP" in p, received_packets)
+        for interface in self.computer.interfaces:
+            self._bind_interface_to_socket(interface)
 
-            for packet, packet_metadata in received_packets.packets.items():
-                interface = packet_metadata.interface
-                if not interface.has_ip():
-                    self.computer.print("Cannot server DHCP without an IP address!")
-                    continue
-                self.actions.get(packet["DHCP"].opcode, self.unknown_packet)(packet, interface)
+        while True:
+            yield from self.computer.select(self.sockets, timeout=0.5)
+            self._detect_new_interfaces()
+            if self.computer.ready_socket is None:
+                continue
+
+            received_packets = self.computer.ready_socket.receive()
+
+            for received_packet in received_packets:
+                for packet, packet_metadata in received_packet.packets.items():
+                    interface = packet_metadata.interface
+                    if not interface.has_ip():
+                        self.computer.print("Cannot server DHCP without an IP address!")
+                        continue
+                    {OPCODES.DHCP.DISCOVER: self.send_offer,
+                     OPCODES.DHCP.REQUEST: self.send_pack}.get(
+                        packet["DHCP"].opcode,
+                        self.raise_on_unknown_packet
+                    )(packet, interface)
+
+    def _bind_interface_to_socket(self, interface):
+        """
+        Takes in an `Interface` and gets a raw socket from the operation system of the computer
+        Binds the socket to the interface with a DHCP packet filter
+        """
+        socket = self.computer.get_socket(self.pid, kind=COMPUTER.SOCKETS.TYPES.SOCK_RAW)
+        socket.bind(lambda p: "DHCP" in p, interface)
+        self.sockets.append(socket)
+
+    def _detect_new_interfaces(self):
+        """
+        Goes over the interfaces of the computer - if there is an interface
+        that does not have a raw-socket bound to it, generate and bind one to it.
+        """
+        for interface in self.computer.interfaces:
+            if not any(socket.interface == interface for socket in self.sockets):
+                # the interface has no socket - it is new
+                self._bind_interface_to_socket(interface)
 
     def __repr__(self):
         """The string representation of the the process"""

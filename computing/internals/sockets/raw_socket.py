@@ -51,7 +51,7 @@ class RawSocket(Socket):
             raise SocketNotBoundError(f"Bind the raw socket to an interface and filter before trying to use it for sending!")
         if self.interface is INTERFACES.ANY_INTERFACE:
             raise RawSocketError("Cannot send on a raw socket that is bound to all interfaces!")
-        self.computer.send(packet, self.interface)
+        self.computer.send(packet, self.interface, sending_socket=self)
 
     def receive(self, count=None):
         """

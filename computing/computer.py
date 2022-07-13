@@ -9,7 +9,7 @@ from address.mac_address import MACAddress
 from computing.internals.arp_cache import ArpCache
 from computing.internals.filesystem.filesystem import Filesystem
 from computing.internals.interface import Interface
-from computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket
+from computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket, WaitingFor
 from computing.internals.processes.kernelmode_processes.arp_process import ARPProcess, SendPacketWithARPProcess
 from computing.internals.processes.process_scheduler import ProcessScheduler
 from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEServerProcess
@@ -28,7 +28,6 @@ from exceptions import *
 from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.arp import ARP
-from packets.dhcp import DHCP, DHCPData
 from packets.icmp import ICMP
 from packets.ip import IP
 from packets.tcp import TCP
@@ -115,6 +114,7 @@ class Computer:
         self.open_udp_ports = []
 
         self.sockets = {}
+        self.__ready_socket = None
 
         self.is_supporting_wireless_connections = False
 
@@ -149,6 +149,15 @@ class Computer:
     @property
     def raw_sockets(self):
         return [socket for socket in self.sockets if self.sockets[socket].kind == COMPUTER.SOCKETS.TYPES.SOCK_RAW]
+
+    @property
+    def ready_socket(self):
+        """
+        This should be used after using the `select` method of the computer
+        Returns the socket that was selected. If timeout has been reached - return None
+        :return:
+        """
+        return self.__ready_socket
 
     @classmethod
     def with_ip(cls, ip_address, name=None):
@@ -418,7 +427,7 @@ class Computer:
         self.arp_cache.add_dynamic(arp.src_ip, arp.src_mac)
 
         if arp.opcode == OPCODES.ARP.REQUEST and packet_metadata.interface.has_this_ip(arp.dst_ip):
-            self.send_arp_reply(packet)                     # Answer if request
+            self.send_arp_reply(packet)  # Answer if request
 
     def _handle_ping(self, returned_packet):
         """
@@ -429,7 +438,8 @@ class Computer:
         """
         packet, packet_metadata = returned_packet.packet_and_metadata
         if (packet["ICMP"].opcode == OPCODES.ICMP.REQUEST) and (self.is_for_me(packet)):
-            if packet_metadata.interface.has_this_ip(packet["IP"].dst_ip) or (packet_metadata.interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):
+            if packet_metadata.interface.has_this_ip(packet["IP"].dst_ip) or (
+                    packet_metadata.interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):
                 # ^ only if the packet is for me also on the third layer!
                 dst_ip = packet["IP"].src_ip
                 self.start_ping_process(dst_ip, OPCODES.ICMP.REPLY)
@@ -651,25 +661,54 @@ class Computer:
         """
         return list(filter(lambda rp: rp.packets[rp.packet].time > time_, self.received))
 
-# -------------------------v packet sending and wrapping related methods v ---------------------------------------------
+    # -------------------------v packet sending and wrapping related methods v ---------------------------------------------
 
-    def _sniff_packet_on_relevant_raw_sockets(self, returned_packet):
+    def _sniff_packet_on_relevant_raw_sockets(self, returned_packet, sending_socket=None):
         """
         Receive a packet on all raw sockets that this packet fits their filter
 
         :param returned_packet:    The ReturnedPacket object that is sniffed
+        :param sending_socket the `RawSocket` object the packet was sent from (if it wasn't sent
+            through a raw socket - this will be None)
         """
         packet, packet_metadata = returned_packet.packet_and_metadata
         for raw_socket in self.raw_sockets:
-            if raw_socket.is_bound and raw_socket.filter(packet) and \
-                    (raw_socket.interface == packet_metadata.interface or raw_socket.interface is INTERFACES.ANY_INTERFACE):
+            if raw_socket != sending_socket and \
+                    raw_socket.is_bound and \
+                    raw_socket.filter(packet) and \
+                    (raw_socket.interface == packet_metadata.interface or
+                     raw_socket.interface is INTERFACES.ANY_INTERFACE):
                 raw_socket.received.append(returned_packet)
 
-    def send(self, packet, interface=None):
+    def select(self, socket_list, timeout=None):
+        """
+        Similar to the `select` syscall of linux
+        Loops over all sockets until one of them has something to receive
+        The selected socket will later be accessible via the `ready_socket` property of the computer
+
+        This is a generator that yields `WaitingFor` objects
+        To use in a computer `Process` - yield from this
+        :param socket_list: List[Socket]
+        :param timeout: the amount of seconds to wait before returning without a selected socket
+        """
+        self.__ready_socket = None
+        start_time = MainLoop.instance.time()
+        while True:
+            for socket in socket_list:
+                if socket.has_data_to_receive:
+                    self.__ready_socket = socket
+                    return
+            if (timeout is not None) and (start_time + timeout < MainLoop.instance.time()):
+                return
+            yield WaitingFor(lambda: True)
+
+    def send(self, packet, interface=None, sending_socket=None):
         """
         Takes a full and ready packet and just sends it.
         :param packet: a valid `Packet` object.
         :param interface: the `Interface` to send the packet on.
+        :param sending_socket: the `RawSocket` object that sent the packet (if was sent using a raw socket
+            it should not be sniffed on that same one as outgoing)
         :return: None
         """
         if interface is None:
@@ -683,7 +722,8 @@ class Computer:
                     interface,
                     MainLoop.instance.time(),
                     PACKET.DIRECTION.OUTGOING
-                ))
+                )),
+                sending_socket=sending_socket,
             )
 
     def send_with_ethernet(self, dst_mac, dst_ip, data):
@@ -817,71 +857,6 @@ class Computer:
             interface
         )
 
-    def send_dhcp_discover(self):
-        """Sends out a `DHCP_DISCOVER` packet (This is sent by a DHCP client)"""
-        dst_ip = IPAddress.broadcast()
-        src_ip = IPAddress.no_address()
-        for interface in self.interfaces:
-            self.send(
-                interface.ethernet_wrap(MACAddress.broadcast(),
-                                        IP(src_ip, dst_ip, TTL.BY_OS[self.os],
-                                           UDP(PORTS.DHCP_CLIENT, PORTS.DHCP_SERVER,
-                                               DHCP(OPCODES.DHCP.DISCOVER, DHCPData(None, None, None))))),
-                interface
-            )
-
-    def send_dhcp_offer(self, client_mac, offer_ip, session_interface):
-        """
-        Sends a `DHCP_OFFER` request with an `offer_ip` offered to the `dst_mac`. (This is sent by the DHCP server)
-        :param client_mac: the `MACAddress` of the client computer.
-        :param offer_ip: The `IPAddress` that is offered in the DHCP offer.
-        :param session_interface: the `Interface` that runs the session with the Client
-        :return: None
-        """
-        dst_ip = offer_ip
-        self.send(
-            session_interface.ethernet_wrap(client_mac,
-                                                 IP(session_interface.ip, dst_ip, TTL.BY_OS[self.os],
-                                                    UDP(PORTS.DHCP_SERVER, PORTS.DHCP_CLIENT,
-                                                        DHCP(OPCODES.DHCP.OFFER, DHCPData(offer_ip, None, None))))),
-            session_interface
-        )
-
-    def send_dhcp_request(self, server_mac, session_interface):
-        """
-        Sends a `DHCP_REQUEST` that confirms the address that the server had offered.
-        This is sent by the DHCP client.
-        :param server_mac: The `MACAddress` of the DHCP server.
-        :param session_interface: The `Interface` that is running the session with the server.
-        :return: None
-        """
-        dst_ip = IPAddress.broadcast()
-        src_ip = IPAddress.no_address()
-        self.send(
-            session_interface.ethernet_wrap(server_mac,
-                                            IP(src_ip, dst_ip, TTL.BY_OS[self.os],
-                                               UDP(PORTS.DHCP_CLIENT, PORTS.DHCP_SERVER,
-                                                   DHCP(OPCODES.DHCP.REQUEST, DHCPData(None, None, None))))),
-            session_interface
-        )
-
-    def send_dhcp_pack(self, client_mac, dhcp_data, session_interface):
-        """
-        Sends a `DHCP_PACK` that tells the DHCP client all of the new ip_layer it needs to update (IP, gateway, DNS)
-        :param client_mac: The `MACAddress` of the client.
-        :param dhcp_data:  a `DHCPData` namedtuple (from 'dhcp_process.py') that is sent in the DHCP pack.
-        :param session_interface: The `Interface` that is running the session with the client.
-        :return: None
-        """
-        dst_ip = dhcp_data.given_ip
-        self.send(
-            session_interface.ethernet_wrap(client_mac,
-                                            IP(session_interface.ip, dst_ip, TTL.BY_OS[self.os],
-                                               UDP(PORTS.DHCP_SERVER, PORTS.DHCP_CLIENT,
-                                                   DHCP(OPCODES.DHCP.PACK, dhcp_data)))),
-            session_interface
-        )
-
     def validate_dhcp_given_ip(self, ip_address):
         """
         This is for future implementation if you want, for now it is not doing anything, just making sure that no two
@@ -935,6 +910,7 @@ class Computer:
         :param kind:
         :return:
         """
+
         def is_registered_on_port(socket_data):
             return socket_data.local_port == port and socket_data.kind == kind
 
@@ -962,7 +938,7 @@ class Computer:
                                            f"The socket: {socket}")
 
         socket.is_bound = True
-        
+
     def remove_socket(self, socket):
         """
         Remove a socket from the operation system's management
@@ -1011,7 +987,7 @@ class Computer:
         """a simple string representation of the computer"""
         return f"{self.name}"
 
-# ----------------------------------------- Other methods  ----------------------------------------
+    # ----------------------------------------- Other methods  ----------------------------------------
 
     @classmethod
     def _interfaces_from_dict(cls, dict_):
