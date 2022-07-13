@@ -77,6 +77,7 @@ class RawSocket(Socket):
                 raise RawSocketError(f"Cannot use promiscuous mode when the socket is on all interfaces!!! socket: {self}, computer: {self.computer}")
             interface.is_promisc = True
         self.is_promisc = promisc
+        self.computer.sockets[self].state = COMPUTER.SOCKETS.STATES.BOUND
 
     def connect(self, address: Tuple[IPAddress, int]):
         """
@@ -103,7 +104,7 @@ class RawSocket(Socket):
 
     def __repr__(self):
         return f"RAW    " \
-            f"{'raw': <23}" \
+            f"{self.interface.name or 'unbound': <23}" \
             f"{'raw': <23}" \
             f"{self.state: <16}" \
             f"{self.acquiring_process_pid}"
