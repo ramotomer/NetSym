@@ -89,10 +89,3 @@ class Socket(metaclass=ABCMeta):
         """
         self.is_closed = True
         self.computer.sockets[self].state = COMPUTER.SOCKETS.STATES.CLOSED
-
-    def __repr__(self):
-        return f"       " \
-            f"{':'.join(map(str, self.bound_address)): <23}" \
-            f"{':'.join(map(str, self.remote_address)): <23}" \
-            f"{self.state: <16}" \
-            f"{self.acquiring_process_pid}"

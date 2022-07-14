@@ -126,6 +126,9 @@ class PROTOCOLS:
         BLOCKED_PORT = "BLOCKED"
         NO_STATE = "no state!"
 
+    class ECHO_SERVER:
+        DEFAULT_REQUEST_COUNT = 1
+
 
 class PORTS:
     DAYTIME = 13
@@ -136,6 +139,8 @@ class PORTS:
     DHCP_CLIENT = 68
     HTTP = 80
     HTTPS = 443
+    ECHO_SERVER = 1000
+    ECHO_CLIENT = 1001
 
     USERMODE_USABLE_RANGE = (2 ** 15 - 2 ** 14), 2 ** 16 - 1
 

@@ -22,7 +22,7 @@ from computing.internals.routing_table import RoutingTable, RoutingTableItem
 from computing.internals.sockets.l4_socket import L4Socket
 from computing.internals.sockets.raw_socket import RawSocket
 from computing.internals.sockets.tcp_socket import TCPSocket
-from computing.internals.sockets.udp_socket import ReturnedUDPPacket
+from computing.internals.sockets.udp_socket import ReturnedUDPPacket, UDPSocket
 from computing.internals.wireless_interface import WirelessInterface
 from consts import *
 from exceptions import *
@@ -114,8 +114,6 @@ class Computer:
             "UDP": self._handle_udp,
         }
 
-        self.open_udp_ports = []
-
         self.sockets = {}
         self.__ready_socket = None
 
@@ -150,7 +148,9 @@ class Computer:
             return self.get_open_ports("TCP") + self.get_open_ports("UDP")
 
         return [socket_data.local_port for socket, socket_data in self.sockets.items()
-                if socket_data.state in [COMPUTER.SOCKETS.STATES.BOUND, COMPUTER.SOCKETS.STATES.LISTENING] and
+                if socket_data.state in [COMPUTER.SOCKETS.STATES.BOUND,
+                                         COMPUTER.SOCKETS.STATES.LISTENING,
+                                         COMPUTER.SOCKETS.STATES.ESTABLISHED] and
                 isinstance(socket, L4Socket) and socket.protocol == protocol]
 
     @property
@@ -263,6 +263,7 @@ class Computer:
         self.boot_time = None
         self.process_scheduler.terminate_all()
         self.filesystem.wipe_temporary_directories()
+        self.remove_all_sockets()
         self._close_all_shells()
 
     def on_startup(self):
@@ -473,24 +474,50 @@ class Computer:
         """
         Handles a UDP packet that is received on the computer
         :param returned_packet: the `ReturnedPacket` that contains the UDP we handle and its metadata
-        :return:
         """
         packet, packet_metadata = returned_packet.packet_and_metadata
         if not self.has_ip() or not packet_metadata.interface.has_this_ip(packet["IP"].dst_ip):
             return
 
-        if packet["UDP"].dst_port not in self.open_udp_ports:
+        if packet["UDP"].dst_port not in self.get_open_ports("UDP"):
             self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip, ICMP(OPCODES.ICMP.PORT_UNREACHABLE))
             # TODO: add the original packet to the ICMP port unreachable packet
             return
 
-        for socket, socket_metadata in self.sockets.items():
-            if socket_metadata.kind == COMPUTER.SOCKETS.TYPES.SOCK_DGRAM and \
-                    socket_metadata.local_port == packet["UDP"].dst_port and \
-                    socket_metadata.remote_port == packet["UDP"].src_port and \
-                    socket_metadata.remote_ip == packet["IP"].src_ip and \
-                    socket_metadata.local_ip == packet["IP"].dst_ip:
+        for socket in self.sockets:
+            if self.__should_udp_socket_receive_packet(socket, packet):
                 socket.received.append(ReturnedUDPPacket(packet["UDP"].data, packet["IP"].src_ip, packet["UDP"].src_port))
+
+    def __should_udp_socket_receive_packet(self, socket, packet):
+        """
+        Validates that the packet matches the bound four-tuple of the UDP socket
+        Needs to operate on connected and disconnected sockets as well.
+        :param socket: `Socket` object to test
+        :param packet: `Packet` object to test
+        :return: `bool`
+        """
+        socket_metadata = self.sockets[socket]
+
+        if socket_metadata.kind != COMPUTER.SOCKETS.TYPES.SOCK_DGRAM or \
+           "UDP" not in packet:
+            return False
+
+        if socket_metadata.remote_ip_address is not None:  # if socket is connected
+            if socket_metadata.remote_port != packet["UDP"].src_port or \
+               socket_metadata.remote_ip_address != packet["IP"].src_ip:
+                return False
+
+        if socket_metadata.local_port != packet["UDP"].dst_port:
+            return False
+
+        if socket_metadata.local_ip_address != IPAddress.no_address() and \
+           socket_metadata.local_ip_address != packet["IP"].dst_ip:
+            return False
+
+        if socket_metadata.local_ip_address == IPAddress.no_address() and \
+           packet["IP"].dst_ip not in self.ips:
+            return False
+        return True
 
     def _handle_special_packet(self, returned_packet):
         """
@@ -898,7 +925,7 @@ class Computer:
         socket = {
             COMPUTER.SOCKETS.TYPES.SOCK_STREAM: TCPSocket,
             COMPUTER.SOCKETS.TYPES.SOCK_RAW: RawSocket,
-            # COMPUTER.SOCKETS.MODES.SOCK_DGRAM:
+            COMPUTER.SOCKETS.TYPES.SOCK_DGRAM: UDPSocket,
         }[kind](self, address_family)
         self.sockets[socket] = SocketData(kind=kind,
                                           local_ip_address=None,
@@ -918,7 +945,9 @@ class Computer:
         """
 
         def is_registered_on_port(socket_data):
-            return socket_data.local_port == port and socket_data.kind == kind
+            return socket_data.local_port == port and \
+                   socket_data.kind == kind and \
+                   socket_data.state != COMPUTER.SOCKETS.STATES.CLOSED
 
         return any(map(is_registered_on_port, self.sockets.values()))
 
@@ -957,6 +986,14 @@ class Computer:
             raise SocketNotRegisteredError(f"The socket that was provided is not known to the operation system! "
                                            f"It was probably not acquired using the `computer.get_socket` method! "
                                            f"The socket: {socket}")
+
+    def remove_all_sockets(self):
+        """
+        Unregisters all of the sockets of the computer
+        :return:
+        """
+        for socket in self.sockets[:]:
+            self.remove_socket(socket)
 
     # ------------------------------- v The main `logic` method of the computer's main loop v --------------------------
 

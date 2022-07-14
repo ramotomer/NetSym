@@ -32,20 +32,22 @@ class UDPSocket(L4Socket):
         """
         Sends down the socket some data
         """
+        self.assert_is_bound()
+        self.assert_is_not_closed()
         _, src_port = self.bound_address
         dst_ip, dst_port = address
         self.computer.start_sending_udp_packet(dst_ip, src_port, dst_port, data)
 
     def receivefrom(self) -> List[ReturnedUDPPacket]:
+        self.assert_is_bound()
+        self.assert_is_not_closed()
         return [self.received.pop(0) for _ in range(len(self.received))]
 
     def receive(self, count=1024) -> List[str]:
-        dst_ip, dst_port = self.remote_address
-        if dst_ip is None:
-            raise SocketNotConnectedError("If you want to receive data using a disconnected socket use the `receivefrom` method, "
-                                          "or connect your socket!")
-
-        return [self.received.pop(0) for _ in range(len(self.received))]
+        self.assert_is_bound()
+        self.assert_is_not_closed()
+        self.assert_is_connected()
+        return [self.received.pop(0).data for _ in range(len(self.received))]
 
     def send(self, data):
         """
@@ -53,10 +55,10 @@ class UDPSocket(L4Socket):
         :param data:
         :return:
         """
+        self.assert_is_bound()
+        self.assert_is_not_closed()
+        self.assert_is_connected()
         dst_ip, dst_port = self.remote_address
-        if dst_ip is None:
-            raise SocketNotConnectedError("If you want to send data using a disconnected socket use the `sendto` method, or connect your socket!")
-
         self.sendto(data, (dst_ip, dst_port))
 
     def connect(self, address: Tuple[IPAddress, int]):
@@ -68,7 +70,8 @@ class UDPSocket(L4Socket):
         dst_ip, dst_port = self.remote_address
         if dst_ip is not None:
             raise SocketAlreadyConnectedError(f"{self} is already connected to {dst_ip, dst_port}")
-        self.computer.sockets[self].remote_address, self.computer.sockets[self].remote_port = address
+        self.computer.sockets[self].remote_ip_address, self.computer.sockets[self].remote_port = address
+        self.computer.sockets[self].state = COMPUTER.SOCKETS.STATES.ESTABLISHED
         self.is_connected = True
 
     def bind(self, address: Tuple[IPAddress, int]):

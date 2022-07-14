@@ -23,6 +23,8 @@ from computing.internals.shell.commands.misc.uname import Uname
 from computing.internals.shell.commands.misc.uptime import Uptime
 from computing.internals.shell.commands.net.arp import Arp
 from computing.internals.shell.commands.net.arping import Arping
+from computing.internals.shell.commands.net.echoc import Echoc
+from computing.internals.shell.commands.net.echos import Echos
 from computing.internals.shell.commands.net.ip import Ip
 from computing.internals.shell.commands.net.ip_address import IpAddressCommand
 from computing.internals.shell.commands.net.ip_route import IpRouteCommand
@@ -50,7 +52,7 @@ class Shell:
 
         self.commands = [Echo, Ls, Cd, Pwd, Touch, Cat, Mkdir, Rm, Uname, Grep,
                          Ip, Arp, Ps, Ping, Arping, Tcpdump, Kill, Hostname, Netstat, Cp, Uptime,
-                         Mv, Alias, Unalias, Help, Head, Tail, Man]
+                         Mv, Alias, Unalias, Help, Head, Tail, Man, Echoc, Echos]
         self.commands = [command(computer, self) for command in self.commands]
 
         self.parser_commands = {

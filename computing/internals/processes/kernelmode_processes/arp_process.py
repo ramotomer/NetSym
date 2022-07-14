@@ -52,6 +52,7 @@ class ARPProcess(Process):
 
         if self.requesting_process is not None:
             self.computer.process_scheduler.terminate_process(self.requesting_process, None)
+            # TODO: what if we kill a process while it is ARP searching? this will try to kill it and crash the simulation
 
     def __repr__(self):
         return f"[karp] {self.address}"

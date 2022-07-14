@@ -43,6 +43,10 @@ class TCPSocket(L4Socket):
         :param data: string
         :return:
         """
+        self.assert_is_bound()
+        self.assert_is_not_closed()
+        self.assert_is_connected()
+        self.assert_is_not_broken()
         self.to_send.append(data)
 
     def connect(self, address: Tuple[IPAddress, int]):
@@ -51,6 +55,8 @@ class TCPSocket(L4Socket):
         :param address:
         :return:
         """
+        self.assert_is_bound()
+        self.assert_is_not_closed()
         self.socket_handling_kernelmode_pid = self.computer.process_scheduler.start_kernelmode_process(ConnectingTCPSocketProcess, self, address)
 
     def listen(self, count: int):
@@ -59,6 +65,8 @@ class TCPSocket(L4Socket):
         :param count:
         :return:
         """
+        self.assert_is_bound()
+        self.assert_is_not_closed()
         self.computer.sockets[self].state = COMPUTER.SOCKETS.STATES.LISTENING
         self.computer.graphics.update_image()
         self.listening_count = count
@@ -68,6 +76,9 @@ class TCPSocket(L4Socket):
         Accept connections to this socket.
         :return:
         """
+        self.assert_is_bound()
+        self.assert_is_not_closed()
+        self.assert_is_not_broken()
         self.socket_handling_kernelmode_pid = self.computer.process_scheduler.start_kernelmode_process(ListeningTCPSocketProcess, self,
                                                                                                        self.bound_address)
 
@@ -80,5 +91,6 @@ class TCPSocket(L4Socket):
         yield WaitingFor(lambda: self.is_connected)
 
     def close(self):
+        self.assert_is_not_broken()
         super(TCPSocket, self).close()
         self.socket_handling_kernelmode_process.close_socket_when_done_transmitting = True

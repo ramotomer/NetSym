@@ -25,13 +25,7 @@ class L4Socket(Socket, metaclass=ABCMeta):
 
     @property
     def remote_address(self):
-        address = self.computer.sockets[self].remote_ip_address
-        port = self.computer.sockets[self].remote_port
-
-        address = address if address is not None else IPAddress("0.0.0.0")
-        port = port if port is not None else 0
-
-        return address, port
+        return self.computer.sockets[self].remote_ip_address, self.computer.sockets[self].remote_port
 
     @property
     def bound_address(self):
