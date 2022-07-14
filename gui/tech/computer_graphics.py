@@ -85,10 +85,10 @@ class ComputerGraphics(ImageGraphics):
         Updates the image according to the current computer state
         :return:
         """
-        self.image_name = os.path.join(DIRECTORIES.IMAGES, IMAGES.COMPUTERS.SERVER if self.computer.open_tcp_ports else IMAGES.COMPUTERS.COMPUTER)
+        self.image_name = os.path.join(DIRECTORIES.IMAGES, IMAGES.COMPUTERS.SERVER if self.computer.get_open_ports() else IMAGES.COMPUTERS.COMPUTER)
         self.load()
         self.child_graphics_objects.process_list.clear()
-        for port in self.computer.open_tcp_ports:
+        for port in self.computer.get_open_ports():
             self.child_graphics_objects.process_list.add(port)
 
     def start_viewing(self, user_interface):

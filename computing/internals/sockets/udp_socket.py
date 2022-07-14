@@ -26,8 +26,6 @@ class UDPSocket(L4Socket):
         :param address_family: usually you need AF_INET - I think it means IP
         """
         super(UDPSocket, self).__init__(computer, address_family, COMPUTER.SOCKETS.TYPES.SOCK_DGRAM)
-        self.protocol = 'UDP'
-        self.is_connected = True
         self.allow_being_broken = True
 
     def sendto(self, data, address: Tuple[IPAddress, int]):
@@ -71,24 +69,10 @@ class UDPSocket(L4Socket):
         if dst_ip is not None:
             raise SocketAlreadyConnectedError(f"{self} is already connected to {dst_ip, dst_port}")
         self.computer.sockets[self].remote_address, self.computer.sockets[self].remote_port = address
+        self.is_connected = True
 
     def bind(self, address: Tuple[IPAddress, int]):
         ip, port = address
         if not self.computer.has_this_ip(ip) and ip != IPAddress.no_address():
             raise InvalidAddressError(f"computer {self.computer} does not have the address {ip} so socket {self} cannot be bound to it")
         super(UDPSocket, self).bind(address)
-
-    def listen(self, count: int):
-        """
-        Listen for connections to this socket.
-        :param count:
-        :return:
-        """
-        raise NotImplementedError
-
-    def accept(self):
-        """
-        Accept connections to this socket.
-        :return:
-        """
-        raise NotImplementedError

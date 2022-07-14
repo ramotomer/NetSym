@@ -47,7 +47,7 @@ class ServerFTPProcess(FTPProcess):
             with self.computer.filesystem.at_path(self.cwd, filename) as file:
                 self.socket.send(file.read())
 
-        yield WaitingFor(lambda: self.socket.process.is_done_transmitting())
+        yield WaitingFor(lambda: self.socket.socket_handling_kernelmode_process.is_done_transmitting())
         self.socket.close()
         # TODO: once we connect once to a server - we cannot do it again because the socket is closed now :) LOL
 

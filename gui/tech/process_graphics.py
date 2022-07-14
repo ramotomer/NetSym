@@ -21,6 +21,7 @@ class ProcessGraphicsList(GraphicsObject):
     def add(self, port):
         """Add a new process to the list"""
         self.child_graphics_objects.append(ProcessGraphics(port, self.server_graphics, self.process_count))
+        # TODO: add a separate list for UDP ports (maybe the drawings of tcp have red glow and udp has blue glow IDK...)
         self.process_count += 1
 
     def remove(self, port):

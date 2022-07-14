@@ -438,3 +438,15 @@ class ActionNotSupportedInARawSocket(RawSocketError):
     """
     The action you were trying to perform should not be done on a socket of type raw
     """
+
+
+class UnknownSocketTypeError(SocketError):
+    """
+    The supplied type is not a valid socket type
+    """
+
+
+class UnknownLayer4SocketTypeError(UnknownSocketTypeError):
+    """
+    The supplied type is not a valid l4 socket type (udp/tcp)
+    """

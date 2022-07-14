@@ -19,6 +19,7 @@ from computing.internals.processes.usermode_processes.ftp_process import ServerF
 from computing.internals.processes.usermode_processes.ping_process import SendPing
 from computing.internals.processes.usermode_processes.sniffing_process import SniffingProcess
 from computing.internals.routing_table import RoutingTable, RoutingTableItem
+from computing.internals.sockets.l4_socket import L4Socket
 from computing.internals.sockets.raw_socket import RawSocket
 from computing.internals.sockets.tcp_socket import TCPSocket
 from computing.internals.sockets.udp_socket import ReturnedUDPPacket
@@ -68,9 +69,11 @@ class Computer:
             PORTS.SSH: None,
             PORTS.HTTP: None,
             PORTS.HTTPS: None,
+            # TODO: add more processes!
         },
         "UDP": {
             PORTS.DHCP_SERVER: DHCPServer,
+            # TODO: a bug that i thought of - this port will not really be open because DHCP uses raw sockets
         },
     }
 
@@ -141,10 +144,14 @@ class Computer:
         """Returns the list of interfaces with the loopback"""
         return self.interfaces + [self.loopback]
 
-    @property
-    def open_tcp_ports(self):
+    def get_open_ports(self, protocol=None):
+        if protocol is None:
+            # probably not the best code - do not write in plain text all l4 protocols - use some const list (what if you want to add another?)
+            return self.get_open_ports("TCP") + self.get_open_ports("UDP")
+
         return [socket_data.local_port for socket, socket_data in self.sockets.items()
-                if socket_data.state == COMPUTER.SOCKETS.STATES.LISTENING]
+                if socket_data.state in [COMPUTER.SOCKETS.STATES.BOUND, COMPUTER.SOCKETS.STATES.LISTENING] and
+                isinstance(socket, L4Socket) and socket.protocol == protocol]
 
     @property
     def raw_sockets(self):
@@ -191,7 +198,7 @@ class Computer:
         :param y: Coordinates to initiate the `GraphicsObject` at.
         :return: None
         """
-        self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.COMPUTER if not self.open_tcp_ports else IMAGES.COMPUTERS.SERVER)
+        self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.COMPUTER if not self.get_open_ports() else IMAGES.COMPUTERS.SERVER)
         self.loopback.connection.connection.show(self.graphics)
 
     def print(self, string):
@@ -457,7 +464,7 @@ class Computer:
 
         if {OPCODES.TCP.SYN} == packet["TCP"].flags:
             dst_port = packet["TCP"].dst_port
-            if dst_port not in self.open_tcp_ports:
+            if dst_port not in self.get_open_ports("TCP"):
                 self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip,
                              TCP(packet["TCP"].dst_port, packet["TCP"].src_port, 0,
                                  {OPCODES.TCP.RST}))
@@ -548,12 +555,11 @@ class Computer:
             raise PopupWindowWithThisError(f"{port_number} is an unknown port!!!")
 
         process = self.PORTS_TO_PROCESSES[protocol][port_number]
-        if port_number in self.open_tcp_ports:
-            if process is not None:
+        if process is not None:
+            if port_number in self.get_open_ports(protocol):
                 self.process_scheduler.kill_all_usermode_processes_by_type(process)
-        else:
-            if process is not None:
-                self.process_scheduler.start_usermode_process(self.PORTS_TO_PROCESSES[port_number])
+                return
+            self.process_scheduler.start_usermode_process(self.PORTS_TO_PROCESSES[protocol][port_number])
 
         self.graphics.update_image()
 
