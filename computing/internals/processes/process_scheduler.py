@@ -365,8 +365,7 @@ class ProcessScheduler:
         :return: `int` the process ID of the process that was started
         """
         pid = self.__get_next_pid(mode)
-        waiting_processes = self.__details_by_mode[mode].waiting_processes
-        waiting_processes.append(WaitingProcess(process_type(pid, self.computer, *args), None))
+        self.__details_by_mode[mode].waiting_processes.append(WaitingProcess(process_type(pid, self.computer, *args), None))
         return pid
 
     def start_usermode_process(self, process_type, *args):

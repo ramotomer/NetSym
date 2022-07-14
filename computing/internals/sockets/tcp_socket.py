@@ -6,7 +6,6 @@ from computing.internals.processes.kernelmode_processes.tcp_socket_process impor
     ConnectingTCPSocketProcess
 from computing.internals.sockets.l4_socket import L4Socket
 from consts import COMPUTER
-from exceptions import SocketIsBrokenError
 
 
 class TCPSocket(L4Socket):
@@ -32,10 +31,10 @@ class TCPSocket(L4Socket):
     def socket_handling_kernelmode_process(self):
         return self.computer.process_scheduler.get_process(self.socket_handling_kernelmode_pid, COMPUTER.PROCESSES.MODES.KERNELMODE, raises=False)
 
-    def assert_is_not_broken(self):
-        if self.socket_handling_kernelmode_pid is None or self.socket_handling_kernelmode_process is None:
-            raise SocketIsBrokenError(f"The socket is broken and cannot be used!!! pid: {self.socket_handling_kernelmode_pid}, "
-                                      f"process: {self.socket_handling_kernelmode_process}, computer: {self.computer}")
+    # def assert_is_not_broken(self):
+    #     if self.socket_handling_kernelmode_pid is None or self.socket_handling_kernelmode_process is None:
+    #         raise SocketIsBrokenError(f"The socket is broken and cannot be used!!! pid: {self.socket_handling_kernelmode_pid}, "
+    #                                   f"process: {self.socket_handling_kernelmode_process}, computer: {self.computer}")
 
     def send(self, data):
         """
@@ -46,7 +45,6 @@ class TCPSocket(L4Socket):
         self.assert_is_bound()
         self.assert_is_not_closed()
         self.assert_is_connected()
-        self.assert_is_not_broken()
         self.to_send.append(data)
 
     def connect(self, address: Tuple[IPAddress, int]):
@@ -78,7 +76,6 @@ class TCPSocket(L4Socket):
         """
         self.assert_is_bound()
         self.assert_is_not_closed()
-        self.assert_is_not_broken()
         self.socket_handling_kernelmode_pid = self.computer.process_scheduler.start_kernelmode_process(ListeningTCPSocketProcess, self,
                                                                                                        self.bound_address)
 
@@ -91,6 +88,5 @@ class TCPSocket(L4Socket):
         yield WaitingFor(lambda: self.is_connected)
 
     def close(self):
-        self.assert_is_not_broken()
         super(TCPSocket, self).close()
         self.socket_handling_kernelmode_process.close_socket_when_done_transmitting = True

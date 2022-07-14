@@ -89,3 +89,4 @@ class Socket(metaclass=ABCMeta):
         """
         self.is_closed = True
         self.computer.sockets[self].state = COMPUTER.SOCKETS.STATES.CLOSED
+        self.computer.graphics.update_image()  # when closing a port - maybe the computer is no longer a server?

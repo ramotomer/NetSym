@@ -121,11 +121,17 @@ class ComputerGraphics(ImageGraphics):
                 MESSAGES.INSERT.INTERFACE_INFO,
                 with_args(user_interface.add_delete_interface, self, type_=INTERFACES.TYPE.WIFI),
             ),
-            "open/close port (shift+o)": with_args(
+            "open/close TCP port (shift+o)": with_args(
                 user_interface.ask_user_for,
                 int,
                 MESSAGES.INSERT.PORT_NUMBER,
-                self.computer.open_port
+                self.computer.open_port,
+            ),
+            "open/close UDP port (shift+u)": with_args(
+                user_interface.ask_user_for,
+                int,
+                MESSAGES.INSERT.PORT_NUMBER,
+                with_args(self.computer.open_port, protocol="UDP"),
             ),
             "set default gateway (g)": with_args(
                 user_interface.ask_user_for,

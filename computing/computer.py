@@ -15,6 +15,7 @@ from computing.internals.processes.process_scheduler import ProcessScheduler
 from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEServerProcess
 from computing.internals.processes.usermode_processes.dhcp_process import DHCPClient
 from computing.internals.processes.usermode_processes.dhcp_process import DHCPServer
+from computing.internals.processes.usermode_processes.echo_server_process import EchoServerProcess
 from computing.internals.processes.usermode_processes.ftp_process import ServerFTPProcess
 from computing.internals.processes.usermode_processes.ping_process import SendPing
 from computing.internals.processes.usermode_processes.sniffing_process import SniffingProcess
@@ -73,6 +74,7 @@ class Computer:
         },
         "UDP": {
             PORTS.DHCP_SERVER: DHCPServer,
+            PORTS.ECHO_SERVER: EchoServerProcess,
             # TODO: a bug that i thought of - this port will not really be open because DHCP uses raw sockets
         },
     }
@@ -579,16 +581,14 @@ class Computer:
             raise UnknownPacketTypeError(f"Protocol type must be one of {list(self.PORTS_TO_PROCESSES.keys())} not {protocol!r}")
 
         if port_number not in self.PORTS_TO_PROCESSES[protocol]:
-            raise PopupWindowWithThisError(f"{port_number} is an unknown port!!!")
+            raise PopupWindowWithThisError(f"{port_number} is an unknown {protocol} port!!!")
 
         process = self.PORTS_TO_PROCESSES[protocol][port_number]
         if process is not None:
             if port_number in self.get_open_ports(protocol):
                 self.process_scheduler.kill_all_usermode_processes_by_type(process)
-                return
-            self.process_scheduler.start_usermode_process(self.PORTS_TO_PROCESSES[protocol][port_number])
-
-        self.graphics.update_image()
+            else:
+                self.process_scheduler.start_usermode_process(self.PORTS_TO_PROCESSES[protocol][port_number])
 
     def update_routing_table(self):
         """updates the routing table according to the interfaces at the moment"""

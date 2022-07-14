@@ -59,6 +59,7 @@ class L4Socket(Socket, metaclass=ABCMeta):
         :param address:
         """
         self.computer.bind_socket(self, address)
+        self.computer.graphics.update_image()  # to view the ports nicely graphically :)
 
     def __str__(self):
         return f"socket of {self.computer.name}"

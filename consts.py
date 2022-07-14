@@ -150,6 +150,7 @@ class PORTS:
         SSH: "processes/ssh_process.png",
         HTTP: "processes/http_process.png",
         HTTPS: "processes/https_process.png",
+        ECHO_SERVER: "processes/echo_server_process.png",
     }
 
 
