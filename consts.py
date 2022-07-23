@@ -188,6 +188,7 @@ class MESSAGES:
 
 class DIRECTORIES:
     IMAGES = "../res/sprites"
+    ANIMATIONS = "../res/animations"
     FILES = "../res/files"
     SAVES = "../res/files/saves"
 
@@ -364,7 +365,7 @@ class VIEW:
 
 
 class ANIMATIONS:
-    EXPLOSION = "misc/explosion.png"
+    EXPLOSION = "explosion.png"
 
     FRAME_RATE = 0.1
     X_COUNT, Y_COUNT = 5, 3
@@ -373,7 +374,7 @@ class ANIMATIONS:
 class PACKET:
     class DIRECTION:
         RIGHT = 'R'
-        LEFT = 'L'  # do not change value! it is depended on
+        LEFT = 'L'  # do not change value! Some things depend on it TODO: understand if this is desired
         WIRELESS = 'W'
 
         INCOMING = 'INCOMING'

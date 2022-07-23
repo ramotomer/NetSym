@@ -88,8 +88,8 @@ class ProcessGraphics(ImageGraphics):
         :param :
         :param :
         """
-        super(ProcessGraphics, self).__init__(os.path.join(DIRECTORIES.IMAGES, PORTS.TO_IMAGES[port]) if port in PORTS.TO_IMAGES else None,
-                                              *server_graphics.location, True, scale_factor=IMAGES.SCALE_FACTORS.PROCESSES)
+        super(ProcessGraphics, self).__init__(PORTS.TO_IMAGES.get(port, None), *server_graphics.location, True,
+                                              scale_factor=IMAGES.SCALE_FACTORS.PROCESSES)
         self.server_graphics = server_graphics
         self.process_index = process_index
         self.port = port

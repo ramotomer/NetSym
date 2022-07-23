@@ -18,10 +18,13 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
     This class is a superclass of any `GraphicsObject` subclass which uses an image in its `draw` method.
     Put simply, it is a graphics object with a picture.
     """
+    PARENT_DIRECTORY = DIRECTORIES.IMAGES
+
     def __init__(self, image_name, x, y, centered=False, is_in_background=False, scale_factor=IMAGES.SCALE_FACTORS.SPRITES,
                  is_opaque=False, is_pressable=False):
         super(ImageGraphics, self).__init__(x, y, False, centered, is_in_background, is_pressable=is_pressable)
-        self.image_name = image_name if image_name is not None else os.path.join(DIRECTORIES.IMAGES, IMAGES.IMAGE_NOT_FOUND)
+        self.image_name = os.path.join(self.PARENT_DIRECTORY, (image_name or IMAGES.IMAGE_NOT_FOUND))
+
         self.scale_factor = scale_factor
         self.is_opaque = is_opaque
         self.sprite = None
@@ -220,7 +223,16 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         It loads the picture of the object.
         :return: None
         """
-        self.sprite = self.get_image_sprite(self.image_name, self.x, self.y, self.is_opaque)
+        try:
+            self.sprite = self.get_image_sprite(self.image_name, self.x, self.y, self.is_opaque)
+        except FileNotFoundError:
+            print(f"Error on finding path '{self.image_name}' :(")
+            image_not_found_image_path = os.path.join(DIRECTORIES.IMAGES, IMAGES.IMAGE_NOT_FOUND)
+            if self.image_name == image_not_found_image_path:
+                raise
+            self.image_name = image_not_found_image_path
+            self.load()  # try again if the image cannot be loaded
+
         self.sprite.update(scale_x=self.scale_factor, scale_y=self.scale_factor)
 
         if self.centered:

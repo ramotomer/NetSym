@@ -41,7 +41,7 @@ class ComputerGraphics(ImageGraphics):
         :param image: the name of the image of the computer. (can be changed for different types of computers)
         """
         super(ComputerGraphics, self).__init__(
-            os.path.join(DIRECTORIES.IMAGES, image),
+            image,
             x, y,
             centered=True,
             is_in_background=True,
