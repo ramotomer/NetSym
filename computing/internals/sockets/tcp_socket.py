@@ -31,11 +31,6 @@ class TCPSocket(L4Socket):
     def socket_handling_kernelmode_process(self):
         return self.computer.process_scheduler.get_process(self.socket_handling_kernelmode_pid, COMPUTER.PROCESSES.MODES.KERNELMODE, raises=False)
 
-    # def assert_is_not_broken(self):
-    #     if self.socket_handling_kernelmode_pid is None or self.socket_handling_kernelmode_process is None:
-    #         raise SocketIsBrokenError(f"The socket is broken and cannot be used!!! pid: {self.socket_handling_kernelmode_pid}, "
-    #                                   f"process: {self.socket_handling_kernelmode_process}, computer: {self.computer}")
-
     def send(self, data):
         """
         Sends down the socket some data
