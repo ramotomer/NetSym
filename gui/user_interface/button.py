@@ -1,0 +1,112 @@
+from collections import namedtuple
+
+from consts import *
+from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
+from gui.main_window import MainWindow
+from gui.shape_drawing import draw_button
+from gui.user_interface.text_graphics import Text
+from usefuls.funcs import sum_tuples
+
+ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", "text")
+
+
+class Button(UserInterfaceGraphicsObject):
+    """
+    A class of a button which you can press and assign text and an action to.
+    """
+    def __init__(self, x, y, action=lambda: None, text=BUTTONS.DEFAULT_TEXT, start_hidden=False,
+                 width=BUTTONS.DEFAULT_WIDTH, height=BUTTONS.DEFAULT_HEIGHT, key=None,
+                 color=BUTTONS.COLOR, text_color=BUTTONS.TEXT_COLOR, is_outlined=True,
+                 custom_active_color=None):
+        """
+        Initiates the button.
+        :param x:
+        :param y: coordinates of the bottom left
+        :param action: a function that will be called when the button is pressed.
+        :param text: a string that will be written on the button.
+            in the same group.
+        :param start_hidden: whether or not this button should be created hidden, and only later shown.
+        :param width: the button's width.
+        :param height: the button's height.
+        :param custom_active_color: the color the button will be once it is hovered. If None - will be the same color but a little lighter
+        """
+        super(Button, self).__init__(x, y)
+        self.initial_location = x, y
+        self.is_button = True
+        self.is_hidden = start_hidden
+
+        self.width, self.height = width, height
+        self.action = action
+        self.child_graphics_objects = ChildGraphicsObjects(
+            Text(text, x, y, self, (self.width / 2, self.height / 2 + BUTTONS.TEXT_PADDING),
+                 is_button=True,
+                 start_hidden=start_hidden,
+                 max_width=WINDOWS.SIDE.WIDTH,
+                 color=text_color),
+        )
+        self.key = key
+
+        self.color = color
+        self.is_outlined = is_outlined
+        self.__custom_active_color = custom_active_color
+
+    @property
+    def light_color(self):
+        return tuple(rgb + COLORS.COLOR_DIFF for rgb in self.color)
+    
+    @property
+    def active_color(self):
+        return self.__custom_active_color if self.__custom_active_color is not None else self.light_color
+
+    def is_mouse_in(self):
+        """Returns whether or not the mouse is located inside of the button."""
+        mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
+        return (self.x < mouse_x < self.x + self.width) and \
+               (self.y < mouse_y < self.y + self.height)
+
+    def toggle_showing(self):
+        """
+        Hides the button when it is not in use (when it is not supposed to be pressed)
+        If the button is hidden now, shows it.
+        """
+        self.is_hidden = not self.is_hidden
+        self.child_graphics_objects.text.is_hidden = not self.child_graphics_objects.text.is_hidden
+
+    def hide(self):
+        """
+        Hides the button so it cannot be pressed or seen
+        """
+        self.is_hidden = True
+        self.child_graphics_objects.text.hide()
+
+    def show(self):
+        """
+        Shows the button again if it was hidden, allows it to be pressed regularly.
+        """
+        self.is_hidden = False
+        self.child_graphics_objects.text.show()
+
+    def draw(self):
+        """
+        Draws the button (If it is not hidden).
+        :return: None
+        """
+        if not self.is_hidden:
+            draw_button(self.x, self.y, self.width, self.height,
+                        color=(self.active_color if self.is_mouse_in() else self.color),
+                        outline_width=(BUTTONS.OUTLINE_WIDTH if self.is_outlined else 0))
+
+    def move(self):
+        """
+        Moves the button according to its parent graphics (if it has any)
+        :return: None
+        """
+        if self.parent_graphics is not None:
+            self.x, self.y = sum_tuples(self.parent_graphics.location, self.padding)
+
+    def __str__(self):
+        state = "[HIDDEN]" if self.is_hidden else "[SHOWING]"
+        return f"{state} '{self.child_graphics_objects.text.text}'"
+
+    def __repr__(self):
+        return f"Button('{self.child_graphics_objects.text}')"

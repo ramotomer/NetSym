@@ -1,15 +1,17 @@
-from consts import *
-from usefuls import get_the_one
+import time
+
+from exceptions import NoSuchGraphicsObjectError
+from usefuls.funcs import get_the_one
 
 
 class MainLoop:
     """
     This class handles everything related to the main loop of the program.
     It holds a list of all of the graphics objects that have registered their methods to the loop.
-    It contains the main loop of the program, and contains methods that allow us to insert
-    new function calls into the main loop.
+    (read more about these in 'gui.graphics_object.py') It contains the main loop of the program, and contains methods
+    that allow us to insert new function calls into the main loop.
 
-    There is only one instance of this class. That instacne is saved in `MainLoop.instance`
+    There is only one instance of this class. That instance is saved in the class attribute `MainLoop.instance`
     """
     instance = None
 
@@ -27,9 +29,18 @@ class MainLoop:
         self.graphics_objects = []
         # ^ a list of all registered `GraphicsObject`-s that are being drawn and moved.
 
-        debugp(f"me: {self.instance}")
+        self.is_paused = False
+        # ^ whether or not the program is paused now.
+
+        self._time = time.time()  # the time that this will return when the `self.time()` method is called.
+        self.paused_time = 0
+        #  ^ the total time the program has been paused so far
+        self.last_time_update = time.time()  # the last time that the `self.update_time` method was called.
+
         self.main_window.user_interface.initiate_buttons()
         # ^ creates the buttons of the user interface.
+
+        # self.logo_animation = self.main_window.user_interface.init_logo_animation()
 
     def register_graphics_object(self, graphics_object, is_in_background=False):
         """
@@ -40,14 +51,16 @@ class MainLoop:
             or the back of the other objects.
         :return: None
         """
-        self.graphics_objects.append(graphics_object)
         graphics_object.load()
-        self.insert_to_loop(graphics_object.move)
 
         if is_in_background:
+            self.graphics_objects.insert(0, graphics_object)
             self.reversed_insert_to_loop(graphics_object.draw)
         else:
+            self.graphics_objects.append(graphics_object)
             self.insert_to_loop(graphics_object.draw)
+
+        self.insert_to_loop(graphics_object.move)
 
     def unregister_graphics_object(self, graphics_object):
         """
@@ -56,22 +69,25 @@ class MainLoop:
         If the object is already unregistered, do nothing.
 
         Any GraphicsObject that wants to have attributes that are also GraphicsObjects needs to have an iterable
-        which is called `child_graphics_objects` and that list is uregistered as well when the main object does.
+        which is called `child_graphics_objects` and that list is unregistered as well when the main object does.
 
         :param graphics_object: The `GraphicsObject`
         :return: None
         """
         try:
             self.graphics_objects.remove(graphics_object)
-
-            self.remove_from_loop(graphics_object.draw)
-            self.remove_from_loop(graphics_object.move)
-
-            if hasattr(graphics_object, "child_graphics_objects"):
-                for child in graphics_object.child_graphics_objects:
-                    self.unregister_graphics_object(child)
         except ValueError:
+            # object is not registered
             pass
+
+        self.remove_from_loop(graphics_object.draw)
+        self.remove_from_loop(graphics_object.move)
+
+        # TODO: BUG: loopback connection graphics stays after deleting computers!!!
+
+        if hasattr(graphics_object, "child_graphics_objects"):
+            for child in graphics_object.child_graphics_objects:
+                self.unregister_graphics_object(child)
 
     def insert_to_loop(self, function, *args, **kwargs):
         """
@@ -98,7 +114,9 @@ class MainLoop:
         self.call_functions.insert(0, (function, args, kwargs, False))  # the False is "can it be paused"
 
     def insert_to_loop_pausable(self, function, *args, **kwargs):
-        """Exactly like `insert_to_loop` but the function is paused when the program is paused (when space bar is pressed)"""
+        """
+        Exactly like `insert_to_loop` but the function is paused when the program is paused (when space bar is pressed)
+        """
         self.call_functions.append((function, args, kwargs, True))
 
     def remove_from_loop(self, function):
@@ -110,20 +128,42 @@ class MainLoop:
         """
         to_remove = [function_and_args for function_and_args in self.call_functions if function_and_args[0] == function]
         for function_and_args in to_remove:
-            self.call_functions.remove(function_and_args)
+            try:
+                self.call_functions.remove(function_and_args)
+            except ValueError:
+                pass
 
-    def drag_object(self):
+    def move_to_front(self, graphics_object):
         """
-        Drags the object that should be dragged around the screen.
-        Essentially sets the objects coordinates to be the ones of the mouse.
+        Receives a graphics object that is registered and moves it to the front to be on top of all other registered
+        graphics objects
+        :param graphics_object: a `GraphicsObject` object that is registered
         :return: None
         """
-        if self.main_window.user_interface.dragged_object is not None \
-                and not self.main_window.user_interface.dragged_object.is_button \
-                and self.main_window.user_interface.mode != CONNECTING_MODE:
-            self.main_window.user_interface.dragged_object.x, self.main_window.user_interface.dragged_object.y = self.main_window.mouse_x, self.main_window.mouse_y
+        try:
+            self.graphics_objects.remove(graphics_object)
+            self.graphics_objects.append(graphics_object)
 
-    def select_selected_object(self):
+            self.remove_from_loop(graphics_object.draw)
+            self.insert_to_loop(graphics_object.draw)
+
+            if hasattr(graphics_object, "child_graphics_objects"):
+                for child_graphics_object in graphics_object.child_graphics_objects:
+                    self.move_to_front(child_graphics_object)
+                    # if this is not the order that they were meant to be in, this might cause bugs, fix in the future
+                    # if necessary
+
+        except ValueError:
+            raise NoSuchGraphicsObjectError("The graphics object is not registered!!!")
+
+    def toggle_pause(self):
+        """
+        Toggles the pause
+        :return:
+        """
+        self.is_paused = not self.is_paused
+
+    def select_selected_and_marked_objects(self):
         """
         Draws a rectangle around the selected object.
         The selected object is the object that was last pressed and is surrounded by a white square.
@@ -132,13 +172,8 @@ class MainLoop:
         if self.main_window.user_interface.selected_object is not None:
             self.main_window.user_interface.selected_object.mark_as_selected()
 
-    def delete_all_graphics(self):
-        """
-        Deletes and unregisters all of the graphics objects on the screen. (not buttons)
-        :return: None
-        """
-        for object in list(filter(lambda go: not go.is_button, self.graphics_objects)):
-            self.unregister_graphics_object(object)
+        for marked_object in self.main_window.user_interface.marked_objects:
+            marked_object.mark_as_selected_non_resizable()
 
     def get_object_the_mouse_is_on(self):
         """
@@ -147,6 +182,41 @@ class MainLoop:
         :return: a `GraphicsObject` or None.
         """
         return get_the_one(reversed(self.graphics_objects), lambda go: go.is_mouse_in() and not go.is_button)
+
+    def graphics_objects_of_types(self, *types):
+        """
+        Returns a list of graphics objects of the given types
+        :param types:
+        :return:
+        """
+        if not types:
+            return self.graphics_objects
+        return list(filter(lambda go: any(isinstance(go, type_) for type_ in types), self.graphics_objects))
+
+    def update_time(self):
+        """
+        Updates the time that the `self.time()` method returns, adjusted to pauses.
+        :return: None
+        """
+        if not self.is_paused:
+            self._time = (time.time() - self.paused_time)
+        else:  # if the program is paused now
+            self.paused_time += (time.time() - self.last_time_update)
+            # ^ add to `self.paused_time` the amount of time since the last update.
+
+        self.last_time_update = time.time()
+
+    def time(self):
+        """
+        This method is just like the `time.time()` method, with one different, when the program is paused, the time does
+        not run. this is very important for some processes (STP, TCP, Switches, etc...)
+        :return:
+        """
+        return self._time
+
+    def time_since(self, other_time):
+        """Returns the amount of time that passed since another time (adjusted to pauses of course)"""
+        return self.time() - other_time
 
     def main_loop(self):
         """
@@ -158,10 +228,12 @@ class MainLoop:
         :return: None
         """
         self.main_window.clear()
-        self.drag_object()
-        self.select_selected_object()
+
+        self.update_time()
+        self.select_selected_and_marked_objects()
         self.main_window.user_interface.show()
+
         for function, args, kwargs, can_be_paused in self.call_functions:
-            if self.main_window.user_interface.is_paused and can_be_paused:
+            if self.is_paused and can_be_paused:
                 continue
             function(*args, **kwargs)

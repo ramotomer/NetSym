@@ -1,0 +1,26 @@
+Hello and welcome to the Network Simulation of NetSym!
+
+This program allows you to simulate a computer network with ease and with style!
+Simply create the devices you desire, connect them, and start sending packets!
+
+To create a device, open the "Device Creation Window" using the button on the side menu or
+press 'e' on your keyboard, There you can select the device you wish to create.
+On the buttons in that window you can see keyboard shortcuts, these work also outside of the window.
+
+Once some device are created, you can drag them around and display them on the side menu.
+You can move which device is displayed using the arrow keys.
+To move a device around, use CTRL + arrows.
+
+To connect the computers press the "connect computers" button, and then press the two
+computers you want to connect one after the other.
+You can also use CTRL + C to use "smart connect", which will connect each endpoint computer to
+his nearby switch, and SHIFT + c to connect every device to every other device.
+
+When you display a device or any object in the side menu, you have some options for it,
+For computers you can change the IP address or add or remove an interface, etc...
+You can also press the network interfaces of the devices, and so configure a new MAC address,
+start or stop sniffing on that interface, and more!
+You can select packets, and then drop them mid way! amazing (you might want to pause the simulation
+in order to do that, press the SPACE BAR)
+
+And that's it! your'e a NetSym pro!!!

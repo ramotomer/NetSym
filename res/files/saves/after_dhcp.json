@@ -1,0 +1,2592 @@
+{
+    "computers": [
+        {
+            "class": "Computer",
+            "location": [
+                871,
+                93
+            ],
+            "name": "Zebra71",
+            "size": [
+                0.5,
+                0.5
+            ],
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        855.2250959829018,
+                        124.64099245048013
+                    ],
+                    "name": "money5",
+                    "mac": "4E:DF:64:5F:71:13",
+                    "ip": "1.1.1.6 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.1.1.1",
+                        "1.1.1.6"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.1.1.1",
+                        "1.1.1.6"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.1.1.0 /24": [
+                        "On-link",
+                        "1.1.1.6"
+                    ],
+                    "1.1.1.6 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Computer",
+            "location": [
+                564,
+                76
+            ],
+            "name": "calculator28",
+            "size": [
+                0.5,
+                0.5
+            ],
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        576.2140817435279,
+                        109.17855040779233
+                    ],
+                    "name": "physical10",
+                    "mac": "27:20:20:B2:0A:73",
+                    "ip": "1.1.1.7 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.1.1.1",
+                        "1.1.1.7"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.1.1.1",
+                        "1.1.1.7"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.1.1.0 /24": [
+                        "On-link",
+                        "1.1.1.7"
+                    ],
+                    "1.1.1.7 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Computer",
+            "location": [
+                366,
+                145
+            ],
+            "name": "what37",
+            "size": [
+                0.5,
+                0.5
+            ],
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        377.81586672561264,
+                        178.3224442909364
+                    ],
+                    "name": "wonder0",
+                    "mac": "EB:2A:90:4F:72:43",
+                    "ip": "1.2.3.7 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.2.3.1",
+                        "1.2.3.7"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.2.3.1",
+                        "1.2.3.7"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.2.3.0 /24": [
+                        "On-link",
+                        "1.2.3.7"
+                    ],
+                    "1.2.3.7 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Computer",
+            "location": [
+                513,
+                232
+            ],
+            "name": "dog33",
+            "size": [
+                1.345,
+                1.345
+            ],
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        575.9711320443286,
+                        302.79997548767756
+                    ],
+                    "name": "cover7",
+                    "mac": "32:17:04:14:66:BD",
+                    "ip": "1.1.1.3 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.1.1.1",
+                        "1.1.1.3"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.1.1.1",
+                        "1.1.1.3"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.1.1.0 /24": [
+                        "On-link",
+                        "1.1.1.3"
+                    ],
+                    "1.1.1.3 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Computer",
+            "location": [
+                189,
+                343
+            ],
+            "name": "Y_top95",
+            "size": [
+                0.5,
+                0.5
+            ],
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        219.13029435056427,
+                        361.49771235446036
+                    ],
+                    "name": "tell1",
+                    "mac": "48:4A:0A:D0:86:49",
+                    "ip": "1.2.3.6 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.2.3.1",
+                        "1.2.3.6"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.2.3.1",
+                        "1.2.3.6"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.2.3.0 /24": [
+                        "On-link",
+                        "1.2.3.6"
+                    ],
+                    "1.2.3.6 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Computer",
+            "location": [
+                238,
+                201
+            ],
+            "name": "Boubou58",
+            "size": [
+                0.5,
+                0.5
+            ],
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        259.9957684223048,
+                        228.6800681269454
+                    ],
+                    "name": "much2",
+                    "mac": "12:1E:45:C8:B0:A8",
+                    "ip": "1.2.3.8 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.2.3.1",
+                        "1.2.3.8"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.2.3.1",
+                        "1.2.3.8"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.2.3.0 /24": [
+                        "On-link",
+                        "1.2.3.8"
+                    ],
+                    "1.2.3.8 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Computer",
+            "location": [
+                354,
+                257
+            ],
+            "name": "you9",
+            "size": [
+                0.5,
+                0.5
+            ],
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        370.78183905988834,
+                        288.11864196535583
+                    ],
+                    "name": "everybody10",
+                    "mac": "2D:90:88:CF:E2:A9",
+                    "ip": "1.2.3.5 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.2.3.1",
+                        "1.2.3.5"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.2.3.1",
+                        "1.2.3.5"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.2.3.0 /24": [
+                        "On-link",
+                        "1.2.3.5"
+                    ],
+                    "1.2.3.5 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Computer",
+            "location": [
+                523,
+                394
+            ],
+            "name": "K_top22",
+            "size": [
+                0.5,
+                0.5
+            ],
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        518.5845202125661,
+                        429.07853386683604
+                    ],
+                    "name": "leg3",
+                    "mac": "E5:92:47:7B:8A:B7",
+                    "ip": "1.2.3.3 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.2.3.1",
+                        "1.2.3.3"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.2.3.1",
+                        "1.2.3.3"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.2.3.0 /24": [
+                        "On-link",
+                        "1.2.3.3"
+                    ],
+                    "1.2.3.3 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Computer",
+            "location": [
+                694,
+                208
+            ],
+            "name": "Creeper35",
+            "size": [
+                0.5,
+                0.5
+            ],
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        694.6094842288854,
+                        243.35008527535314
+                    ],
+                    "name": "successful6",
+                    "mac": "8F:CC:9B:51:8E:E5",
+                    "ip": "1.1.1.4 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.1.1.1",
+                        "1.1.1.4"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.1.1.1",
+                        "1.1.1.4"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.1.1.0 /24": [
+                        "On-link",
+                        "1.1.1.4"
+                    ],
+                    "1.1.1.4 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Computer",
+            "location": [
+                749,
+                184
+            ],
+            "name": "Cliffchat87",
+            "size": [
+                0.5,
+                0.5
+            ],
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        742.0922966510116,
+                        218.673961908648
+                    ],
+                    "name": "card6",
+                    "mac": "CD:37:B3:56:3E:28",
+                    "ip": "1.1.1.5 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.1.1.1",
+                        "1.1.1.5"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.1.1.1",
+                        "1.1.1.5"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.1.1.0 /24": [
+                        "On-link",
+                        "1.1.1.5"
+                    ],
+                    "1.1.1.5 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Computer",
+            "location": [
+                810,
+                344
+            ],
+            "name": "Chipmunk47",
+            "size": [
+                0.5,
+                0.5
+            ],
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        783.156225390342,
+                        367.0089496654211
+                    ],
+                    "name": "appear5",
+                    "mac": "C7:8E:AD:F8:07:D4",
+                    "ip": "1.1.1.2 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.1.1.1",
+                        "1.1.1.2"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.1.1.1",
+                        "1.1.1.2"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.1.1.0 /24": [
+                        "On-link",
+                        "1.1.1.2"
+                    ],
+                    "1.1.1.2 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Computer",
+            "location": [
+                411,
+                451
+            ],
+            "name": "Woodpecker99",
+            "size": [
+                0.5,
+                0.5
+            ],
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        437.0853605021732,
+                        474.8653298211372
+                    ],
+                    "name": "up4",
+                    "mac": "33:6E:25:96:BE:78",
+                    "ip": "1.2.3.2 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.2.3.1",
+                        "1.2.3.2"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.2.3.1",
+                        "1.2.3.2"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.2.3.0 /24": [
+                        "On-link",
+                        "1.2.3.2"
+                    ],
+                    "1.2.3.2 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Computer",
+            "location": [
+                274,
+                484
+            ],
+            "name": "Coot59",
+            "size": [
+                0.5,
+                0.5
+            ],
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        308.45996043329,
+                        491.9063978483306
+                    ],
+                    "name": "should10",
+                    "mac": "3C:E8:71:0F:C1:D6",
+                    "ip": "1.2.3.4 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.2.3.1",
+                        "1.2.3.4"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.2.3.1",
+                        "1.2.3.4"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.2.3.0 /24": [
+                        "On-link",
+                        "1.2.3.4"
+                    ],
+                    "1.2.3.4 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Switch",
+            "location": [
+                698,
+                440
+            ],
+            "name": "moses97",
+            "size": [
+                0.5,
+                0.5
+            ],
+            "os": "Linux",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        713.7749040170982,
+                        408.3590075495199
+                    ],
+                    "name": "certain10",
+                    "mac": "A5:20:D4:6B:8F:35",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        685.7859182564721,
+                        406.82144959220767
+                    ],
+                    "name": "his5",
+                    "mac": "27:FC:1E:37:1E:4B",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        674.5033089386834,
+                        413.5820986986278
+                    ],
+                    "name": "finger10",
+                    "mac": "12:FA:11:FE:52:80",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        697.3905157711146,
+                        404.64991472464686
+                    ],
+                    "name": "then2",
+                    "mac": "AB:47:0D:FA:B8:D0",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        704.9077033489884,
+                        405.32603809135196
+                    ],
+                    "name": "coach10",
+                    "mac": "60:33:A8:A8:CE:42",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        724.843774609658,
+                        416.9910503345789
+                    ],
+                    "name": "far4",
+                    "mac": "FA:1A:00:9D:B9:F5",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        697.036121880637,
+                        475.3421977099757
+                    ],
+                    "name": "nor9",
+                    "mac": "C4:04:C2:5E:83:A7",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        null,
+                        null
+                    ],
+                    "255.255.255.255 /32": [
+                        null,
+                        null
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Switch",
+            "location": [
+                505,
+                537
+            ],
+            "name": "snakeJazz74",
+            "size": [
+                0.5,
+                0.5
+            ],
+            "os": "Linux",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        493.18413327438736,
+                        503.6775557090636
+                    ],
+                    "name": "music8",
+                    "mac": "3E:9F:C4:EC:A5:C7",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        474.86970564943573,
+                        518.5022876455397
+                    ],
+                    "name": "entire8",
+                    "mac": "08:C2:8D:92:86:F9",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        483.0042315776952,
+                        509.3199318730546
+                    ],
+                    "name": "table8",
+                    "mac": "23:F3:2A:5F:79:27",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        488.21816094011166,
+                        505.88135803464417
+                    ],
+                    "name": "effect4",
+                    "mac": "08:5A:73:55:2A:F2",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        509.4154797874339,
+                        501.92146613316396
+                    ],
+                    "name": "seat3",
+                    "mac": "6F:D6:94:4F:95:F7",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        478.9146394978268,
+                        513.1346701788628
+                    ],
+                    "name": "try7",
+                    "mac": "D9:FC:9C:1C:F3:80",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        470.54003956671,
+                        529.0936021516694
+                    ],
+                    "name": "left3",
+                    "mac": "5B:E6:F0:70:51:96",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        540.2728715396402,
+                        539.4134070000806
+                    ],
+                    "name": "pass7",
+                    "mac": "A1:EE:9F:4C:42:4E",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        null,
+                        null
+                    ],
+                    "255.255.255.255 /32": [
+                        null,
+                        null
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Router",
+            "location": [
+                695,
+                550
+            ],
+            "name": "Skink87",
+            "size": [
+                0.5,
+                0.5
+            ],
+            "os": "Solaris",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        695.963878119363,
+                        514.6578022900243
+                    ],
+                    "name": "loss7",
+                    "mac": "4D:BB:5F:01:FB:14",
+                    "ip": "1.1.1.1 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        659.7271284603598,
+                        547.5865929999194
+                    ],
+                    "name": "suffer3",
+                    "mac": "88:8F:06:4C:76:48",
+                    "ip": "1.2.3.1 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ethernet"
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        null,
+                        null
+                    ],
+                    "255.255.255.255 /32": [
+                        null,
+                        null
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.1.1.0 /24": [
+                        "On-link",
+                        "1.1.1.1"
+                    ],
+                    "1.1.1.1 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ],
+                    "1.2.3.0 /24": [
+                        "On-link",
+                        "1.2.3.1"
+                    ],
+                    "1.2.3.1 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            },
+            "is_dhcp_server": true
+        }
+    ],
+    "connections": [
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 120,
+            "start": {
+                "computer": "Zebra71",
+                "interface": "money5"
+            },
+            "end": {
+                "computer": "moses97",
+                "interface": "certain10"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 120,
+            "start": {
+                "computer": "calculator28",
+                "interface": "physical10"
+            },
+            "end": {
+                "computer": "moses97",
+                "interface": "his5"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 120,
+            "start": {
+                "computer": "what37",
+                "interface": "wonder0"
+            },
+            "end": {
+                "computer": "snakeJazz74",
+                "interface": "music8"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 120,
+            "start": {
+                "computer": "dog33",
+                "interface": "cover7"
+            },
+            "end": {
+                "computer": "moses97",
+                "interface": "finger10"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 120,
+            "start": {
+                "computer": "Y_top95",
+                "interface": "tell1"
+            },
+            "end": {
+                "computer": "snakeJazz74",
+                "interface": "entire8"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 120,
+            "start": {
+                "computer": "Boubou58",
+                "interface": "much2"
+            },
+            "end": {
+                "computer": "snakeJazz74",
+                "interface": "table8"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 120,
+            "start": {
+                "computer": "you9",
+                "interface": "everybody10"
+            },
+            "end": {
+                "computer": "snakeJazz74",
+                "interface": "effect4"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 120,
+            "start": {
+                "computer": "K_top22",
+                "interface": "leg3"
+            },
+            "end": {
+                "computer": "snakeJazz74",
+                "interface": "seat3"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 120,
+            "start": {
+                "computer": "Creeper35",
+                "interface": "successful6"
+            },
+            "end": {
+                "computer": "moses97",
+                "interface": "then2"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 120,
+            "start": {
+                "computer": "Cliffchat87",
+                "interface": "card6"
+            },
+            "end": {
+                "computer": "moses97",
+                "interface": "coach10"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 120,
+            "start": {
+                "computer": "Chipmunk47",
+                "interface": "appear5"
+            },
+            "end": {
+                "computer": "moses97",
+                "interface": "far4"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 120,
+            "start": {
+                "computer": "Woodpecker99",
+                "interface": "up4"
+            },
+            "end": {
+                "computer": "snakeJazz74",
+                "interface": "try7"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 120,
+            "start": {
+                "computer": "Coot59",
+                "interface": "should10"
+            },
+            "end": {
+                "computer": "snakeJazz74",
+                "interface": "left3"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 120,
+            "start": {
+                "computer": "Skink87",
+                "interface": "loss7"
+            },
+            "end": {
+                "computer": "moses97",
+                "interface": "nor9"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 120,
+            "start": {
+                "computer": "Skink87",
+                "interface": "suffer3"
+            },
+            "end": {
+                "computer": "snakeJazz74",
+                "interface": "pass7"
+            }
+        }
+    ]
+}
