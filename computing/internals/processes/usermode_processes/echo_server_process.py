@@ -48,7 +48,7 @@ class EchoClientProcess(Process):
             return
 
         self.socket = self.computer.get_socket(kind=COMPUTER.SOCKETS.TYPES.SOCK_DGRAM, requesting_process_pid=self.pid)
-        self.socket.bind((self.computer.ips[0], PORTS.ECHO_CLIENT))
+        self.socket.bind()
         self.socket.connect(self.server_address)
 
         for _ in range(self.count):

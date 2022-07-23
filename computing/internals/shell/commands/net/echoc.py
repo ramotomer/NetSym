@@ -21,9 +21,9 @@ class Echoc(Command):
         self.parser.add_argument('ip', type=str, help='the echo server ip address')
         self.parser.add_argument('data', type=str, nargs='*', help='the data to send to the server')
 
-        self.parser.add_argument('-p', type=int, dest='port', default=PORTS.ECHO_SERVER, help='the server UDP port')
+        self.parser.add_argument('-p', type=int, dest='port', default=PORTS.ECHO_SERVER, help=f'the server UDP port (default: {PORTS.ECHO_SERVER})')
         self.parser.add_argument('-c', type=int, dest='count', default=PROTOCOLS.ECHO_SERVER.DEFAULT_REQUEST_COUNT,
-                                 help='the amount of requests to send')
+                                 help=f'the amount of requests to send (default: {PROTOCOLS.ECHO_SERVER.DEFAULT_REQUEST_COUNT})')
 
     def action(self, parsed_args):
         """

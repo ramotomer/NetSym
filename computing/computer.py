@@ -263,9 +263,9 @@ class Computer:
         :return:
         """
         self.boot_time = None
-        self.process_scheduler.terminate_all()
+        self.process_scheduler.on_shutdown()
         self.filesystem.wipe_temporary_directories()
-        self.remove_all_sockets()
+        self._remove_all_sockets()
         self._close_all_shells()
 
     def on_startup(self):
@@ -274,8 +274,22 @@ class Computer:
         :return:
         """
         self.boot_time = MainLoop.instance.time()
-        self.process_scheduler.terminate_all()
         self.process_scheduler.run_startup_processes()
+
+    def _cleanup_unused_sockets(self):
+        """
+        Remove sockets that have no process that is using them
+        """
+        for socket, socket_metadata in list(self.sockets.items()):
+            if not self.process_scheduler.is_usermode_process_running(socket_metadata.pid):
+                self.remove_socket(socket)
+
+    def garbage_cleanup(self):
+        """
+        This method runs continuously and removes unused resources on the computer (sockets, processes, etc...)
+        """
+        self._cleanup_unused_sockets()
+        self.arp_cache.forget_old_items()
 
     def add_interface(self, name=None, mac=None, type_=INTERFACES.TYPE.ETHERNET):
         """
@@ -987,7 +1001,7 @@ class Computer:
                                            f"It was probably not acquired using the `computer.get_socket` method! "
                                            f"The socket: {socket}")
 
-    def remove_all_sockets(self):
+    def _remove_all_sockets(self):
         """
         Unregisters all of the sockets of the computer
         :return:
@@ -1020,7 +1034,7 @@ class Computer:
                 self._sniff_packet_on_relevant_raw_sockets(packet_with_metadata)
 
         self.process_scheduler.handle_processes()
-        self.arp_cache.forget_old_items()  # deletes just the required items in the arp cache....
+        self.garbage_cleanup()
 
     def __repr__(self):
         """The string representation of the computer"""

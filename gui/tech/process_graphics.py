@@ -9,6 +9,7 @@ class ProcessGraphicsList(GraphicsObject):
     """
     A graphics object which is just a list of `ProcessGraphics`
     """
+
     def __init__(self, server_graphics):
         """
         initiates the list empty.
@@ -79,6 +80,7 @@ class ProcessGraphics(ImageGraphics):
     """
     The graphics of a TCP process that is running on a server
     """
+
     def __init__(self, port, server_graphics, process_index):
         """
         Initiates the process graphics from a port number
@@ -86,7 +88,8 @@ class ProcessGraphics(ImageGraphics):
         :param :
         :param :
         """
-        super(ProcessGraphics, self).__init__(os.path.join(DIRECTORIES.IMAGES, PORTS.TO_IMAGES[port]), *server_graphics.location, True, scale_factor=IMAGES.SCALE_FACTORS.PROCESSES)
+        super(ProcessGraphics, self).__init__(os.path.join(DIRECTORIES.IMAGES, PORTS.TO_IMAGES[port]) if port in PORTS.TO_IMAGES else None,
+                                              *server_graphics.location, True, scale_factor=IMAGES.SCALE_FACTORS.PROCESSES)
         self.server_graphics = server_graphics
         self.process_index = process_index
         self.port = port

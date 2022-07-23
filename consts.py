@@ -142,6 +142,8 @@ class PORTS:
     ECHO_SERVER = 1000
     ECHO_CLIENT = 1001
 
+    SERVER_PORTS = [DAYTIME, FTP, SSH, DNS, DHCP_SERVER, HTTP, HTTPS, ECHO_SERVER]
+
     USERMODE_USABLE_RANGE = (2 ** 15 - 2 ** 14), 2 ** 16 - 1
 
     TO_IMAGES = {
@@ -272,6 +274,8 @@ class WINDOWS:
 
 class IMAGES:
     SIZE = 100
+
+    IMAGE_NOT_FOUND = "misc/image_not_found.png"
 
     class SCALE_FACTORS:
         SPRITES = 0.5

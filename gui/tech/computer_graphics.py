@@ -80,12 +80,18 @@ class ComputerGraphics(ImageGraphics):
         """Sometimes the ip_layer of the computer is changed and we want to text to change as well"""
         self.child_graphics_objects.text.set_text(self.generate_text())
 
+    def _is_server(self):
+        """
+        :return: Whether or not the computer should be displayed as a server - by the ports that are open on it
+        """
+        return set(self.computer.get_open_ports()) & set(PORTS.SERVER_PORTS)
+
     def update_image(self):
         """
         Updates the image according to the current computer state
         :return:
         """
-        self.image_name = os.path.join(DIRECTORIES.IMAGES, IMAGES.COMPUTERS.SERVER if self.computer.get_open_ports() else IMAGES.COMPUTERS.COMPUTER)
+        self.image_name = os.path.join(DIRECTORIES.IMAGES, IMAGES.COMPUTERS.SERVER if self._is_server() else IMAGES.COMPUTERS.COMPUTER)
         self.load()
         self.child_graphics_objects.process_list.clear()
         for port in self.computer.get_open_ports():

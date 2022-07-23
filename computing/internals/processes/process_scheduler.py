@@ -20,6 +20,7 @@ SchedulerDetails = recordclass("SchedulerDetails", [
     "ready_processes",
     "waiting_processes",
     "process_last_check_time",
+    "latest_pid",
 ])
 # ^ for doc see the ProcessScheduler doc below
 
@@ -63,6 +64,7 @@ class ProcessScheduler:
                 ready_processes=[],
                 waiting_processes=[],
                 process_last_check_time=MainLoop.instance.time(),
+                latest_pid=COMPUTER.PROCESSES.INIT_PID,
             ),
             COMPUTER.PROCESSES.MODES.KERNELMODE: SchedulerDetails(
                 startup_processes=[],
@@ -70,6 +72,7 @@ class ProcessScheduler:
                 ready_processes=[],
                 waiting_processes=[],
                 process_last_check_time=MainLoop.instance.time(),
+                latest_pid=COMPUTER.PROCESSES.INIT_PID,
             ),
         }
 
@@ -331,7 +334,7 @@ class ProcessScheduler:
         """
         self.terminate_process(self.get_process(pid, mode, raises=True), mode)
 
-    def terminate_all(self):
+    def _terminate_all(self):
         """
         Terminates all processes
         :return:
@@ -345,11 +348,23 @@ class ProcessScheduler:
             if self.__details_by_mode[mode].currently_running_process is not None:
                 self.__details_by_mode[mode].currently_running_process.die()
 
+    def on_shutdown(self):
+        """
+        This function should be called when the host computer is turned off
+        """
+        self._terminate_all()
+
+        for mode, details in self.__details_by_mode.items():
+            details.latest_pid = COMPUTER.PROCESSES.INIT_PID
+            # ^ reset the PID counting
+
     def __get_next_pid(self, mode):
         """
         :return: `int` - the next PID a new process should receive
+            Increases the PIDs
         """
-        return max([process.pid for process in self.get_all_processes(mode)] + [COMPUTER.PROCESSES.INIT_PID]) + 1
+        self.__details_by_mode[mode].latest_pid += 1
+        return self.__details_by_mode[mode].latest_pid
 
     def start_process(self, mode, process_type, *args):
         """
@@ -392,6 +407,13 @@ class ProcessScheduler:
             if isinstance(process, process_type):
                 return True
         return False
+
+    def is_usermode_process_running(self, pid):
+        """
+        :param pid: `int` - The process ID to check if running
+        :return: `bool` - whether or not this usermode process is running
+        """
+        return self.get_process(pid, COMPUTER.PROCESSES.MODES.USERMODE, raises=False) is not None
 
     def is_usermode_process_running_by_type(self, process_type):
         """

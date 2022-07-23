@@ -21,7 +21,7 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
     def __init__(self, image_name, x, y, centered=False, is_in_background=False, scale_factor=IMAGES.SCALE_FACTORS.SPRITES,
                  is_opaque=False, is_pressable=False):
         super(ImageGraphics, self).__init__(x, y, False, centered, is_in_background, is_pressable=is_pressable)
-        self.image_name = image_name
+        self.image_name = image_name if image_name is not None else os.path.join(DIRECTORIES.IMAGES, IMAGES.IMAGE_NOT_FOUND)
         self.scale_factor = scale_factor
         self.is_opaque = is_opaque
         self.sprite = None

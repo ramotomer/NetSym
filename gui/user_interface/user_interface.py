@@ -175,6 +175,7 @@ class UserInterface:
             ((self.delete_all_packets, "delete all packets (Shift+d)"), {"key": (key.D, KEYBOARD.MODIFIERS.SHIFT)}),
             ((self.delete_all, "delete all (^d)"), {"key": (key.D, KEYBOARD.MODIFIERS.CTRL)}),
             ((with_args(self.ask_user_for, str, "save file as:", self._save_to_file_with_override_safety), "save to file(^s)"), {"key": (key.S, KEYBOARD.MODIFIERS.CTRL)}),
+            # TODO: saving to files does not work :(
             ((self._ask_user_for_load_file, "load from file (^o)"), {"key": (key.O, KEYBOARD.MODIFIERS.CTRL)}),
             ((self.open_help, "help (shift+/)"), {"key": (key.SLASH, KEYBOARD.MODIFIERS.SHIFT)}),
         ]
@@ -782,8 +783,9 @@ class UserInterface:
         elif isinstance(graphics_object, InterfaceGraphics):
             interface = graphics_object.interface
             computer = get_the_one(self.computers, (lambda c: interface in c.interfaces), NoSuchInterfaceError)
-            connection = interface.connection.connection
-            self.delete(connection.graphics)
+            if interface.is_connected:
+                connection = interface.connection.connection
+                self.delete(connection.graphics)
             computer.add_remove_interface(interface.name)
 
     def _delete_connections_to(self, computer):
