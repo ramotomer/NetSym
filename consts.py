@@ -669,6 +669,11 @@ class COMPUTER:
             SOCK_DGRAM = 2
             SOCK_RAW = 3
 
+        L4_PROTOCOLS = {
+            TYPES.SOCK_STREAM: "TCP",
+            TYPES.SOCK_DGRAM: "UDP",
+        }
+
         class ADDRESS_FAMILIES:
             AF_INET = 2
             AF_INET6 = 23

@@ -51,6 +51,7 @@ class ComputerGraphics(ImageGraphics):
         self.is_computer = True
         self.computer = computer
         self.class_name = self.computer.__class__.__name__
+        self.original_image = image
 
         self.child_graphics_objects = ChildGraphicsObjects(
             Text(self.generate_text(), self.x, self.y, self),
@@ -68,6 +69,14 @@ class ComputerGraphics(ImageGraphics):
     @property
     def console_location(self):
         return MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2) - (CONSOLE.WIDTH / 2), CONSOLE.Y
+
+    @property
+    def should_be_transparent(self):
+        return not self.computer.is_powered_on
+
+    def draw(self):
+        self.update_image()
+        super(ComputerGraphics, self).draw()
 
     def generate_text(self):
         """
@@ -88,14 +97,10 @@ class ComputerGraphics(ImageGraphics):
 
     def update_image(self):
         """
-        Updates the image according to the current computer state
-        :return:
+        Refreshes the image according to the current computer state
         """
-        self.image_name = os.path.join(DIRECTORIES.IMAGES, IMAGES.COMPUTERS.SERVER if self._is_server() else IMAGES.COMPUTERS.COMPUTER)
-        self.load()
-        self.child_graphics_objects.process_list.clear()
-        for port in self.computer.get_open_ports():
-            self.child_graphics_objects.process_list.add(port)
+        self.change_image(IMAGES.COMPUTERS.SERVER if self._is_server() else self.original_image)
+        self.child_graphics_objects.process_list.set_list([port for port in self.computer.get_open_ports() if port in PORTS.SERVER_PORTS])
 
     def start_viewing(self, user_interface):
         """

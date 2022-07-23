@@ -1,9 +1,10 @@
+import random
 from abc import ABCMeta, abstractmethod
-from typing import Tuple
+from typing import Tuple, Optional
 
 from address.ip_address import IPAddress
 from computing.internals.sockets.socket import Socket
-from consts import COMPUTER
+from consts import COMPUTER, PORTS
 from exceptions import *
 
 
@@ -11,17 +12,18 @@ class L4Socket(Socket, metaclass=ABCMeta):
     """
     UDP/TCP sockets have many functions in common :)
     """
+
     def __init__(self, computer, address_family=COMPUTER.SOCKETS.ADDRESS_FAMILIES.AF_INET, kind=COMPUTER.SOCKETS.TYPES.SOCK_STREAM):
         super(L4Socket, self).__init__(computer, address_family=address_family, kind=kind)
         self.is_connected = False
 
     @property
     def protocol(self):
-        if self.kind == COMPUTER.SOCKETS.TYPES.SOCK_STREAM:
-            return "TCP"
-        if self.kind == COMPUTER.SOCKETS.TYPES.SOCK_DGRAM:
-            return "UDP"
-        raise UnknownLayer4SocketTypeError(f"no such l4 protocol! socket: {self}, type: {self.kind}")
+        try:
+            return COMPUTER.SOCKETS.L4_PROTOCOLS[self.kind]
+        except KeyError:
+            raise UnknownLayer4SocketTypeError(
+                f"no such l4 protocol! socket: {self}, type: {self.kind} only known types are: {COMPUTER.SOCKETS.L4_PROTOCOLS}")
 
     @property
     def remote_address(self):
@@ -53,13 +55,22 @@ class L4Socket(Socket, metaclass=ABCMeta):
         self.received.clear()
         return data
 
-    def bind(self, address: Tuple[IPAddress, int]):
+    @staticmethod
+    def generate_port():
+        return random.randint(*PORTS.USERMODE_USABLE_RANGE)
+
+    def bind(self, address: Tuple[Optional[IPAddress], Optional[int]] = (None, None)):
         """
         Binds the socket to a certain address and port on the computer
-        :param address:
         """
-        self.computer.bind_socket(self, address)
-        self.computer.graphics.update_image()  # to view the ports nicely graphically :)
+        ip, port = address
+        port = port if port is not None else self.generate_port()
+        ip = ip if ip is not None else IPAddress.no_address()
+
+        if not self.computer.has_this_ip(ip) and ip != IPAddress.no_address():
+            raise InvalidAddressError(f"computer {self.computer} does not have the address {ip} so socket {self} cannot be bound to it")
+
+        self.computer.bind_socket(self, (ip, port))
 
     def __str__(self):
         return f"socket of {self.computer.name}"

@@ -1,5 +1,7 @@
 import random
 from collections import namedtuple
+from functools import reduce
+from operator import concat
 from typing import Tuple
 
 from recordclass import recordclass
@@ -146,8 +148,7 @@ class Computer:
 
     def get_open_ports(self, protocol=None):
         if protocol is None:
-            # probably not the best code - do not write in plain text all l4 protocols - use some const list (what if you want to add another?)
-            return self.get_open_ports("TCP") + self.get_open_ports("UDP")
+            return reduce(concat, [self.get_open_ports(protocol) for protocol in COMPUTER.SOCKETS.L4_PROTOCOLS.values()])
 
         return [socket_data.local_port for socket, socket_data in self.sockets.items()
                 if socket_data.state in [COMPUTER.SOCKETS.STATES.BOUND,
@@ -249,13 +250,11 @@ class Computer:
         for interface in self.all_interfaces:
             interface.is_powered_on = self.is_powered_on
             # TODO: add UP and DOWN for interfaces.
-        self.graphics.toggle_opacity()
 
         if self.is_powered_on:
             self.on_startup()
         else:
             self.on_shutdown()
-            # TODO: delete all sockets
 
     def on_shutdown(self):
         """
@@ -1006,7 +1005,7 @@ class Computer:
         Unregisters all of the sockets of the computer
         :return:
         """
-        for socket in self.sockets[:]:
+        for socket in list(self.sockets):
             self.remove_socket(socket)
 
     # ------------------------------- v The main `logic` method of the computer's main loop v --------------------------

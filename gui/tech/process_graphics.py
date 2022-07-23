@@ -1,3 +1,5 @@
+from typing import List
+
 from consts import *
 from exceptions import UnknownPortError
 from gui.abstracts.graphics_object import GraphicsObject
@@ -19,6 +21,10 @@ class ProcessGraphicsList(GraphicsObject):
         self.child_graphics_objects = []
         self.process_count = 0
 
+    @property
+    def set_of_all_ports(self):
+        return {process_graphics.port for process_graphics in self.child_graphics_objects}
+
     def add(self, port):
         """Add a new process to the list"""
         self.child_graphics_objects.append(ProcessGraphics(port, self.server_graphics, self.process_count))
@@ -35,11 +41,24 @@ class ProcessGraphicsList(GraphicsObject):
         for process_graphics in self.child_graphics_objects[:]:
             if process_graphics.port == port:
                 MainLoop.instance.unregister_graphics_object(process_graphics)
+                self.child_graphics_objects.remove(process_graphics)
                 found = True
             elif found:
                 process_graphics.process_index -= 1
+                # ^ move down the processes that are above the removed one
         if not found:
             raise UnknownPortError(f"The port is not the process list!!! {port}")
+
+    def set_list(self, list_: List[int]):
+        """
+        Sets the list of ports to the supplied list
+        """
+        if set(list_) == self.set_of_all_ports:
+            return  # EFFICIENCY!!!
+
+        self.clear()
+        for port in list_:
+            self.add(port)
 
     def clear(self):
         """

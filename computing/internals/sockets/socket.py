@@ -88,5 +88,8 @@ class Socket(metaclass=ABCMeta):
         :return:
         """
         self.is_closed = True
-        self.computer.sockets[self].state = COMPUTER.SOCKETS.STATES.CLOSED
-        self.computer.graphics.update_image()  # when closing a port - maybe the computer is no longer a server?
+        try:
+            self.computer.sockets[self].state = COMPUTER.SOCKETS.STATES.CLOSED
+        except KeyError:
+            # If the process died
+            pass

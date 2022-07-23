@@ -34,7 +34,7 @@ class ServerFTPProcess(FTPProcess):
     """
 
     def code(self):
-        self.socket.bind((self.computer.get_ip(), PORTS.FTP))
+        self.socket.bind((None, PORTS.FTP))
         self.socket.listen(1)
         yield from self.socket.blocking_accept()
 
@@ -62,6 +62,7 @@ class ClientFTPProcess(FTPProcess):
         self.filename = filename
 
     def code(self):
+        self.socket.bind()
         self.socket.connect((self.server_ip, PORTS.FTP))
         yield WaitingFor(lambda: self.socket.is_connected or self.socket.is_closed)
 

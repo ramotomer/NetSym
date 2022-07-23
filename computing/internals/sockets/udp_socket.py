@@ -1,10 +1,9 @@
-import random
 from collections import namedtuple
-from typing import Tuple, List, Union
+from typing import Tuple, List
 
 from address.ip_address import IPAddress
 from computing.internals.sockets.l4_socket import L4Socket
-from consts import COMPUTER, PORTS
+from consts import COMPUTER
 from exceptions import *
 
 ReturnedUDPPacket = namedtuple("ReturnedUDPPacket", [
@@ -75,16 +74,3 @@ class UDPSocket(L4Socket):
         self.computer.sockets[self].remote_ip_address, self.computer.sockets[self].remote_port = address
         self.computer.sockets[self].state = COMPUTER.SOCKETS.STATES.ESTABLISHED
         self.is_connected = True
-
-    def bind(self, address: Union[Tuple[IPAddress, int], None] = None):
-        if address is None:
-            try:
-                address = self.computer.ips[0], random.randint(*PORTS.USERMODE_USABLE_RANGE)
-            except IndexError:
-                raise NoIPAddressError(
-                    f"Cannot bind udp socket without an IP address! on socket: {self} computer: {self.computer} ips: {self.computer.ips}")
-
-        ip, port = address
-        if not self.computer.has_this_ip(ip) and ip != IPAddress.no_address():
-            raise InvalidAddressError(f"computer {self.computer} does not have the address {ip} so socket {self} cannot be bound to it")
-        super(UDPSocket, self).bind(address)

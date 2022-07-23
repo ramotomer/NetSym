@@ -66,7 +66,6 @@ class TCPSocket(L4Socket):
         self.assert_is_bound()
         self.assert_is_not_closed()
         self.computer.sockets[self].state = COMPUTER.SOCKETS.STATES.LISTENING
-        self.computer.graphics.update_image()
         self.listening_count = count
 
     def accept(self):
