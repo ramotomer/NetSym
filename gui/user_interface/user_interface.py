@@ -11,9 +11,9 @@ from pyglet.window import key
 
 from address.ip_address import IPAddress
 from computing.computer import Computer
-from computing.internals.processes.usermode_processes.stp_process import STPProcess
 from computing.internals.frequency import Frequency
 from computing.internals.interface import Interface
+from computing.internals.processes.usermode_processes.stp_process import STPProcess
 from computing.internals.wireless_interface import WirelessInterface
 from computing.router import Router
 from computing.switch import Switch, Hub, Antenna
@@ -175,6 +175,7 @@ class UserInterface:
             ((self.delete_all_packets, "delete all packets (Shift+d)"), {"key": (key.D, KEYBOARD.MODIFIERS.SHIFT)}),
             ((self.delete_all, "delete all (^d)"), {"key": (key.D, KEYBOARD.MODIFIERS.CTRL)}),
             ((with_args(self.ask_user_for, str, "save file as:", self._save_to_file_with_override_safety), "save to file(^s)"), {"key": (key.S, KEYBOARD.MODIFIERS.CTRL)}),
+            # TODO: saving to files does not work :(
             ((self._ask_user_for_load_file, "load from file (^o)"), {"key": (key.O, KEYBOARD.MODIFIERS.CTRL)}),
             ((self.open_help, "help (shift+/)"), {"key": (key.SLASH, KEYBOARD.MODIFIERS.SHIFT)}),
         ]
@@ -782,8 +783,9 @@ class UserInterface:
         elif isinstance(graphics_object, InterfaceGraphics):
             interface = graphics_object.interface
             computer = get_the_one(self.computers, (lambda c: interface in c.interfaces), NoSuchInterfaceError)
-            connection = interface.connection.connection
-            self.delete(connection.graphics)
+            if interface.is_connected:
+                connection = interface.connection.connection
+                self.delete(connection.graphics)
             computer.add_remove_interface(interface.name)
 
     def _delete_connections_to(self, computer):
@@ -1199,7 +1201,7 @@ class UserInterface:
             new_computers[i].graphics.location = location
 
         self.tab_through_selected()
-        self.selected_object.computer.open_tcp_port(21)
+        self.selected_object.computer.open_port(21, "TCP")
         self.tab_through_selected()
 
     def register_window(self, window, *buttons):

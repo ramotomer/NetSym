@@ -403,6 +403,13 @@ class SocketNotConnectedError(SocketError):
     """
 
 
+class SocketAlreadyConnectedError(SocketError):
+    """
+    Raises when trying to connect a socket that is already connected :)
+    """
+    pass
+
+
 class SocketNotRegisteredError(SocketError):
     """
     Occurs when one tries to bind a socket that is not known to the operation system.
@@ -430,4 +437,16 @@ class RawSocketError(SocketError):
 class ActionNotSupportedInARawSocket(RawSocketError):
     """
     The action you were trying to perform should not be done on a socket of type raw
+    """
+
+
+class UnknownSocketTypeError(SocketError):
+    """
+    The supplied type is not a valid socket type
+    """
+
+
+class UnknownLayer4SocketTypeError(UnknownSocketTypeError):
+    """
+    The supplied type is not a valid l4 socket type (udp/tcp)
     """

@@ -41,7 +41,7 @@ class ComputerGraphics(ImageGraphics):
         :param image: the name of the image of the computer. (can be changed for different types of computers)
         """
         super(ComputerGraphics, self).__init__(
-            os.path.join(DIRECTORIES.IMAGES, image),
+            image,
             x, y,
             centered=True,
             is_in_background=True,
@@ -51,6 +51,7 @@ class ComputerGraphics(ImageGraphics):
         self.is_computer = True
         self.computer = computer
         self.class_name = self.computer.__class__.__name__
+        self.original_image = image
 
         self.child_graphics_objects = ChildGraphicsObjects(
             Text(self.generate_text(), self.x, self.y, self),
@@ -69,6 +70,14 @@ class ComputerGraphics(ImageGraphics):
     def console_location(self):
         return MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2) - (CONSOLE.WIDTH / 2), CONSOLE.Y
 
+    @property
+    def should_be_transparent(self):
+        return not self.computer.is_powered_on
+
+    def draw(self):
+        self.update_image()
+        super(ComputerGraphics, self).draw()
+
     def generate_text(self):
         """
         Generates the text under the computer.
@@ -80,16 +89,18 @@ class ComputerGraphics(ImageGraphics):
         """Sometimes the ip_layer of the computer is changed and we want to text to change as well"""
         self.child_graphics_objects.text.set_text(self.generate_text())
 
+    def _is_server(self):
+        """
+        :return: Whether or not the computer should be displayed as a server - by the ports that are open on it
+        """
+        return set(self.computer.get_open_ports()) & set(PORTS.SERVER_PORTS)
+
     def update_image(self):
         """
-        Updates the image according to the current computer state
-        :return:
+        Refreshes the image according to the current computer state
         """
-        self.image_name = os.path.join(DIRECTORIES.IMAGES, IMAGES.COMPUTERS.SERVER if self.computer.open_tcp_ports else IMAGES.COMPUTERS.COMPUTER)
-        self.load()
-        self.child_graphics_objects.process_list.clear()
-        for port in self.computer.open_tcp_ports:
-            self.child_graphics_objects.process_list.add(port)
+        self.change_image(IMAGES.COMPUTERS.SERVER if self._is_server() else self.original_image)
+        self.child_graphics_objects.process_list.set_list([port for port in self.computer.get_open_ports() if port in PORTS.SERVER_PORTS])
 
     def start_viewing(self, user_interface):
         """
@@ -121,11 +132,17 @@ class ComputerGraphics(ImageGraphics):
                 MESSAGES.INSERT.INTERFACE_INFO,
                 with_args(user_interface.add_delete_interface, self, type_=INTERFACES.TYPE.WIFI),
             ),
-            "open/close port (shift+o)": with_args(
+            "open/close TCP port (shift+o)": with_args(
                 user_interface.ask_user_for,
                 int,
                 MESSAGES.INSERT.PORT_NUMBER,
-                self.computer.open_tcp_port
+                self.computer.open_port,
+            ),
+            "open/close UDP port (shift+u)": with_args(
+                user_interface.ask_user_for,
+                int,
+                MESSAGES.INSERT.PORT_NUMBER,
+                with_args(self.computer.open_port, protocol="UDP"),
             ),
             "set default gateway (g)": with_args(
                 user_interface.ask_user_for,

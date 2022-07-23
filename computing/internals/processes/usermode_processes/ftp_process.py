@@ -34,7 +34,7 @@ class ServerFTPProcess(FTPProcess):
     """
 
     def code(self):
-        self.socket.bind((self.computer.get_ip(), PORTS.FTP))
+        self.socket.bind((None, PORTS.FTP))
         self.socket.listen(1)
         yield from self.socket.blocking_accept()
 
@@ -47,7 +47,7 @@ class ServerFTPProcess(FTPProcess):
             with self.computer.filesystem.at_path(self.cwd, filename) as file:
                 self.socket.send(file.read())
 
-        yield WaitingFor(lambda: self.socket.process.is_done_transmitting())
+        yield WaitingFor(lambda: self.socket.socket_handling_kernelmode_process.is_done_transmitting())
         self.socket.close()
         # TODO: once we connect once to a server - we cannot do it again because the socket is closed now :) LOL
 
@@ -62,6 +62,7 @@ class ClientFTPProcess(FTPProcess):
         self.filename = filename
 
     def code(self):
+        self.socket.bind()
         self.socket.connect((self.server_ip, PORTS.FTP))
         yield WaitingFor(lambda: self.socket.is_connected or self.socket.is_closed)
 

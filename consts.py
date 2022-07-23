@@ -94,6 +94,9 @@ class PROTOCOLS:
     class ICMP:
         INFINITY = float("inf")  # the builtin infinity
 
+    class DHCP:
+        DEFAULT_TTL = 0
+
     class TCP:
         MAX_SEQUENCE_NUMBER = 2**32 - 1
         RESEND_TIME = 15  # seconds
@@ -123,6 +126,9 @@ class PROTOCOLS:
         BLOCKED_PORT = "BLOCKED"
         NO_STATE = "no state!"
 
+    class ECHO_SERVER:
+        DEFAULT_REQUEST_COUNT = 1
+
 
 class PORTS:
     DAYTIME = 13
@@ -133,6 +139,10 @@ class PORTS:
     DHCP_CLIENT = 68
     HTTP = 80
     HTTPS = 443
+    ECHO_SERVER = 1000
+    ECHO_CLIENT = 1001
+
+    SERVER_PORTS = [DAYTIME, FTP, SSH, DNS, DHCP_SERVER, HTTP, HTTPS, ECHO_SERVER]
 
     USERMODE_USABLE_RANGE = (2 ** 15 - 2 ** 14), 2 ** 16 - 1
 
@@ -142,6 +152,7 @@ class PORTS:
         SSH: "processes/ssh_process.png",
         HTTP: "processes/http_process.png",
         HTTPS: "processes/https_process.png",
+        ECHO_SERVER: "processes/echo_server_process.png",
     }
 
 
@@ -177,6 +188,7 @@ class MESSAGES:
 
 class DIRECTORIES:
     IMAGES = "../res/sprites"
+    ANIMATIONS = "../res/animations"
     FILES = "../res/files"
     SAVES = "../res/files/saves"
 
@@ -263,6 +275,8 @@ class WINDOWS:
 
 class IMAGES:
     SIZE = 100
+
+    IMAGE_NOT_FOUND = "misc/image_not_found.png"
 
     class SCALE_FACTORS:
         SPRITES = 0.5
@@ -351,7 +365,7 @@ class VIEW:
 
 
 class ANIMATIONS:
-    EXPLOSION = "misc/explosion.png"
+    EXPLOSION = "explosion.png"
 
     FRAME_RATE = 0.1
     X_COUNT, Y_COUNT = 5, 3
@@ -360,7 +374,7 @@ class ANIMATIONS:
 class PACKET:
     class DIRECTION:
         RIGHT = 'R'
-        LEFT = 'L'  # do not change value! it is depended on
+        LEFT = 'L'  # do not change value! Some things depend on it TODO: understand if this is desired
         WIRELESS = 'W'
 
         INCOMING = 'INCOMING'
@@ -654,6 +668,11 @@ class COMPUTER:
             SOCK_STREAM = 1
             SOCK_DGRAM = 2
             SOCK_RAW = 3
+
+        L4_PROTOCOLS = {
+            TYPES.SOCK_STREAM: "TCP",
+            TYPES.SOCK_DGRAM: "UDP",
+        }
 
         class ADDRESS_FAMILIES:
             AF_INET = 2

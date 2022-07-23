@@ -16,8 +16,6 @@ class Cd(Command):
 
         self.parser.add_argument('new_dir', metavar='new_dir', type=str, nargs='?', help='directory to switch to')
 
-        # TODO: doing a -h flag or giving the wrong args crashes the program!!! no good...
-
     def action(self, parsed_args):
         """
         prints out the arguments.

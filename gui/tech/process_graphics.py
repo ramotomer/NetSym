@@ -1,3 +1,5 @@
+from typing import List
+
 from consts import *
 from exceptions import UnknownPortError
 from gui.abstracts.graphics_object import GraphicsObject
@@ -9,6 +11,7 @@ class ProcessGraphicsList(GraphicsObject):
     """
     A graphics object which is just a list of `ProcessGraphics`
     """
+
     def __init__(self, server_graphics):
         """
         initiates the list empty.
@@ -18,9 +21,14 @@ class ProcessGraphicsList(GraphicsObject):
         self.child_graphics_objects = []
         self.process_count = 0
 
+    @property
+    def set_of_all_ports(self):
+        return {process_graphics.port for process_graphics in self.child_graphics_objects}
+
     def add(self, port):
         """Add a new process to the list"""
         self.child_graphics_objects.append(ProcessGraphics(port, self.server_graphics, self.process_count))
+        # TODO: add a separate list for UDP ports (maybe the drawings of tcp have red glow and udp has blue glow IDK...)
         self.process_count += 1
 
     def remove(self, port):
@@ -33,11 +41,24 @@ class ProcessGraphicsList(GraphicsObject):
         for process_graphics in self.child_graphics_objects[:]:
             if process_graphics.port == port:
                 MainLoop.instance.unregister_graphics_object(process_graphics)
+                self.child_graphics_objects.remove(process_graphics)
                 found = True
             elif found:
                 process_graphics.process_index -= 1
+                # ^ move down the processes that are above the removed one
         if not found:
             raise UnknownPortError(f"The port is not the process list!!! {port}")
+
+    def set_list(self, list_: List[int]):
+        """
+        Sets the list of ports to the supplied list
+        """
+        if set(list_) == self.set_of_all_ports:
+            return  # EFFICIENCY!!!
+
+        self.clear()
+        for port in list_:
+            self.add(port)
 
     def clear(self):
         """
@@ -78,6 +99,7 @@ class ProcessGraphics(ImageGraphics):
     """
     The graphics of a TCP process that is running on a server
     """
+
     def __init__(self, port, server_graphics, process_index):
         """
         Initiates the process graphics from a port number
@@ -85,7 +107,8 @@ class ProcessGraphics(ImageGraphics):
         :param :
         :param :
         """
-        super(ProcessGraphics, self).__init__(os.path.join(DIRECTORIES.IMAGES, PORTS.TO_IMAGES[port]), *server_graphics.location, True, scale_factor=IMAGES.SCALE_FACTORS.PROCESSES)
+        super(ProcessGraphics, self).__init__(PORTS.TO_IMAGES.get(port, None), *server_graphics.location, True,
+                                              scale_factor=IMAGES.SCALE_FACTORS.PROCESSES)
         self.server_graphics = server_graphics
         self.process_index = process_index
         self.port = port

@@ -11,6 +11,7 @@ from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rectangle
 from gui.user_interface.resizing_dot import ResizingDot
 from usefuls.funcs import get_the_one, scale_tuple, sum_tuples
+from usefuls.paths import add_path_basename_if_needed
 
 
 class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
@@ -18,10 +19,13 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
     This class is a superclass of any `GraphicsObject` subclass which uses an image in its `draw` method.
     Put simply, it is a graphics object with a picture.
     """
+    PARENT_DIRECTORY = DIRECTORIES.IMAGES
+
     def __init__(self, image_name, x, y, centered=False, is_in_background=False, scale_factor=IMAGES.SCALE_FACTORS.SPRITES,
                  is_opaque=False, is_pressable=False):
         super(ImageGraphics, self).__init__(x, y, False, centered, is_in_background, is_pressable=is_pressable)
-        self.image_name = image_name
+        self.image_name = add_path_basename_if_needed(self.PARENT_DIRECTORY, image_name or IMAGES.IMAGE_NOT_FOUND)
+
         self.scale_factor = scale_factor
         self.is_opaque = is_opaque
         self.sprite = None
@@ -105,9 +109,36 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         returned.opacity = sprite.opacity
         return returned
 
+    def set_transparency(self, amount):
+        """
+        Set how transparent the sprite is.
+            Use the `IMAGES.TRANSPARENCY` class for measures
+        :param amount: 35 is very transparent, 255 is not at all
+        """
+        self.sprite.opacity = amount
+
+    @property
+    def is_transparent(self):
+        return self.sprite.opacity == IMAGES.TRANSPARENCY.MEDIUM
+
+    @property
+    def should_be_transparent(self):
+        """
+        This property should be overridden - at any given time, the object will become transparent If and Only If this returns `True`
+        """
+        return False
+
+    def make_transparent(self):
+        self.set_transparency(IMAGES.TRANSPARENCY.MEDIUM)
+
+    def make_opaque(self):
+        self.set_transparency(IMAGES.TRANSPARENCY.LOW)
+
     def toggle_opacity(self):
-        """toggles whether or not the image is opaque"""
-        self.sprite.opacity = IMAGES.TRANSPARENCY.MEDIUM if self.sprite.opacity == IMAGES.TRANSPARENCY.LOW else IMAGES.TRANSPARENCY.LOW
+        if self.is_transparent:
+            self.make_opaque()
+        else:
+            self.make_transparent()
 
     def is_mouse_in(self):
         """
@@ -220,7 +251,16 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         It loads the picture of the object.
         :return: None
         """
-        self.sprite = self.get_image_sprite(self.image_name, self.x, self.y, self.is_opaque)
+        try:
+            self.sprite = self.get_image_sprite(self.image_name, self.x, self.y, self.is_opaque)
+        except FileNotFoundError:
+            print(f"Error on finding path '{self.image_name}' :(")
+            image_not_found_image_path = os.path.join(DIRECTORIES.IMAGES, IMAGES.IMAGE_NOT_FOUND)
+            if self.image_name == image_not_found_image_path:
+                raise
+            self.image_name = image_not_found_image_path
+            self.load()  # try again if the image cannot be loaded
+
         self.sprite.update(scale_x=self.scale_factor, scale_y=self.scale_factor)
 
         if self.centered:
@@ -233,6 +273,11 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         This function is in charge of the graphical drawing of the object, draws the image to the screen.
         :return: None
         """
+        if self.should_be_transparent:
+            self.make_transparent()
+        else:
+            self.make_opaque()
+
         self.sprite.draw()
 
     def move(self):
@@ -322,6 +367,18 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         :return:
         """
         self.sprite.image = pyglet.image.load(self.image_name)
+
+    def change_image(self, new_image_name: str):
+        """
+        Change the image path and reload it
+        Only reloads the file if the path has changed (efficient!)
+        :param new_image_name: The path to the new image to load
+        """
+        new_image_name = add_path_basename_if_needed(self.PARENT_DIRECTORY, new_image_name)
+
+        if self.image_name != new_image_name:
+            self.image_name = new_image_name
+            self.load()
 
     def __str__(self):
         """The string representation of the GraphicsObject"""

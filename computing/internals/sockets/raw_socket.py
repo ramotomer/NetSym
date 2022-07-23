@@ -1,9 +1,6 @@
-from typing import Tuple
-
-from address.ip_address import IPAddress
 from computing.internals.sockets.socket import Socket
 from consts import COMPUTER, INTERFACES
-from exceptions import ActionNotSupportedInARawSocket, RawSocketError, SocketNotBoundError
+from exceptions import RawSocketError
 
 
 class RawSocket(Socket):
@@ -29,29 +26,17 @@ class RawSocket(Socket):
         self.interface = INTERFACES.NO_INTERFACE
         self.is_promisc = False
 
-    @property
-    def bound_address(self):
-        raise ActionNotSupportedInARawSocket(f"It is meaningless to bind a raw socket to an address! socket: {self}, computer: {self.computer}")
-
-    @property
-    def foreign_address(self):
-        raise ActionNotSupportedInARawSocket(f"Raw sockets are not connected! they are just ")
-
-    @property
-    def state(self):
-        return self.computer.sockets[self].state
-
     def send(self, packet):
         """
         Directly sends the supplied packet down the socket and out into the world
         :param packet: a Packet object to send
         :return:
         """
-        if not self.is_bound:
-            raise SocketNotBoundError(f"Bind the raw socket to an interface and filter before trying to use it for sending!")
+        self.assert_is_bound()
+        self.assert_is_not_closed()
         if self.interface is INTERFACES.ANY_INTERFACE:
             raise RawSocketError("Cannot send on a raw socket that is bound to all interfaces!")
-        self.computer.send(packet, self.interface)
+        self.computer.send(packet, self.interface, sending_socket=self)
 
     def receive(self, count=None):
         """
@@ -59,6 +44,8 @@ class RawSocket(Socket):
         :param count: is ignored
         :return `list[ReturnedPacket]`
         """
+        self.assert_is_bound()
+        self.assert_is_not_closed()
         returned = self.received[:]
         self.received.clear()
         return returned
@@ -68,8 +55,9 @@ class RawSocket(Socket):
         Binds the socket to an interface and filter.
         This is necessary for sniffing and sending using it.
         """
-        self.is_bound = True
+        self.assert_is_not_closed()
 
+        self.is_bound = True
         self.filter = filter
         self.interface = interface
         if promisc:
@@ -77,33 +65,11 @@ class RawSocket(Socket):
                 raise RawSocketError(f"Cannot use promiscuous mode when the socket is on all interfaces!!! socket: {self}, computer: {self.computer}")
             interface.is_promisc = True
         self.is_promisc = promisc
-
-    def connect(self, address: Tuple[IPAddress, int]):
-        """
-        Connect to a listening socket with the given address
-        :param address:
-        :return:
-        """
-        raise ActionNotSupportedInARawSocket("Do not call the connect method of a raw socket! What are you connecting to?")
-
-    def listen(self, count: int):
-        """
-        Listen for connections to this socket.
-        :param count:
-        :return:
-        """
-        raise ActionNotSupportedInARawSocket("Do not call the listen method of a raw socket! What are you listening to?")
-
-    def accept(self):
-        """
-        Accept connections to this socket.
-        :return:
-        """
-        raise ActionNotSupportedInARawSocket("Do not call the accept method of a raw socket! What are you accepting?")
+        self.computer.sockets[self].state = COMPUTER.SOCKETS.STATES.BOUND
 
     def __repr__(self):
         return f"RAW    " \
-            f"{'raw': <23}" \
+            f"{self.interface.name or 'unbound': <23}" \
             f"{'raw': <23}" \
             f"{self.state: <16}" \
             f"{self.acquiring_process_pid}"

@@ -4,7 +4,7 @@ from consts import INTERFACES
 
 class Tcpdump(Command):
     """
-    The command that prints the arguments that it receives.
+    The command that starts and stops sniffing on an interface
     """
     def __init__(self, computer, shell):
         """

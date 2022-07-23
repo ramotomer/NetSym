@@ -1,3 +1,4 @@
+from address.mac_address import MACAddress
 from computing.internals.processes.abstracts.process import Process, ReturnedPacket, WaitingForPacketWithTimeout, Timeout, \
     WaitingFor
 from consts import OPCODES, PROTOCOLS
@@ -51,12 +52,13 @@ class ARPProcess(Process):
 
         if self.requesting_process is not None:
             self.computer.process_scheduler.terminate_process(self.requesting_process, None)
+            # TODO: what if we kill a process while it is ARP searching? this will try to kill it and crash the simulation
 
     def __repr__(self):
         return f"[karp] {self.address}"
 
 
-class SendPacketWithArpsProcess(Process):
+class SendPacketWithARPProcess(Process):
     """
     This is a process that starts a complete sending of a packet.
     It checks the routing table and asks for the address and does whatever is necessary.
@@ -66,7 +68,7 @@ class SendPacketWithArpsProcess(Process):
         Initiates the process with the running computer
         the ip_layer will be wrapped in ethernet
         """
-        super(SendPacketWithArpsProcess, self).__init__(pid, computer)
+        super(SendPacketWithARPProcess, self).__init__(pid, computer)
         self.ip_layer = ip_layer
 
     def code(self):
@@ -75,8 +77,11 @@ class SendPacketWithArpsProcess(Process):
         :return:
         """
         dst_ip = self.ip_layer.dst_ip
-        ip_for_the_mac, done_searching = self.computer.request_address(dst_ip, self, True)
-        yield WaitingFor(done_searching)
+        if not dst_ip.is_broadcast():
+            ip_for_the_mac, done_searching = self.computer.request_address(dst_ip, self, True)
+            yield WaitingFor(done_searching)
+        else:
+            ip_for_the_mac = MACAddress.broadcast()
 
         self.computer.send_with_ethernet(
             self.computer.arp_cache[ip_for_the_mac].mac,

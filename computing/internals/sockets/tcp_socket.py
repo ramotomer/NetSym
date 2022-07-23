@@ -2,17 +2,18 @@ from typing import Tuple
 
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import WaitingFor
-from computing.internals.processes.kernelmode_processes.sockets.tcp_socket_process import ListeningTCPSocketProcess, \
+from computing.internals.processes.kernelmode_processes.tcp_socket_process import ListeningTCPSocketProcess, \
     ConnectingTCPSocketProcess
-from computing.internals.sockets.socket import Socket
+from computing.internals.sockets.l4_socket import L4Socket
 from consts import COMPUTER
 
 
-class TCPSocket(Socket):
+class TCPSocket(L4Socket):
     """
     A socket is an operation-system object that allows for an abstraction of network access
     and sessions
     """
+
     def __init__(self, computer, address_family=COMPUTER.SOCKETS.ADDRESS_FAMILIES.AF_INET):
         """
         Generates a socket
@@ -20,6 +21,15 @@ class TCPSocket(Socket):
         :param address_family: usually you need AF_INET
         """
         super(TCPSocket, self).__init__(computer, address_family, COMPUTER.SOCKETS.TYPES.SOCK_STREAM)
+        self.to_send = []
+
+        self.listening_count = None
+
+        self.socket_handling_kernelmode_pid = None
+
+    @property
+    def socket_handling_kernelmode_process(self):
+        return self.computer.process_scheduler.get_process(self.socket_handling_kernelmode_pid, COMPUTER.PROCESSES.MODES.KERNELMODE, raises=False)
 
     def send(self, data):
         """
@@ -27,18 +37,10 @@ class TCPSocket(Socket):
         :param data: string
         :return:
         """
+        self.assert_is_bound()
+        self.assert_is_not_closed()
+        self.assert_is_connected()
         self.to_send.append(data)
-        return len(data)
-
-    def receive(self, count=1024):
-        """
-        receive the information from the other side of the socket
-        :param count: how many bytes to receive
-        :return:
-        """
-        data = ''.join(self.received) if self.received else None
-        self.received.clear()
-        return data
 
     def connect(self, address: Tuple[IPAddress, int]):
         """
@@ -46,15 +48,9 @@ class TCPSocket(Socket):
         :param address:
         :return:
         """
-        self.pid = self.computer.process_scheduler.start_kernelmode_process(ConnectingTCPSocketProcess, self, address)
-
-    def bind(self, address: Tuple[IPAddress, int]):
-        """
-        Binds the socket to a certain address and port on the computer
-        :param address:
-        :return:
-        """
-        self.computer.bind_socket(self, address)
+        self.assert_is_bound()
+        self.assert_is_not_closed()
+        self.socket_handling_kernelmode_pid = self.computer.process_scheduler.start_kernelmode_process(ConnectingTCPSocketProcess, self, address)
 
     def listen(self, count: int):
         """
@@ -62,8 +58,9 @@ class TCPSocket(Socket):
         :param count:
         :return:
         """
+        self.assert_is_bound()
+        self.assert_is_not_closed()
         self.computer.sockets[self].state = COMPUTER.SOCKETS.STATES.LISTENING
-        self.computer.graphics.update_image()
         self.listening_count = count
 
     def accept(self):
@@ -71,7 +68,10 @@ class TCPSocket(Socket):
         Accept connections to this socket.
         :return:
         """
-        self.pid = self.computer.process_scheduler.start_kernelmode_process(ListeningTCPSocketProcess, self, self.bound_address)
+        self.assert_is_bound()
+        self.assert_is_not_closed()
+        self.socket_handling_kernelmode_pid = self.computer.process_scheduler.start_kernelmode_process(ListeningTCPSocketProcess, self,
+                                                                                                       self.bound_address)
 
     def blocking_accept(self):
         """
@@ -83,14 +83,4 @@ class TCPSocket(Socket):
 
     def close(self):
         super(TCPSocket, self).close()
-        self.process.close_socket_when_done_transmitting = True
-
-    def __str__(self):
-        return f"socket of {self.computer.name}"
-
-    def __repr__(self):
-        return f"TCP    " \
-            f"{':'.join(map(str, self.bound_address)): <23}" \
-            f"{':'.join(map(str, self.foreign_address)): <23}" \
-            f"{self.state: <16}" \
-            f"{self.acquiring_process_pid}"
+        self.socket_handling_kernelmode_process.close_socket_when_done_transmitting = True

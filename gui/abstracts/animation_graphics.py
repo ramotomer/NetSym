@@ -14,6 +14,8 @@ class AnimationGraphics(ImageGraphics):
     """
     A GraphicsObject of an animation. An image that is made out of little images and the animation if looped through them.
     """
+    PARENT_DIRECTORY = DIRECTORIES.ANIMATIONS
+
     def __init__(self, image_name, x, y, is_looping=False, x_count=ANIMATIONS.X_COUNT, y_count=ANIMATIONS.Y_COUNT,
                  image_width=IMAGES.SIZE, image_height=IMAGES.SIZE, frame_rate=ANIMATIONS.FRAME_RATE, scale=1.0):
         """
@@ -50,7 +52,7 @@ class AnimationGraphics(ImageGraphics):
         """
         Returns a pyglet.sprite.Sprite object of the animation
         """
-        image = pyglet.image.load(os.path.join(DIRECTORIES.IMAGES, image_name))
+        image = pyglet.image.load(image_name)
         sequence = pyglet.image.ImageGrid(image, x_count, y_count,
                                           item_width=self.item_width, item_height=self.item_height)
         textures = pyglet.image.TextureGrid(sequence)
