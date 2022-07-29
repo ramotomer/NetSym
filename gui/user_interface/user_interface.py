@@ -13,6 +13,7 @@ from address.ip_address import IPAddress
 from computing.computer import Computer
 from computing.internals.frequency import Frequency
 from computing.internals.interface import Interface
+from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEClientProcess
 from computing.internals.processes.usermode_processes.stp_process import STPProcess
 from computing.internals.wireless_interface import WirelessInterface
 from computing.router import Router
@@ -391,6 +392,26 @@ class UserInterface:
                     if not button.is_hidden:
                         button.y = button.initial_location[1] - self.scrolled_view
 
+    def initiate_buttons(self):
+        """
+        Initiates the buttons in the window.
+        This does not happen in init because when init is called here
+        `MainWindow.main_window` is still uninitiated so it cannot register the graphics objects of the buttons.
+        :return: None
+        """
+        self.buttons[BUTTONS.MAIN_MENU.ID] = [
+            Button(
+                *MainWindow.main_window.button_location_by_index(i - 1),
+                *args,
+                **kwargs,
+            ) for i, (args, kwargs) in enumerate(self.button_arguments)
+        ]
+
+        for i, button in enumerate(self.buttons[BUTTONS.MAIN_MENU.ID]):
+            x, y = MainWindow.main_window.button_location_by_index(i - 1)
+            padding = x - WINDOWS.MAIN.WIDTH, y - WINDOWS.MAIN.HEIGHT
+            button.set_parent_graphics(MainWindow.main_window, padding)
+
     def tab_through_selected(self, reverse=False):
         """
         This is called when the TAB key is pressed.
@@ -412,26 +433,6 @@ class UserInterface:
             self.selected_object = available_graphics_objects[-1]
 
         self.set_mode(MODES.VIEW)
-
-    def initiate_buttons(self):
-        """
-        Initiates the buttons in the window.
-        This does not happen in init because when init is called here
-        `MainWindow.main_window` is still uninitiated so it cannot register the graphics objects of the buttons.
-        :return: None
-        """
-        self.buttons[BUTTONS.MAIN_MENU.ID] = [
-            Button(
-                *MainWindow.main_window.button_location_by_index(i - 1),
-                *args,
-                **kwargs,
-            ) for i, (args, kwargs) in enumerate(self.button_arguments)
-        ]
-
-        for i, button in enumerate(self.buttons[BUTTONS.MAIN_MENU.ID]):
-            x, y = MainWindow.main_window.button_location_by_index(i - 1)
-            padding = x - WINDOWS.MAIN.WIDTH, y - WINDOWS.MAIN.HEIGHT
-            button.set_parent_graphics(MainWindow.main_window, padding)
 
     def set_mode(self, new_mode):
         """
@@ -1202,7 +1203,10 @@ class UserInterface:
 
         self.tab_through_selected()
         self.selected_object.computer.open_port(21, "TCP")
+        self.selected_object.computer.open_port(13, "TCP")
         self.tab_through_selected()
+        self.tab_through_selected()
+        self.selected_object.computer.process_scheduler.start_usermode_process(DAYTIMEClientProcess, IPAddress("192.168.1.2"))
 
     def register_window(self, window, *buttons):
         """

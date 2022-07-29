@@ -1,4 +1,5 @@
 from computing.internals.shell.commands.command import Command, CommandOutput
+from consts import COMPUTER
 
 
 class Netstat(Command):
@@ -23,8 +24,12 @@ class Netstat(Command):
         :param parsed_args:
         :return:
         """
-        headers = f"{'Proto': <7}{'Local Address': <23}{'Foreign Address': <23}{'State': <16}PID\n"
-        return headers + '\n'.join(repr(socket) for socket in self.computer.sockets)
+        headers = f"{'Proto': <{   COMPUTER.SOCKETS.REPR.PROTO_SPACE_COUNT}} " \
+            f"{'Local Address': <{ COMPUTER.SOCKETS.REPR.LOCAL_ADDRESS_SPACE_COUNT}} " \
+            f"{'Remote Address': <{COMPUTER.SOCKETS.REPR.REMOTE_ADDRESS_SPACE_COUNT}} " \
+            f"{'State': <{         COMPUTER.SOCKETS.REPR.STATE_SPACE_COUNT}} " \
+            f"PID\n"
+        return headers + '\n'.join(getattr(socket, 'get_str_representation', socket.__repr__)() for socket in self.computer.sockets)
 
     def action(self, parsed_args):
         """

@@ -115,6 +115,6 @@ seq={self.sequence_number}, ack={self.ack_number}, win={self.window_size}
 options:
 {linesep.join(f'{option}: {value}' for option, value in self.options.items())}
 
-ip_layer:
+data:
 {getattr(self.data, "multiline_repr", self.data.__str__)()}
 """

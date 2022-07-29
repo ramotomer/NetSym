@@ -6,6 +6,7 @@ from computing.internals.processes.kernelmode_processes.tcp_socket_process impor
     ConnectingTCPSocketProcess
 from computing.internals.sockets.l4_socket import L4Socket
 from consts import COMPUTER
+from exceptions import TCPSocketConnectionRefused
 
 
 class TCPSocket(L4Socket):
@@ -22,8 +23,6 @@ class TCPSocket(L4Socket):
         """
         super(TCPSocket, self).__init__(computer, address_family, COMPUTER.SOCKETS.TYPES.SOCK_STREAM)
         self.to_send = []
-
-        self.listening_count = None
 
         self.socket_handling_kernelmode_pid = None
 
@@ -52,16 +51,23 @@ class TCPSocket(L4Socket):
         self.assert_is_not_closed()
         self.socket_handling_kernelmode_pid = self.computer.process_scheduler.start_kernelmode_process(ConnectingTCPSocketProcess, self, address)
 
-    def listen(self, count: int):
+    def blocking_connect(self, address: Tuple[IPAddress, int]):
+        """
+        Same as `accept` only yields a `WaitingFor` namedtuple that waits until the socket is connected
+        """
+        self.connect(address)
+        yield WaitingFor(lambda: self.is_connected or self.is_closed)
+        if self.is_closed:
+            raise TCPSocketConnectionRefused
+
+    def listen(self):
         """
         Listen for connections to this socket.
-        :param count:
         :return:
         """
         self.assert_is_bound()
         self.assert_is_not_closed()
         self.computer.sockets[self].state = COMPUTER.SOCKETS.STATES.LISTENING
-        self.listening_count = count
 
     def accept(self):
         """
@@ -73,7 +79,7 @@ class TCPSocket(L4Socket):
         self.socket_handling_kernelmode_pid = self.computer.process_scheduler.start_kernelmode_process(ListeningTCPSocketProcess, self,
                                                                                                        self.bound_address)
 
-    def blocking_accept(self):
+    def blocking_accept(self, requesting_process_pid):
         """
         Just like `self.accept` - only processes can use `yield from` to block until the socket is connected :)
         :return:
@@ -81,6 +87,28 @@ class TCPSocket(L4Socket):
         self.accept()
         yield WaitingFor(lambda: self.is_connected)
 
+        listening_socket = self.computer.get_socket(requesting_process_pid, address_family=self.address_family, kind=self.kind)
+        listening_socket.bind(self.bound_address)
+        listening_socket.listen()
+        return listening_socket
+
     def close(self):
+        if self.is_closed:
+            return
         super(TCPSocket, self).close()
         self.socket_handling_kernelmode_process.close_socket_when_done_transmitting = True
+
+    def close_when_done_transmitting(self):
+        """
+        A generator to `yield from` inside processes.
+        Waits until all of the data is sent and then closes the socket :)
+        """
+        yield WaitingFor(getattr(self.socket_handling_kernelmode_process, 'is_done_transmitting', lambda: True))
+        self.close()
+
+    def block_until_closed(self):
+        """
+        Return a generator to yield from when implementing a process.
+        The generator yields a condition that is only met once the socket is closed :)
+        """
+        yield WaitingFor(lambda: self.is_closed)

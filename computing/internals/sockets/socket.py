@@ -82,6 +82,13 @@ class Socket(metaclass=ABCMeta):
         """
         yield WaitingFor(lambda: self.has_data_to_receive)
 
+    def block_until_received_or_closed(self):
+        """
+        Like `self.block_until_received` - but the condition also matches if the socket is closed :)
+        :return:
+        """
+        yield WaitingFor(lambda: self.has_data_to_receive or self.is_closed)
+
     def close(self):
         """
         Closes the socket

@@ -36,6 +36,7 @@ from packets.icmp import ICMP
 from packets.ip import IP
 from packets.tcp import TCP
 from packets.udp import UDP
+from packets.usefuls import get_src_port, get_dst_port
 from usefuls.funcs import get_the_one
 
 ReceivedPacket = namedtuple("ReceivedPacket", "packet metadata")
@@ -478,12 +479,12 @@ class Computer:
         if not self.has_ip() or not self.has_this_ip(packet["IP"].dst_ip):
             return
 
-        if {OPCODES.TCP.SYN} == packet["TCP"].flags:
-            dst_port = packet["TCP"].dst_port
-            if dst_port not in self.get_open_ports("TCP"):
-                self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip,
-                             TCP(packet["TCP"].dst_port, packet["TCP"].src_port, 0,
-                                 {OPCODES.TCP.RST}))
+        if not any(self._does_packet_match_tcp_socket_fourtuple(socket, packet)
+                   for socket in self.sockets if socket.kind == COMPUTER.SOCKETS.TYPES.SOCK_STREAM) and \
+                not {OPCODES.TCP.RST} <= packet["TCP"].flags:
+            self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip,
+                         TCP(packet["TCP"].dst_port, packet["TCP"].src_port, 0,
+                             {OPCODES.TCP.RST}))
 
     def _handle_udp(self, returned_packet):
         """
@@ -500,39 +501,57 @@ class Computer:
             return
 
         for socket in self.sockets:
-            if self.__should_udp_socket_receive_packet(socket, packet):
+            if self._does_packet_match_udp_socket_fourtuple(socket, packet):
                 socket.received.append(ReturnedUDPPacket(packet["UDP"].data, packet["IP"].src_ip, packet["UDP"].src_port))
 
-    def __should_udp_socket_receive_packet(self, socket, packet):
+    def _does_packet_match_socket_fourtuple(self, socket, packet):
         """
-        Validates that the packet matches the bound four-tuple of the UDP socket
+        Validates that the packet matches the bound fourtuple of the socket
+        """
+        socket_metadata = self.sockets[socket]
+        if not isinstance(socket, L4Socket):
+            return False
+
+        if socket_metadata.remote_ip_address is not None:  # if socket is connected
+            if socket_metadata.remote_port != get_src_port(packet) or \
+                    socket_metadata.remote_ip_address != packet["IP"].src_ip:
+                return False
+
+        if socket_metadata.local_port != get_dst_port(packet):
+            return False
+
+        if socket_metadata.local_ip_address != IPAddress.no_address() and \
+                socket_metadata.local_ip_address != packet["IP"].dst_ip:
+            return False
+
+        if socket_metadata.local_ip_address == IPAddress.no_address() and \
+                packet["IP"].dst_ip not in self.ips:
+            return False
+        return True
+
+    def _does_packet_match_udp_socket_fourtuple(self, socket, packet):
+        """
+        Validates that the packet matches the bound fourtuple of the UDP socket
         Needs to operate on connected and disconnected sockets as well.
         :param socket: `Socket` object to test
         :param packet: `Packet` object to test
         :return: `bool`
         """
-        socket_metadata = self.sockets[socket]
+        return self.sockets[socket].kind == COMPUTER.SOCKETS.TYPES.SOCK_DGRAM and \
+                "UDP" in packet and \
+                self._does_packet_match_socket_fourtuple(socket, packet)
 
-        if socket_metadata.kind != COMPUTER.SOCKETS.TYPES.SOCK_DGRAM or \
-           "UDP" not in packet:
-            return False
-
-        if socket_metadata.remote_ip_address is not None:  # if socket is connected
-            if socket_metadata.remote_port != packet["UDP"].src_port or \
-               socket_metadata.remote_ip_address != packet["IP"].src_ip:
-                return False
-
-        if socket_metadata.local_port != packet["UDP"].dst_port:
-            return False
-
-        if socket_metadata.local_ip_address != IPAddress.no_address() and \
-           socket_metadata.local_ip_address != packet["IP"].dst_ip:
-            return False
-
-        if socket_metadata.local_ip_address == IPAddress.no_address() and \
-           packet["IP"].dst_ip not in self.ips:
-            return False
-        return True
+    def _does_packet_match_tcp_socket_fourtuple(self, socket, packet):
+        """
+        Validates that the packet matches the bound fourtuple of the TCP socket
+        Needs to operate on connected and disconnected sockets as well.
+        :param socket: `Socket` object to test
+        :param packet: `Packet` object to test
+        :return: `bool`
+        """
+        return self.sockets[socket].kind == COMPUTER.SOCKETS.TYPES.SOCK_STREAM and \
+               "TCP" in packet and \
+               self._does_packet_match_socket_fourtuple(socket, packet)
 
     def _handle_special_packet(self, returned_packet):
         """
@@ -960,7 +979,7 @@ class Computer:
         def is_registered_on_port(socket_data):
             return socket_data.local_port == port and \
                    socket_data.kind == kind and \
-                   socket_data.state != COMPUTER.SOCKETS.STATES.CLOSED
+                   socket_data.state == COMPUTER.SOCKETS.STATES.LISTENING
 
         return any(map(is_registered_on_port, self.sockets.values()))
 
@@ -974,7 +993,7 @@ class Computer:
         ip_address, port = address
 
         if self._is_port_taken(port, socket.kind):
-            raise PortAlreadyBoundError(f"The socket cannot be bound, since another socket is bound to port {port}")
+            raise PortAlreadyBoundError(f"The socket cannot be bound, since another socket is listening on port {port}")
 
         try:
             self.sockets[socket].local_ip_address = ip_address

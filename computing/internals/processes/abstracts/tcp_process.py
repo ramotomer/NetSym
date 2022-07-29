@@ -486,10 +486,6 @@ class TCPProcess(Process, metaclass=ABCMeta):
         """
         pass
 
-    def __repr__(self):
-        """String representation of the process"""
-        return "A TCP Process"
-
 
 class SendingWindow:
     """

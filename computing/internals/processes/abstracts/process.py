@@ -67,7 +67,6 @@ class Process(metaclass=ABCMeta):
     def die(self):
         """
         self.kill_me = True
-        :return:
         """
         self.kill_me = True
 

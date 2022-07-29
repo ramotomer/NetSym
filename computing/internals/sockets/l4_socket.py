@@ -51,7 +51,7 @@ class L4Socket(Socket, metaclass=ABCMeta):
         :param count: how many bytes to receive
         :return:
         """
-        data = ''.join(self.received) if self.received else None
+        data = ''.join(self.received) if self.received else ''
         self.received.clear()
         return data
 
@@ -72,12 +72,17 @@ class L4Socket(Socket, metaclass=ABCMeta):
 
         self.computer.bind_socket(self, (ip, port))
 
-    def __str__(self):
-        return f"socket of {self.computer.name}"
+    def get_str_representation(self,
+                               proto_space_count=COMPUTER.SOCKETS.REPR.PROTO_SPACE_COUNT,
+                               local_address_space_count=COMPUTER.SOCKETS.REPR.LOCAL_ADDRESS_SPACE_COUNT,
+                               remote_address_space_count=COMPUTER.SOCKETS.REPR.REMOTE_ADDRESS_SPACE_COUNT,
+                               state_space_count=COMPUTER.SOCKETS.REPR.STATE_SPACE_COUNT):
+
+        return f"{self.protocol: <{proto_space_count}} " \
+            f"{':'.join(map(str, self.bound_address)): <{local_address_space_count}} " \
+            f"{':'.join(map(str, self.remote_address)): <{remote_address_space_count}} " \
+            f"{self.state: <{state_space_count}} " \
+            f"{self.acquiring_process_pid}"
 
     def __repr__(self):
-        return f"{self.protocol}    " \
-            f"{':'.join(map(str, self.bound_address)): <23}" \
-            f"{':'.join(map(str, self.remote_address)): <23}" \
-            f"{self.state: <16}" \
-            f"{self.acquiring_process_pid}"
+        return self.get_str_representation(0, 0, 0, 0)

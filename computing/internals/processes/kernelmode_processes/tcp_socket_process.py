@@ -20,7 +20,7 @@ class TCPSocketProcess(TCPProcess, metaclass=ABCMeta):
         self.received = []
         self.close_socket_when_done_transmitting = False
 
-    def __unload_socket_sending_queue(self):
+    def _unload_socket_sending_queue(self):
         """
         reads from the socket what it needs to send
         and sends it
@@ -32,7 +32,7 @@ class TCPSocketProcess(TCPProcess, metaclass=ABCMeta):
             self.send(data)
         self.socket.to_send.clear()
 
-    def __set_socket_connected(self):
+    def _set_socket_connected(self):
         """
         Sets the connection of the socket as established, defines the foreign address and port etc...
         :return:
@@ -47,25 +47,28 @@ class TCPSocketProcess(TCPProcess, metaclass=ABCMeta):
 
     def code(self):
         """"""
-        yield from self.hello_handshake()  # halts until receiving a syn to the port
+        yield from self.hello_handshake()  # blocks until receiving a syn to the port
         if self.kill_me:
             return
-        self.__set_socket_connected()
+        self._set_socket_connected()
 
         while not (self.close_socket_when_done_transmitting and self.is_done_transmitting()):
-            self.__unload_socket_sending_queue()
+            self._unload_socket_sending_queue()
             yield from self.handle_tcp_and_receive(self.socket.received)
 
     def _end_session(self):
         super(TCPSocketProcess, self)._end_session()
         self.socket.close()
 
+    def is_done_transmitting(self):
+        return super(TCPSocketProcess, self).is_done_transmitting() and not self.socket.to_send
+
     def __repr__(self):
         """
         The string representation of the process (also the process name in `ps`)
-        :return:
         """
-        return "[ktcpsock]"
+        _, local_port = self.socket.bound_address
+        return f"[ktcpsock] {local_port}"
 
 
 class ListeningTCPSocketProcess(TCPSocketProcess):
