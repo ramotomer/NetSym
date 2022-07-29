@@ -385,44 +385,50 @@ class SocketError(ComputerError):
     """
 
 
-class SocketIsBrokenError(SocketError):
+class WrongUsageSocketError(SocketError):
+    """
+    Occurs when the order of commands activated on a socket is not correct
+    """
+
+
+class SocketIsBrokenError(WrongUsageSocketError):
     """
     Trying to send or receive through a broken socket
     """
 
 
-class SocketNotBoundError(SocketError):
+class SocketNotBoundError(WrongUsageSocketError):
     """
     Trying to use an un-bound socket
     """
 
 
-class SocketNotConnectedError(SocketError):
+class SocketNotConnectedError(WrongUsageSocketError):
     """
     Trying to receive or send using a disconnected socket
     """
 
 
-class SocketAlreadyConnectedError(SocketError):
+class SocketAlreadyConnectedError(WrongUsageSocketError):
     """
     Raises when trying to connect a socket that is already connected :)
     """
     pass
 
 
-class SocketNotRegisteredError(SocketError):
+class SocketNotRegisteredError(WrongUsageSocketError):
     """
     Occurs when one tries to bind a socket that is not known to the operation system.
     """
 
 
-class PortAlreadyBoundError(SocketError):
+class PortAlreadyBoundError(WrongUsageSocketError):
     """
     Trying to bind a port on an already bound port.
     """
 
 
-class SocketIsClosedError(SocketError):
+class SocketIsClosedError(WrongUsageSocketError):
     """
     Trying to use a closed socket.
     """
@@ -431,6 +437,24 @@ class SocketIsClosedError(SocketError):
 class RawSocketError(SocketError):
     """
     an exception related to raw sockets specifically
+    """
+
+
+class L4SocketError(SocketError):
+    """
+    An error related to L4 sockets (tcp/udp)
+    """
+
+
+class TCPSocketError(L4SocketError):
+    """
+    An error related to TCP sockets
+    """
+
+
+class UDPSocketError(L4SocketError):
+    """
+    An error related to UDP sockets
     """
 
 
@@ -446,7 +470,13 @@ class UnknownSocketTypeError(SocketError):
     """
 
 
-class UnknownLayer4SocketTypeError(UnknownSocketTypeError):
+class UnknownLayer4SocketTypeError(UnknownSocketTypeError, L4SocketError):
     """
     The supplied type is not a valid l4 socket type (udp/tcp)
+    """
+
+
+class TCPSocketConnectionRefused(TCPSocketError):
+    """
+    Tried connecting a TCP socket but the connection was not successful
     """

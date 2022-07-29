@@ -684,3 +684,9 @@ class COMPUTER:
             LISTENING = "LISTENING"
             ESTABLISHED = "ESTABLISHED"
             CLOSED = "CLOSED"
+
+        class REPR:
+            LOCAL_ADDRESS_SPACE_COUNT = 22
+            REMOTE_ADDRESS_SPACE_COUNT = 22
+            STATE_SPACE_COUNT = 15
+            PROTO_SPACE_COUNT = 6

@@ -48,7 +48,7 @@ class FTP(Protocol):
         """
         return f"""
 FTP: {"(request)" if self.is_request else ""}
-ip_layer:
+data:
 {self.data}
 """
 
