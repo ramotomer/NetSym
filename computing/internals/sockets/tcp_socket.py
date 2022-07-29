@@ -5,7 +5,7 @@ from computing.internals.processes.abstracts.process import WaitingFor
 from computing.internals.processes.kernelmode_processes.tcp_socket_process import ListeningTCPSocketProcess, \
     ConnectingTCPSocketProcess
 from computing.internals.sockets.l4_socket import L4Socket
-from consts import COMPUTER, debugp
+from consts import COMPUTER
 from exceptions import TCPSocketConnectionRefused
 
 
@@ -93,6 +93,8 @@ class TCPSocket(L4Socket):
         return listening_socket
 
     def close(self):
+        if self.is_closed:
+            return
         super(TCPSocket, self).close()
         self.socket_handling_kernelmode_process.close_socket_when_done_transmitting = True
 
@@ -101,8 +103,12 @@ class TCPSocket(L4Socket):
         A generator to `yield from` inside processes.
         Waits until all of the data is sent and then closes the socket :)
         """
-        debugp(f"is done: {self.socket_handling_kernelmode_process.is_done_transmitting} {self.socket_handling_kernelmode_process.is_done_transmitting()}")
-
-        yield WaitingFor(self.socket_handling_kernelmode_process.is_done_transmitting)
-        debugp(f"{self.computer} found what you're waiting for")
+        yield WaitingFor(getattr(self.socket_handling_kernelmode_process, 'is_done_transmitting', lambda: True))
         self.close()
+
+    def block_until_closed(self):
+        """
+        Return a generator to yield from when implementing a process.
+        The generator yields a condition that is only met once the socket is closed :)
+        """
+        yield WaitingFor(lambda: self.is_closed)

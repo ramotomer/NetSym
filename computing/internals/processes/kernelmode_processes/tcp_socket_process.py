@@ -60,6 +60,9 @@ class TCPSocketProcess(TCPProcess, metaclass=ABCMeta):
         super(TCPSocketProcess, self)._end_session()
         self.socket.close()
 
+    def is_done_transmitting(self):
+        return super(TCPSocketProcess, self).is_done_transmitting() and not self.socket.to_send
+
     def __repr__(self):
         """
         The string representation of the process (also the process name in `ps`)

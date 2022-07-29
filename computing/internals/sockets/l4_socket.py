@@ -51,7 +51,7 @@ class L4Socket(Socket, metaclass=ABCMeta):
         :param count: how many bytes to receive
         :return:
         """
-        data = ''.join(self.received) if self.received else None
+        data = ''.join(self.received) if self.received else ''
         self.received.clear()
         return data
 
