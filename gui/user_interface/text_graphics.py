@@ -68,13 +68,16 @@ class Text(UserInterfaceGraphicsObject):
         :return: None
         """
         self._text = text
-        self.label = pyglet.text.Label(self._text,
-                                       font_name=self.font,
-                                       font_size=self.font_size,
-                                       x=self.x + self.padding[0], y=(self.y + self.padding[1]),
-                                       color=self.color + (255,),
-                                       anchor_x='center', anchor_y='top',
-                                       align=self.align)
+        if self.label is None:
+            self.label = pyglet.text.Label(self._text,
+                                           font_name=self.font,
+                                           font_size=self.font_size,
+                                           x=self.x + self.padding[0], y=(self.y + self.padding[1]),
+                                           color=self.color + (255,),
+                                           anchor_x='center', anchor_y='top',
+                                           align=self.align)
+        else:
+            self.label.text = self._text
 
         self.label.width = self.max_width
         self.label.multiline = True

@@ -155,6 +155,13 @@ def draw_circle(x, y, radius, outline_color=COLORS.WHITE, fill_color=None):
                          )
 
 
+def debug_circle(x, y, fill_color=COLORS.RED, size=3):
+    """
+    Red dot for debugging
+    """
+    draw_circle(x, y, size, fill_color=fill_color, outline_color=fill_color)
+
+
 def draw_sine_wave(start_coordinates, end_coordinates,
                    amplitude=SHAPES.SINE_WAVE.DEFAULT_AMPLITUDE,
                    frequency=SHAPES.SINE_WAVE.DEFAULT_FREQUENCY,

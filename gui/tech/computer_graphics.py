@@ -12,7 +12,7 @@ from gui.main_window import MainWindow
 from gui.tech.interface_graphics_list import InterfaceGraphicsList
 from gui.tech.output_console import OutputConsole
 from gui.tech.process_graphics import ProcessGraphicsList
-from gui.user_interface.popup_windows.popup_console import PopupConsole
+from gui.user_interface.popup_windows.console.popup_console import PopupConsole
 from gui.user_interface.popup_windows.popup_error import PopupError
 from gui.user_interface.text_graphics import Text
 from usefuls.funcs import with_args
