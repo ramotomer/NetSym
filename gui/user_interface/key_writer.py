@@ -36,13 +36,10 @@ class KeyWriter:
         self.submit = submit_action
         self.exit = exit_action
 
-        self.key_dict = {
-            key.ENTER: self.submit,
-            key.BACKSPACE: self.delete,
+        self.key_combination_dict = {
+            (key.ENTER,     KEYBOARD.MODIFIERS.NONE): self.submit,
+            (key.BACKSPACE, KEYBOARD.MODIFIERS.NONE): self.delete,
         }
-
-        self.key_combination_dict = {}  # {(key, modifiers): action}
-        # TODO: maybe we do not need 2 dicts - only the key_combination where normal presses are simply without modifiers?
 
     def add_key_mapping(self, symbol, action):
         """
@@ -51,15 +48,7 @@ class KeyWriter:
         :param action: function
         :return:
         """
-        if isinstance(symbol, list):
-            for inner_symbol in symbol:
-                self.add_key_mapping(inner_symbol, action)
-                return
-
-        if symbol in self.key_dict:
-            raise KeyActionAlreadyExistsError("you are overriding and action in the key dict!!!")
-
-        self.key_dict[symbol] = action
+        self.add_key_combination(symbol, KEYBOARD.MODIFIERS.NONE, action)
 
     def add_key_combination(self, symbol, modifiers, action):
         """
@@ -75,7 +64,7 @@ class KeyWriter:
                 self.add_key_combination(inner_symbol, modifiers, action)
             return
 
-        if (symbol, modifiers) in self.key_dict:
+        if (symbol, modifiers) in self.key_combination_dict:
             raise KeyActionAlreadyExistsError("you are overriding and action in the key dict!!!")
 
         self.key_combination_dict[(symbol, modifiers)] = action
@@ -86,20 +75,22 @@ class KeyWriter:
         :param symbol: a string of the key that was pressed.
         :param modifiers: a bitwise representation of what other button were also pressed
         (KEYBOARD.MODIFIERS.SHIFT, etc...)
-        :return: None
+        :return: `bool` - whether or not the pressed key had any effect
         """
         if (symbol, modifiers) in self.key_combination_dict:
             self.key_combination_dict[(symbol, modifiers)]()
+            return True
 
-        elif symbol in self.key_dict:
-            self.key_dict[symbol]()
-
-        elif symbol in KEYBOARD.PRINTABLE_RANGE:
+        if symbol in KEYBOARD.PRINTABLE_RANGE:
             char = chr(symbol).lower()
             if (modifiers & KEYBOARD.MODIFIERS.SHIFT) ^ (modifiers & KEYBOARD.MODIFIERS.CAPS):
                 char = char.upper()
                 char = self.TO_UPPERCASE.get(char, char)
             self.write(char)
+            return True
 
-        elif symbol in self.NUMPAD_KEYS:
+        if symbol in self.NUMPAD_KEYS:
             self.write(self.NUMPAD_KEYS[symbol])
+            return True
+
+        return False

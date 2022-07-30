@@ -60,12 +60,12 @@ class ShellGraphics(OutputConsole):
         self.key_writer.add_key_combination(key.K, KEYBOARD.MODIFIERS.CTRL, self.delete_from_caret_until_the_end)
         self.key_writer.add_key_combination(key.U, KEYBOARD.MODIFIERS.CTRL, self.delete_from_the_start_up_to_caret)
 
-        self.key_writer.add_key_mapping(key.UP, self.command_parser.scroll_up_history)
-        self.key_writer.add_key_mapping(key.DOWN, self.command_parser.scroll_down_history)
-        self.key_writer.add_key_mapping(key.RIGHT, with_args(self.move_caret, 1))
-        self.key_writer.add_key_mapping(key.LEFT, with_args(self.move_caret, -1))
-        self.key_writer.add_key_mapping(key.HOME, with_args(self.move_caret, chr(key.HOME)))
-        self.key_writer.add_key_mapping(key.END, with_args(self.move_caret, chr(key.END)))
+        self.key_writer.add_key_combination(key.UP,    KEYBOARD.MODIFIERS.NONE, self.command_parser.scroll_up_history)
+        self.key_writer.add_key_combination(key.DOWN,  KEYBOARD.MODIFIERS.NONE, self.command_parser.scroll_down_history)
+        self.key_writer.add_key_combination(key.RIGHT, KEYBOARD.MODIFIERS.NONE, with_args(self.move_caret, 1))
+        self.key_writer.add_key_combination(key.LEFT,  KEYBOARD.MODIFIERS.NONE, with_args(self.move_caret, -1))
+        self.key_writer.add_key_combination(key.HOME,  KEYBOARD.MODIFIERS.NONE, with_args(self.move_caret, chr(key.HOME)))
+        self.key_writer.add_key_combination(key.END,   KEYBOARD.MODIFIERS.NONE, with_args(self.move_caret, chr(key.END)))
 
         self.caret_index = 0
         

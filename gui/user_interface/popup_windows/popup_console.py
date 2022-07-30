@@ -2,7 +2,7 @@ from collections import namedtuple
 
 from consts import COLORS, CONSOLE, COMPUTER
 from gui.main_loop import MainLoop
-from gui.user_interface.popup_windows.console.shell_graphics import ShellGraphics
+from gui.tech.shell_graphics import ShellGraphics
 from gui.user_interface.popup_windows.popup_window import PopupWindow
 
 ChildrenGraphicsObjects = namedtuple("ChildrenGraphicsObjects", [

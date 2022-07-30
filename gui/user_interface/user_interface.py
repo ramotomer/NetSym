@@ -30,8 +30,8 @@ from gui.tech.connection_graphics import ConnectionGraphics
 from gui.tech.interface_graphics import InterfaceGraphics
 from gui.tech.packet_graphics import PacketGraphics
 from gui.user_interface.button import Button
-from gui.user_interface.popup_windows.console.popup_console import PopupConsole
 from gui.user_interface.popup_windows.device_creation_window import DeviceCreationWindow
+from gui.user_interface.popup_windows.popup_console import PopupConsole
 from gui.user_interface.popup_windows.popup_error import PopupError
 from gui.user_interface.popup_windows.popup_help import PopupHelp
 from gui.user_interface.popup_windows.popup_text_box import PopupTextBox
@@ -114,6 +114,7 @@ class UserInterface:
             (key.J, KEYBOARD.MODIFIERS.NONE):       self.color_by_subnets,
             (key.LALT, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.ALT): with_args(self.set_is_ignoring_keyboard_escape_keys, False),
             (key.G, KEYBOARD.MODIFIERS.CTRL):       with_args(self.set_is_ignoring_keyboard_escape_keys, True),
+            (key.TAB, KEYBOARD.MODIFIERS.ALT):      self.tab_through_windows,
             (key.RIGHT, KEYBOARD.MODIFIERS.WINKEY): with_args(self.pin_active_window_to, WINDOWS.POPUP.DIRECTIONS.RIGHT),
             (key.LEFT, KEYBOARD.MODIFIERS.WINKEY):  with_args(self.pin_active_window_to, WINDOWS.POPUP.DIRECTIONS.LEFT),
             (key.UP, KEYBOARD.MODIFIERS.WINKEY):    with_args(self.pin_active_window_to, WINDOWS.POPUP.DIRECTIONS.UP),
@@ -430,6 +431,25 @@ class UserInterface:
             padding = x - WINDOWS.MAIN.WIDTH, y - WINDOWS.MAIN.HEIGHT
             button.set_parent_graphics(MainWindow.main_window, padding)
 
+    def tab_through_windows(self, reverse=False):
+        """
+
+        :param reverse:
+        :return:
+        """
+        available_windows = list(filter(lambda o: isinstance(o, PopupWindow), MainLoop.instance.graphics_objects))
+        debugp(f"t: {available_windows}")
+        if not available_windows:
+            return
+        if reverse:
+            available_windows = list(reversed(available_windows))
+
+        try:
+            index = available_windows.index(self.active_window)
+            self.active_window = available_windows[index - 1]
+        except ValueError:
+            self.active_window = available_windows[-1]
+
     def tab_through_selected(self, reverse=False):
         """
         This is called when the TAB key is pressed.
@@ -571,13 +591,14 @@ class UserInterface:
         """
         modifiers = modifiers & (~KEYBOARD.MODIFIERS.NUMLOCK)
 
-        if (not modifiers & KEYBOARD.MODIFIERS.WINKEY) and (symbol != key.ESCAPE):
-            if isinstance(self.active_window, PopupTextBox):
-                self.active_window.key_writer.pressed(symbol, modifiers)
+        # if (not modifiers & KEYBOARD.MODIFIERS.WINKEY) and (symbol != key.ESCAPE):
+        debugp(f"got in 1 {symbol}, {modifiers}")
+        if isinstance(self.active_window, PopupTextBox):
+            if self.active_window.key_writer.pressed(symbol, modifiers):
                 return
 
-            if isinstance(self.active_window, PopupConsole):
-                self.active_window.shell.key_writer.pressed(symbol, modifiers)
+        if isinstance(self.active_window, PopupConsole):
+            if self.active_window.shell.key_writer.pressed(symbol, modifiers):
                 return
 
         modified_key = (symbol, modifiers)
