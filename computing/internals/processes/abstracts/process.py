@@ -115,6 +115,9 @@ class Timeout:
         """
         return MainLoop.instance.time_since(self.init_time) > self.seconds
 
+    def is_done(self):
+        return bool(self)
+
     def reset(self):
         """
         Resets the timeout object's initiation time.
