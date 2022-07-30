@@ -112,6 +112,8 @@ class UserInterface:
             (key.ESCAPE, KEYBOARD.MODIFIERS.NONE): with_args(self.set_mode, MODES.NORMAL),
             (key.DELETE, KEYBOARD.MODIFIERS.NONE): self.delete_selected_and_marked,
             (key.J, KEYBOARD.MODIFIERS.NONE): self.color_by_subnets,
+            (key.LALT, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.ALT): with_args(self.set_is_ignoring_keyboard_escape_keys, False),
+            (key.G, KEYBOARD.MODIFIERS.CTRL): with_args(self.set_is_ignoring_keyboard_escape_keys, True),
         }
 
         for direction in {key.UP, key.RIGHT, key.LEFT, key.DOWN}:
@@ -175,7 +177,8 @@ class UserInterface:
             ((self.start_all_stp, "start STP (ctrl+shift+s)"), {"key": (key.S, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT)}),
             ((self.delete_all_packets, "delete all packets (Shift+d)"), {"key": (key.D, KEYBOARD.MODIFIERS.SHIFT)}),
             ((self.delete_all, "delete all (^d)"), {"key": (key.D, KEYBOARD.MODIFIERS.CTRL)}),
-            ((with_args(self.ask_user_for, str, "save file as:", self._save_to_file_with_override_safety), "save to file(^s)"), {"key": (key.S, KEYBOARD.MODIFIERS.CTRL)}),
+            ((with_args(self.ask_user_for, str, "save file as:", self._save_to_file_with_override_safety), "save to file(^s)"),
+             {"key": (key.S, KEYBOARD.MODIFIERS.CTRL)}),
             # TODO: saving to files does not work :(
             ((self._ask_user_for_load_file, "load from file (^o)"), {"key": (key.O, KEYBOARD.MODIFIERS.CTRL)}),
             ((self.open_help, "help (shift+/)"), {"key": (key.SLASH, KEYBOARD.MODIFIERS.SHIFT)}),
@@ -232,6 +235,13 @@ class UserInterface:
         else:
             self.__selected_object = graphics_object
             self.active_window = None
+
+    @staticmethod
+    def set_is_ignoring_keyboard_escape_keys(value):
+        """
+        :param value: Whether or not to swallow special keyboard shortcuts passed (winkey, alt+tab...)
+        """
+        MainWindow.main_window.set_is_ignoring_keyboard_escape_keys(value)
 
     def show(self):
         """
@@ -307,7 +317,7 @@ class UserInterface:
         x = (MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2)) - (IMAGES.SIZE * IMAGES.SCALE_FACTORS.VIEWING_OBJECTS / 2)
         y = MainWindow.main_window.height - ((IMAGES.SIZE * IMAGES.SCALE_FACTORS.VIEWING_OBJECTS) + 15)
         return x, y
-    
+
     @property
     def viewing_text_location(self):
         return (MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2)), \
@@ -599,11 +609,11 @@ class UserInterface:
             x, y = WINDOWS.MAIN.WIDTH / 2, WINDOWS.MAIN.HEIGHT / 2
 
         router = Router("Router and DHCP Server", [
-                        Interface.with_ip('192.168.1.1'),
-                        Interface.with_ip('10.10.10.1'),
-                        Interface.with_ip('172.3.10.1'),
-                        Interface.with_ip('1.1.1.1'),
-                        ])
+            Interface.with_ip('192.168.1.1'),
+            Interface.with_ip('10.10.10.1'),
+            Interface.with_ip('172.3.10.1'),
+            Interface.with_ip('1.1.1.1'),
+        ])
         # TODO: find out why this warning exists and fix it (if there is no warning here, delete this comment)
         router.show(x, y)
         self.computers.append(router)
@@ -857,7 +867,7 @@ class UserInterface:
         :param graphics_object: a `PacketGraphics` object.
         :return:
         """
-        all_connections = [connection_data[0] for connection_data in self.connection_data] +\
+        all_connections = [connection_data[0] for connection_data in self.connection_data] + \
                           [computer.loopback.connection.connection for computer in self.computers] + self.frequencies
         all_sent_packets = functools.reduce(operator.concat, map(operator.attrgetter("sent_packets"), all_connections))
 
@@ -957,9 +967,11 @@ class UserInterface:
         Prints out lots of useful information for debugging.
         :return: None
         """
+
         # print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
         def gos():
             return [go for go in MainLoop.instance.graphics_objects if not isinstance(go, UserInterfaceGraphicsObject)]
+
         print(MainWindow.main_window.get_mouse_location())
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
         goes = list(filter(lambda go: not isinstance(go, UserInterfaceGraphicsObject), MainLoop.instance.graphics_objects))
@@ -993,7 +1005,7 @@ class UserInterface:
 
         try:
             given_ip = self._get_largest_ip_in_nearest_subnet(x, y)
-        except (NoSuchComputerError, NoIPAddressError):      # if there are no computers with IP on the screen.
+        except (NoSuchComputerError, NoIPAddressError):  # if there are no computers with IP on the screen.
             given_ip = IPAddress(ADDRESSES.IP.DEFAULT)
 
         new_computer = Computer.with_ip(given_ip) if not wireless else Computer.wireless_with_ip(given_ip)
@@ -1089,6 +1101,7 @@ class UserInterface:
         :param error_msg: The msg to be displayed if the input is invalid
         :return: None
         """
+
         def try_casting_with_action(string):
             try:
                 user_input_object = type_(string)
@@ -1160,7 +1173,7 @@ class UserInterface:
                     start_hidden=True,
                 )
                 for i, (string, action) in enumerate(dictionary.items())
-              ],
+            ],
         ]
 
         self.buttons[buttons_id + 1] = [
@@ -1228,6 +1241,7 @@ class UserInterface:
             for button_ in buttons:
                 self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID].remove(button_)
                 MainLoop.instance.unregister_graphics_object(button_)
+
         window.remove_buttons = remove_buttons
 
     def unregister_window(self, window):

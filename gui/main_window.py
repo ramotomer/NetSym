@@ -62,6 +62,7 @@ class MainWindow(pyglet.window.Window):
         """
         :param value: Whether or not to swallow special keyboard shortcuts passed (winkey, alt+tab...)
         """
+        debugp(f"calling the toggler with value {value} and hooking is: {self._keyboard_hook_manager.keyboard_hook}")
         if value and not self._keyboard_hook_manager.keyboard_hook:
             self._keyboard_hook_manager.HookKeyboard()
         elif not value and self._keyboard_hook_manager.keyboard_hook:
