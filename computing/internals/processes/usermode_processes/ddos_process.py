@@ -36,8 +36,7 @@ class DDOSProcess(Process):
                     "DDOS",
                 ),
             )
-            timeout = Timeout(self.sending_interval)
-            yield WaitingFor(lambda: timeout)
+            yield WaitingFor(Timeout(self.sending_interval).is_done)
 
     def __repr__(self):
         """A string representation of the process"""

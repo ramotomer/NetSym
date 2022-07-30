@@ -14,8 +14,7 @@ class WatchingProcess(Process):
     def code(self):
         while True:
             self.shell.execute(self.command_string, record_in_shell_history=False)
-            timeout = Timeout(self.interval)
-            yield WaitingFor(lambda: timeout)
+            yield WaitingFor(Timeout(self.interval).is_done)
 
     def __repr__(self):
         return f'watch -n {self.interval} "{self.command_string}"'
