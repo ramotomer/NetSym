@@ -64,8 +64,8 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.unregister_from_user_interface = with_args(user_interface.unregister_window, self)
 
         self._x_before_pinning, self._y_before_pinning = None, None
+        self._size_before_pinning = self.width, self.height
         self._pinned_directions = set()
-        self._initial_size = self.width, self.height
 
     @property
     def location(self):
@@ -76,6 +76,8 @@ class PopupWindow(UserInterfaceGraphicsObject):
         # this is the way the `UserInterface` moves the `selected_object`
         self.x, self.y = value
         self._x_before_pinning, self._y_before_pinning = value
+        self._pinned_directions = set()
+        self._size_before_pinning = self.width, self.height
 
     @property
     def is_pinned(self):
@@ -251,7 +253,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         Set the size and location of the window to be just like before the window was pinned
         """
         self.x, self.y = self._x_before_pinning, self._y_before_pinning
-        self.resize(*self._initial_size)
+        self.resize(*self._size_before_pinning)
         self._pinned_directions = set()
 
     def __str__(self):
