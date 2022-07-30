@@ -15,12 +15,13 @@ from computing.internals.shell.commands.filesystem.touch import Touch
 from computing.internals.shell.commands.info.hostname import Hostname
 from computing.internals.shell.commands.info.uname import Uname
 from computing.internals.shell.commands.info.uptime import Uptime
-from computing.internals.shell.commands.misc.alias import Alias
+from computing.internals.shell.commands.meta.alias import Alias
+from computing.internals.shell.commands.meta.help import Help
+from computing.internals.shell.commands.meta.man import Man
+from computing.internals.shell.commands.meta.unalias import Unalias
+from computing.internals.shell.commands.meta.watch import Watch
 from computing.internals.shell.commands.misc.echo import Echo
 from computing.internals.shell.commands.misc.grep import Grep
-from computing.internals.shell.commands.misc.help import Help
-from computing.internals.shell.commands.misc.man import Man
-from computing.internals.shell.commands.misc.unalias import Unalias
 from computing.internals.shell.commands.net.arp import Arp
 from computing.internals.shell.commands.net.arping import Arping
 from computing.internals.shell.commands.net.echoc import Echoc
@@ -52,7 +53,7 @@ class Shell:
 
         self.commands = [Echo, Ls, Cd, Pwd, Touch, Cat, Mkdir, Rm, Uname, Grep,
                          Ip, Arp, Ps, Ping, Arping, Tcpdump, Kill, Hostname, Netstat, Cp, Uptime,
-                         Mv, Alias, Unalias, Help, Head, Tail, Man, Echoc, Echos]
+                         Mv, Alias, Unalias, Help, Head, Tail, Man, Echoc, Echos, Watch]
         self.commands = [command(computer, self) for command in self.commands]
 
         self.parser_commands = {
@@ -202,20 +203,21 @@ class Shell:
         return (CONSOLE.SHELL.END_COMMAND in string) and \
                (len(cls._split_by_command_enders_outside_of_quotes(string)) != 1)
 
-    def execute(self, string):
+    def execute(self, string, record_in_shell_history=True):
         """
 
         The main function of the shell. This happens when one presses enter.
 
-        Receives the string of a command and returns the command and its arguments.
+        Receives the string of a command and writes the output to the screen
         :param string:
         :return:
         """
         if not string.split():  # string is empty or all spaces
             return
 
-        self.history.append(string)
-        self.history_index = None
+        if record_in_shell_history:
+            self.history.append(string)
+            self.history_index = None
 
         string = string.split(CONSOLE.SHELL.COMMENT_SIGN)[0]
         if not string:  # all of the line is comment

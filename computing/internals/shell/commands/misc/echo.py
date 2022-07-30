@@ -13,9 +13,10 @@ class Echo(Command):
         super(Echo, self).__init__('echo', 'print out arguments', computer, shell)
 
         self.parser.add_argument('words', metavar='words', type=str, nargs='*', help='words to print')
+        self.parser.add_argument('-n', dest='newline_count', type=int, default=1, help='the amount of newlines at the end')
 
     def action(self, parsed_args):
         """
         The command action
         """
-        return CommandOutput(' '.join(parsed_args.words), '')
+        return CommandOutput(' '.join(parsed_args.words) + ('\n' * (parsed_args.newline_count - 1)), '')
