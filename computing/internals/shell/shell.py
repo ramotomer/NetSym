@@ -203,7 +203,7 @@ class Shell:
         return (CONSOLE.SHELL.END_COMMAND in string) and \
                (len(cls._split_by_command_enders_outside_of_quotes(string)) != 1)
 
-    def execute(self, string):
+    def execute(self, string, record_in_shell_history=True):
         """
 
         The main function of the shell. This happens when one presses enter.
@@ -215,8 +215,9 @@ class Shell:
         if not string.split():  # string is empty or all spaces
             return
 
-        self.history.append(string)
-        self.history_index = None
+        if record_in_shell_history:
+            self.history.append(string)
+            self.history_index = None
 
         string = string.split(CONSOLE.SHELL.COMMENT_SIGN)[0]
         if not string:  # all of the line is comment

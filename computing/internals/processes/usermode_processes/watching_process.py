@@ -13,7 +13,7 @@ class WatchingProcess(Process):
 
     def code(self):
         while True:
-            self.shell.execute(self.command_string)
+            self.shell.execute(self.command_string, record_in_shell_history=False)
             timeout = Timeout(self.interval)
             yield WaitingFor(lambda: timeout)
 

@@ -10,7 +10,7 @@ class Watch(Command):
     def __init__(self, computer, shell):
         super(Watch, self).__init__('watch', 'run a command periodically and print the output', computer, shell)
 
-        self.parser.add_argument('-n', dest='interval', default=1, help='How often to run the command')
+        self.parser.add_argument('-n', dest='interval', type=float, default=1, help='How often to run the command')
         self.parser.add_argument('command', metavar='command', type=str, nargs='*', help='the command to run')
 
     def action(self, parsed_args):
