@@ -124,5 +124,20 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.exit_button.color = WINDOWS.POPUP.DEACTIVATED_COLOR
         self.__is_active = False
 
+    def resize(self, width, height):
+        self.width, self.height = width, height
+
+    def pin_to(self, direction):
+        """
+
+        :param direction:
+        :return:
+        """
+        if direction == WINDOWS.POPUP.DIRECTIONS.RIGHT:
+            self.x, self.y = (MainWindow.main_window.width - WINDOWS.SIDE.WIDTH) / 2, 0
+            self.resize((MainWindow.main_window.width - WINDOWS.SIDE.WIDTH) / 2, MainWindow.main_window.height)
+        else:
+            raise NotImplementedError
+
     def __str__(self):
         return f"PopupWindow(title='{self.child_graphics_objects[0].text}')"

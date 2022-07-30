@@ -114,6 +114,7 @@ class UserInterface:
             (key.J, KEYBOARD.MODIFIERS.NONE): self.color_by_subnets,
             (key.LALT, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.ALT): with_args(self.set_is_ignoring_keyboard_escape_keys, False),
             (key.G, KEYBOARD.MODIFIERS.CTRL): with_args(self.set_is_ignoring_keyboard_escape_keys, True),
+            (key.RIGHT, KEYBOARD.MODIFIERS.WINKEY): with_args(self.pin_active_window_to, WINDOWS.POPUP.DIRECTIONS.RIGHT),
         }
 
         for direction in {key.UP, key.RIGHT, key.LEFT, key.DOWN}:
@@ -240,6 +241,8 @@ class UserInterface:
     def set_is_ignoring_keyboard_escape_keys(value):
         """
         :param value: Whether or not to swallow special keyboard shortcuts passed (winkey, alt+tab...)
+
+            This must be a separate method because inside this class's __init__ method the `MainWindow.main_window` object is still `None`
         """
         MainWindow.main_window.set_is_ignoring_keyboard_escape_keys(value)
 
@@ -511,6 +514,15 @@ class UserInterface:
         if self.active_window is None:
             self._create_selecting_square()
 
+    def pin_active_window_to(self, direction):
+        """
+
+        :param direction:
+        :return:
+        """
+        if self.active_window is not None:
+            self.active_window.pin_to(direction)
+
     def _create_selecting_square(self):
         """
         Creates the selection square when the mouse is pressed and dragged around
@@ -548,20 +560,22 @@ class UserInterface:
         """
         modifiers = modifiers & (~KEYBOARD.MODIFIERS.NUMLOCK)
 
-        if isinstance(self.active_window, PopupTextBox):
-            self.active_window.key_writer.pressed(symbol, modifiers)
+        if not modifiers & KEYBOARD.MODIFIERS.WINKEY:
+            if isinstance(self.active_window, PopupTextBox):
+                self.active_window.key_writer.pressed(symbol, modifiers)
+                return
 
-        elif isinstance(self.active_window, PopupConsole):
-            self.active_window.shell.key_writer.pressed(symbol, modifiers)
+            if isinstance(self.active_window, PopupConsole):
+                self.active_window.shell.key_writer.pressed(symbol, modifiers)
+                return
 
-        else:
-            modified_key = (symbol, modifiers)
-            for button_id in sorted(list(self.buttons)):
-                for button in self.buttons[button_id]:
-                    if button.key == modified_key:
-                        button.action()
-                        return
-            self.key_to_action.get(modified_key, lambda: None)()
+        modified_key = (symbol, modifiers)
+        for button_id in sorted(list(self.buttons)):
+            for button in self.buttons[button_id]:
+                if button.key == modified_key:
+                    button.action()
+                    return
+        self.key_to_action.get(modified_key, lambda: None)()
 
     def view_mode_at_press(self):
         """

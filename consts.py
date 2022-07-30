@@ -247,6 +247,12 @@ class WINDOWS:
         STACKING_PADDING = 10, -10
         DEACTIVATED_COLOR = COLORS.LIGHT_GRAY
 
+        class DIRECTIONS:
+            RIGHT = 0b0001
+            LEFT =  0b0010
+            UP =    0b0100
+            DOWN =  0b1000
+
         class TEXTBOX:
             WIDTH = 400
             HEIGHT = 170

@@ -57,3 +57,7 @@ class PopupConsole(PopupWindow):
         self.computer.active_shells.remove(self.shell)
         if not self.computer.active_shells:
             self.computer.output_method = COMPUTER.OUTPUT_METHOD.CONSOLE
+
+    def resize(self, width, height):
+        super(PopupConsole, self).resize(width, height)
+        self.shell.width, self.shell.height = width, height
