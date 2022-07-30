@@ -3,6 +3,7 @@ import pyglet
 from consts import *
 from gui.main_loop import MainLoop
 from usefuls.funcs import normal_color_to_weird_gl_color
+from usefuls.paths import add_path_basename_if_needed
 
 
 class MainWindow(pyglet.window.Window):
@@ -36,6 +37,11 @@ class MainWindow(pyglet.window.Window):
 
         self.previous_width = self.width
         self.previous_height = self.height
+
+        try:
+            self.set_icon(pyglet.image.load(add_path_basename_if_needed(DIRECTORIES.IMAGES, IMAGES.PACKETS.ICMP.REQUEST)))
+        except FileNotFoundError:
+            print("ERROR: could not find icon image :( No window icon set :(")
 
         pyglet.gl.glClearColor(*normal_color_to_weird_gl_color(WINDOWS.MAIN.BACKGROUND))
 
