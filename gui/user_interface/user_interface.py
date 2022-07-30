@@ -23,7 +23,7 @@ from exceptions import *
 from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
-from gui.shape_drawing import draw_circle, draw_line
+from gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
 from gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from gui.tech.computer_graphics import ComputerGraphics
 from gui.tech.connection_graphics import ConnectionGraphics
@@ -257,6 +257,8 @@ class UserInterface:
         self._draw_side_window()
         if MainLoop.instance.is_paused:
             draw_pause_rectangles()
+        if MainWindow.main_window.is_ignoring_keyboard_escape_keys:
+            draw_tiny_corner_windows_icon()
         self.drag_objects()
         self._stop_viewing_dead_packets()
         self._showcase_running_stp()

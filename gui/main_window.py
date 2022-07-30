@@ -70,10 +70,14 @@ class MainWindow(pyglet.window.Window):
         """
         :param value: Whether or not to swallow special keyboard shortcuts passed (winkey, alt+tab...)
         """
-        if value and not self._keyboard_hook_manager.keyboard_hook:
+        if value and not self.is_ignoring_keyboard_escape_keys:
             self._keyboard_hook_manager.HookKeyboard()
-        elif not value and self._keyboard_hook_manager.keyboard_hook:
+        elif not value and self.is_ignoring_keyboard_escape_keys:
             self._keyboard_hook_manager.UnhookKeyboard()
+
+    @property
+    def is_ignoring_keyboard_escape_keys(self):
+        return self._keyboard_hook_manager.keyboard_hook
 
     @property
     def location(self):

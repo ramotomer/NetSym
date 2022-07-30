@@ -60,15 +60,16 @@ class Text(UserInterfaceGraphicsObject):
     def text(self):
         return self._text
 
-    def set_text(self, text):
+    def set_text(self, text, hard_refresh=False):
         """
         The correct way to update the text of a `Text` object.
         updates the text and corrects the lines and everything necessary.
         :param text: a string which is the new text.
+        :param hard_refresh: whether or not to recreate the `Label` object of the text
         :return: None
         """
         self._text = text
-        if self.label is None:
+        if self.label is None or hard_refresh:
             self.label = pyglet.text.Label(self._text,
                                            font_name=self.font,
                                            font_size=self.font_size,
@@ -83,6 +84,12 @@ class Text(UserInterfaceGraphicsObject):
         self.label.multiline = True
         self.x, self.y = self.label.x, self.label.y
         self.move()
+
+    def refresh_text(self):
+        """
+        Enforce text parameters on actual visible text on the screen (update it)
+        """
+        self.set_text(self._text, hard_refresh=True)
 
     def append_text(self, text):
         """

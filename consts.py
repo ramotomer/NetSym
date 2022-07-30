@@ -248,10 +248,17 @@ class WINDOWS:
         DEACTIVATED_COLOR = COLORS.LIGHT_GRAY
 
         class DIRECTIONS:
-            RIGHT = 0b0001
-            LEFT =  0b0010
-            UP =    0b0100
-            DOWN =  0b1000
+            RIGHT = 'right'
+            LEFT =  'left'
+            UP =    'up'
+            DOWN =  'down'
+
+            OPPOSITE = {
+                RIGHT: LEFT,
+                LEFT: RIGHT,
+                UP: DOWN,
+                DOWN: UP,
+            }
 
         class TEXTBOX:
             WIDTH = 400
@@ -568,7 +575,7 @@ class SHAPES:
 
     class PAUSE_RECT:
         WIDTH, HEIGHT = 10, 60
-        COORDINATES = 20, ((WINDOWS.MAIN.HEIGHT - HEIGHT) - 10)
+        COORDINATES = 35, ((WINDOWS.MAIN.HEIGHT - HEIGHT) - 5)
 
 
 class SELECTION_SQUARE:
