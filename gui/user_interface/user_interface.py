@@ -546,7 +546,7 @@ class UserInterface:
         :param modifiers:
         :return:
         """
-        modifiers = int(bin(modifiers)[2:][-4:], base=2)
+        modifiers = modifiers & (~KEYBOARD.MODIFIERS.NUMLOCK)
 
         if isinstance(self.active_window, PopupTextBox):
             self.active_window.key_writer.pressed(symbol, modifiers)

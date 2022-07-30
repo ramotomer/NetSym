@@ -47,14 +47,22 @@ class MainWindow(pyglet.window.Window):
         pyglet.gl.glClearColor(*normal_color_to_weird_gl_color(WINDOWS.MAIN.BACKGROUND))
 
         # v  allows ignoring the Winkey and Alt+tab keys...
+        self._ignored_keys = {
+            'lwin': (pyglet.window.key.LWINDOWS, KEYBOARD.MODIFIERS.WINKEY),
+            'tab':  (pyglet.window.key.TAB, KEYBOARD.MODIFIERS.NONE),
+        }
         self._keyboard_hook_manager = pyWinhook.HookManager()
         self._keyboard_hook_manager.KeyDown = self.block_keyboard_escape_keys
         self.set_is_ignoring_keyboard_escape_keys(True)
+        self._active_keyboard_modifiers = KEYBOARD.MODIFIERS.NONE
 
-    @staticmethod
-    def block_keyboard_escape_keys(event):
-        if event.Key.lower() in ['lwin', 'tab']:
-            return False  # block these keys
+    def block_keyboard_escape_keys(self, event):
+        for pywinhook_key, (pyglet_key, pyglet_modifier) in self._ignored_keys.items():
+            # pywinhook is the library we use for trapping the winkey and pyglet we use for everything else
+            if event.Key.lower() == pywinhook_key:
+                self._active_keyboard_modifiers = self._active_keyboard_modifiers | pyglet_modifier
+                # self.on_key_press(pyglet_key, pyglet_modifier, is_manually_called=True)
+                return False
         return True
         # ^ return True to pass the event to other handlers
 
@@ -62,7 +70,6 @@ class MainWindow(pyglet.window.Window):
         """
         :param value: Whether or not to swallow special keyboard shortcuts passed (winkey, alt+tab...)
         """
-        debugp(f"calling the toggler with value {value} and hooking is: {self._keyboard_hook_manager.keyboard_hook}")
         if value and not self._keyboard_hook_manager.keyboard_hook:
             self._keyboard_hook_manager.HookKeyboard()
         elif not value and self._keyboard_hook_manager.keyboard_hook:
@@ -168,15 +175,29 @@ class MainWindow(pyglet.window.Window):
         self.mouse_pressed = False
         self.user_interface.dragged_object = None
 
-    def on_key_press(self, symbol, modifiers):
+    def on_key_press(self, symbol, modifiers, is_manually_called=False):
         """
         This method is called when any key is pressed on the keyboard.
         :param symbol: The key itself.
         :param modifiers:  additional keys that are pressed (ctrl, shift, caps lock, etc..)
+        :param is_manually_called:
         :return:  None
         """
-        debugp(F"calling on key pressed :) {symbol} {modifiers}")
-        self.user_interface.on_key_pressed(symbol, modifiers)
+        for other_symbol, other_modifiers in self._ignored_keys.values():
+            if other_symbol == symbol:
+                # Due to the way pyWinhook works - this actually means the key is released - so turn off the modifier
+                self._active_keyboard_modifiers = self._active_keyboard_modifiers & (~other_modifiers)
+
+        self.user_interface.on_key_pressed(symbol, modifiers | self._active_keyboard_modifiers)
+
+    def on_key_release(self, symbol, modifiers):
+        """
+        This method is called when any key is released on the keyboard.
+        :param symbol: The key itself.
+        :param modifiers:  additional keys that are pressed (ctrl, shift, caps lock, etc..)
+        :return:  None
+        """
+        pass
 
     def _on_resize(self):
         """

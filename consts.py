@@ -163,11 +163,13 @@ class KEYBOARD:
         """
         key modifiers, you can `|` them together to get the different combinations.
         """
-        NONE = 0
-        SHIFT = 1
-        CTRL = 2
-        ALT = 4
-        CAPS = 8
+        NONE =    0b00000000
+        SHIFT =   0b00000001
+        CTRL =    0b00000010
+        ALT =     0b00000100
+        CAPS =    0b00001000
+        NUMLOCK = 0b00010000
+        WINKEY =  0b00100000
 
 
 class MESSAGES:
