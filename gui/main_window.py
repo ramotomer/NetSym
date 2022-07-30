@@ -1,3 +1,4 @@
+import pyWinhook
 import pyglet
 
 from consts import *
@@ -44,6 +45,27 @@ class MainWindow(pyglet.window.Window):
             print("ERROR: could not find icon image :( No window icon set :(")
 
         pyglet.gl.glClearColor(*normal_color_to_weird_gl_color(WINDOWS.MAIN.BACKGROUND))
+
+        # v  allows ignoring the Winkey and Alt+tab keys...
+        self._keyboard_hook_manager = pyWinhook.HookManager()
+        self._keyboard_hook_manager.KeyDown = self.block_keyboard_escape_keys
+        self.set_is_ignoring_keyboard_escape_keys(True)
+
+    @staticmethod
+    def block_keyboard_escape_keys(event):
+        if event.Key.lower() in ['lwin', 'tab']:
+            return False  # block these keys
+        return True
+        # ^ return True to pass the event to other handlers
+
+    def set_is_ignoring_keyboard_escape_keys(self, value):
+        """
+        :param value: Whether or not to swallow special keyboard shortcuts passed (winkey, alt+tab...)
+        """
+        if value and not self._keyboard_hook_manager.keyboard_hook:
+            self._keyboard_hook_manager.HookKeyboard()
+        elif not value and self._keyboard_hook_manager.keyboard_hook:
+            self._keyboard_hook_manager.UnhookKeyboard()
 
     @property
     def location(self):
@@ -152,6 +174,7 @@ class MainWindow(pyglet.window.Window):
         :param modifiers:  additional keys that are pressed (ctrl, shift, caps lock, etc..)
         :return:  None
         """
+        debugp(F"calling on key pressed :) {symbol} {modifiers}")
         self.user_interface.on_key_pressed(symbol, modifiers)
 
     def _on_resize(self):
@@ -173,6 +196,18 @@ class MainWindow(pyglet.window.Window):
 
         if self.width != self.previous_width or self.height != self.previous_height:
             self._on_resize()  # `on_resize` does not work, I wrote `_on_resize` instead.
+
+    def on_activate(self):
+        """
+        Called when the `MainWindow` is activated
+        """
+        self.set_is_ignoring_keyboard_escape_keys(True)
+
+    def on_deactivate(self):
+        """
+        Called when the `MainWindow` is deactivated
+        """
+        self.set_is_ignoring_keyboard_escape_keys(False)
 
     def update(self, time_interval):
         """
