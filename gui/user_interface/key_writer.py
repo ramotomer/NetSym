@@ -38,7 +38,6 @@ class KeyWriter:
 
         self.key_dict = {
             key.ENTER: self.submit,
-            key.ESCAPE: self.exit,
             key.BACKSPACE: self.delete,
         }
 

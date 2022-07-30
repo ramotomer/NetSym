@@ -109,7 +109,7 @@ class UserInterface:
             (key.SPACE, KEYBOARD.MODIFIERS.NONE):   self.toggle_pause,
             (key.TAB, KEYBOARD.MODIFIERS.NONE):     self.tab_through_selected,
             (key.TAB, KEYBOARD.MODIFIERS.SHIFT):    with_args(self.tab_through_selected, True),
-            (key.ESCAPE, KEYBOARD.MODIFIERS.NONE):  with_args(self.set_mode, MODES.NORMAL),
+            (key.ESCAPE, KEYBOARD.MODIFIERS.NONE):  self.clear_selected_objects_and_active_window,
             (key.DELETE, KEYBOARD.MODIFIERS.NONE):  self.delete_selected_and_marked,
             (key.J, KEYBOARD.MODIFIERS.NONE):       self.color_by_subnets,
             (key.LALT, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.ALT): with_args(self.set_is_ignoring_keyboard_escape_keys, False),
@@ -144,8 +144,8 @@ class UserInterface:
             self.key_to_action[self.key_from_string(key_string)] = with_args(self.create_device, device)
 
         self.action_at_press_by_mode = {
-            MODES.NORMAL:     self.view_mode_at_press,
-            MODES.VIEW:       self.view_mode_at_press,
+            MODES.NORMAL:     self.normal_mode_at_press,
+            MODES.VIEW:       self.normal_mode_at_press,
             MODES.CONNECTING: self.start_device_visual_connecting,
             MODES.PINGING:    self.start_device_visual_connecting,
         }
@@ -481,6 +481,12 @@ class UserInterface:
             self.show_buttons(BUTTONS.MAIN_MENU.ID)
             self.marked_objects.clear()
 
+    def clear_selected_objects_and_active_window(self):
+        if self.selected_object is not None:
+            self.selected_object = None
+        self.marked_objects.clear()
+        self.active_window = None
+
     def toggle_mode(self, mode):
         """
         Toggles to and from a mode!
@@ -565,7 +571,7 @@ class UserInterface:
         """
         modifiers = modifiers & (~KEYBOARD.MODIFIERS.NUMLOCK)
 
-        if not modifiers & KEYBOARD.MODIFIERS.WINKEY:
+        if (not modifiers & KEYBOARD.MODIFIERS.WINKEY) and (symbol != key.ESCAPE):
             if isinstance(self.active_window, PopupTextBox):
                 self.active_window.key_writer.pressed(symbol, modifiers)
                 return
@@ -580,9 +586,10 @@ class UserInterface:
                 if button.key == modified_key:
                     button.action()
                     return
+        debugp(F"got here {symbol}, {modifiers}")
         self.key_to_action.get(modified_key, lambda: None)()
 
-    def view_mode_at_press(self):
+    def normal_mode_at_press(self):
         """
         Happens when we are in viewing mode (or simulation mode) and we press our mouse.
         decides whether to start viewing a new graphics object or finish a previous one.

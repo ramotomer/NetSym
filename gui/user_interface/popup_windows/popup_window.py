@@ -1,5 +1,3 @@
-from pyglet.window import key
-
 from consts import *
 from exceptions import WrongUsageError
 from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
@@ -50,7 +48,6 @@ class PopupWindow(UserInterfaceGraphicsObject):
             height=WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT,
             color=self.outline_color,
             text_color=COLORS.BLACK,
-            key=(key.ESCAPE, KEYBOARD.MODIFIERS.NONE),
             is_outlined=False,
             custom_active_color=COLORS.LIGHT_RED
         )
