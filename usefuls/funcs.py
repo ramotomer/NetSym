@@ -265,3 +265,33 @@ def my_range(start, end=None, step=1):
     while current < end:
         yield current
         current += step
+
+
+def split_with_escaping(string, separator=' ', escaping_char='"'):
+    """
+    Just like the builtin `split` - but can handle escaping characters like "-s and not split in between them
+
+        example:
+                        >>> split_with_escaping('and i said "hello w o r l d" ! !')
+                        >>> ['and', 'i', 'said', '"hello w o r l d"', '!', '!']
+    :param string: the `str` to split
+    :param separator: the substring to split by
+    :param escaping_char: the character which in between you should not split
+    :return:
+    """
+    splitted = []
+    last_splitted = 0
+    is_escaped = False
+
+    if separator == escaping_char:
+        raise WrongUsageError(f"separator and escaping char must be different! not both '{separator}'")
+
+    for i, char in enumerate(string):
+        if char == escaping_char:
+            is_escaped = not is_escaped
+            continue
+        if char == separator and not is_escaped:
+            splitted.append(string[last_splitted:i])
+            last_splitted = i + 1
+    splitted.append(string[last_splitted:])
+    return splitted

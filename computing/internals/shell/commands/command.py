@@ -2,6 +2,7 @@ import argparse
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 
+from usefuls.funcs import split_with_escaping
 from usefuls.print_stealer import PrintStealer
 
 CommandOutput = namedtuple("CommandOutput", [
@@ -44,7 +45,7 @@ class Command(metaclass=ABCMeta):
         :param string:
         :return:
         """
-        args = string.split()[1:]
+        args = [arg.strip('"') for arg in split_with_escaping(string)[1:]]
 
         stdout_stealer = PrintStealer()
         with stdout_stealer:
