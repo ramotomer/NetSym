@@ -267,7 +267,7 @@ def my_range(start, end=None, step=1):
         current += step
 
 
-def split_with_escaping(string, separator=' ', escaping_char='"'):
+def split_with_escaping(string, separator=' ', escaping_char='"', remove_empty_spaces=True):
     """
     Just like the builtin `split` - but can handle escaping characters like "-s and not split in between them
 
@@ -283,6 +283,9 @@ def split_with_escaping(string, separator=' ', escaping_char='"'):
     last_splitted = 0
     is_escaped = False
 
+    if not string:
+        return []
+
     if separator == escaping_char:
         raise WrongUsageError(f"separator and escaping char must be different! not both '{separator}'")
 
@@ -294,4 +297,6 @@ def split_with_escaping(string, separator=' ', escaping_char='"'):
             splitted.append(string[last_splitted:i])
             last_splitted = i + 1
     splitted.append(string[last_splitted:])
+    if remove_empty_spaces:
+        splitted = [string for string in splitted if len(string) > 0]
     return splitted
