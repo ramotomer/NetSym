@@ -62,4 +62,4 @@ class PopupConsole(PopupWindow):
     def resize(self, width, height):
         super(PopupConsole, self).resize(width, height)
         self.shell.width, self.shell.height = width, height
-        self.shell.update_text_by_console_size()
+        self.shell.child_graphics_objects.text.resize(self.shell.get_text_padding(), width)

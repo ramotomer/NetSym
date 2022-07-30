@@ -586,7 +586,6 @@ class UserInterface:
                 if button.key == modified_key:
                     button.action()
                     return
-        debugp(F"got here {symbol}, {modifiers}")
         self.key_to_action.get(modified_key, lambda: None)()
 
     def normal_mode_at_press(self):
@@ -624,25 +623,6 @@ class UserInterface:
         object_ = object_type()
         object_.show(x, y)
         self.computers.append(object_)
-
-    def create_router(self):
-        """
-        Create a router where the mouse is.
-        :return: None
-        """
-        x, y = MainWindow.main_window.get_mouse_location()
-        if self.is_mouse_in_side_window():
-            x, y = WINDOWS.MAIN.WIDTH / 2, WINDOWS.MAIN.HEIGHT / 2
-
-        router = Router("Router and DHCP Server", [
-            Interface.with_ip('192.168.1.1'),
-            Interface.with_ip('10.10.10.1'),
-            Interface.with_ip('172.3.10.1'),
-            Interface.with_ip('1.1.1.1'),
-        ])
-        # TODO: find out why this warning exists and fix it (if there is no warning here, delete this comment)
-        router.show(x, y)
-        self.computers.append(router)
 
     def two_pressed_objects(self, action, more_pressable_types=None):
         """

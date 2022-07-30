@@ -48,14 +48,6 @@ class OutputConsole(UserInterfaceGraphicsObject):
         """
         return (self.width / 2) + 2, self.height
 
-    def update_text_by_console_size(self):
-        """
-        After the console changes size - the padding and max_width of the text must be refreshed
-        """
-        self.child_graphics_objects.text.padding = self.get_text_padding()
-        self.child_graphics_objects.text.max_width = self.width
-        self.child_graphics_objects.text.refresh_text()
-
     def draw(self):
         """
         Draws the graphics object - The OutputConsole.

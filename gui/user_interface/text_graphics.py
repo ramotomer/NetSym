@@ -104,6 +104,7 @@ class Text(UserInterfaceGraphicsObject):
         Draws the text to the screen
         :return: None
         """
+        # debug_circle(self.x, self.y)
         if not self.is_hidden:
             self.label.draw()
 
@@ -131,6 +132,11 @@ class Text(UserInterfaceGraphicsObject):
             return
         super(Text, self).move()
         self.label.x, self.label.y = self.x, self.y
+
+    def resize(self, new_padding, new_max_size):
+        self.padding = new_padding
+        self.max_width = new_max_size
+        self.refresh_text()
 
     def __str__(self):
         return f"Text Graphics: '{self.text}'"

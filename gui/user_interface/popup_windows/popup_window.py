@@ -32,8 +32,8 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.outline_color = color
         self.outline_width = outline_width
 
-        title_text = Text(title, self.x, self.y, self, ((self.width / 2) + 2, self.height + 22),
-                          color=COLORS.BLACK, align='left', max_width=self.width)
+        self.title_text = Text(title, self.x, self.y, self, self.get_title_text_padding(),
+                               color=COLORS.BLACK, align='left', max_width=self.width)
         information_text = Text(text, self.x, self.y, self, ((self.width / 2), self.height - 25), max_width=self.width)
         # TODO: if PopupConsole does not have `information_text` - it should not be in the parent class `PopupWindow`!!!!
 
@@ -55,7 +55,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
 
         self.remove_buttons = None
         self.child_graphics_objects = [
-            title_text,
+            self.title_text,
             information_text,
             self.exit_button,
             *buttons,
@@ -83,6 +83,9 @@ class PopupWindow(UserInterfaceGraphicsObject):
 
     def get_exit_button_padding(self):
         return self.width - WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT, self.height
+
+    def get_title_text_padding(self):
+        return (self.width / 2) + 2, self.height + 22
 
     def is_mouse_in(self):
         """
@@ -148,6 +151,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
     def resize(self, width, height):
         self.width, self.height = width, height
         self.exit_button.padding = self.get_exit_button_padding()
+        self.title_text.resize(self.get_title_text_padding(), width)
 
     def pin_to(self, direction):
         """
