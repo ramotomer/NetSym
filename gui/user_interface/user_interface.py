@@ -94,30 +94,31 @@ class UserInterface:
 
         """
         self.key_to_action = {
-            (key.N, KEYBOARD.MODIFIERS.CTRL):       self.create_computer_with_ip,
+            (key.N, KEYBOARD.MODIFIERS.CTRL): self.create_computer_with_ip,
             (key.N, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT): with_args(self.create_computer_with_ip, True),
-            (key.C, KEYBOARD.MODIFIERS.CTRL):       self.smart_connect,
-            (key.C, KEYBOARD.MODIFIERS.SHIFT):      self.connect_all_to_all,
-            (key.P, KEYBOARD.MODIFIERS.CTRL):       self.send_random_ping,
-            (key.P, KEYBOARD.MODIFIERS.SHIFT):      self.send_ping_to_self,
-            (key.R, KEYBOARD.MODIFIERS.CTRL):       with_args(self.create_device, Router),
-            (key.M, KEYBOARD.MODIFIERS.NONE):       self.print_debugging_info,
-            (key.W, KEYBOARD.MODIFIERS.NONE):       self.add_tcp_test,
-            (key.Q, KEYBOARD.MODIFIERS.CTRL):       self.exit,
-            (key.A, KEYBOARD.MODIFIERS.CTRL):       self.select_all,
-            (key.SPACE, KEYBOARD.MODIFIERS.NONE):   self.toggle_pause,
-            (key.TAB, KEYBOARD.MODIFIERS.NONE):     self.tab_through_selected,
-            (key.TAB, KEYBOARD.MODIFIERS.SHIFT):    with_args(self.tab_through_selected, True),
-            (key.ESCAPE, KEYBOARD.MODIFIERS.NONE):  self.clear_selected_objects_and_active_window,
-            (key.DELETE, KEYBOARD.MODIFIERS.NONE):  self.delete_selected_and_marked,
-            (key.J, KEYBOARD.MODIFIERS.NONE):       self.color_by_subnets,
+            (key.C, KEYBOARD.MODIFIERS.CTRL): self.smart_connect,
+            (key.C, KEYBOARD.MODIFIERS.SHIFT): self.connect_all_to_all,
+            (key.P, KEYBOARD.MODIFIERS.CTRL): self.send_random_ping,
+            (key.P, KEYBOARD.MODIFIERS.SHIFT): self.send_ping_to_self,
+            (key.R, KEYBOARD.MODIFIERS.CTRL): with_args(self.create_device, Router),
+            (key.M, KEYBOARD.MODIFIERS.NONE): self.print_debugging_info,
+            (key.W, KEYBOARD.MODIFIERS.NONE): self.add_tcp_test,
+            (key.Q, KEYBOARD.MODIFIERS.CTRL): self.exit,
+            (key.A, KEYBOARD.MODIFIERS.CTRL): self.select_all,
+            (key.SPACE, KEYBOARD.MODIFIERS.NONE): self.toggle_pause,
+            (key.TAB, KEYBOARD.MODIFIERS.NONE): self.tab_through_selected,
+            (key.TAB, KEYBOARD.MODIFIERS.SHIFT): with_args(self.tab_through_selected, True),
+            (key.ESCAPE, KEYBOARD.MODIFIERS.NONE): self.clear_selected_objects_and_active_window,
+            (key.DELETE, KEYBOARD.MODIFIERS.NONE): self.delete_selected_and_marked,
+            (key.J, KEYBOARD.MODIFIERS.NONE): self.color_by_subnets,
             (key.LALT, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.ALT): with_args(self.set_is_ignoring_keyboard_escape_keys, False),
-            (key.G, KEYBOARD.MODIFIERS.CTRL):       with_args(self.set_is_ignoring_keyboard_escape_keys, True),
-            (key.TAB, KEYBOARD.MODIFIERS.ALT):      self.tab_through_windows,
+            (key.G, KEYBOARD.MODIFIERS.CTRL): with_args(self.set_is_ignoring_keyboard_escape_keys, True),
+            (key.TAB, KEYBOARD.MODIFIERS.ALT): self.tab_through_windows,
+            (key.TAB, KEYBOARD.MODIFIERS.ALT | KEYBOARD.MODIFIERS.SHIFT): with_args(self.tab_through_windows, True),
             (key.RIGHT, KEYBOARD.MODIFIERS.WINKEY): with_args(self.pin_active_window_to, WINDOWS.POPUP.DIRECTIONS.RIGHT),
-            (key.LEFT, KEYBOARD.MODIFIERS.WINKEY):  with_args(self.pin_active_window_to, WINDOWS.POPUP.DIRECTIONS.LEFT),
-            (key.UP, KEYBOARD.MODIFIERS.WINKEY):    with_args(self.pin_active_window_to, WINDOWS.POPUP.DIRECTIONS.UP),
-            (key.DOWN, KEYBOARD.MODIFIERS.WINKEY):  with_args(self.pin_active_window_to, WINDOWS.POPUP.DIRECTIONS.DOWN),
+            (key.LEFT, KEYBOARD.MODIFIERS.WINKEY): with_args(self.pin_active_window_to, WINDOWS.POPUP.DIRECTIONS.LEFT),
+            (key.UP, KEYBOARD.MODIFIERS.WINKEY): with_args(self.pin_active_window_to, WINDOWS.POPUP.DIRECTIONS.UP),
+            (key.DOWN, KEYBOARD.MODIFIERS.WINKEY): with_args(self.pin_active_window_to, WINDOWS.POPUP.DIRECTIONS.DOWN),
         }
 
         for direction in {key.UP, key.RIGHT, key.LEFT, key.DOWN}:
@@ -144,10 +145,10 @@ class UserInterface:
             self.key_to_action[self.key_from_string(key_string)] = with_args(self.create_device, device)
 
         self.action_at_press_by_mode = {
-            MODES.NORMAL:     self.normal_mode_at_press,
-            MODES.VIEW:       self.normal_mode_at_press,
+            MODES.NORMAL: self.normal_mode_at_press,
+            MODES.VIEW: self.normal_mode_at_press,
             MODES.CONNECTING: self.start_device_visual_connecting,
-            MODES.PINGING:    self.start_device_visual_connecting,
+            MODES.PINGING: self.start_device_visual_connecting,
         }
         # ^ maps what to do when the screen is pressed in each `mode`.
 
@@ -436,8 +437,8 @@ class UserInterface:
         :param reverse:
         :return:
         """
-        available_windows = list(filter(lambda o: isinstance(o, PopupWindow), MainLoop.instance.graphics_objects))
-        debugp(f"t: {available_windows}")
+        available_windows = sorted(list(filter(lambda o: isinstance(o, PopupWindow), MainLoop.instance.graphics_objects)),
+                                   key=lambda w: w.creation_time)
         if not available_windows:
             return
         if reverse:

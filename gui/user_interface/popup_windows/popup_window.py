@@ -31,6 +31,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.__is_active = False
         self.outline_color = color
         self.outline_width = outline_width
+        self.creation_time = MainLoop.instance.time()
 
         self.title_text = Text(title, self.x, self.y, self, self.get_title_text_padding(),
                                color=COLORS.BLACK, align='left', max_width=self.width)
