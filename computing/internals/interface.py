@@ -1,12 +1,13 @@
 import random
 
+from scapy.layers.l2 import Ether
+
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
 from computing.connection import Connection
 from computing.loopback_connection import LoopbackConnection
 from consts import *
 from exceptions import *
-from packets.ethernet import Ethernet
 from packets.packet import Packet
 
 
@@ -236,7 +237,7 @@ class Interface:
         :param dst_mac: a `MACAddress` object of the destination of the packet.
         :return: the ready `Packet` object
         """
-        return Packet(Ethernet(self.mac, dst_mac, data))
+        return Packet(Ether(str(self.mac), str(dst_mac)) / data)
 
     def send_with_ethernet(self, dst_mac, protocol):
         """

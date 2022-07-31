@@ -5,6 +5,8 @@ from operator import concat
 from typing import Tuple
 
 from recordclass import recordclass
+from scapy.layers.inet import ICMP, IP, TCP, UDP
+from scapy.layers.l2 import ARP
 
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
@@ -31,11 +33,6 @@ from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
-from packets.arp import ARP
-from packets.icmp import ICMP
-from packets.ip import IP
-from packets.tcp import TCP
-from packets.udp import UDP
 from packets.usefuls import get_src_port, get_dst_port
 from usefuls.funcs import get_the_one
 
@@ -483,8 +480,8 @@ class Computer:
                    for socket in self.sockets if socket.kind == COMPUTER.SOCKETS.TYPES.SOCK_STREAM) and \
                 not {OPCODES.TCP.RST} <= packet["TCP"].flags:
             self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip,
-                         TCP(packet["TCP"].dst_port, packet["TCP"].src_port, 0,
-                             {OPCODES.TCP.RST}))
+                         TCP(dport=packet["TCP"].dst_port, sport=packet["TCP"].src_port, seq=0,
+                             flags=OPCODES.TCP.RST))
 
     def _handle_udp(self, returned_packet):
         """
@@ -496,7 +493,7 @@ class Computer:
             return
 
         if packet["UDP"].dst_port not in self.get_open_ports("UDP"):
-            self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip, ICMP(OPCODES.ICMP.PORT_UNREACHABLE))
+            self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip, ICMP(type=3, code=OPCODES.ICMP.PORT_UNREACHABLE))
             # TODO: add the original packet to the ICMP port unreachable packet
             return
 
@@ -538,8 +535,8 @@ class Computer:
         :return: `bool`
         """
         return self.sockets[socket].kind == COMPUTER.SOCKETS.TYPES.SOCK_DGRAM and \
-                "UDP" in packet and \
-                self._does_packet_match_socket_fourtuple(socket, packet)
+               "UDP" in packet and \
+               self._does_packet_match_socket_fourtuple(socket, packet)
 
     def _does_packet_match_tcp_socket_fourtuple(self, socket, packet):
         """
@@ -826,14 +823,14 @@ class Computer:
         :return: a valid `Packet` object.
         """
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
-        return interface.ethernet_wrap(dst_mac, IP(interface.ip, dst_ip, TTL.BY_OS[self.os], protocol))
+        return interface.ethernet_wrap(dst_mac, IP(src=str(interface.ip), dst=str(dst_ip), ttl=TTL.BY_OS[self.os]) / protocol)
 
     def udp_wrap(self, dst_mac, dst_ip, src_port, dst_port, protocol):
         """
         Takes in some protocol and wraps it up in Ethernet and IP with the appropriate MAC and IP addresses and TTL and UDP with the supplied ports
         all ready to be sent
         """
-        return self.ip_wrap(dst_mac, dst_ip, UDP(src_port, dst_port, protocol))
+        return self.ip_wrap(dst_mac, dst_ip, UDP(sport=src_port, dport=dst_port) / protocol)
 
     def start_sending_udp_packet(self, dst_ip, src_port, dst_port, data):
         """
@@ -846,8 +843,9 @@ class Computer:
         """
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
         self.process_scheduler.start_kernelmode_process(SendPacketWithARPProcess,
-                                                        IP(interface.ip, dst_ip, TTL.BY_OS[self.os],
-                                                           UDP(src_port, dst_port, data)))
+                                                        IP(src=str(interface.ip), dst=str(dst_ip),
+                                                           ttl=TTL.BY_OS[self.os]) / UDP(sport=src_port,
+                                                                                         dport=dst_port) / data)
 
     def send_arp_to(self, ip_address):
         """
@@ -857,7 +855,7 @@ class Computer:
         """
         interface_ip = self.routing_table[ip_address].interface_ip
         interface = self.get_interface_with_ip(interface_ip)
-        arp = ARP(OPCODES.ARP.REQUEST, interface.ip, ip_address, interface.mac)
+        arp = ARP(op=OPCODES.ARP.REQUEST, psrc=str(interface.ip), pdst=str(ip_address), hwsrc=str(interface.mac))
         if interface.ip is None:
             arp = ARP.create_probe(ip_address, interface.mac)
         self.send(interface.ethernet_wrap(MACAddress.broadcast(), arp), interface)
@@ -880,7 +878,8 @@ class Computer:
             raise WrongUsageError("Do not call this method if the ARP is not for me!!!")
 
         interface = self.get_interface_with_ip(requested_ip)
-        arp = ARP(OPCODES.ARP.REPLY, request["ARP"].dst_ip, sender_ip, interface.mac, request["ARP"].src_mac)
+        arp = ARP(op=OPCODES.ARP.REPLY, psrc=str(request["ARP"].dst_ip), pdst=str(sender_ip), hwsrc=str(interface.mac),
+                  hwdst=str(request["ARP"].src_mac))
         self.send(interface.ethernet_wrap(request["ARP"].src_mac, arp), interface)
 
     def arp_grat(self, interface):
@@ -894,7 +893,7 @@ class Computer:
             if interface.has_ip():
                 self.send(
                     interface.ethernet_wrap(MACAddress.broadcast(),
-                                            ARP(OPCODES.ARP.GRAT, interface.ip, interface.ip, interface.mac)),
+                                            ARP(op=OPCODES.ARP.GRAT, psrc=str(interface.ip), pdst=str(interface.ip), hwsrc=str(interface.mac))),
                     interface
                 )
 
@@ -906,7 +905,7 @@ class Computer:
         :param opcode: the ICMP opcode (reply / request / time exceeded)
         :return: None
         """
-        self.send_to(mac_address, ip_address, ICMP(opcode, data))
+        self.send_to(mac_address, ip_address, ICMP(type=opcode) / data)
 
     def send_time_exceeded(self, dst_mac, dst_ip, data=''):
         """
@@ -916,9 +915,7 @@ class Computer:
         """
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
         self.send(
-            interface.ethernet_wrap(dst_mac,
-                                    IP(interface.ip, dst_ip, TTL.MAX,
-                                       ICMP(OPCODES.ICMP.TIME_EXCEEDED, data))),
+            interface.ethernet_wrap(dst_mac, IP(src=str(interface.ip), dst=str(dst_ip), ttl=TTL.MAX) / ICMP(type=OPCODES.ICMP.TIME_EXCEEDED) / data),
             interface
         )
 

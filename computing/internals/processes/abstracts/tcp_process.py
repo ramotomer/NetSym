@@ -4,6 +4,7 @@ from collections import deque
 from operator import attrgetter
 
 from recordclass import recordclass
+from scapy.layers.inet import TCP
 
 from computing.internals.processes.abstracts.process import Process, WaitingForPacketWithTimeout, Timeout, \
     ReturnedPacket, \
@@ -12,7 +13,6 @@ from consts import *
 from exceptions import TCPDataLargerThanMaxSegmentSize
 from gui.main_loop import MainLoop
 from packets.packet import Packet
-from packets.tcp import TCP
 from usefuls.funcs import insort
 from usefuls.funcs import split_by_size
 
@@ -57,6 +57,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         yield from self.goodbye_handshake(initiate=True)
 
     """
+
     def __init__(self, pid, computer, dst_ip=None, dst_port=None, src_port=None, is_client=True, mss=PROTOCOLS.TCP.MAX_MSS):
         """
         Initiates a TCP process.
@@ -95,16 +96,15 @@ class TCPProcess(Process, metaclass=ABCMeta):
         """
         packet = self.computer.ip_wrap(self.dst_mac, self.dst_ip,
                                        TCP(
-                                            self.src_port,
-                                            self.dst_port,
-                                            self.sequence_number,
-                                            flags,
-                                            self.receiving_window.ack_number,
-                                            self.sending_window.window_size,
-                                            data,
-                                            mss=self.mss,
-                                            is_retransmission=is_retransmission,
-                                       )
+                                           sport=self.src_port,
+                                           dport=self.dst_port,
+                                           seq=self.sequence_number,
+                                           flags=flags,
+                                           ack=self.receiving_window.ack_number,
+                                           window=self.sending_window.window_size,
+                                           option=[("MSS", self.mss)],
+                                           is_retransmission=is_retransmission,
+                                       ) / data
                                        )
         self.sequence_number += packet["TCP"].length
         return packet
@@ -160,8 +160,8 @@ class TCPProcess(Process, metaclass=ABCMeta):
             return True
 
         return packet["IP"].src_ip == self.dst_ip and \
-            tcp_packet.dst_port == self.src_port and \
-            tcp_packet.src_port == self.dst_port
+               tcp_packet.dst_port == self.src_port and \
+               tcp_packet.src_port == self.dst_port
 
     def _tcp_with_flags(self, *flag_lists):
         """
@@ -171,12 +171,14 @@ class TCPProcess(Process, metaclass=ABCMeta):
         :param flags:
         :return:
         """
+
         def tester(packet):
             return self.computer.has_this_ip(packet["IP"].dst_ip) and \
                    any("TCP" in packet and
                        packet["TCP"].dst_port == self.src_port and
                        flags == packet["TCP"].flags
                        for flags in flag_lists)
+
         return tester
 
     def reset_connection(self):
@@ -493,6 +495,7 @@ class SendingWindow:
     It has three queues, the packets that are not yet sent, the packets that are sent and not yet acked and a list of
     `sent` packets that need to be physically sent one by one (in the `TCP_SENDING_INTERVAL` time gaps).
     """
+
     def __init__(self, window_size=PROTOCOLS.TCP.MAX_WINDOW_SIZE):
         """
         Initiates the three queues of the window.
@@ -596,6 +599,7 @@ class ReceivingWindow:
     The receiving window of the process
     Handles the SACk option of TCP
     """
+
     def __init__(self):
         """
         Initiates the receiving window with an empty window.

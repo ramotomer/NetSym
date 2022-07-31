@@ -49,6 +49,20 @@ class TTL:
     MAX = 255
 
 
+class TCPFlag(object):
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
+    def __ior__(self, other):
+        if isinstance(other, self.__class__):
+            return self.value | other.value
+        return self.value | other
+
+    def __repr__(self):
+        return self.name
+
+
 class OPCODES:
     class ARP:
         REPLY = "ARP reply"
@@ -60,7 +74,7 @@ class OPCODES:
         REPLY = "ping reply"
         TIME_EXCEEDED = "ICMP Time Exceeded!"
         UNREACHABLE = "ICMP Unreachable"
-        PORT_UNREACHABLE = "ICMP Port Unreachable"
+        PORT_UNREACHABLE = 3
 
     class DHCP:
         DISCOVER = "DHCP Discover"
@@ -73,11 +87,11 @@ class OPCODES:
         DATA_PACKET = "FTP Data"
 
     class TCP:
-        ACK = "ACK"
-        SYN = "SYN"
-        FIN = "FIN"
-        RST = "RST"
-        PSH = "PSH"
+        FIN = TCPFlag("FIN", 0b00001)
+        SYN = TCPFlag("SYN", 0b00010)
+        RST = TCPFlag("RST", 0b00100)
+        PSH = TCPFlag("PSH", 0b01000)
+        ACK = TCPFlag("ACK", 0b10000)
         RETRANSMISSION = " retransmission"
         NO_FLAGS = None
         FLAGS = {ACK, FIN, PSH, SYN, RST}
