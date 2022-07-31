@@ -2,6 +2,8 @@
 import os
 from math import sqrt
 
+import pyglet
+
 from exceptions import TCPDoneReceiving
 
 
@@ -163,11 +165,24 @@ class KEYBOARD:
         """
         key modifiers, you can `|` them together to get the different combinations.
         """
-        NONE = 0
-        SHIFT = 1
-        CTRL = 2
-        ALT = 4
-        CAPS = 8
+        NONE =    0b00000000
+        SHIFT =   0b00000001
+        CTRL =    0b00000010
+        ALT =     0b00000100
+        CAPS =    0b00001000
+        NUMLOCK = 0b00010000
+        WINKEY =  0b00100000
+
+        KEY_TO_MODIFIER = {
+            pyglet.window.key.LSHIFT: SHIFT,
+            pyglet.window.key.RSHIFT: SHIFT,
+            pyglet.window.key.LCTRL: CTRL,
+            pyglet.window.key.RCTRL: CTRL,
+            pyglet.window.key.LALT: ALT,
+            pyglet.window.key.RALT: ALT,
+            pyglet.window.key.LWINDOWS: WINKEY,
+            pyglet.window.key.RWINDOWS: WINKEY,
+        }
 
 
 class MESSAGES:
@@ -244,6 +259,19 @@ class WINDOWS:
     class POPUP:
         STACKING_PADDING = 10, -10
         DEACTIVATED_COLOR = COLORS.LIGHT_GRAY
+
+        class DIRECTIONS:
+            RIGHT = 'right'
+            LEFT =  'left'
+            UP =    'up'
+            DOWN =  'down'
+
+            OPPOSITE = {
+                RIGHT: LEFT,
+                LEFT: RIGHT,
+                UP: DOWN,
+                DOWN: UP,
+            }
 
         class TEXTBOX:
             WIDTH = 400
@@ -560,7 +588,7 @@ class SHAPES:
 
     class PAUSE_RECT:
         WIDTH, HEIGHT = 10, 60
-        COORDINATES = 20, ((WINDOWS.MAIN.HEIGHT - HEIGHT) - 10)
+        COORDINATES = 35, ((WINDOWS.MAIN.HEIGHT - HEIGHT) - 5)
 
 
 class SELECTION_SQUARE:

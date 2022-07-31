@@ -1,8 +1,12 @@
-import pyglet
+from functools import reduce
+from operator import ior as binary_or
+
+import pyWinhook
 
 from consts import *
 from gui.main_loop import MainLoop
 from usefuls.funcs import normal_color_to_weird_gl_color
+from usefuls.paths import add_path_basename_if_needed
 
 
 class MainWindow(pyglet.window.Window):
@@ -31,13 +35,56 @@ class MainWindow(pyglet.window.Window):
 
         self.mouse_x, self.mouse_y = WINDOWS.MAIN.WIDTH / 2, WINDOWS.MAIN.HEIGHT / 2
         self.mouse_pressed = False
+        self.pressed_keys = set()
 
         self.user_interface = user_interface
 
         self.previous_width = self.width
         self.previous_height = self.height
 
+        try:
+            self.set_icon(pyglet.image.load(add_path_basename_if_needed(DIRECTORIES.IMAGES, IMAGES.PACKETS.ICMP.REQUEST)))
+        except FileNotFoundError:
+            print("ERROR: could not find icon image :( No window icon set :(")
+
         pyglet.gl.glClearColor(*normal_color_to_weird_gl_color(WINDOWS.MAIN.BACKGROUND))
+
+        # v  allows ignoring the Winkey and Alt+tab keys...
+        self._ignored_keys = {
+            'lwin': (pyglet.window.key.LWINDOWS, KEYBOARD.MODIFIERS.WINKEY),
+            'tab':  (pyglet.window.key.TAB, KEYBOARD.MODIFIERS.NONE),
+        }
+        self._keyboard_hook_manager = pyWinhook.HookManager()
+        self._keyboard_hook_manager.KeyDown = self.block_keyboard_escape_keys
+        self.set_is_ignoring_keyboard_escape_keys(True)
+
+    @property
+    def _active_keyboard_modifiers(self):
+        no_modifier = KEYBOARD.MODIFIERS.NONE
+        return reduce(binary_or, [KEYBOARD.MODIFIERS.KEY_TO_MODIFIER.get(key, no_modifier) for key in self.pressed_keys], no_modifier)
+
+    def block_keyboard_escape_keys(self, event):
+        for pywinhook_key, (pyglet_key, _) in self._ignored_keys.items():
+            # pywinhook is the library we use for trapping the winkey and pyglet we use for everything else
+            if event.Key.lower() == pywinhook_key:
+                self.pressed_keys.add(pyglet_key)
+                self.on_key_press(pyglet_key, self._active_keyboard_modifiers, is_manually_called=True)
+                return False
+        return True
+        # ^ return True to pass the event to other handlers
+
+    def set_is_ignoring_keyboard_escape_keys(self, value):
+        """
+        :param value: Whether or not to swallow special keyboard shortcuts passed (winkey, alt+tab...)
+        """
+        if value and not self.is_ignoring_keyboard_escape_keys:
+            self._keyboard_hook_manager.HookKeyboard()
+        elif not value and self.is_ignoring_keyboard_escape_keys:
+            self._keyboard_hook_manager.UnhookKeyboard()
+
+    @property
+    def is_ignoring_keyboard_escape_keys(self):
+        return self._keyboard_hook_manager.keyboard_hook
 
     @property
     def location(self):
@@ -139,14 +186,30 @@ class MainWindow(pyglet.window.Window):
         self.mouse_pressed = False
         self.user_interface.dragged_object = None
 
-    def on_key_press(self, symbol, modifiers):
+    def on_key_press(self, symbol, modifiers, is_manually_called=False):
         """
         This method is called when any key is pressed on the keyboard.
         :param symbol: The key itself.
         :param modifiers:  additional keys that are pressed (ctrl, shift, caps lock, etc..)
+        :param is_manually_called:
         :return:  None
         """
-        self.user_interface.on_key_pressed(symbol, modifiers)
+        if any(symbol == other_symbol for other_symbol, _ in self._ignored_keys.values()) and not is_manually_called:
+            # Due to the way pyWinhook works - this actually means the key is released - so turn off the modifier
+            self.pressed_keys.remove(symbol)
+            return
+
+        self.pressed_keys.add(symbol)
+        self.user_interface.on_key_pressed(symbol, modifiers | self._active_keyboard_modifiers)
+
+    def on_key_release(self, symbol, modifiers):
+        """
+        This method is called when any key is released on the keyboard.
+        :param symbol: The key itself.
+        :param modifiers:  additional keys that are pressed (ctrl, shift, caps lock, etc..)
+        :return:  None
+        """
+        self.pressed_keys.remove(symbol)
 
     def _on_resize(self):
         """
@@ -167,6 +230,18 @@ class MainWindow(pyglet.window.Window):
 
         if self.width != self.previous_width or self.height != self.previous_height:
             self._on_resize()  # `on_resize` does not work, I wrote `_on_resize` instead.
+
+    def on_activate(self):
+        """
+        Called when the `MainWindow` is activated
+        """
+        self.set_is_ignoring_keyboard_escape_keys(True)
+
+    def on_deactivate(self):
+        """
+        Called when the `MainWindow` is deactivated
+        """
+        self.set_is_ignoring_keyboard_escape_keys(False)
 
     def update(self, time_interval):
         """

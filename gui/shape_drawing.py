@@ -135,6 +135,22 @@ def draw_pause_rectangles():
     _draw_rect_no_outline(x + 2 * SHAPES.PAUSE_RECT.WIDTH, y, SHAPES.PAUSE_RECT.WIDTH, SHAPES.PAUSE_RECT.HEIGHT, COLORS.RED)
 
 
+def draw_tiny_corner_windows_icon():
+    """
+    Draws the four blue squares in the corner that indicate that the screen is highlighted and currently ignores presses of `winkey` etc...
+    """
+    SIZE = 10
+    GAP_SIZE = 2
+    INITIAL_X = 5
+    INITIAL_Y_FROM_TOP = 15
+    SQUARE_COLOR = COLORS.BLUE
+
+    draw_rectangle(INITIAL_X,                   WINDOWS.MAIN.HEIGHT - INITIAL_Y_FROM_TOP,                     SIZE, SIZE, SQUARE_COLOR)
+    draw_rectangle(INITIAL_X + SIZE + GAP_SIZE, WINDOWS.MAIN.HEIGHT - INITIAL_Y_FROM_TOP,                     SIZE, SIZE, SQUARE_COLOR)
+    draw_rectangle(INITIAL_X,                   WINDOWS.MAIN.HEIGHT - (INITIAL_Y_FROM_TOP + SIZE + GAP_SIZE), SIZE, SIZE, SQUARE_COLOR)
+    draw_rectangle(INITIAL_X + SIZE + GAP_SIZE, WINDOWS.MAIN.HEIGHT - (INITIAL_Y_FROM_TOP + SIZE + GAP_SIZE), SIZE, SIZE, SQUARE_COLOR)
+
+
 def draw_circle(x, y, radius, outline_color=COLORS.WHITE, fill_color=None):
     """
     Draws a circle with a given center location and a radius and a color.
@@ -153,6 +169,13 @@ def draw_circle(x, y, radius, outline_color=COLORS.WHITE, fill_color=None):
                          ('v2f', tuple(vertices)),
                          ('c3B', outline_color * SHAPES.CIRCLE.SEGMENT_COUNT),
                          )
+
+
+def debug_circle(x, y, fill_color=COLORS.RED, size=3):
+    """
+    Red dot for debugging
+    """
+    draw_circle(x, y, size, fill_color=fill_color, outline_color=fill_color)
 
 
 def draw_sine_wave(start_coordinates, end_coordinates,

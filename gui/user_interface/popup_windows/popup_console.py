@@ -29,6 +29,7 @@ class PopupConsole(PopupWindow):
         )
 
         title_text, info_text, exit_button = self.child_graphics_objects[:3]
+        # TODO: ^ disgusting!!!!
         MainLoop.instance.unregister_graphics_object(info_text)
 
         self.computer = computer
@@ -57,3 +58,8 @@ class PopupConsole(PopupWindow):
         self.computer.active_shells.remove(self.shell)
         if not self.computer.active_shells:
             self.computer.output_method = COMPUTER.OUTPUT_METHOD.CONSOLE
+
+    def resize(self, width, height):
+        super(PopupConsole, self).resize(width, height)
+        self.shell.width, self.shell.height = width, height
+        self.shell.child_graphics_objects.text.resize(self.shell.get_text_padding(), width)

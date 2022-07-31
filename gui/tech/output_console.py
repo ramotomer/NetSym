@@ -1,4 +1,5 @@
 from collections import namedtuple
+from typing import Tuple
 
 from consts import CONSOLE, TEXT
 from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
@@ -16,6 +17,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
 
     It views errors, ping replies and requests, dhcp requests and more.
     """
+
     def __init__(self, x, y, initial_text='OutputConsole:\n',
                  width=CONSOLE.WIDTH, height=CONSOLE.HEIGHT, font_size=CONSOLE.FONT_SIZE, font=TEXT.FONT.DEFAULT):
         """
@@ -26,20 +28,25 @@ class OutputConsole(UserInterfaceGraphicsObject):
         self.is_hidden = True
 
         self._text = initial_text
+        self.width, self.height = width, height
         self.child_graphics_objects = ChildGraphicsObjects(
             Text(
                 self._text, x, y, self,
-                padding=((width / 2) + 2, height),
+                padding=self.get_text_padding(),
                 start_hidden=True,
                 font_size=font_size,
-                max_width=width,
-                align='left',
+                max_width=self.width,
+                align=TEXT.ALIGN.LEFT,
                 color=CONSOLE.TEXT_COLOR,
                 font=font,
             )
         )
 
-        self.width, self.height = width, height
+    def get_text_padding(self) -> Tuple[float, float]:
+        """
+        Must be recalculated every time the size of the console changes
+        """
+        return (self.width / 2) + 2, self.height
 
     def draw(self):
         """
@@ -77,7 +84,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
         else:
             self.hide()
 
-    def num_lines(self, text):
+    def approximate_line_count(self, text):
         """
         The number of lines that some text would be split into in the console.
         This is somewhat of an approximation.
@@ -85,10 +92,10 @@ class OutputConsole(UserInterfaceGraphicsObject):
         :param text: a string
         :return: None
         """
-        return (((len(text) * CONSOLE.CHAR_WIDTH) +
-                 (text.count('\t') * CONSOLE.CHAR_WIDTH * 3) -
-                 (text.count(':') * CONSOLE.CHAR_WIDTH // 2) -
-                 (text.count('.') * 2 * CONSOLE.CHAR_WIDTH // 3)) // self.width) + 1
+        return int((((len(text) * CONSOLE.CHAR_WIDTH) +
+                     (text.count('\t') * CONSOLE.CHAR_WIDTH * 3) -
+                     (text.count(':') * CONSOLE.CHAR_WIDTH // 2) -
+                     (text.count('.') * 2 * CONSOLE.CHAR_WIDTH // 3)) // self.width) + 1)
         # TODO: this method is totally shit...
 
     @property
@@ -99,7 +106,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
         """
         Returns whether or not the console is full (and should go down a line)
         """
-        text_height = sum([self.num_lines(line) for line in self._text.split('\n')]) * self.line_height
+        text_height = sum([self.approximate_line_count(line) for line in self._text.split('\n')]) * self.line_height
         return text_height >= self.height
 
     def write(self, text):
@@ -113,7 +120,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
                 self.write(line)
             return
         if self.is_full():
-            self._text = '\n'.join(self._text.split('\n')[self.num_lines(text):])
+            self._text = '\n'.join(self._text.split('\n')[self.approximate_line_count(text):])
             # remove the up most lines if we are out of space.
         self._text += text + '\n'
         self.child_graphics_objects.text.set_text(self._text)

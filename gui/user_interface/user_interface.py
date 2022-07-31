@@ -6,7 +6,6 @@ from collections import namedtuple, defaultdict
 from functools import reduce
 from operator import concat, attrgetter
 
-import pyglet
 from pyglet.window import key
 
 from address.ip_address import IPAddress
@@ -23,7 +22,7 @@ from exceptions import *
 from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
-from gui.shape_drawing import draw_circle, draw_line
+from gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
 from gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from gui.tech.computer_graphics import ComputerGraphics
 from gui.tech.connection_graphics import ConnectionGraphics
@@ -109,9 +108,17 @@ class UserInterface:
             (key.SPACE, KEYBOARD.MODIFIERS.NONE): self.toggle_pause,
             (key.TAB, KEYBOARD.MODIFIERS.NONE): self.tab_through_selected,
             (key.TAB, KEYBOARD.MODIFIERS.SHIFT): with_args(self.tab_through_selected, True),
-            (key.ESCAPE, KEYBOARD.MODIFIERS.NONE): with_args(self.set_mode, MODES.NORMAL),
+            (key.ESCAPE, KEYBOARD.MODIFIERS.NONE): self.clear_selected_objects_and_active_window,
             (key.DELETE, KEYBOARD.MODIFIERS.NONE): self.delete_selected_and_marked,
             (key.J, KEYBOARD.MODIFIERS.NONE): self.color_by_subnets,
+            (key.LALT, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.ALT): with_args(self.set_is_ignoring_keyboard_escape_keys, False),
+            (key.G, KEYBOARD.MODIFIERS.CTRL): with_args(self.set_is_ignoring_keyboard_escape_keys, True),
+            (key.TAB, KEYBOARD.MODIFIERS.ALT): self.tab_through_windows,
+            (key.TAB, KEYBOARD.MODIFIERS.ALT | KEYBOARD.MODIFIERS.SHIFT): with_args(self.tab_through_windows, True),
+            (key.RIGHT, KEYBOARD.MODIFIERS.WINKEY): with_args(self.pin_active_window_to, WINDOWS.POPUP.DIRECTIONS.RIGHT),
+            (key.LEFT, KEYBOARD.MODIFIERS.WINKEY): with_args(self.pin_active_window_to, WINDOWS.POPUP.DIRECTIONS.LEFT),
+            (key.UP, KEYBOARD.MODIFIERS.WINKEY): with_args(self.pin_active_window_to, WINDOWS.POPUP.DIRECTIONS.UP),
+            (key.DOWN, KEYBOARD.MODIFIERS.WINKEY): with_args(self.pin_active_window_to, WINDOWS.POPUP.DIRECTIONS.DOWN),
         }
 
         for direction in {key.UP, key.RIGHT, key.LEFT, key.DOWN}:
@@ -138,8 +145,8 @@ class UserInterface:
             self.key_to_action[self.key_from_string(key_string)] = with_args(self.create_device, device)
 
         self.action_at_press_by_mode = {
-            MODES.NORMAL: self.view_mode_at_press,
-            MODES.VIEW: self.view_mode_at_press,
+            MODES.NORMAL: self.normal_mode_at_press,
+            MODES.VIEW: self.normal_mode_at_press,
             MODES.CONNECTING: self.start_device_visual_connecting,
             MODES.PINGING: self.start_device_visual_connecting,
         }
@@ -175,7 +182,8 @@ class UserInterface:
             ((self.start_all_stp, "start STP (ctrl+shift+s)"), {"key": (key.S, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT)}),
             ((self.delete_all_packets, "delete all packets (Shift+d)"), {"key": (key.D, KEYBOARD.MODIFIERS.SHIFT)}),
             ((self.delete_all, "delete all (^d)"), {"key": (key.D, KEYBOARD.MODIFIERS.CTRL)}),
-            ((with_args(self.ask_user_for, str, "save file as:", self._save_to_file_with_override_safety), "save to file(^s)"), {"key": (key.S, KEYBOARD.MODIFIERS.CTRL)}),
+            ((with_args(self.ask_user_for, str, "save file as:", self._save_to_file_with_override_safety), "save to file(^s)"),
+             {"key": (key.S, KEYBOARD.MODIFIERS.CTRL)}),
             # TODO: saving to files does not work :(
             ((self._ask_user_for_load_file, "load from file (^o)"), {"key": (key.O, KEYBOARD.MODIFIERS.CTRL)}),
             ((self.open_help, "help (shift+/)"), {"key": (key.SLASH, KEYBOARD.MODIFIERS.SHIFT)}),
@@ -233,6 +241,15 @@ class UserInterface:
             self.__selected_object = graphics_object
             self.active_window = None
 
+    @staticmethod
+    def set_is_ignoring_keyboard_escape_keys(value):
+        """
+        :param value: Whether or not to swallow special keyboard shortcuts passed (winkey, alt+tab...)
+
+            This must be a separate method because inside this class's __init__ method the `MainWindow.main_window` object is still `None`
+        """
+        MainWindow.main_window.set_is_ignoring_keyboard_escape_keys(value)
+
     def show(self):
         """
         This is like the `draw` method of GraphicObject`s.
@@ -241,6 +258,8 @@ class UserInterface:
         self._draw_side_window()
         if MainLoop.instance.is_paused:
             draw_pause_rectangles()
+        if MainWindow.main_window.is_ignoring_keyboard_escape_keys:
+            draw_tiny_corner_windows_icon()
         self.drag_objects()
         self._stop_viewing_dead_packets()
         self._showcase_running_stp()
@@ -307,7 +326,7 @@ class UserInterface:
         x = (MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2)) - (IMAGES.SIZE * IMAGES.SCALE_FACTORS.VIEWING_OBJECTS / 2)
         y = MainWindow.main_window.height - ((IMAGES.SIZE * IMAGES.SCALE_FACTORS.VIEWING_OBJECTS) + 15)
         return x, y
-    
+
     @property
     def viewing_text_location(self):
         return (MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2)), \
@@ -412,6 +431,25 @@ class UserInterface:
             padding = x - WINDOWS.MAIN.WIDTH, y - WINDOWS.MAIN.HEIGHT
             button.set_parent_graphics(MainWindow.main_window, padding)
 
+    def tab_through_windows(self, reverse=False):
+        """
+
+        :param reverse:
+        :return:
+        """
+        available_windows = sorted(list(filter(lambda o: isinstance(o, PopupWindow), MainLoop.instance.graphics_objects)),
+                                   key=lambda w: w.creation_time)
+        if not available_windows:
+            return
+        if reverse:
+            available_windows = list(reversed(available_windows))
+
+        try:
+            index = available_windows.index(self.active_window)
+            self.active_window = available_windows[index - 1]
+        except ValueError:
+            self.active_window = available_windows[-1]
+
     def tab_through_selected(self, reverse=False):
         """
         This is called when the TAB key is pressed.
@@ -463,6 +501,12 @@ class UserInterface:
             self.show_buttons(BUTTONS.MAIN_MENU.ID)
             self.marked_objects.clear()
 
+    def clear_selected_objects_and_active_window(self):
+        if self.selected_object is not None:
+            self.selected_object = None
+        self.marked_objects.clear()
+        self.active_window = None
+
     def toggle_mode(self, mode):
         """
         Toggles to and from a mode!
@@ -501,6 +545,15 @@ class UserInterface:
         if self.active_window is None:
             self._create_selecting_square()
 
+    def pin_active_window_to(self, direction):
+        """
+
+        :param direction:
+        :return:
+        """
+        if self.active_window is not None:
+            self.active_window.pin_to(direction)
+
     def _create_selecting_square(self):
         """
         Creates the selection square when the mouse is pressed and dragged around
@@ -536,24 +589,26 @@ class UserInterface:
         :param modifiers:
         :return:
         """
-        modifiers = int(bin(modifiers)[2:][-4:], base=2)
+        modifiers = modifiers & (~KEYBOARD.MODIFIERS.NUMLOCK)
 
+        # if (not modifiers & KEYBOARD.MODIFIERS.WINKEY) and (symbol != key.ESCAPE):
         if isinstance(self.active_window, PopupTextBox):
-            self.active_window.key_writer.pressed(symbol, modifiers)
+            if self.active_window.key_writer.pressed(symbol, modifiers):
+                return
 
-        elif isinstance(self.active_window, PopupConsole):
-            self.active_window.shell.key_writer.pressed(symbol, modifiers)
+        if isinstance(self.active_window, PopupConsole):
+            if self.active_window.shell.key_writer.pressed(symbol, modifiers):
+                return
 
-        else:
-            modified_key = (symbol, modifiers)
-            for button_id in sorted(list(self.buttons)):
-                for button in self.buttons[button_id]:
-                    if button.key == modified_key:
-                        button.action()
-                        return
-            self.key_to_action.get(modified_key, lambda: None)()
+        modified_key = (symbol, modifiers)
+        for button_id in sorted(list(self.buttons)):
+            for button in self.buttons[button_id]:
+                if button.key == modified_key:
+                    button.action()
+                    return
+        self.key_to_action.get(modified_key, lambda: None)()
 
-    def view_mode_at_press(self):
+    def normal_mode_at_press(self):
         """
         Happens when we are in viewing mode (or simulation mode) and we press our mouse.
         decides whether to start viewing a new graphics object or finish a previous one.
@@ -588,25 +643,6 @@ class UserInterface:
         object_ = object_type()
         object_.show(x, y)
         self.computers.append(object_)
-
-    def create_router(self):
-        """
-        Create a router where the mouse is.
-        :return: None
-        """
-        x, y = MainWindow.main_window.get_mouse_location()
-        if self.is_mouse_in_side_window():
-            x, y = WINDOWS.MAIN.WIDTH / 2, WINDOWS.MAIN.HEIGHT / 2
-
-        router = Router("Router and DHCP Server", [
-                        Interface.with_ip('192.168.1.1'),
-                        Interface.with_ip('10.10.10.1'),
-                        Interface.with_ip('172.3.10.1'),
-                        Interface.with_ip('1.1.1.1'),
-                        ])
-        # TODO: find out why this warning exists and fix it (if there is no warning here, delete this comment)
-        router.show(x, y)
-        self.computers.append(router)
 
     def two_pressed_objects(self, action, more_pressable_types=None):
         """
@@ -857,7 +893,7 @@ class UserInterface:
         :param graphics_object: a `PacketGraphics` object.
         :return:
         """
-        all_connections = [connection_data[0] for connection_data in self.connection_data] +\
+        all_connections = [connection_data[0] for connection_data in self.connection_data] + \
                           [computer.loopback.connection.connection for computer in self.computers] + self.frequencies
         all_sent_packets = functools.reduce(operator.concat, map(operator.attrgetter("sent_packets"), all_connections))
 
@@ -957,9 +993,11 @@ class UserInterface:
         Prints out lots of useful information for debugging.
         :return: None
         """
+
         # print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
         def gos():
             return [go for go in MainLoop.instance.graphics_objects if not isinstance(go, UserInterfaceGraphicsObject)]
+
         print(MainWindow.main_window.get_mouse_location())
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
         goes = list(filter(lambda go: not isinstance(go, UserInterfaceGraphicsObject), MainLoop.instance.graphics_objects))
@@ -993,7 +1031,7 @@ class UserInterface:
 
         try:
             given_ip = self._get_largest_ip_in_nearest_subnet(x, y)
-        except (NoSuchComputerError, NoIPAddressError):      # if there are no computers with IP on the screen.
+        except (NoSuchComputerError, NoIPAddressError):  # if there are no computers with IP on the screen.
             given_ip = IPAddress(ADDRESSES.IP.DEFAULT)
 
         new_computer = Computer.with_ip(given_ip) if not wireless else Computer.wireless_with_ip(given_ip)
@@ -1089,6 +1127,7 @@ class UserInterface:
         :param error_msg: The msg to be displayed if the input is invalid
         :return: None
         """
+
         def try_casting_with_action(string):
             try:
                 user_input_object = type_(string)
@@ -1160,7 +1199,7 @@ class UserInterface:
                     start_hidden=True,
                 )
                 for i, (string, action) in enumerate(dictionary.items())
-              ],
+            ],
         ]
 
         self.buttons[buttons_id + 1] = [
@@ -1228,6 +1267,7 @@ class UserInterface:
             for button_ in buttons:
                 self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID].remove(button_)
                 MainLoop.instance.unregister_graphics_object(button_)
+
         window.remove_buttons = remove_buttons
 
     def unregister_window(self, window):
@@ -1236,15 +1276,18 @@ class UserInterface:
         :param window: a `PopupWindow` object
         :return: None
         """
+        try:
+            self.popup_windows.remove(window)
+        except ValueError:
+            raise WrongUsageError("The window is not registered in the UserInterface!!!")
+
         if self.active_window is window:
             self.active_window = None
         if self.selected_object is window:
             self.selected_object = None
 
-        try:
-            self.popup_windows.remove(window)
-        except ValueError:
-            raise WrongUsageError("The window is not registered in the UserInterface!!!")
+        if self.popup_windows:
+            self.active_window = self.popup_windows[0]
 
     def open_device_creation_window(self):
         """
