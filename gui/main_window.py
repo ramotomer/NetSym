@@ -1,5 +1,7 @@
+from functools import reduce
+from operator import ior as binary_or
+
 import pyWinhook
-import pyglet
 
 from consts import *
 from gui.main_loop import MainLoop
@@ -33,6 +35,7 @@ class MainWindow(pyglet.window.Window):
 
         self.mouse_x, self.mouse_y = WINDOWS.MAIN.WIDTH / 2, WINDOWS.MAIN.HEIGHT / 2
         self.mouse_pressed = False
+        self.pressed_keys = set()
 
         self.user_interface = user_interface
 
@@ -54,14 +57,18 @@ class MainWindow(pyglet.window.Window):
         self._keyboard_hook_manager = pyWinhook.HookManager()
         self._keyboard_hook_manager.KeyDown = self.block_keyboard_escape_keys
         self.set_is_ignoring_keyboard_escape_keys(True)
-        self._active_keyboard_modifiers = KEYBOARD.MODIFIERS.NONE
+
+    @property
+    def _active_keyboard_modifiers(self):
+        no_modifier = KEYBOARD.MODIFIERS.NONE
+        return reduce(binary_or, [KEYBOARD.MODIFIERS.KEY_TO_MODIFIER.get(key, no_modifier) for key in self.pressed_keys], no_modifier)
 
     def block_keyboard_escape_keys(self, event):
-        for pywinhook_key, (pyglet_key, pyglet_modifier) in self._ignored_keys.items():
+        for pywinhook_key, (pyglet_key, _) in self._ignored_keys.items():
             # pywinhook is the library we use for trapping the winkey and pyglet we use for everything else
             if event.Key.lower() == pywinhook_key:
-                self._active_keyboard_modifiers = self._active_keyboard_modifiers | pyglet_modifier
-                # self.on_key_press(pyglet_key, pyglet_modifier, is_manually_called=True)
+                self.pressed_keys.add(pyglet_key)
+                self.on_key_press(pyglet_key, self._active_keyboard_modifiers, is_manually_called=True)
                 return False
         return True
         # ^ return True to pass the event to other handlers
@@ -187,11 +194,12 @@ class MainWindow(pyglet.window.Window):
         :param is_manually_called:
         :return:  None
         """
-        for other_symbol, other_modifiers in self._ignored_keys.values():
-            if other_symbol == symbol:
-                # Due to the way pyWinhook works - this actually means the key is released - so turn off the modifier
-                self._active_keyboard_modifiers = self._active_keyboard_modifiers & (~other_modifiers)
+        if any(symbol == other_symbol for other_symbol, _ in self._ignored_keys.values()) and not is_manually_called:
+            # Due to the way pyWinhook works - this actually means the key is released - so turn off the modifier
+            self.pressed_keys.remove(symbol)
+            return
 
+        self.pressed_keys.add(symbol)
         self.user_interface.on_key_pressed(symbol, modifiers | self._active_keyboard_modifiers)
 
     def on_key_release(self, symbol, modifiers):
@@ -201,7 +209,7 @@ class MainWindow(pyglet.window.Window):
         :param modifiers:  additional keys that are pressed (ctrl, shift, caps lock, etc..)
         :return:  None
         """
-        pass
+        self.pressed_keys.remove(symbol)
 
     def _on_resize(self):
         """

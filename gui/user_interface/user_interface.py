@@ -6,7 +6,6 @@ from collections import namedtuple, defaultdict
 from functools import reduce
 from operator import concat, attrgetter
 
-import pyglet
 from pyglet.window import key
 
 from address.ip_address import IPAddress
@@ -592,7 +591,6 @@ class UserInterface:
         modifiers = modifiers & (~KEYBOARD.MODIFIERS.NUMLOCK)
 
         # if (not modifiers & KEYBOARD.MODIFIERS.WINKEY) and (symbol != key.ESCAPE):
-        debugp(f"got in 1 {symbol}, {modifiers}")
         if isinstance(self.active_window, PopupTextBox):
             if self.active_window.key_writer.pressed(symbol, modifiers):
                 return

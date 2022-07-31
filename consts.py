@@ -2,6 +2,8 @@
 import os
 from math import sqrt
 
+import pyglet
+
 from exceptions import TCPDoneReceiving
 
 
@@ -170,6 +172,17 @@ class KEYBOARD:
         CAPS =    0b00001000
         NUMLOCK = 0b00010000
         WINKEY =  0b00100000
+
+        KEY_TO_MODIFIER = {
+            pyglet.window.key.LSHIFT: SHIFT,
+            pyglet.window.key.RSHIFT: SHIFT,
+            pyglet.window.key.LCTRL: CTRL,
+            pyglet.window.key.RCTRL: CTRL,
+            pyglet.window.key.LALT: ALT,
+            pyglet.window.key.RALT: ALT,
+            pyglet.window.key.LWINDOWS: WINKEY,
+            pyglet.window.key.RWINDOWS: WINKEY,
+        }
 
 
 class MESSAGES:
