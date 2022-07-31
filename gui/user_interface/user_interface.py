@@ -1276,15 +1276,18 @@ class UserInterface:
         :param window: a `PopupWindow` object
         :return: None
         """
+        try:
+            self.popup_windows.remove(window)
+        except ValueError:
+            raise WrongUsageError("The window is not registered in the UserInterface!!!")
+
         if self.active_window is window:
             self.active_window = None
         if self.selected_object is window:
             self.selected_object = None
 
-        try:
-            self.popup_windows.remove(window)
-        except ValueError:
-            raise WrongUsageError("The window is not registered in the UserInterface!!!")
+        if self.popup_windows:
+            self.active_window = self.popup_windows[0]
 
     def open_device_creation_window(self):
         """
