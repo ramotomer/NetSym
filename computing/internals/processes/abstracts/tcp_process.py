@@ -4,7 +4,6 @@ from collections import deque
 from operator import attrgetter
 
 from recordclass import recordclass
-from scapy.layers.inet import TCP
 
 from computing.internals.processes.abstracts.process import Process, WaitingForPacketWithTimeout, Timeout, \
     ReturnedPacket, \
@@ -12,6 +11,7 @@ from computing.internals.processes.abstracts.process import Process, WaitingForP
 from consts import *
 from exceptions import TCPDataLargerThanMaxSegmentSize
 from gui.main_loop import MainLoop
+from packets.all import TCP
 from packets.packet import Packet
 from usefuls.funcs import insort
 from usefuls.funcs import split_by_size

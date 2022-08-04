@@ -1,7 +1,7 @@
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
 from computing.internals.processes.abstracts.process import Process, WaitingFor, Timeout
-from packets.udp import UDP
+from packets.all import UDP
 
 
 class DDOSProcess(Process):
@@ -31,13 +31,12 @@ class DDOSProcess(Process):
                 MACAddress.broadcast(),
                 IPAddress.broadcast(),
                 UDP(
-                    69420,
-                    69420,
-                    "DDOS",
-                ),
+                    sport=69420,
+                    dport=69420,
+                ) / "DDOS",
             )
             yield WaitingFor(Timeout(self.sending_interval).is_done)
 
     def __repr__(self):
         """A string representation of the process"""
-        return f"my_attack.py -c {self.count} -i {self.sending_interval}"
+        return f"python my_attack.py -c {self.count} -i {self.sending_interval}"

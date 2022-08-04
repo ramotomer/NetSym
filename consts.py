@@ -77,10 +77,10 @@ class OPCODES:
         PORT_UNREACHABLE = 3
 
     class DHCP:
-        DISCOVER = "DHCP Discover"
-        OFFER = "DHCP Offer"
-        REQUEST = "DHCP Request"
-        PACK = "DHCP Pack"
+        DISCOVER = "discover"
+        OFFER = "offer"
+        REQUEST = "request"
+        PACK = "ack"
 
     class FTP:
         REQUEST_PACKET = "FTP Request"
@@ -100,6 +100,10 @@ class OPCODES:
     class DNS:
         REQUEST = 'request'
         REPLY = 'reply'
+
+    class BOOTP:
+        REQUEST = "BOOTREQUEST"
+        REPLY = "BOOTREPLY"
 
 
 class PROTOCOLS:

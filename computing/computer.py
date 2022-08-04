@@ -5,8 +5,6 @@ from operator import concat
 from typing import Tuple
 
 from recordclass import recordclass
-from scapy.layers.inet import ICMP, IP, TCP, UDP
-from scapy.layers.l2 import ARP
 
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
@@ -33,6 +31,7 @@ from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
+from packets.all import ICMP, IP, TCP, UDP, ARP
 from packets.usefuls import get_src_port, get_dst_port
 from usefuls.funcs import get_the_one
 

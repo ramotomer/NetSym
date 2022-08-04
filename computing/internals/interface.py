@@ -1,13 +1,12 @@
 import random
 
-from scapy.layers.l2 import Ether
-
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
 from computing.connection import Connection
 from computing.loopback_connection import LoopbackConnection
 from consts import *
 from exceptions import *
+from packets.all import Ether
 from packets.packet import Packet
 
 
