@@ -116,7 +116,6 @@ class Computer:
         }
 
         self.sockets = {}
-        self.__ready_socket = None
 
         self.is_supporting_wireless_connections = False
 
@@ -156,15 +155,6 @@ class Computer:
     @property
     def raw_sockets(self):
         return [socket for socket in self.sockets if self.sockets[socket].kind == COMPUTER.SOCKETS.TYPES.SOCK_RAW]
-
-    @property
-    def ready_socket(self):
-        """
-        This should be used after using the `select` method of the computer
-        Returns the socket that was selected. If timeout has been reached - return None
-        :return:
-        """
-        return self.__ready_socket
 
     @classmethod
     def with_ip(cls, ip_address, name=None):
@@ -745,22 +735,21 @@ class Computer:
         """
         Similar to the `select` syscall of linux
         Loops over all sockets until one of them has something to receive
-        The selected socket will later be accessible via the `ready_socket` property of the computer
+        The selected socket will later be returned. Use in the format:
+            >>> ready_socket = yield from self.select(socket, timeout)
 
         This is a generator that yields `WaitingFor` objects
         To use in a computer `Process` - yield from this
         :param socket_list: List[Socket]
         :param timeout: the amount of seconds to wait before returning without a selected socket
         """
-        self.__ready_socket = None
         start_time = MainLoop.instance.time()
         while True:
             for socket in socket_list:
                 if socket.has_data_to_receive:
-                    self.__ready_socket = socket
-                    return
+                    return socket
             if (timeout is not None) and (start_time + timeout < MainLoop.instance.time()):
-                return
+                return None
             yield WaitingFor(lambda: True)
 
     def send(self, packet, interface=None, sending_socket=None):

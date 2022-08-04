@@ -28,6 +28,19 @@ SackEdges = recordclass("SackEdges", [
 ])
 
 
+def get_tcp_packet_data_length(tcp_packet):
+    """
+    Returns the length of the data of the TCP packet
+    :param tcp_packet:
+    :return:
+    """
+    layer_names = [layer.__name__ for layer in tcp_packet.data.getlayers()]
+    try:
+        return len(tcp_packet.data.getlayers()[layer_names.index("TCP") + 1].build())
+    except IndexError:
+        return 1
+
+
 def is_number_acking_packet(ack_number: int, packet):
     """
     Receives an ACK number and a packet and returns whether or not the packet is ACKed in that ACK
@@ -35,7 +48,7 @@ def is_number_acking_packet(ack_number: int, packet):
     :param packet: a `Packet` object.
     :return:
     """
-    return packet["TCP"].sequence_number + packet["TCP"].length <= ack_number
+    return packet["TCP"].sequence_number + get_tcp_packet_data_length(packet) <= ack_number
 
 
 class TCPProcess(Process, metaclass=ABCMeta):
@@ -96,17 +109,17 @@ class TCPProcess(Process, metaclass=ABCMeta):
         """
         packet = self.computer.ip_wrap(self.dst_mac, self.dst_ip,
                                        TCP(
-                                           sport=self.src_port,
-                                           dport=self.dst_port,
-                                           seq=self.sequence_number,
+                                           src_port=self.src_port,
+                                           dst_port=self.dst_port,
+                                           sequence_number=self.sequence_number,
                                            flags=flags,
-                                           ack=self.receiving_window.ack_number,
-                                           window=self.sending_window.window_size,
-                                           option=[("MSS", self.mss)],
-                                           is_retransmission=is_retransmission,
+                                           ack_number=self.receiving_window.ack_number,
+                                           window_size=self.sending_window.window_size,
+                                           options=[("MSS", self.mss)],
                                        ) / data
                                        )
-        self.sequence_number += packet["TCP"].length
+        packet["TCP"].is_retransmission = is_retransmission
+        self.sequence_number += get_tcp_packet_data_length(packet)
         return packet
 
     def _send_ack_for(self, packet, additional_flags: set = None):
@@ -121,7 +134,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
 
         if packet["TCP"].sequence_number == self.receiving_window.ack_number:
             # ^ the received packet is in-order
-            self.receiving_window.ack_number += packet["TCP"].length
+            self.receiving_window.ack_number += get_tcp_packet_data_length(packet)
 
         elif packet["TCP"].sequence_number < self.receiving_window.ack_number:
             # ^ the packet was already received (lost ACK)
@@ -134,7 +147,8 @@ class TCPProcess(Process, metaclass=ABCMeta):
             self.receiving_window.merge_sack_blocks()
 
         ack = self._create_packet(({OPCODES.TCP.ACK} | additional_flags_set), is_retransmission=is_retransmission)
-        ack["TCP"].options[PROTOCOLS.TCP.OPTIONS.SACK] = self.receiving_window.sack_blocks[:]
+        ack["TCP"].options.SACK = self.receiving_window.sack_blocks[:]
+        raise NotImplementedError("^^^ fix this - cannot really be a list ^^^")
 
         if additional_flags_set:
             self.sending_window.add_waiting(ack)
@@ -199,7 +213,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         self.dst_port = packet["TCP"].src_port
         self.dst_ip = packet["IP"].src_ip
         self.sending_window.window_size = min(packet["TCP"].window_size, self.sending_window.window_size)
-        self.mss = min(packet["TCP"].options[PROTOCOLS.TCP.OPTIONS.MSS], self.mss)
+        self.mss = min(packet["TCP"].parsed_options.MSS, self.mss)
 
     def _acknowledge_with_packet(self, packet):
         """
@@ -216,7 +230,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
                 break
         self.sending_window.slide_window(acked_count)
 
-        sack_blocks = packet["TCP"].options[PROTOCOLS.TCP.OPTIONS.SACK]
+        sack_blocks = packet["TCP"].parsed_options.SACK
         if not isinstance(sack_blocks, list) or not sack_blocks:
             return
         for not_acked_packet in list(self.sending_window.window):
@@ -645,7 +659,7 @@ class ReceivingWindow:
         :return: None
         """
         packet_start = packet["TCP"].sequence_number
-        packet_length = packet["TCP"].length
+        packet_length = get_tcp_packet_data_length(packet)
         packet_end = packet_start + packet_length
 
         for block in self.sack_blocks:

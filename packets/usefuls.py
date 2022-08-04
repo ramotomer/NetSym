@@ -38,3 +38,27 @@ def get_src_ip(packet):
 
 def get_dst_ip(packet):
     return get_packet_attribute(packet, 'dst_ip', ["IP", "ARP"])
+
+
+class ScapyOptions:
+    def __init__(self, options):
+        self.options = options
+
+    def __getitem__(self, item):
+        for key, value in [option for option in self.options if isinstance(option, tuple)]:
+            if key.replace('-', '_') == item:
+                return value
+        raise KeyError(f"This scapy options list: {self} has no option '{item}'!")
+
+    def __getattr__(self, item):
+        return self[item]
+
+    def __setattr__(self, key, value):
+        for existing_key, existing_value in [option for option in self.options if isinstance(option, tuple)]:
+            if existing_key == key:
+                self.options = [option for option in self.options if not (isinstance(option, tuple) and option[0] == key)] + [(key, value)]
+                return
+        self.options.append((key, value))
+
+    def __repr__(self):
+        return str(self.options)

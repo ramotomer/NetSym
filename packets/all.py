@@ -2,7 +2,8 @@ from scapy.layers.dhcp import BOOTP
 from scapy.layers.inet import IP, UDP, TCP
 from scapy.layers.l2 import Ether, ARP
 
-from usefuls.attribute_renamer import define_attribute_aliases
+from packets.usefuls import ScapyOptions
+from usefuls.attribute_renamer import define_attribute_aliases, with_parsed_attributes
 
 Ether = define_attribute_aliases(
     Ether,
@@ -41,10 +42,15 @@ IP = define_attribute_aliases(
     }
 )
 TCP = define_attribute_aliases(
-    TCP,
+    with_parsed_attributes(TCP, {"options": ScapyOptions}),
     {
         "src_port": "sport",
         "dst_port": "dport",
+        "sequence_number": "seq",
+        "ack_number": "ack",
+        "checksum": "chksum",
+        "urgent_pointer": "urgptr",
+        "window_size": "window",
     }
 )
 BOOTP = define_attribute_aliases(
@@ -59,3 +65,4 @@ BOOTP = define_attribute_aliases(
         "gateway_ip": "giaddr",
     }
 )
+DHCP = with_parsed_attributes(TCP, {"options": ScapyOptions}),

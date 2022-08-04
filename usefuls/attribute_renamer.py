@@ -7,9 +7,16 @@ def define_attribute_aliases(class_, attribute_name_mapping):
             )
 
         def __getattr__(self, item):
-            try:
-                return super(AttributeRenamer, self).__getattr__(attribute_name_mapping[item])
-            except KeyError:
-                return super(AttributeRenamer, self).__getattr__(item)
+            return super(AttributeRenamer, self).__getattr__(attribute_name_mapping.get(item, item))
 
     return AttributeRenamer
+
+
+def with_parsed_attributes(class_, attribute_name_to_parser):
+    class AttributeParser(class_):
+        def __getattr__(self, item):
+            if item.startswith("parsed_") and item[len("parsed_"):] in attribute_name_to_parser:
+                return attribute_name_to_parser[item[len("parsed_"):]](super(AttributeParser, self).__getattr__(item[len("parsed_"):]))
+            return super(AttributeParser, self).__getattr__(item)
+
+    return AttributeParser

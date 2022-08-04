@@ -101,8 +101,8 @@ class DHCPClient(Process):
         for socket in self.sockets:
             socket.send(self.build_dhcp_discover(socket.interface))
 
-        yield from self.computer.select(self.sockets)
-        dhcp_offer, session_interface = self.computer.ready_socket.receive()[0].packet_and_interface
+        ready_socket = yield from self.computer.select(self.sockets)
+        dhcp_offer, session_interface = ready_socket.receive()[0].packet_and_interface
         # TODO: validate offer
         session_socket = get_the_one(self.sockets, lambda s: s.interface == session_interface, ThisCodeShouldNotBeReached)
 
@@ -259,12 +259,12 @@ class DHCPServer(Process):
             self._bind_interface_to_socket(interface)
 
         while True:
-            yield from self.computer.select(self.sockets, timeout=0.5)
+            ready_socket = yield from self.computer.select(self.sockets, timeout=0.5)
             self._detect_new_interfaces()
-            if self.computer.ready_socket is None:
+            if ready_socket is None:
                 continue
 
-            received_packets = self.computer.ready_socket.receive()
+            received_packets = ready_socket.receive()
 
             for received_packet in received_packets:
                 for packet, packet_metadata in received_packet.packets.items():
