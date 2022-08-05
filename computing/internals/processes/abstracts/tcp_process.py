@@ -1,7 +1,8 @@
 import random
 from abc import ABCMeta, abstractmethod
 from collections import deque
-from operator import attrgetter
+from functools import reduce
+from operator import attrgetter, concat
 
 from recordclass import recordclass
 
@@ -147,8 +148,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
             self.receiving_window.merge_sack_blocks()
 
         ack = self._create_packet(({OPCODES.TCP.ACK} | additional_flags_set), is_retransmission=is_retransmission)
-        ack["TCP"].options.SACK = self.receiving_window.sack_blocks[:]
-        raise NotImplementedError("^^^ fix this - cannot really be a list ^^^")
+        ack["TCP"].options.SACK = self.receiving_window.get_sack_blocks_as_tuple()
 
         if additional_flags_set:
             self.sending_window.add_waiting(ack)
@@ -230,7 +230,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
                 break
         self.sending_window.slide_window(acked_count)
 
-        sack_blocks = packet["TCP"].parsed_options.SACK
+        sack_blocks = ReceivingWindow.get_sack_blocks_from_tuple(packet["TCP"].parsed_options.SACK)
         if not isinstance(sack_blocks, list) or not sack_blocks:
             return
         for not_acked_packet in list(self.sending_window.window):
@@ -687,4 +687,22 @@ class ReceivingWindow:
 
             if block.right == next_block.left:
                 self.sack_blocks.remove(block)
-                next_block.left = block.left
+            next_block.left = block.left
+
+    def get_sack_blocks_as_tuple(self):
+        """
+        :receives: self.sack_blocks = [SackEdges(a, b), SackEdges(c, d), ...]
+        :return:                      (a, b, c, d, ...)
+        """
+        return reduce(concat, map(tuple, self.sack_blocks))
+
+    @staticmethod
+    def get_sack_blocks_from_tuple(tuple_):
+        """
+        :receives: (a, b, c, d, ...)
+        :returns:  [SackEdges(a, b), SackEdges(c, d), ...]
+        """
+        try:
+            return [SackEdges(tuple_[i], tuple_[i + 1]) for i in range(0, len(tuple_), 2)]
+        except IndexError:
+            raise IndexError(f"Tuple {tuple_} must have an even length in order to be parsed as a list of `SackEdges`")
