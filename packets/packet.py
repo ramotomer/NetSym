@@ -1,6 +1,6 @@
 from exceptions import *
 from gui.tech.packet_graphics import PacketGraphics
-from packets.protocol import Protocol
+from packets.all import Ether
 
 
 class Packet:
@@ -37,10 +37,7 @@ class Packet:
         is the deepest layer in the packet. Not including strings and so on.
         Must be a `Protocol` subclass instance.
         """
-        layer = self
-        while isinstance(layer.data, Protocol):
-            layer = layer.data
-        return layer
+        self.data.getlayers()
 
     def copy(self):
         """
@@ -49,28 +46,27 @@ class Packet:
         :return: a copied `Packet` object.
         """
         return self.__class__(
-            self.data.copy(),
+            Ether(self.data.build())
         )
-
-    def get_layers(self):
-        """
-        This is a generator that runs over all of the layers in the packet not including the last one (if it is a string
-        in ICMP for example)
-        :yield: a `Protocol` object usually but any object that is put in the `ip_layer` field of a protocol.
-        """
-        layer = self.data
-        while isinstance(layer, Protocol):
-            yield layer
-            layer = layer.data
 
     def is_valid(self):
         """
         Returns whether or not the packet is valid.
-        The check is simply if the layer indexes are increasing. (for example layer 2, layer 3 then layer 4 as expected).
-        :return: None
         """
-        layer_indexes = [layer.layer_index for layer in self.get_layers()]
-        return layer_indexes == sorted(layer_indexes)
+        # TODO: implement packet.is_valid - use checksums
+        return True and (self is self)
+
+    def get_layer_by_name(self, name):
+        """
+        :param name: The name of the layer one wishes to receive.
+        :return: The layer object if it exists, if not, raises KeyError.
+        """
+        layer_classes = self.data.getlayers()
+        layer_names = [layer.__name__ for layer in layer_classes]
+        try:
+            return self.data.getlayer(layer_classes[layer_names.index(name)])
+        except ValueError:
+            raise NoSuchLayerError(f"The packet does not contain the layer '{name}'! \n{self.multiline_repr()}")
 
     def __contains__(self, item):
         """
@@ -78,22 +74,18 @@ class Packet:
         :param item: A type-name of the layer you want.
         :return:
         """
-        for layer in self.get_layers():
-            if layer.__class__.__name__ == item:
-                return True
-        return False
+        try:
+            self.get_layer_by_name(item)
+        except NoSuchLayerError:
+            return False
+        return True
 
     def __getitem__(self, item):
         """
         This is where the packet acts like a dictionary with the layer type as the key
         and the actual layer object as the value.
-        :param item: The layer type one wishes to receive.
-        :return: The layer object if it exists, if not, raises KeyError.
         """
-        for layer in self.get_layers():
-            if layer.__class__.__name__ == item:
-                return layer
-        raise NoSuchLayerError(f'The packet does not contain the layer {item}!')
+        return self.get_layer_by_name(item)
 
     def __str__(self):
         """The shorter string representation of the packet"""

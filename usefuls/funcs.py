@@ -1,5 +1,6 @@
 import cmath
 import datetime
+from contextlib import contextmanager
 from functools import reduce
 from math import sin, cos, pi, atan
 from operator import mul
@@ -300,3 +301,15 @@ def split_with_escaping(string, separator=' ', escaping_char='"', remove_empty_s
     if remove_empty_spaces:
         splitted = [string for string in splitted if len(string) > 0]
     return splitted
+
+
+@contextmanager
+def temporary_attribute_values(object_, attribute_value_mapping):
+    old_mapping = {attr: getattr(object_, attr) for attr in attribute_value_mapping}
+    try:
+        for attr, new_value in attribute_value_mapping.items():
+            setattr(object_, attr, new_value)
+        yield object_
+    finally:
+        for attr, new_value in old_mapping.items():
+            setattr(object_, attr, new_value)

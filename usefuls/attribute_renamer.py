@@ -1,5 +1,7 @@
 def define_attribute_aliases(class_, attribute_name_mapping):
     class AttributeRenamer(class_):
+        __name__ = class_.__name__
+        
         def __init__(self, *args, **kwargs):
             super(AttributeRenamer, self).__init__(
                 *args,

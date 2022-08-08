@@ -764,17 +764,18 @@ class Computer:
         if interface is None:
             interface = self.get_interface_with_ip(self.routing_table[packet["IP"].dst_ip].interface_ip)
 
-        if packet.is_valid():
-            interface.send(packet)
+        if not packet.is_valid():
+            return
 
-            self._sniff_packet_on_relevant_raw_sockets(
-                ReturnedPacket(packet, PacketMetadata(
-                    interface,
-                    MainLoop.instance.time(),
-                    PACKET.DIRECTION.OUTGOING
-                )),
-                sending_socket=sending_socket,
-            )
+        interface.send(packet)
+        self._sniff_packet_on_relevant_raw_sockets(
+            ReturnedPacket(packet, PacketMetadata(
+                interface,
+                MainLoop.instance.time(),
+                PACKET.DIRECTION.OUTGOING
+            )),
+            sending_socket=sending_socket,
+        )
 
     def send_with_ethernet(self, dst_mac, dst_ip, data):
         """

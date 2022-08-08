@@ -1,5 +1,6 @@
-from consts import OPCODES
 from packets.protocol import Protocol
+
+from consts import OPCODES
 
 
 class FTP(Protocol):

@@ -5,7 +5,60 @@ from computing.internals.processes.abstracts.process import Process, WaitingForP
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
-from packets.stp import BID
+
+
+class BID:
+    """
+    A Bridge Identifier.
+    This is a unique ID for each switch in a STP session.
+    I consists of a priority and the switches MAC address (one of them).
+    """
+    def __init__(self, priority, mac, computer_name):
+        """
+        Initiates a BID object.
+        :param priority: The priority of the switch
+        :param mac: one of the `MACAddress`-s of the switch.
+        """
+        self.priority = priority
+        self.mac = mac
+        self.computer_name = computer_name
+        self.done_loading = True
+
+    @property
+    def value(self):
+        """
+        The numerical value of the BID.
+        :return: an integer value of the BID..
+        """
+        return int(str(self.priority) + str(self.mac.as_number()))
+
+    def __gt__(self, other):
+        """
+        Allows to use the `this_BID > other_BID` notation
+        :param other: another `BID` object or a number.
+        :return: whether or not this is greater then the other.
+        """
+        if isinstance(other, int) or isinstance(other, float):
+            return self.value > other
+        if isinstance(other, self.__class__):
+            return self.value > other.value
+        raise STPError(f"Cannot compare BID with this type: {type(other).__name__}!!!!")
+
+    def __repr__(self):
+        """The String representation of the BID"""
+        return f"{self.priority}{self.mac} ({self.computer_name})"
+
+    def __str__(self):
+        """The short string representation of the BID"""
+        return f"{self.priority}{self.mac}"
+
+    def __hash__(self):
+        """For using this as dictionary keys"""
+        return hash(self.value)
+
+    def __eq__(self, other):
+        """Returns whether or not two BID objects are equal"""
+        return self.value == other.value
 
 
 class STPPort:
@@ -87,6 +140,8 @@ class STPProcess(Process):
         Sends the STP packet with the information of the current state of the switch.
         :return: None
         """
+        self.computer.send()
+        # TODO: are STP sockets a thing? should they be?
         self.computer.send_stp(self.my_bid,
                                self.root_bid,
                                self.distance_to_root,
@@ -95,7 +150,7 @@ class STPProcess(Process):
 
     def _update_root(self, new_root_bid, distance_to_new_root, root_declaration_time, receiving_port):
         """
-        Updates the root switch according to the inforamtion from other received STP packets.
+        Updates the root switch according to the information from other received STP packets.
         :param new_root_bid: The `BID` of the new root.
         :param distance_to_new_root: the distance that the switch that sent this STP packet reports it has to the root switch.
         :param receiving_port: The `Interface` that received the STP packet.

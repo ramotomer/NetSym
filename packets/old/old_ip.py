@@ -1,6 +1,7 @@
+from packets.protocol import Protocol
+
 from address.ip_address import IPAddress
 from consts import TTL, OS
-from packets.protocol import Protocol
 
 
 class IP(Protocol):

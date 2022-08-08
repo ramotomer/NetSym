@@ -1,4 +1,6 @@
 from exceptions import *
+from usefuls.attribute_renamer import define_attribute_aliases
+from usefuls.funcs import temporary_attribute_values
 
 
 def get_packet_attribute(packet, attribute_name, containing_protocols):
@@ -62,3 +64,39 @@ class ScapyOptions:
 
     def __repr__(self):
         return str(self.options)
+
+
+class ScapyRenamedPacketField:
+    def __init__(self, new_name, field_object):
+        self.field_object = field_object
+        self.new_name = new_name
+
+    def __getattr__(self, item):
+        if item == "name":
+            return self.new_name
+        return getattr(self.field_object, item)
+
+
+def define_scapy_packet_attribute_aliases(class_, attribute_name_mapping):
+    """
+    Scapy has ugly attribute names                 (ciaddr, dport)
+    We want to add our aliases that would work too (client_ip, dst_port)
+    `define_attribute_aliases` allows us to do so - but the `show` method still prints with the bad names
+
+    This method temporarily sets the field names to be our better names, calls the `show` method,
+        and set field names back as they were
+    """
+    class_ = define_attribute_aliases(class_, attribute_name_mapping)
+    attribute_value_mapping = {'fields_desc': [
+        ScapyRenamedPacketField(attribute_name_mapping.get(field.name, field.name), field)
+        for field in class_.fields_desc
+    ]}
+
+    class WithOverriddenShowMethod(class_):
+        __name__ = class_.__name__
+
+        def show(self, *args, **kwargs):
+            with temporary_attribute_values(self, attribute_value_mapping):
+                super(WithOverriddenShowMethod, self).show(*args, **kwargs)
+
+    return WithOverriddenShowMethod

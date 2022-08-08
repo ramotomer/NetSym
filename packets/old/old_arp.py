@@ -1,7 +1,8 @@
+from packets.protocol import Protocol
+
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
 from consts import OPCODES
-from packets.protocol import Protocol
 
 
 class ARP(Protocol):

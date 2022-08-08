@@ -1,7 +1,8 @@
 import copy
 
-from consts import *
 from packets.protocol import Protocol
+
+from consts import *
 
 
 class TCP(Protocol):

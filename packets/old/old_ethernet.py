@@ -1,5 +1,6 @@
-from address.mac_address import MACAddress
 from packets.protocol import Protocol
+
+from address.mac_address import MACAddress
 
 
 class Ethernet(Protocol):

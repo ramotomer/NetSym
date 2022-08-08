@@ -1,7 +1,8 @@
 import copy
 
-from exceptions import STPError
 from packets.protocol import Protocol
+
+from exceptions import STPError
 
 
 class LogicalLinkControl(Protocol):
