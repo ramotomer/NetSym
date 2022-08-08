@@ -5,8 +5,10 @@ from computing.internals.processes.kernelmode_processes.switching_process import
 from computing.internals.processes.usermode_processes.stp_process import STPProcess
 from computing.internals.routing_table import RoutingTable
 from computing.internals.wireless_interface import WirelessInterface
-from consts import OS, PROTOCOLS, IMAGES, CONNECTIONS
+from consts import OS, PROTOCOLS, IMAGES, CONNECTIONS, ADDRESSES
+from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
+from packets.all import LLC, STP
 
 
 class Switch(Computer):
@@ -61,18 +63,31 @@ class Switch(Computer):
         if not self.process_scheduler.is_usermode_process_running_by_type(STPProcess) and self.interfaces:
             self.process_scheduler.start_usermode_process(STPProcess)
 
-    def send_stp(self, sender_bid, root_bid, distance_to_root, root_declaration_time):
+    def send_stp(self, sender_bid, root_bid, distance_to_root, root_declaration_time, sending_interval, root_timeout):
         """
         Sends an STP packet with the given information on all interfaces. (should only be used on a switch)
         :param sender_bid: a `BID` object of the sending switch.
         :param root_bid: a `BID` object of the root switch.
         :param distance_to_root: The switch's distance to the root switch.
-        :return: None
+        :param root_declaration_time: The timestamp of the last time the root announced itself
+        :param sending_interval: (seconds) The amount of time until the next periodic packet
+        :param root_timeout: (seconds) How long do you wait before you forget the root when you don't hear from it
         """
         for interface in self.interfaces:
             interface.send_with_ethernet(MACAddress.stp_multicast(),
-                                         LogicalLinkControl(
-                                             STP(sender_bid, root_bid, distance_to_root, root_declaration_time)))
+                                         LLC(src_service_access_point=ADDRESSES.LLC.STP_SAP,
+                                             dst_service_access_point=ADDRESSES.LLC.STP_SAP,
+                                             control_field=ADDRESSES.LLC.STP_CONTROL_FIELD) /
+                                         STP(
+                                            root_id=root_bid.priority,
+                                            root_mac=str(root_bid.mac),
+                                            path_cost=distance_to_root,
+                                            bridge_id=sender_bid.priority,
+                                            bridge_mac=str(sender_bid.mac),
+                                            age=int(MainLoop.instance.time_since(root_declaration_time)),
+                                            max_age=root_timeout,
+                                            hello_time=sending_interval,
+                                         ))
 
     @classmethod
     def from_dict_load(cls, dict_):

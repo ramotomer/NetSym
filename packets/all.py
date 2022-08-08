@@ -1,6 +1,6 @@
 from scapy.layers.dhcp import BOOTP
 from scapy.layers.inet import IP, UDP, TCP, ICMP
-from scapy.layers.l2 import Ether, ARP
+from scapy.layers.l2 import Ether, ARP, LLC, STP
 
 from packets.usefuls import ScapyOptions, define_scapy_packet_attribute_aliases
 from usefuls.attribute_renamer import with_parsed_attributes
@@ -30,6 +30,31 @@ IP = define_scapy_packet_attribute_aliases(
         "fragment_offset": "frag",
         "protocol":        "proto",
         "checksum":        "chksum",
+    }
+)
+LLC = define_scapy_packet_attribute_aliases(
+    LLC,
+    {
+        "src_service_access_point": "ssap",
+        "dst_service_access_point": "dsap",
+        "control_field": "ctrl",
+    }
+)
+STP = define_scapy_packet_attribute_aliases(
+    STP,
+    {
+        "protocol": "proto",
+        "bpdu_type": "bpdutype",
+        "bpdu_flags": "bpduflags",
+        "root_id": "rootid",
+        "root_mac": "rootmac",
+        "path_cost": "pathcost",
+        "bridge_id": "bridgeid",
+        "bridge_mac": "bridgemac",
+        "port_id": "portid",
+        "max_age": "maxage",
+        "hello_time": "helltime",
+        "forward_delay": "fwddelay",
     }
 )
 ICMP = define_scapy_packet_attribute_aliases(

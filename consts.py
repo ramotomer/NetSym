@@ -18,6 +18,7 @@ def debugp(*strings):
 
 SENDING_GRAT_ARPS = False
 
+
 class ADDRESSES:
     class MAC:
         BROADCAST = 'ff:ff:ff:ff:ff:ff'
@@ -32,6 +33,10 @@ class ADDRESSES:
         SUBNET_SEPARATOR = '/'
         DEFAULT_SUBNET_MASK = '24'
         BIT_LENGTH = 32
+
+    class LLC:
+        STP_SAP = 0x42
+        STP_CONTROL_FIELD = 0x3
 
 
 class OS:
