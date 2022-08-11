@@ -35,9 +35,9 @@ def get_tcp_packet_data_length(tcp_packet):
     :param tcp_packet:
     :return:
     """
-    layer_names = [layer.__name__ for layer in tcp_packet.data.getlayers()]
+    layer_names = [layer.__name__ for layer in tcp_packet.data.layers()]
     try:
-        return len(tcp_packet.data.getlayers()[layer_names.index("TCP") + 1].build())
+        return len(tcp_packet.data.layers()[layer_names.index("TCP") + 1].build())
     except IndexError:
         return 1
 

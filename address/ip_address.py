@@ -220,6 +220,7 @@ class IPAddress:
         """Test whether two ip addresses are equal or not (does no include subnet mask)"""
         if other is None:
             return False
+        other = IPAddress(other)
         return self.string_ip == other.string_ip
         # ^ maybe i broke something when i did not also check the subnet mask, take into consideration....
 

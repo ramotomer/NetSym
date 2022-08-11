@@ -6,6 +6,13 @@ class NetworkSimulationError(Exception):
     """
 
 
+class AttributeError_(NetworkSimulationError):
+    """
+    For some reason pyglet makes attribute errors silent.
+    I catch them early and replace them with this custom AttributeError
+    """
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 

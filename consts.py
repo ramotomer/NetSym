@@ -67,19 +67,26 @@ class TCPFlag(object):
     def __repr__(self):
         return self.name
 
+    def __add__(self, other):
+        return self.name + str(other)
+
 
 class OPCODES:
     class ARP:
-        REPLY = "ARP reply"
-        REQUEST = "ARP request"
+        REQUEST = 1
+        REPLY = 2
         GRAT = "gratuitous ARP"
 
     class ICMP:
-        REQUEST = "ping request"
-        REPLY = "ping reply"
-        TIME_EXCEEDED = "ICMP Time Exceeded!"
-        UNREACHABLE = "ICMP Unreachable"
-        PORT_UNREACHABLE = 3
+        class TYPES:
+            REQUEST = 8
+            REPLY = 0
+            TIME_EXCEEDED = 11
+            UNREACHABLE = 3
+
+        class CODES:
+            NETWORK_UNREACHABLE = 0
+            PORT_UNREACHABLE = 3
 
     class DHCP:
         DISCOVER = "discover"
@@ -422,6 +429,13 @@ class ANIMATIONS:
     X_COUNT, Y_COUNT = 5, 3
 
 
+def get_dominant_tcp_flag(tcp):
+    for flag in OPCODES.TCP.FLAGS_DISPLAY_PRIORITY:
+        if flag in tcp.flags:
+            return flag if not tcp.is_retransmission else flag + OPCODES.TCP.RETRANSMISSION
+    return TCPFlag("No flags", 0)
+
+
 class PACKET:
     class DIRECTION:
         RIGHT = 'R'
@@ -430,6 +444,13 @@ class PACKET:
 
         INCOMING = 'INCOMING'
         OUTGOING = 'OUTGOING'
+
+    TYPE_TO_OPCODE_FUNCTION = {
+        "ARP": lambda arp: arp.opcode,
+        "ICMP": (lambda icmp: (icmp.type, icmp.code) if icmp.type == OPCODES.ICMP.TYPES.UNREACHABLE else icmp.type),
+        "DHCP": lambda dhcp: dhcp.parsed_options.message_type,
+        "TCP": get_dominant_tcp_flag,
+    }
 
     TYPE_TO_IMAGE = {
         "Ethernet": IMAGES.PACKETS.ETHERNET,
@@ -448,11 +469,11 @@ class PACKET:
             OPCODES.DHCP.PACK: IMAGES.PACKETS.DHCP.PACK,
         },
         "ICMP": {
-            OPCODES.ICMP.REQUEST: IMAGES.PACKETS.ICMP.REQUEST,
-            OPCODES.ICMP.REPLY: IMAGES.PACKETS.ICMP.REPLY,
-            OPCODES.ICMP.TIME_EXCEEDED: IMAGES.PACKETS.ICMP.TIME_EXCEEDED,
-            OPCODES.ICMP.UNREACHABLE: IMAGES.PACKETS.ICMP.UNREACHABLE,
-            OPCODES.ICMP.PORT_UNREACHABLE: IMAGES.PACKETS.ICMP.PORT_UNREACHABLE,
+            OPCODES.ICMP.TYPES.REQUEST: IMAGES.PACKETS.ICMP.REQUEST,
+            OPCODES.ICMP.TYPES.REPLY: IMAGES.PACKETS.ICMP.REPLY,
+            OPCODES.ICMP.TYPES.TIME_EXCEEDED: IMAGES.PACKETS.ICMP.TIME_EXCEEDED,
+            (OPCODES.ICMP.TYPES.UNREACHABLE, OPCODES.ICMP.CODES.NETWORK_UNREACHABLE): IMAGES.PACKETS.ICMP.UNREACHABLE,
+            (OPCODES.ICMP.TYPES.UNREACHABLE, OPCODES.ICMP.CODES.PORT_UNREACHABLE): IMAGES.PACKETS.ICMP.PORT_UNREACHABLE,
         },
         "TCP": {
             OPCODES.TCP.SYN: IMAGES.PACKETS.TCP.SYN,

@@ -1,3 +1,5 @@
+from scapy.packet import Raw
+
 from exceptions import *
 from gui.tech.packet_graphics import PacketGraphics
 from packets.all import Ether
@@ -33,11 +35,10 @@ class Packet:
     def deepest_layer(self):
         """
         Returns a pointer to the deepest layer in the packet.
-        :return: A `Protocol` subclass object (ARP, Ethernet, etc...) which
+        :return: A protocol object (ARP, Ethernet, etc...) which
         is the deepest layer in the packet. Not including strings and so on.
-        Must be a `Protocol` subclass instance.
         """
-        self.data.getlayers()
+        return self.data.getlayer([layer for layer in self.data.layers() if not isinstance(layer, (Raw, str))][-1])
 
     def copy(self):
         """
@@ -61,12 +62,10 @@ class Packet:
         :param name: The name of the layer one wishes to receive.
         :return: The layer object if it exists, if not, raises KeyError.
         """
-        layer_classes = self.data.getlayers()
-        layer_names = [layer.__name__ for layer in layer_classes]
-        try:
-            return self.data.getlayer(layer_classes[layer_names.index(name)])
-        except ValueError:
-            raise NoSuchLayerError(f"The packet does not contain the layer '{name}'! \n{self.multiline_repr()}")
+        for layer_class in self.data.layers():
+            if any(layer_superclass.__name__ == name for layer_superclass in layer_class.__mro__):
+                return self.data.getlayer(layer_class)
+        raise NoSuchLayerError(f"The packet does not contain the layer '{name}'! \n{self.multiline_repr()}")
 
     def __contains__(self, item):
         """

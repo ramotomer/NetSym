@@ -1,6 +1,7 @@
 from computing.internals.processes.abstracts.process import Process
 from consts import COMPUTER, INTERFACES, OPCODES
 from exceptions import SocketIsClosedError
+from packets.usefuls import get_layer_opcode, get_original_layer_name
 
 
 class SniffingProcess(Process):
@@ -36,7 +37,7 @@ class SniffingProcess(Process):
         packet, packet_metadata = returned_packet.packet_and_metadata
 
         deepest = packet.deepest_layer()
-        line = deepest.opcode if hasattr(deepest, "opcode") else type(deepest).__name__
+        line = str(get_layer_opcode(deepest)) or get_original_layer_name(deepest)
         if 'TCP' in packet:
             line = f"TCP {' '.join([f for f in OPCODES.TCP.FLAGS_DISPLAY_PRIORITY if f in packet['TCP'].flags])}"
 

@@ -386,6 +386,9 @@ class Computer:
         if ip_address is None:
             # raise NoIPAddressError("The address that is given is None!!!")
             return
+        if isinstance(ip_address, str):
+            ip_address = IPAddress(ip_address)
+
         return any(interface.has_ip() and interface.ip.string_ip == ip_address.string_ip
                    for interface in self.all_interfaces)
 
@@ -436,7 +439,7 @@ class Computer:
 
         self.arp_cache.add_dynamic(arp.src_ip, arp.src_mac)
 
-        if arp.opcode == OPCODES.ARP.REQUEST and packet_metadata.interface.has_this_ip(arp.dst_ip):
+        if arp.opcode == OPCODES.ARP.REQUEST and packet_metadata.interface.has_this_ip(IPAddress(arp.dst_ip)):
             self.send_arp_reply(packet)  # Answer if request
 
     def _handle_ping(self, returned_packet):
@@ -447,12 +450,12 @@ class Computer:
         :return: None
         """
         packet, packet_metadata = returned_packet.packet_and_metadata
-        if (packet["ICMP"].opcode == OPCODES.ICMP.REQUEST) and (self.is_for_me(packet)):
+        if (packet["ICMP"].opcode == OPCODES.ICMP.TYPES.REQUEST) and (self.is_for_me(packet)):
             if packet_metadata.interface.has_this_ip(packet["IP"].dst_ip) or (
                     packet_metadata.interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):
                 # ^ only if the packet is for me also on the third layer!
                 dst_ip = packet["IP"].src_ip
-                self.start_ping_process(dst_ip, OPCODES.ICMP.REPLY)
+                self.start_ping_process(dst_ip, OPCODES.ICMP.TYPES.REPLY)
 
     def _handle_tcp(self, returned_packet):
         """
@@ -482,7 +485,9 @@ class Computer:
             return
 
         if packet["UDP"].dst_port not in self.get_open_ports("UDP"):
-            self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip, ICMP(type=3, code=OPCODES.ICMP.PORT_UNREACHABLE))
+            self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip, ICMP(
+                type=OPCODES.ICMP.TYPES.UNREACHABLE,
+                code=OPCODES.ICMP.CODES.PORT_UNREACHABLE))
             # TODO: add the original packet to the ICMP port unreachable packet
             return
 
@@ -552,7 +557,7 @@ class Computer:
                 self.packet_types_and_handlers[packet_type](returned_packet)
                 continue
 
-    def start_ping_process(self, ip_address, opcode=OPCODES.ICMP.REQUEST, count=1):
+    def start_ping_process(self, ip_address, opcode=OPCODES.ICMP.TYPES.REQUEST, count=1):
         """
         Starts sending a ping to another computer.
         :param ip_address: an `IPAddress` object to ping.
@@ -844,7 +849,10 @@ class Computer:
         """
         interface_ip = self.routing_table[ip_address].interface_ip
         interface = self.get_interface_with_ip(interface_ip)
-        arp = ARP(op=OPCODES.ARP.REQUEST, psrc=str(interface.ip), pdst=str(ip_address), hwsrc=str(interface.mac))
+        arp = ARP(opcode=OPCODES.ARP.REQUEST,
+                  src_ip=str(interface.ip),
+                  dst_ip=str(ip_address),
+                  src_mac=str(interface.mac))
         if interface.ip is None:
             arp = ARP.create_probe(ip_address, interface.mac)
         self.send(interface.ethernet_wrap(MACAddress.broadcast(), arp), interface)
@@ -886,12 +894,12 @@ class Computer:
                     interface
                 )
 
-    def send_ping_to(self, mac_address, ip_address, opcode=OPCODES.ICMP.REQUEST, data=''):
+    def send_ping_to(self, mac_address, ip_address, opcode=OPCODES.ICMP.TYPES.REQUEST, data=''):
         """
         Send an ICMP packet to the a given ip address.
         :param ip_address: The destination `IPAddress` object of the ICMP packet
         :param mac_address: The destination `MACAddress` object of the ICMP packet
-        :param opcode: the ICMP opcode (reply / request / time exceeded)
+        :param opcode: the ICMP TYPE (reply / request / time exceeded / unreachable)
         :return: None
         """
         self.send_to(mac_address, ip_address, ICMP(type=opcode) / data)
@@ -904,7 +912,7 @@ class Computer:
         """
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
         self.send(
-            interface.ethernet_wrap(dst_mac, IP(src=str(interface.ip), dst=str(dst_ip), ttl=TTL.MAX) / ICMP(type=OPCODES.ICMP.TIME_EXCEEDED) / data),
+            interface.ethernet_wrap(dst_mac, IP(src=str(interface.ip), dst=str(dst_ip), ttl=TTL.MAX) / ICMP(type=OPCODES.ICMP.TYPES.TIME_EXCEEDED) / data),
             interface
         )
 

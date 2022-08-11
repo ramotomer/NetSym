@@ -17,11 +17,22 @@ class MACAddress:
         Initiates a MACAddress object from a ip_layer
         :param string_mac: The string mac ('aa:bb:cc:11:22:76' for example)
         """
+        if isinstance(string_mac, self.__class__):
+            self.string_mac = string_mac.string_mac
+            return
+
+        if not isinstance(string_mac, str):
+            raise InvalidAddressError(f"Input of `MACAddress` must be a string! or another `MACAddress`! but not {type(string_mac)}")
+
         if not MACAddress.is_valid(string_mac):
             raise InvalidAddressError(f"This address is not a valid MAC address: {string_mac}")
+
         self.string_mac = string_mac
         self.__class__.generated_addresses.append(string_mac)
-        self.vendor = ADDRESSES.MAC.SEPARATOR.join(string_mac.split(ADDRESSES.MAC.SEPARATOR)[0:3])
+
+    @property
+    def vendor(self):
+        return ADDRESSES.MAC.SEPARATOR.join(self.string_mac.split(ADDRESSES.MAC.SEPARATOR)[0:3])
 
     def is_broadcast(self):
         """Returns if a MAC address is the broadcast MAC or not"""
@@ -86,14 +97,12 @@ class MACAddress:
         splitted_address = address.split(ADDRESSES.MAC.SEPARATOR)
         return len(splitted_address) == 6 and all([is_hex(part) and len(part) == 2 for part in splitted_address])
 
-    @staticmethod
-    def as_bytes(address):
+    def as_bytes(self):
         """
         Returns a byte representation of the MAC address
-        :param address: A MACAddress object.
         :return: a `bytes` object which is the representation of the mac address.
         """
-        address_as_numbers = [int(hex_num, 16) for hex_num in address.string_mac.split(ADDRESSES.MAC.SEPARATOR)]
+        address_as_numbers = [int(hex_num, 16) for hex_num in self.string_mac.split(ADDRESSES.MAC.SEPARATOR)]
         return bytes(address_as_numbers)
 
     def as_number(self):

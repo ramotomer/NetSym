@@ -1,6 +1,7 @@
 from collections import namedtuple
 
 from address.ip_address import IPAddress
+from address.mac_address import MACAddress
 from consts import COMPUTER
 from exceptions import InvalidAddressError
 from gui.main_loop import MainLoop
@@ -38,25 +39,25 @@ class ArpCache:
 
     def add_dynamic(self, ip_address, mac_address):
         """
-        Adds a dynamic
-        :param ip_address: IPAddress
-        :param mac_address: MACAddress
+        Adds a dynamic arp cache item
+        :param ip_address: IPAddress or str
+        :param mac_address: MACAddress or str
         :return:
         """
-        self.__cache[ip_address] = ARPCacheItem(mac_address,
-                                                MainLoop.instance.time(),
-                                                COMPUTER.ARP_CACHE.DYNAMIC)
+        self.__cache[IPAddress(ip_address)] = ARPCacheItem(MACAddress(mac_address),
+                                                           MainLoop.instance.time(),
+                                                           COMPUTER.ARP_CACHE.DYNAMIC)
 
     def add_static(self, ip_address, mac_address):
         """
-        Adds a dynamic
-        :param ip_address: IPAddress
-        :param mac_address: MACAddress
+        Adds a static arp cache item
+        :param ip_address: IPAddress or str
+        :param mac_address: MACAddress or str
         :return:
         """
-        self.__cache[ip_address] = ARPCacheItem(mac_address,
-                                                MainLoop.instance.time(),
-                                                COMPUTER.ARP_CACHE.STATIC)
+        self.__cache[IPAddress(ip_address)] = ARPCacheItem(mac_address,
+                                                           MainLoop.instance.time(),
+                                                           COMPUTER.ARP_CACHE.STATIC)
 
     def wipe(self):
         """

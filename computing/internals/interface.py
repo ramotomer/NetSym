@@ -102,6 +102,7 @@ class Interface:
         :param ip_address: IPAddress
         :return: boolean
         """
+        ip_address = IPAddress(ip_address)
         return self.has_ip() and self.ip.string_ip == ip_address.string_ip
 
     def is_connected(self):
@@ -236,11 +237,12 @@ class Interface:
         :param dst_mac: a `MACAddress` object of the destination of the packet.
         :return: the ready `Packet` object
         """
-        return Packet(Ether(str(self.mac), str(dst_mac)) / data)
+        return Packet(Ether(src_mac=str(self.mac), dst_mac=str(dst_mac)) / data)
 
     def send_with_ethernet(self, dst_mac, protocol):
         """
         Receives a `Protocol` object, wraps it with ethernet and sends it.
+        :param dst_mac: `MACAddress` object which will be the destination address of the ethernet frame
         :param protocol: a `Protocol` instance.
         :return: None
         """

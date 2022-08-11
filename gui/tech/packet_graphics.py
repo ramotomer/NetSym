@@ -2,6 +2,7 @@ from consts import *
 from gui.abstracts.animation_graphics import AnimationGraphics
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_loop import MainLoop
+from packets.usefuls import get_original_layer_name
 from usefuls.funcs import with_args
 
 
@@ -74,10 +75,11 @@ class PacketGraphics(ImageGraphics):
         :param layer: The `Protocol` instance that you wish to get an image for.
         :return: a string of the corresponding image's location.
         """
+        name = get_original_layer_name(layer)
 
-        if hasattr(layer, "opcode"):
-            return PACKET.TYPE_TO_IMAGE[type(layer).__name__][layer.opcode]
-        return PACKET.TYPE_TO_IMAGE[type(layer).__name__]
+        if name in PACKET.TYPE_TO_OPCODE_FUNCTION:
+            return PACKET.TYPE_TO_IMAGE[name][PACKET.TYPE_TO_OPCODE_FUNCTION[name](layer)]
+        return PACKET.TYPE_TO_IMAGE[name]
 
     def start_viewing(self, user_interface):
         """

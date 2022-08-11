@@ -274,7 +274,7 @@ class DHCPServer(Process):
                         continue
                     {OPCODES.DHCP.DISCOVER: self.send_offer,
                      OPCODES.DHCP.REQUEST: self.send_pack}.get(
-                        packet["DHCP"].opcode,
+                        packet["DHCP"].parsed_options.message_type,
                         self.raise_on_unknown_packet
                     )(packet, interface)
 

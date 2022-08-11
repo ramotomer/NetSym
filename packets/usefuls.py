@@ -1,3 +1,4 @@
+from consts import PACKET
 from exceptions import *
 from usefuls.attribute_renamer import define_attribute_aliases
 from usefuls.funcs import temporary_attribute_values
@@ -93,10 +94,31 @@ def define_scapy_packet_attribute_aliases(class_, attribute_name_mapping):
     ]}
 
     class WithOverriddenShowMethod(class_):
-        __name__ = class_.__name__
+        original_name = getattr(class_, 'original_name', class_.__name__)
 
         def show(self, *args, **kwargs):
             with temporary_attribute_values(self, attribute_value_mapping):
                 super(WithOverriddenShowMethod, self).show(*args, **kwargs)
 
     return WithOverriddenShowMethod
+
+
+def get_original_layer_name(layer):
+    """
+
+    :param layer:
+    :return:
+    """
+    return getattr(layer, 'original_name', type(layer).__name__)
+
+
+def get_layer_opcode(layer):
+    """
+
+    :param layer:
+    :return:
+    """
+    try:
+        return PACKET.TYPE_TO_OPCODE_FUNCTION[get_original_layer_name(layer)](layer)
+    except KeyError:
+        return None

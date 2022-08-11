@@ -1,6 +1,6 @@
 import time
 
-from exceptions import NoSuchGraphicsObjectError
+from exceptions import NoSuchGraphicsObjectError, AttributeError_
 from usefuls.funcs import get_the_one
 
 
@@ -227,13 +227,18 @@ class MainLoop:
         The `self.call_functions` list is the list of function that it calls with their arguments.
         :return: None
         """
-        self.main_window.clear()
+        function = None
+        try:
+            self.main_window.clear()
 
-        self.update_time()
-        self.select_selected_and_marked_objects()
-        self.main_window.user_interface.show()
+            self.update_time()
+            self.select_selected_and_marked_objects()
+            self.main_window.user_interface.show()
 
-        for function, args, kwargs, can_be_paused in self.call_functions:
-            if self.is_paused and can_be_paused:
-                continue
-            function(*args, **kwargs)
+            for function, args, kwargs, can_be_paused in self.call_functions:
+                if self.is_paused and can_be_paused:
+                    continue
+                function(*args, **kwargs)
+        except AttributeError as e:
+            # for some reason pyglet makes AttributeErrors silent - we reraise them or else it is very hard to debug
+            raise AttributeError_((f"in function: {function}" if function else ''), *e.args)

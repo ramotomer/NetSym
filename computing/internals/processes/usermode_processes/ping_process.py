@@ -8,7 +8,7 @@ class SendPing(Process):
     """
     This is a process for sending a ping request to another computer and receiving the reply.
     """
-    def __init__(self, pid, computer, ip_address, opcode=OPCODES.ICMP.REQUEST, count=1):
+    def __init__(self, pid, computer, ip_address, opcode=OPCODES.ICMP.TYPES.REQUEST, count=1):
         super(SendPing, self).__init__(pid, computer)
         self.dst_ip = ip_address
         self.ping_opcode = opcode
@@ -36,12 +36,12 @@ class SendPing(Process):
         """
         def tester(packet):
             if "ICMP" in packet:
-                if packet["ICMP"].opcode == OPCODES.ICMP.REPLY:
+                if packet["ICMP"].type == OPCODES.ICMP.TYPES.REPLY:
                     if packet["IP"].src_ip == ip_address and self.computer.has_this_ip(packet["IP"].dst_ip):
                         return True
                     if self.computer.has_this_ip(self.dst_ip) and packet["IP"].src_ip == self.computer.loopback.ip:
                         return True
-                if packet["ICMP"].opcode == OPCODES.ICMP.UNREACHABLE:
+                if packet["ICMP"].type == OPCODES.ICMP.TYPES.UNREACHABLE:
                     return True
             return False
         return tester
@@ -51,7 +51,7 @@ class SendPing(Process):
         Receives the `ReturnedPacket` object that was received and prints out to the `OutputConsole` an appropriate message
         """
         packet = returned_packet.packet
-        if packet["ICMP"].opcode == OPCODES.ICMP.UNREACHABLE:
+        if packet["ICMP"].type == OPCODES.ICMP.TYPES.REPLY:
             self.computer.print("destination unreachable :(")
         else:
             self.computer.print("ping reply!")
@@ -62,7 +62,7 @@ class SendPing(Process):
         If the address is unknown, first it sends an ARP and waits for a reply.
         :return: a generator of `WaitingForPacket` namedtuple-s.
         """
-        if self.ping_opcode == OPCODES.ICMP.REQUEST:
+        if self.ping_opcode == OPCODES.ICMP.TYPES.REQUEST:
             self.computer.print(f"pinging {self.dst_ip} with some bytes")
 
         for _ in my_range(self.count):
@@ -74,7 +74,7 @@ class SendPing(Process):
             except NoIPAddressError:
                 return
 
-            if self.ping_opcode == OPCODES.ICMP.REQUEST:
+            if self.ping_opcode == OPCODES.ICMP.TYPES.REQUEST:
                 returned_packet = ReturnedPacket()
                 yield WaitingForPacket(self.ping_reply_from(self.dst_ip), returned_packet)
                 self._print_output(returned_packet)
