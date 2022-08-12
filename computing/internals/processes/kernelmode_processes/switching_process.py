@@ -96,6 +96,7 @@ class SwitchingProcess(Process):
         while True:
             new_packets = ReturnedPacket()
             yield WaitingForPacket(self.is_switchable_packet, new_packets)
+            #TODO: move to using the python3 `generator.send` method!!! it is just what you need!
 
             self.send_new_packets_to_destinations(new_packets)
             self.update_switch_table_from_packets(new_packets)

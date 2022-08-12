@@ -1,7 +1,5 @@
 from consts import PACKET
 from exceptions import *
-from usefuls.attribute_renamer import define_attribute_aliases
-from usefuls.funcs import temporary_attribute_values
 
 
 def get_packet_attribute(packet, attribute_name, containing_protocols):
@@ -77,30 +75,40 @@ class ScapyRenamedPacketField:
             return self.new_name
         return getattr(self.field_object, item)
 
+    def __repr__(self):
+        return f"new_name: '{self.new_name}' of Renamed({self.field_object!r})"
 
-def define_scapy_packet_attribute_aliases(class_, attribute_name_mapping):
-    """
-    Scapy has ugly attribute names                 (ciaddr, dport)
-    We want to add our aliases that would work too (client_ip, dst_port)
-    `define_attribute_aliases` allows us to do so - but the `show` method still prints with the bad names
-
-    This method temporarily sets the field names to be our better names, calls the `show` method,
-        and set field names back as they were
-    """
-    class_ = define_attribute_aliases(class_, attribute_name_mapping)
-    attribute_value_mapping = {'fields_desc': [
-        ScapyRenamedPacketField(attribute_name_mapping.get(field.name, field.name), field)
-        for field in class_.fields_desc
-    ]}
-
-    class WithOverriddenShowMethod(class_):
-        original_name = getattr(class_, 'original_name', class_.__name__)
-
-        def show(self, *args, **kwargs):
-            with temporary_attribute_values(self, attribute_value_mapping):
-                return super(WithOverriddenShowMethod, self).show(*args, **kwargs)
-
-    return WithOverriddenShowMethod
+# TODO: make this vvvvvv Work! (for a `multiline_repr` method with more indicative attribute names :)
+# def define_scapy_packet_attribute_aliases(class_, attribute_name_mapping):
+#     """
+#     Scapy has ugly attribute names                 (ciaddr, dport)
+#     We want to add our aliases that would work too (client_ip, dst_port)
+#     `define_attribute_aliases` allows us to do so - but the `show` method still prints with the bad names
+#
+#     This method temporarily sets the field names to be our better names, calls the `show` method,
+#         and set field names back as they were
+#     """
+#     class_ = define_attribute_aliases(class_, attribute_name_mapping)
+#     scapy_names_to_good_names = reverse_dict(attribute_name_mapping)
+#
+#     class WithOverriddenShowMethod(class_):
+#         original_name = getattr(class_, 'original_name', class_.__name__)
+#
+#         def _show_or_dump(self, *args, **kwargs):
+#             with temporary_attribute_values(
+#                 self,
+#                 {
+#                     'fields_desc': [
+#                         ScapyRenamedPacketField(scapy_names_to_good_names.get(field.name, field.name), field)
+#                         for field in class_.fields_desc
+#                     ],
+#                     'fields': change_dict_key_names(self.fields, scapy_names_to_good_names),
+#                     'default_fields': change_dict_key_names(self.default_fields, scapy_names_to_good_names),
+#                 }
+#             ):
+#                 return super(WithOverriddenShowMethod, self)._show_or_dump(*args, **kwargs)
+#
+#     return WithOverriddenShowMethod
 
 
 def get_original_layer_name(layer):

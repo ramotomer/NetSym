@@ -2,17 +2,17 @@ from scapy.layers.dhcp import BOOTP, DHCP
 from scapy.layers.inet import IP, UDP, TCP, ICMP
 from scapy.layers.l2 import Ether, ARP, LLC, STP
 
-from packets.usefuls import ScapyOptions, define_scapy_packet_attribute_aliases
-from usefuls.attribute_renamer import with_parsed_attributes
+from packets.usefuls import ScapyOptions
+from usefuls.attribute_renamer import with_parsed_attributes, define_attribute_aliases
 
-Ether = define_scapy_packet_attribute_aliases(
+Ether = define_attribute_aliases(
     Ether,
     {
         "src_mac": "src",
         "dst_mac": "dst",
     }
 )
-ARP = define_scapy_packet_attribute_aliases(
+ARP = define_attribute_aliases(
     ARP,
     {
         "hardware_type":           "hwtype",
@@ -20,18 +20,13 @@ ARP = define_scapy_packet_attribute_aliases(
         "hardware_address_length": "hwlen",
         "protocol_address_length": "plen",
         "opcode":                  "op",
-        "hardware_src_address":    "hwsrc",
-        "hardware_dst_address":    "hwdst",
-        "protocol_src_address":    "psrc",
-        "protocol_dst_address":    "pdst",
-
         "src_mac":                 "hwsrc",
         "src_ip":                  "psrc",
         "dst_mac":                 "hwdst",
         "dst_ip":                  "pdst",
     }
 )
-IP = define_scapy_packet_attribute_aliases(
+IP = define_attribute_aliases(
     IP,
     {
         "src_ip":          "src",
@@ -42,7 +37,7 @@ IP = define_scapy_packet_attribute_aliases(
         "checksum":        "chksum",
     }
 )
-LLC = define_scapy_packet_attribute_aliases(
+LLC = define_attribute_aliases(
     LLC,
     {
         "src_service_access_point": "ssap",
@@ -50,7 +45,7 @@ LLC = define_scapy_packet_attribute_aliases(
         "control_field":            "ctrl",
     }
 )
-STP = define_scapy_packet_attribute_aliases(
+STP = define_attribute_aliases(
     STP,
     {
         "protocol":      "proto",
@@ -67,14 +62,14 @@ STP = define_scapy_packet_attribute_aliases(
         "forward_delay": "fwddelay",
     }
 )
-ICMP = define_scapy_packet_attribute_aliases(
+ICMP = define_attribute_aliases(
     ICMP,
     {
         "sequence": "seq",
         "checksum": "chksum",
     }
 )
-UDP = define_scapy_packet_attribute_aliases(
+UDP = define_attribute_aliases(
     UDP,
     {
         "src_port": "sport",
@@ -83,7 +78,7 @@ UDP = define_scapy_packet_attribute_aliases(
         "checksum": "chksum",
     }
 )
-TCP = define_scapy_packet_attribute_aliases(
+TCP = define_attribute_aliases(
     with_parsed_attributes(TCP, {"options": ScapyOptions}),
     {
         "src_port":        "sport",
@@ -95,7 +90,7 @@ TCP = define_scapy_packet_attribute_aliases(
         "window_size":     "window",
     }
 )
-BOOTP = define_scapy_packet_attribute_aliases(
+BOOTP = define_attribute_aliases(
     BOOTP,
     {
         "opcode":      "op",
