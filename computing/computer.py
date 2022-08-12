@@ -450,7 +450,7 @@ class Computer:
         :return: None
         """
         packet, packet_metadata = returned_packet.packet_and_metadata
-        if (packet["ICMP"].opcode == OPCODES.ICMP.TYPES.REQUEST) and (self.is_for_me(packet)):
+        if (packet["ICMP"].type == OPCODES.ICMP.TYPES.REQUEST) and (self.is_for_me(packet)):
             if packet_metadata.interface.has_this_ip(packet["IP"].dst_ip) or (
                     packet_metadata.interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):
                 # ^ only if the packet is for me also on the third layer!
@@ -471,7 +471,7 @@ class Computer:
         if not any(self._does_packet_match_tcp_socket_fourtuple(socket, packet)
                    for socket in self.sockets if socket.kind == COMPUTER.SOCKETS.TYPES.SOCK_STREAM) and \
                 not {OPCODES.TCP.RST} <= packet["TCP"].flags:
-            self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip,
+            self.send_to(packet["Ether"].src_mac, packet["IP"].src_ip,
                          TCP(dport=packet["TCP"].dst_port, sport=packet["TCP"].src_port, seq=0,
                              flags=OPCODES.TCP.RST))
 
@@ -485,7 +485,7 @@ class Computer:
             return
 
         if packet["UDP"].dst_port not in self.get_open_ports("UDP"):
-            self.send_to(packet["Ethernet"].src_mac, packet["IP"].src_ip, ICMP(
+            self.send_to(packet["Ether"].src_mac, packet["IP"].src_ip, ICMP(
                 type=OPCODES.ICMP.TYPES.UNREACHABLE,
                 code=OPCODES.ICMP.CODES.PORT_UNREACHABLE))
             # TODO: add the original packet to the ICMP port unreachable packet

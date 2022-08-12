@@ -98,7 +98,7 @@ def define_scapy_packet_attribute_aliases(class_, attribute_name_mapping):
 
         def show(self, *args, **kwargs):
             with temporary_attribute_values(self, attribute_value_mapping):
-                super(WithOverriddenShowMethod, self).show(*args, **kwargs)
+                return super(WithOverriddenShowMethod, self).show(*args, **kwargs)
 
     return WithOverriddenShowMethod
 

@@ -15,7 +15,7 @@ def define_attribute_aliases(class_, attribute_name_mapping):
             try:
                 return super(AttributeRenamer, self).__getattr__(attribute_name_mapping.get(item, item))
             except AttributeError as e:
-                raise AttributeError_(*e.args)
+                raise AttributeError_(f"{self!r} has no attribute '{e.args[0]}'")
 
     return AttributeRenamer
 

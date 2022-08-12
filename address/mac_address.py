@@ -114,6 +114,8 @@ class MACAddress:
 
     def __eq__(self, other):
         """Determines whether two MAC addresses are equal or not"""
+        if isinstance(other, str):
+            other = MACAddress(other)
         return self.string_mac.lower() == other.string_mac.lower()
 
     def __hash__(self):

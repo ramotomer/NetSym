@@ -54,7 +54,7 @@ class DHCPClient(Process):
     #     Receives a `Packet` parses it, validates it and returns the server MAC address.
     #     :return: a `MACAddress` object.
     #     """
-    #     server_mac = dhcp_offer["Ethernet"].src_mac
+    #     server_mac = dhcp_offer["Ether"].src_mac
     #     offered_ip = dhcp_offer["DHCP"].data.given_ip
     #     if not self.computer.validate_dhcp_given_ip(offered_ip):
     #         raise AddressError("did not validate IP from DHCP server!!! (probably two interfaces have the same address)")
@@ -95,7 +95,7 @@ class DHCPClient(Process):
         """
         for interface in self.computer.interfaces:
             socket = self.computer.get_socket(self.pid, kind=COMPUTER.SOCKETS.TYPES.SOCK_RAW)
-            socket.bind(lambda p: "DHCP" in p and p["Ethernet"].dst_mac in self.computer.macs, interface)
+            socket.bind(lambda p: "DHCP" in p and p["Ether"].dst_mac in self.computer.macs, interface)
             self.sockets.append(socket)
         self.computer.print("Asking For DHCP...")
         for socket in self.sockets:
@@ -107,7 +107,7 @@ class DHCPClient(Process):
         session_socket = get_the_one(self.sockets, lambda s: s.interface == session_interface, ThisCodeShouldNotBeReached)
 
         session_socket.send(self.build_dhcp_request(
-            server_mac=dhcp_offer["Ethernet"].src_mac,
+            server_mac=dhcp_offer["Ether"].src_mac,
             session_interface=session_interface,
             server_ip=dhcp_offer["IP"].src_ip,
             requested_ip=dhcp_offer["BOOTP"].your_ip
@@ -207,7 +207,7 @@ class DHCPServer(Process):
         """
         Sends the `DHCP_PACK` packet to the destination with all of the details the client had requested.
         """
-        client_mac = request_packet["Ethernet"].src_mac
+        client_mac = request_packet["Ether"].src_mac
 
         socket = get_the_one(self.sockets, lambda s: s.interface == interface, ThisCodeShouldNotBeReached)
         socket.send(self.build_dhcp_pack(client_mac,
@@ -224,7 +224,7 @@ class DHCPServer(Process):
         :param discover_packet: a `Packet` object which is a `DHCP_DISCOVER`
         :param interface: the `Interface` that is currently serving the DHCP.
         """
-        client_mac = discover_packet["Ethernet"].src_mac
+        client_mac = discover_packet["Ether"].src_mac
         offered = self.offer_ip(interface)
 
         self.in_session_with[client_mac] = IPAddress.copy(offered)

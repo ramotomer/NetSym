@@ -81,7 +81,7 @@ class Interface:
         :param packet: a `Packet` object.
         :return: whether the destination MAC address is of this Interface
         """
-        return self.mac == packet["Ethernet"].dst_mac or packet["Ethernet"].dst_mac.is_no_mac()
+        return self.mac == packet["Ether"].dst_mac or packet["Ether"].dst_mac.is_no_mac()
 
     def is_for_me(self, packet):
         """
@@ -90,7 +90,7 @@ class Interface:
         :param packet: a `Packet` object.
         :return: whether the destination MAC address is of this Interface
         """
-        return self.is_directly_for_me(packet) or (packet["Ethernet"].dst_mac.is_broadcast())
+        return self.is_directly_for_me(packet) or (packet["Ether"].dst_mac.is_broadcast())
 
     def has_ip(self):
         """Returns whether the Interface has an IP address"""

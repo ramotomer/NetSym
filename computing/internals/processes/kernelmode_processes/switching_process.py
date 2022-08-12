@@ -32,7 +32,7 @@ class SwitchingProcess(Process):
         """
         for packet, packet_metadata in packets:
             try:
-                src_mac = packet["Ethernet"].src_mac
+                src_mac = packet["Ether"].src_mac
             except KeyError:
                 raise UnknownPacketTypeError("The packet contains no Ethernet layer!!!")
             self.switching_table[src_mac] = SwitchTableItem(leg=packet_metadata.interface, time=MainLoop.instance.time())
@@ -72,7 +72,7 @@ class SwitchingProcess(Process):
         :param source_leg: the `Interface` object from which it was received.
         :return: a list of interface that the packet should be sent on.
         """
-        dst_mac = packet["Ethernet"].dst_mac
+        dst_mac = packet["Ether"].dst_mac
 
         if self.computer.is_hub or dst_mac.is_broadcast() or (dst_mac not in self.switching_table):
             return [leg for leg in self.computer.interfaces if leg is not source_leg and leg.is_connected()]  # flood!!!

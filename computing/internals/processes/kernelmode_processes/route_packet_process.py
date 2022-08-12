@@ -29,7 +29,7 @@ class RoutePacket(Process):
         if "0.0.0.0" in [str(self.packet["IP"].dst_ip), str(self.packet["IP"].src_ip)]:
             return False
 
-        if self.packet["IP"].src_ip.is_broadcast() or self.packet["Ethernet"].dst_mac.is_broadcast():
+        if self.packet["IP"].src_ip.is_broadcast() or self.packet["Ether"].dst_mac.is_broadcast():
             return False
 
         return True

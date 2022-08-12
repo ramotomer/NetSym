@@ -52,7 +52,7 @@ class Switch(Computer):
         :return: whether it is for me or not.
         """
         if self.stp_enabled:
-            return (super(Switch, self).is_for_me(packet)) or (packet["Ethernet"].dst_mac == MACAddress.stp_multicast())
+            return (super(Switch, self).is_for_me(packet)) or (packet["Ether"].dst_mac == MACAddress.stp_multicast())
         return super(Switch, self).is_for_me(packet)
 
     def start_stp(self):

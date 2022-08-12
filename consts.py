@@ -453,7 +453,7 @@ class PACKET:
     }
 
     TYPE_TO_IMAGE = {
-        "Ethernet": IMAGES.PACKETS.ETHERNET,
+        "Ether": IMAGES.PACKETS.ETHERNET,
         "IP": IMAGES.PACKETS.IP,
         "UDP": IMAGES.PACKETS.UDP,
         "STP": IMAGES.PACKETS.STP,
@@ -527,7 +527,7 @@ class INTERFACES:
     NO_INTERFACE = ''
 
     class TYPE:
-        ETHERNET = "Ethernet"
+        ETHERNET = "Ether"
         WIFI = "Wifi"
 
 

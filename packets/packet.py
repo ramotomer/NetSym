@@ -35,10 +35,10 @@ class Packet:
     def deepest_layer(self):
         """
         Returns a pointer to the deepest layer in the packet.
-        :return: A protocol object (ARP, Ethernet, etc...) which
-        is the deepest layer in the packet. Not including strings and so on.
+        :return: A protocol instance (ARP, Ethernet, etc...) which
+        is the deepest layer in the packet.
         """
-        return self.data.getlayer([layer for layer in self.data.layers() if not isinstance(layer, (Raw, str))][-1])
+        return self.data.getlayer([layer for layer in self.data.layers() if not issubclass(layer, (Raw, str))][-1])
 
     def copy(self):
         """
@@ -96,4 +96,4 @@ class Packet:
 
     def multiline_repr(self):
         """Multiline representation of the packet"""
-        return f"\nPacket: \n{self.data.show()}"
+        return f"\nPacket: \n{self.data.show(dump=True)}"

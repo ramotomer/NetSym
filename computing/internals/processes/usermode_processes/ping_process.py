@@ -51,7 +51,7 @@ class SendPing(Process):
         Receives the `ReturnedPacket` object that was received and prints out to the `OutputConsole` an appropriate message
         """
         packet = returned_packet.packet
-        if packet["ICMP"].type == OPCODES.ICMP.TYPES.REPLY:
+        if packet["ICMP"].type == OPCODES.ICMP.TYPES.UNREACHABLE:
             self.computer.print("destination unreachable :(")
         else:
             self.computer.print("ping reply!")
