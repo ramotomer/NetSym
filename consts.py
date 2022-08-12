@@ -286,6 +286,10 @@ class WINDOWS:
         WIDTH = 230
         COLOR = COLORS.LIGHT_GRAY
 
+        class VIEWING_OBJECT:
+            class TEXT:
+                PADDING = (7, -10)
+
     class POPUP:
         STACKING_PADDING = 10, -10
         DEACTIVATED_COLOR = COLORS.LIGHT_GRAY

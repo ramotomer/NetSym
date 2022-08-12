@@ -352,7 +352,16 @@ class UserInterface:
                 text = self.packet_from_graphics_object(graphics_object).multiline_repr()
 
         x, y = self.viewing_text_location
-        self.object_view = ObjectView(sprite, Text(text, x, y, max_width=WINDOWS.SIDE.WIDTH), graphics_object)
+        self.object_view = ObjectView(
+            sprite,
+            Text(
+                text, x, y,
+                max_width=(WINDOWS.SIDE.WIDTH - WINDOWS.SIDE.VIEWING_OBJECT.TEXT.PADDING[0]),
+                align=TEXT.ALIGN.LEFT,
+                padding=WINDOWS.SIDE.VIEWING_OBJECT.TEXT.PADDING
+            ),
+            graphics_object,
+        )
         self.adjust_viewed_text_to_buttons(buttons_id + 1)
 
     def adjust_viewed_text_to_buttons(self, buttons_id):
