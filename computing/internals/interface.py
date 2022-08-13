@@ -81,7 +81,7 @@ class Interface:
         :param packet: a `Packet` object.
         :return: whether the destination MAC address is of this Interface
         """
-        return self.mac == packet["Ether"].dst_mac or packet["Ether"].dst_mac.is_no_mac()
+        return (self.mac == packet["Ether"].dst_mac) or MACAddress(packet["Ether"].dst_mac).is_no_mac()
 
     def is_for_me(self, packet):
         """

@@ -70,6 +70,9 @@ class TCPFlag(object):
     def __add__(self, other):
         return self.name + str(other)
 
+    def __int__(self):
+        return int(self.value)
+
 
 class OPCODES:
     class ARP:
@@ -99,13 +102,13 @@ class OPCODES:
         DATA_PACKET = "FTP Data"
 
     class TCP:
-        FIN = TCPFlag("FIN", 0b00001)
-        SYN = TCPFlag("SYN", 0b00010)
-        RST = TCPFlag("RST", 0b00100)
-        PSH = TCPFlag("PSH", 0b01000)
-        ACK = TCPFlag("ACK", 0b10000)
+        FIN =      TCPFlag("FIN",      0b00001)
+        SYN =      TCPFlag("SYN",      0b00010)
+        RST =      TCPFlag("RST",      0b00100)
+        PSH =      TCPFlag("PSH",      0b01000)
+        ACK =      TCPFlag("ACK",      0b10000)
+        NO_FLAGS = TCPFlag("No Flags", 0b00000)
         RETRANSMISSION = " retransmission"
-        NO_FLAGS = None
         FLAGS = {ACK, FIN, PSH, SYN, RST}
         FLAGS_DISPLAY_PRIORITY = [SYN, FIN, RST, PSH, ACK]
 
@@ -437,7 +440,7 @@ def get_dominant_tcp_flag(tcp):
     for flag in OPCODES.TCP.FLAGS_DISPLAY_PRIORITY:
         if flag in tcp.flags:
             return flag if not tcp.is_retransmission else flag + OPCODES.TCP.RETRANSMISSION
-    return TCPFlag("No flags", 0)
+    return OPCODES.TCP.NO_FLAGS
 
 
 class PACKET:

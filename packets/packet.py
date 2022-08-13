@@ -2,7 +2,8 @@ from scapy.packet import Raw
 
 from exceptions import *
 from gui.tech.packet_graphics import PacketGraphics
-from packets.all import Ether
+from packets.all import Ether, protocols
+from usefuls.funcs import get_the_one
 
 
 class Packet:
@@ -46,9 +47,11 @@ class Packet:
         This is done in flooding of switches.
         :return: a copied `Packet` object.
         """
-        return self.__class__(
+        copied = self.__class__(
             Ether(self.data.build())
         )
+        copied.transform_to_good_attribute_names()
+        return copied
 
     def is_valid(self):
         """
@@ -66,6 +69,19 @@ class Packet:
             if any(layer_superclass.__name__ == name for layer_superclass in layer_class.__mro__):
                 return self.data.getlayer(layer_class)
         raise NoSuchLayerError(f"The packet does not contain the layer '{name}'! \n{self.multiline_repr()}")
+
+    def transform_to_good_attribute_names(self) -> None:
+        """
+        Change the data of the packet to be of the new classes that override the scapy classes
+        Those new classes have nice good indicative attribute names :)
+        """
+        final_data = None
+        for layer_class in self.data.layers():
+            new_layer = get_the_one(protocols,
+                                    lambda p: issubclass(p, layer_class),
+                                    raises=NoSuchLayerError)(**self.data.getlayer(layer_class).fields)
+            final_data = (final_data / new_layer) if final_data is not None else new_layer
+        self.data = final_data
 
     def __contains__(self, item):
         """

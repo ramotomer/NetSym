@@ -103,3 +103,11 @@ BOOTP = define_attribute_aliases(
     }
 )
 DHCP = with_parsed_attributes(DHCP, {"options": ScapyOptions})
+
+
+protocols = [
+    Ether,
+    ARP, IP, LLC,
+    ICMP, UDP, TCP, BOOTP, STP,
+    DHCP,
+]

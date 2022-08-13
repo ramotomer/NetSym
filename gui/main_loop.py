@@ -241,4 +241,4 @@ class MainLoop:
                 function(*args, **kwargs)
         except AttributeError as e:
             # for some reason pyglet makes AttributeErrors silent - we reraise them or else it is very hard to debug
-            raise AttributeError_((f"in function: {function}" if function else ''), *e.args)
+            raise AttributeError_(f"'{e.args[0]}' - in function: {function}" if function else '')
