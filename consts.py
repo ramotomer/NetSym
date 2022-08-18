@@ -59,10 +59,15 @@ class TCPFlag(object):
         self.name = name
         self.value = value
 
-    def __ior__(self, other):
-        if isinstance(other, self.__class__):
-            return self.value | other.value
-        return self.value | other
+    @classmethod
+    def absolute_value(cls, other):
+        if isinstance(other, cls):
+            return other.value
+        return int(other)
+        # raise TypeError(f"Type '{type(other)}' has no absolute value! only `TCPFlag` and `int` have!!")
+
+    def __or__(self, other):
+        return self.value | self.absolute_value(other)
 
     def __repr__(self):
         return self.name
@@ -72,6 +77,12 @@ class TCPFlag(object):
 
     def __int__(self):
         return int(self.value)
+
+    def __eq__(self, other):
+        return self.value == self.absolute_value(other)
+
+    def __hash__(self):
+        return hash((self.name, self.value))
 
 
 class OPCODES:
@@ -109,7 +120,6 @@ class OPCODES:
         ACK =      TCPFlag("ACK",      0b10000)
         NO_FLAGS = TCPFlag("No Flags", 0b00000)
         RETRANSMISSION = " retransmission"
-        FLAGS = {ACK, FIN, PSH, SYN, RST}
         FLAGS_DISPLAY_PRIORITY = [SYN, FIN, RST, PSH, ACK]
 
     class DNS:
@@ -438,8 +448,8 @@ class ANIMATIONS:
 
 def get_dominant_tcp_flag(tcp):
     for flag in OPCODES.TCP.FLAGS_DISPLAY_PRIORITY:
-        if flag in tcp.flags:
-            return flag if not tcp.is_retransmission else flag + OPCODES.TCP.RETRANSMISSION
+        if int(tcp.flags) & int(flag):
+            return flag
     return OPCODES.TCP.NO_FLAGS
 
 

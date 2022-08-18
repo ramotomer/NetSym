@@ -52,9 +52,15 @@ class ScapyOptions:
         raise KeyError(f"This scapy options list: {self} has no option '{item}'!")
 
     def __getattr__(self, item):
+        if item == 'options':
+            return super(ScapyOptions, self).__getattribute__(item)
         return self[item]
 
     def __setattr__(self, key, value):
+        if key == 'options':
+            super(ScapyOptions, self).__setattr__(key, value)
+            return
+
         for existing_key, existing_value in [option for option in self.options if isinstance(option, tuple)]:
             if existing_key == key:
                 self.options = [option for option in self.options if not (isinstance(option, tuple) and option[0] == key)] + [(key, value)]

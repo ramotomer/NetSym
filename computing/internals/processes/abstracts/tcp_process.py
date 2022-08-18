@@ -3,13 +3,14 @@ from abc import ABCMeta, abstractmethod
 from collections import deque
 from functools import reduce
 from operator import attrgetter, concat
-from typing import Optional
+from typing import Optional, Callable, List, Tuple
 
 from recordclass import recordclass
 
+from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import Process, WaitingForPacketWithTimeout, Timeout, \
     ReturnedPacket, \
-    NoNeedForPacket, WaitingFor
+    NoNeedForPacket, WaitingFor, T_ProcessCode
 from consts import *
 from exceptions import TCPDataLargerThanMaxSegmentSize
 from gui.main_loop import MainLoop
@@ -31,11 +32,9 @@ SackEdges = recordclass("SackEdges", [
 ])
 
 
-def get_tcp_packet_data_length(tcp_packet):
+def get_tcp_packet_data_length(tcp_packet: Packet) -> int:
     """
     Returns the length of the data of the TCP packet
-    :param tcp_packet:
-    :return:
     """
     layer_names = [get_original_layer_name(layer) for layer in tcp_packet.data.layers()]
     try:
@@ -44,7 +43,7 @@ def get_tcp_packet_data_length(tcp_packet):
         return 1
 
 
-def is_number_acking_packet(ack_number: int, packet):
+def is_number_acking_packet(ack_number: int, packet: Packet) -> bool:
     """
     Receives an ACK number and a packet and returns whether or not the packet is ACKed in that ACK
     :param ack_number:
@@ -74,7 +73,14 @@ class TCPProcess(Process, metaclass=ABCMeta):
 
     """
 
-    def __init__(self, pid, computer, dst_ip=None, dst_port=None, src_port=None, is_client=True, mss=PROTOCOLS.TCP.MAX_MSS):
+    def __init__(self,
+                 pid: int,
+                 computer,
+                 dst_ip: Optional[IPAddress] = None,
+                 dst_port: Optional[int] = None,
+                 src_port: Optional[int] = None,
+                 is_client: bool = True,
+                 mss: int = PROTOCOLS.TCP.MAX_MSS) -> None:
         """
         Initiates a TCP process.
         :param computer: the `Computer` running the process
@@ -105,7 +111,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         for signum in COMPUTER.PROCESSES.SIGNALS.KILLING_SIGNALS:
             self.signal_handlers[signum] = self.kill_signal_handler
 
-    def _create_packet(self, flags=None, data='', is_retransmission=False):
+    def _create_packet(self, flags: Union[TCPFlag, int] = None, data: str = '', is_retransmission: bool = False) -> Packet:
         """
         Creates a full packet that contains TCP with all of the appropriate fields according to the state of
         this process
@@ -147,7 +153,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
             self.receiving_window.merge_sack_blocks()
 
         ack = self._create_packet((OPCODES.TCP.ACK | additional_flags), is_retransmission=is_retransmission)
-        ack["TCP"].options.SACK = self.receiving_window.get_sack_blocks_as_tuple()
+        ack["TCP"].parsed_options.SACK = self.receiving_window.get_sack_blocks_as_tuple()
 
         if additional_flags:
             self.sending_window.add_waiting(ack)
@@ -167,30 +173,12 @@ class TCPProcess(Process, metaclass=ABCMeta):
         tcp_packet = packet["TCP"]
 
         if (self.dst_ip is None or self.dst_port is None or self.dst_port is None) and \
-                OPCODES.TCP.SYN in tcp_packet.flags:
+                (OPCODES.TCP.SYN & tcp_packet.flags):
             return True
 
         return packet["IP"].src_ip == self.dst_ip and \
                tcp_packet.dst_port == self.src_port and \
                tcp_packet.src_port == self.dst_port
-
-    def _tcp_with_flags(self, *flag_lists):
-        """
-        Takes in a bunch of flag lists, if any of them fit exactly returns a function that returns true on them
-        For example if we receive ([TCP_SYN, TCP_ACK], [TCP_RST]) we will return a function that will return True
-        if a packet is either a SYN-ACK or a RST.
-        :param flags:
-        :return:
-        """
-
-        def tester(packet):
-            return self.computer.has_this_ip(packet["IP"].dst_ip) and \
-                   any("TCP" in packet and
-                       packet["TCP"].dst_port == self.src_port and
-                       flags == packet["TCP"].flags
-                       for flags in flag_lists)
-
-        return tester
 
     def reset_connection(self) -> None:
         """
@@ -203,20 +191,18 @@ class TCPProcess(Process, metaclass=ABCMeta):
 
     def _update_from_handshake_packet(self, packet: Packet) -> None:
         """
-        Takes in a `ReturnedPacket` object which is the SYN or SYN ACK packet of the handshake and updates all of
+        Takes in a `Packet` object which is the SYN or SYN ACK packet of the handshake and updates all of
         details of the process according to it.
-        :return: None
         """
         self.dst_port = packet["TCP"].src_port
         self.dst_ip = packet["IP"].src_ip
         self.sending_window.window_size = min(packet["TCP"].window_size, self.sending_window.window_size)
         self.mss = min(packet["TCP"].parsed_options.MSS, self.mss)
 
-    def _acknowledge_with_packet(self, packet):
+    def _acknowledge_with_packet(self, packet: Packet) -> None:
         """
         Takes in an ACk number and releases all of the packets that are ACKed by it.
         :param packet: a packet that contains the ACK information to remove sent packets from my sending window.
-        :return: None
         """
         ack_number = packet["TCP"].ack_number
         acked_count = 0
@@ -236,25 +222,23 @@ class TCPProcess(Process, metaclass=ABCMeta):
                         is_number_acking_packet(right, not_acked_packet.packet):
                     self.sending_window.window.remove(not_acked_packet)
 
-    def on_connection_reset(self):
+    def on_connection_reset(self) -> None:
         """
         This function should be overridden
         Specify what should be done once received an RST packet
-        :return:
         """
         pass
 
-    def hello_handshake(self):
+    def hello_handshake(self) -> T_ProcessCode:
         """
         Starts the TCP handshake by sending a SYN packet to the destination.
-        :return: None
         """
         if self.is_client:
             yield from self._client_hello_handshake()
         else:  # if is server
             yield from self._server_hello_handshake()
 
-    def _client_hello_handshake(self):
+    def _client_hello_handshake(self) -> T_ProcessCode:
         """
         the initial handshake on the client side. sends syn, waits for syn ack, sends ack.
         :return:
@@ -274,7 +258,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         syn_ack, = tcp_syn_ack_list
         self._update_from_handshake_packet(syn_ack)
 
-    def _server_hello_handshake(self):
+    def _server_hello_handshake(self) -> T_ProcessCode:
         """
         The initial handshake on the server side. waits for syn, sends syn ack waits for ack
         :return:
@@ -283,7 +267,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         while not tcp_syn_list or \
                 not isinstance(tcp_syn_list[0], Packet) or \
                 "TCP" not in tcp_syn_list[0] or \
-                OPCODES.TCP.SYN not in tcp_syn_list[0]["TCP"].flags:
+                not (OPCODES.TCP.SYN & tcp_syn_list[0]["TCP"].flags):
             yield from self.handle_tcp_and_receive(tcp_syn_list, is_blocking=True, insert_flag_packets_to_received_data=True)
         syn, = tcp_syn_list
         self._update_from_handshake_packet(syn)
@@ -292,11 +276,16 @@ class TCPProcess(Process, metaclass=ABCMeta):
         yield WaitingFor(done_searching)
         self.dst_mac = self.computer.arp_cache[ip_for_the_mac].mac
 
-        self._send_ack_for(syn, {OPCODES.TCP.SYN})  # sends SYN ACK
+        self._send_ack_for(syn, OPCODES.TCP.SYN)  # sends SYN ACK
         while not self.sending_window.nothing_to_send():  # while the syn ack was not ACKed
             yield from self.handle_tcp_and_receive([], insert_flag_packets_to_received_data=True)
 
-    def _send_and_wait_with_retries(self, sent, waiting_for, timeout, got_packet=None, max_tries=PROTOCOLS.ARP.RESEND_COUNT):
+    def _send_and_wait_with_retries(self,
+                                    sent: Packet,
+                                    waiting_for: Callable,
+                                    timeout: Union[int, float],
+                                    got_packet: Optional[ReturnedPacket] = None,
+                                    max_tries: int = PROTOCOLS.ARP.RESEND_COUNT) -> T_ProcessCode:
         """
         Receives a packet and a condition for a reply to that packet and receives a timeout for waiting.
         Sends the packet and waits for the reply for it. If did not get a reply in `timeout` seconds, try again,
@@ -304,10 +293,9 @@ class TCPProcess(Process, metaclass=ABCMeta):
         This is a generator that yields `WaitingFor` tuples.
         :param sent: The `Packet` to send
         :param waiting_for: a condition packet to wait for which is the answer for the packet you send
-        :param got_packet: a `ReturnedPacket` object that will contain the packet that is returned.
+        :param got_packet: will contain the packet that is returned.
         :param timeout: the amount of seconds to wait for a reply
         :param max_tries: the amount of tries before giving up
-        :return: None
         """
         returned_packet = NoNeedForPacket() if got_packet is None else got_packet
         self.computer.send(sent)
@@ -320,7 +308,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         self.reset_connection()
         return
 
-    def goodbye_handshake(self, initiate=True):
+    def goodbye_handshake(self, initiate: bool = True) -> T_ProcessCode:
         """
         Ends the TCP connection with good terms and with both sides' agreement.
         This can be called with `initiate=True` to end the connection.
@@ -334,7 +322,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
             while not fin_ack_list or \
                     not isinstance(fin_ack_list[0], Packet) or \
                     "TCP" not in fin_ack_list[0] or \
-                    {OPCODES.TCP.FIN, OPCODES.TCP.ACK} != fin_ack_list[0]["TCP"].flags:
+                    ((OPCODES.TCP.FIN | OPCODES.TCP.ACK) != fin_ack_list[0]["TCP"].flags):
                 yield from self.handle_tcp_and_receive(fin_ack_list, insert_flag_packets_to_received_data=True)
                 if fin_ack_list:
                     pass
@@ -349,7 +337,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
                 yield from self.handle_tcp_and_receive([], insert_flag_packets_to_received_data=True)
         self._end_session()
 
-    def _end_session(self):
+    def _end_session(self) -> None:
         """
         Ends the current session. For the client that kills the process after it is done, this does nothing
         This is mostly for servers that server multiple clients in the same process. It resets everything and gets ready
@@ -363,7 +351,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         self.dst_port = None
         self.dst_mac = None
 
-    def send(self, data, packet_constructor=lambda d: d):
+    def send(self, data, packet_constructor=lambda d: d) -> None:
         """
         Takes in some data and sends it over TCP as soon as possible.
         :param data: the piece of the data that the child process class wants to send over TCP
@@ -377,41 +365,41 @@ class TCPProcess(Process, metaclass=ABCMeta):
         else:
             self.send_no_split(data)
 
-    def send_no_split(self, data):
+    def send_no_split(self, data: str) -> None:
         """
         This function assumes that the length of the data is not larger than the MSS of the process.
         If it is larger, raises an exception.
-        :param data:
-        :return:
         """
         if len(data) > self.mss:
             raise TCPDataLargerThanMaxSegmentSize("To split string data, use the `TCPProcess.send` method")
         self.sending_window.add_waiting(self._create_packet(OPCODES.TCP.PSH, data))
 
-    def is_done_transmitting(self):
+    def is_done_transmitting(self) -> bool:
         """
         Returns whether or not the process has finished transmitting all of the desired data.
         :return: bool
         """
         return self.sending_window.nothing_to_send()
 
-    def _session_timeout(self):
+    def _session_timeout(self) -> bool:
         """Returns whether or not the connection should be timed-out"""
         return MainLoop.instance.time_since(self.last_packet_sent_time) >= PROTOCOLS.TCP.MAX_UNUSED_CONNECTION_TIME
 
-    def _physically_send_packets_with_time_gaps(self):
+    def _physically_send_packets_with_time_gaps(self) -> None:
         """
         Sends the next packet in the `self.sending_window.sent` list.
         The packets are not all sent in one go because then the graphics will one over the other.
         This function sends a packet if was not just sent.
-        :return:
         """
         if MainLoop.instance.time_since(self.last_packet_sent_time) > PROTOCOLS.TCP.SENDING_INTERVAL:
             if self.sending_window.sent:
                 self.computer.send(self.sending_window.sent.popleft())
                 self.last_packet_sent_time = MainLoop.instance.time()
 
-    def handle_tcp_and_receive(self, received_data, is_blocking=False, insert_flag_packets_to_received_data=False):
+    def handle_tcp_and_receive(self,
+                               received_data: List,
+                               is_blocking: bool = False,
+                               insert_flag_packets_to_received_data: bool = False) -> T_ProcessCode:
         """
         This function is a generator that yield `WaitingFor` and `WaitingForPacket` namedtuple-s.
         It receives TCP packets from the destination sends ACKs sends all of the other packets in the
@@ -421,7 +409,6 @@ class TCPProcess(Process, metaclass=ABCMeta):
         If a FIN was received, appends the list a `DON_RECEIVING` constant (None) that tells
         it that the process terminates.
         :param insert_flag_packets_to_received_data: whether or not to insert TCP SYN and FIN packets to the `received_data`
-        :return: yields WaitingFor-s.
 
         when a SYN packet is received, the whole packet is appended to the received_data list.
         """
@@ -446,52 +433,52 @@ class TCPProcess(Process, metaclass=ABCMeta):
             if not is_blocking:
                 return
 
-    def _handle_packet_and_receive(self, packet, received_data, insert_flag_packets_to_received_data):
+    def _handle_packet_and_receive(self,
+                                   packet: Packet,
+                                   received_data: List,
+                                   insert_flag_packets_to_received_data: bool) -> None:
         """
         Receives a packet and handles it, sends ack, learns, and adds the data to a given `received_data` list.
         If it is a FIN or RST, reacts accordingly.
         :param packet: the packet to handle
         :param received_data: a list of data from the PSH tcp packets
         :param insert_flag_packets_to_received_data: whether or not to insert SYN or FIN packets to received data
-        :return: None
         """
         tcp_layer = packet["TCP"]
 
-        if OPCODES.TCP.PSH in tcp_layer.flags:
+        if OPCODES.TCP.PSH & tcp_layer.flags:
             if not is_number_acking_packet(self.receiving_window.ack_number, packet):
                 self.receiving_window.add_packet(packet)  # if the packet was not received already
             self._send_ack_for(packet)
 
-        if OPCODES.TCP.SYN in tcp_layer.flags or {OPCODES.TCP.FIN, OPCODES.TCP.ACK} == tcp_layer.flags:
+        if (OPCODES.TCP.SYN & tcp_layer.flags) or (OPCODES.TCP.FIN | OPCODES.TCP.ACK) == tcp_layer.flags:
             if insert_flag_packets_to_received_data:
                 received_data.append(packet)
 
-            if {OPCODES.TCP.SYN, OPCODES.TCP.ACK} == tcp_layer.flags:
+            if (OPCODES.TCP.SYN | OPCODES.TCP.ACK) == tcp_layer.flags:
                 self._send_ack_for(packet)
 
-        if OPCODES.TCP.ACK in tcp_layer.flags:
+        if OPCODES.TCP.ACK & tcp_layer.flags:
             self._acknowledge_with_packet(packet)
 
-        if {OPCODES.TCP.FIN} == tcp_layer.flags and not insert_flag_packets_to_received_data:
-            self._send_ack_for(packet, additional_flags={OPCODES.TCP.FIN})  # FIN ACK
+        if OPCODES.TCP.FIN == tcp_layer.flags and not insert_flag_packets_to_received_data:
+            self._send_ack_for(packet, additional_flags=OPCODES.TCP.FIN)  # FIN ACK
             yield from self.goodbye_handshake(initiate=False)
 
-        if OPCODES.TCP.RST in tcp_layer.flags:
+        if OPCODES.TCP.RST & tcp_layer.flags:
             self.kill_me = True
             self.on_connection_reset()
             return
 
-    def kill_signal_handler(self, signum):
+    def kill_signal_handler(self, signum: int) -> None:
         """
         This is the handler to each signal that is supposed to kill this process.
-        :param signum:
-        :return:
         """
         self.reset_connection()
         self.die()
 
     @abstractmethod
-    def code(self):
+    def code(self) -> T_ProcessCode:
         """
         The actual code of the process if for each child process to implement
         :return: generator of `WaitingFor`s bluh bluh you know the drill...
@@ -507,7 +494,7 @@ class SendingWindow:
     `sent` packets that need to be physically sent one by one (in the `TCP_SENDING_INTERVAL` time gaps).
     """
 
-    def __init__(self, window_size=PROTOCOLS.TCP.MAX_WINDOW_SIZE):
+    def __init__(self, window_size: int = PROTOCOLS.TCP.MAX_WINDOW_SIZE) -> None:
         """
         Initiates the three queues of the window.
         """
@@ -517,7 +504,7 @@ class SendingWindow:
         self.window = deque()
         self.sent = deque()
 
-    def clear(self):
+    def clear(self) -> None:
         """
         Clears all of the attributes of the window.
         :return:
@@ -526,19 +513,17 @@ class SendingWindow:
         self.window.clear()
         self.sent.clear()
 
-    def fill_window(self):
+    def fill_window(self) -> None:
         """
         Fills the window until it is in its full window size
-        :return:
         """
         while len(self.window) < self.window_size and self.waiting_for_sending:
             self.window.append(NotAckedPacket(self.waiting_for_sending.popleft(), MainLoop.instance.time(), False))
 
-    def slide_window(self, count):
+    def slide_window(self, count: int) -> None:
         """
         Moves the window `count` packets to the right.
         Also fills up the window if it is not full.
-        :return:
         """
         for _ in range(count):
             if not self.window:
@@ -546,26 +531,24 @@ class SendingWindow:
             self.window.popleft()
         self.fill_window()
 
-    def send_window(self):
+    def send_window(self) -> None:
         """
         Sends all of the packets in the window (adds them to the `sent` queue)
         Only does that to NotAckedPackets where the `is_sent` attribute is False.
-        :return:
         """
         for non_acked_packet in self.window:
             if not non_acked_packet.is_sent:
                 self.sent.append(non_acked_packet.packet.copy())
                 non_acked_packet.is_sent = True
 
-    def add_waiting(self, packet):
+    def add_waiting(self, packet: Packet) -> None:
         """
         Adds a new packet to the end of the `waiting_for_sending` queue
         :param packet: a `Packet` object.
-        :return:
         """
         self.waiting_for_sending.append(packet)
 
-    def add_no_wait(self, packet):
+    def add_no_wait(self, packet: Packet) -> None:
         """
         Adds a packet to the `sent` queue so it will be sent almost immediately
         :param packet:
@@ -573,17 +556,15 @@ class SendingWindow:
         """
         self.sent.append(packet.copy())
 
-    def nothing_to_send(self):
+    def nothing_to_send(self) -> bool:
         """
         Returns whether or there is nothing left to send.
-        :return:
         """
         return not self.sent and not self.window and not self.waiting_for_sending
 
-    def retransmit_unacked(self):
+    def retransmit_unacked(self) -> None:
         """
         Retransmits all of the packets that were not ACKed for too long!
-        :return: None
         """
         for non_acked_packet in list(self.window):
             if MainLoop.instance.time_since(non_acked_packet.sending_time) > PROTOCOLS.TCP.RESEND_TIME:
@@ -591,7 +572,7 @@ class SendingWindow:
                 self.add_no_wait(non_acked_packet.packet)
                 non_acked_packet.sending_time = MainLoop.instance.time()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         The string representation of the sending window.
         """
@@ -611,7 +592,7 @@ class ReceivingWindow:
     Handles the SACk option of TCP
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initiates the receiving window with an empty window.
         """
@@ -619,7 +600,7 @@ class ReceivingWindow:
         self.ack_number = 0
         self.sack_blocks = []
 
-    def clear(self):
+    def clear(self) -> None:
         """
         Clears the window and resets it like it was just created
         :return:
@@ -628,19 +609,17 @@ class ReceivingWindow:
         self.sack_blocks.clear()
         self.ack_number = 0
 
-    def add_packet(self, packet):
+    def add_packet(self, packet: Packet) -> None:
         """
         Adds a packet to the window.
-        :return:
         """
         insort(self.window, packet, key=lambda p: p["TCP"].sequence_number)
 
-    def add_data_and_remove_from_window(self, received_data):
+    def add_data_and_remove_from_window(self, received_data: List) -> None:
         """
         Adds the data from all of the packets that arrived in-order to the given list.
         Also removes them from the receiving window.
         :param received_data: a list of data that is received from the destination computer.
-        :return: None
         """
         for packet in self.window[:]:
             if is_number_acking_packet(self.ack_number, packet):
@@ -649,11 +628,9 @@ class ReceivingWindow:
             else:
                 break  # the window is sorted by the sequence number.
 
-    def add_to_sack(self, packet):
+    def add_to_sack(self, packet: Packet) -> None:
         """
         Adds a packet to the SACK data of the process.
-        :param packet: a `Packet` object that contains a TCP layer
-        :return: None
         """
         packet_start = packet["TCP"].sequence_number
         packet_length = get_tcp_packet_data_length(packet)
@@ -669,7 +646,7 @@ class ReceivingWindow:
 
         insort(self.sack_blocks, SackEdges(packet_start, packet_end), key=attrgetter('left'))
 
-    def merge_sack_blocks(self):
+    def merge_sack_blocks(self) -> None:
         """
         Merges the SACK blocks to the ack number.
         :return: None
@@ -686,15 +663,15 @@ class ReceivingWindow:
                 self.sack_blocks.remove(block)
             next_block.left = block.left
 
-    def get_sack_blocks_as_tuple(self):
+    def get_sack_blocks_as_tuple(self) -> Union[Tuple[int], Tuple]:
         """
         :receives: self.sack_blocks = [SackEdges(a, b), SackEdges(c, d), ...]
         :return:                      (a, b, c, d, ...)
         """
-        return reduce(concat, map(tuple, self.sack_blocks))
+        return reduce(concat, map(tuple, self.sack_blocks), ())
 
     @staticmethod
-    def get_sack_blocks_from_tuple(tuple_):
+    def get_sack_blocks_from_tuple(tuple_: Tuple[int]) -> List[SackEdges]:
         """
         :receives: (a, b, c, d, ...)
         :returns:  [SackEdges(a, b), SackEdges(c, d), ...]

@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple, defaultdict
+from typing import Iterator, Union
 
 from recordclass import recordclass
 
@@ -19,6 +20,10 @@ The condition should be specific so you don't accidentally catch the wrong packe
 
 WaitingForPacketWithTimeout = namedtuple("WaitingForPacketWithTimeout", "condition value timeout")
 WaitingFor = namedtuple("WaitingFor", "condition")
+
+
+T_WaitingFor = Union[WaitingFor, WaitingForPacket, WaitingForPacketWithTimeout]
+T_ProcessCode = Iterator[T_WaitingFor]
 
 
 class Process(metaclass=ABCMeta):
