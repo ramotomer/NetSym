@@ -6,8 +6,11 @@ interface. Users can watch the packets get sent back and fourth with a **very** 
 down version of real life network protocols.
 
 ## Requirements ##
-In order to run this program, one needs to have python 3.5 and higher and the graphics
-package *pyglet*. It can be installed using a simple `pip install pyglet` command.
+In order to run this program, one needs to have python 3.8 or higher.
+And install these following packages:
+ 
+    `pip install pyglet`
+    `pip install pyWinhook`
 
 ## Using the Program ##
 When the program is started, no objects are drawn to screen.

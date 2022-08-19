@@ -1,3 +1,8 @@
+from typing import Any
+
+import scapy
+from scapy.packet import Raw
+
 from consts import PACKET
 from exceptions import *
 
@@ -54,7 +59,11 @@ class ScapyOptions:
     def __getattr__(self, item):
         if item == 'options':
             return super(ScapyOptions, self).__getattribute__(item)
-        return self[item]
+
+        try:
+            return self[item]
+        except KeyError as e:
+            raise AttributeError(*e.args)
 
     def __setattr__(self, key, value):
         if key == 'options':
@@ -117,22 +126,27 @@ class ScapyRenamedPacketField:
 #     return WithOverriddenShowMethod
 
 
-def get_original_layer_name(layer):
+def get_original_layer_name_by_instance(layer: scapy.packet.Packet) -> str:
     """
-
-    :param layer:
-    :return:
+    Returns the name of the protocol - regardless of the `AttributeRenamer` encapsulation
     """
     return getattr(layer, 'original_name', type(layer).__name__)
 
 
-def get_layer_opcode(layer):
+def get_layer_opcode(layer: scapy.packet.Packet):
     """
-
-    :param layer:
-    :return:
+    Take in a layer of a packet and return the most dominant value of the packet
+        that can be considered as an "opcode" (arp.opcode, icmp.type, one of tcp.flags, etc...)
     """
     try:
-        return PACKET.TYPE_TO_OPCODE_FUNCTION[get_original_layer_name(layer)](layer)
+        return PACKET.TYPE_TO_OPCODE_FUNCTION[get_original_layer_name_by_instance(layer)](layer)
     except KeyError:
         return None
+
+
+def is_raw_layer(layer: Any) -> bool:
+    """
+    Return whether or not the layer is a layer that only contains raw information
+    Can accept either an instance or a subclass - works anyway
+    """
+    return isinstance(layer, (Raw, str)) or issubclass(layer, (Raw, str))

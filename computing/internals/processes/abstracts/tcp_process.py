@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 from collections import deque
 from functools import reduce
 from operator import attrgetter, concat
-from typing import Optional, Callable, List, Tuple
+from typing import Optional, Callable, List, Tuple, Union
 
 from recordclass import recordclass
 
@@ -16,7 +16,6 @@ from exceptions import TCPDataLargerThanMaxSegmentSize
 from gui.main_loop import MainLoop
 from packets.all import TCP
 from packets.packet import Packet
-from packets.usefuls import get_original_layer_name
 from usefuls.funcs import insort
 from usefuls.funcs import split_by_size
 
@@ -36,9 +35,8 @@ def get_tcp_packet_data_length(tcp_packet: Packet) -> int:
     """
     Returns the length of the data of the TCP packet
     """
-    layer_names = [get_original_layer_name(layer) for layer in tcp_packet.data.layers()]
     try:
-        return len(tcp_packet.data.getlayer(tcp_packet.data.layers()[layer_names.index("TCP") + 1]).build())
+        return len(tcp_packet["TCP"].payload.build())
     except IndexError:
         return 1
 
@@ -213,7 +211,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
                 break
         self.sending_window.slide_window(acked_count)
 
-        sack_blocks = ReceivingWindow.get_sack_blocks_from_tuple(packet["TCP"].parsed_options.SACK)
+        sack_blocks = ReceivingWindow.get_sack_blocks_from_tuple(getattr(packet["TCP"].parsed_options, 'SACK', ()))
         if not isinstance(sack_blocks, list) or not sack_blocks:
             return
         for not_acked_packet in list(self.sending_window.window):

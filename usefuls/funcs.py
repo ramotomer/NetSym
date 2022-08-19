@@ -4,13 +4,16 @@ from contextlib import contextmanager
 from functools import reduce
 from math import sin, cos, pi, atan
 from operator import mul
-from typing import Dict, Any
+from typing import Dict, Any, Iterable, Callable
 
 from consts import *
 from exceptions import WrongUsageError
 
 
-def get_the_one(iterable, condition, raises=None):
+def get_the_one(iterable: Iterable,
+                condition: Callable,
+                raises: Callable = None,
+                default: Any = None) -> Any:
     """
     Receives an iterable and a condition and returns the first item in the
     iterable that the condition is true for.
@@ -19,6 +22,7 @@ def get_the_one(iterable, condition, raises=None):
     :param iterable: An iterable object.
     :param condition: A boolean function that takes one argument.
     :param raises: The exception this function will raise if it does not find.
+    :param default: A default value to return if no matching value is found
     :return: The item with that condition or None
     """
     for item in iterable:
@@ -26,10 +30,10 @@ def get_the_one(iterable, condition, raises=None):
             return item
     if raises is not None:
         raise raises(f'Failed to "get_the_one" since it does not exist in your iterable: {iterable}')
-    return None
+    return default
 
 
-def is_hex(string):
+def is_hex(string: str) -> bool:
     """
     returns if a ip_layer is a hexadecimal digit or not
     """
