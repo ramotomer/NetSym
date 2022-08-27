@@ -1,6 +1,7 @@
 import argparse
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
+from typing import Union
 
 from usefuls.funcs import split_with_escaping
 from usefuls.print_stealer import PrintStealer
@@ -39,11 +40,9 @@ class Command(metaclass=ABCMeta):
         The action that this command activates when called.
         """
 
-    def parse(self, string):
+    def parse(self, string: str) -> Union[ParsedCommand, SyntaxArgumentMessage]:
         """
         parses the command string!!!
-        :param string:
-        :return:
         """
         args = [arg.strip('"') for arg in split_with_escaping(string)[1:]]
 

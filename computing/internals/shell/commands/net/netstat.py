@@ -18,7 +18,7 @@ class Netstat(Command):
         self.parser.add_argument('-a', '--all', action='store_true', dest='all_sockets',
                                  help='display all socket (even disconnected)')
 
-    def to_print(self, parsed_args):
+    def _to_print(self, parsed_args):
         """
         The string to print
         :param parsed_args:
@@ -35,4 +35,4 @@ class Netstat(Command):
         """
         prints out the arguments.
         """
-        return CommandOutput(self.to_print(parsed_args), '')
+        return CommandOutput(self._to_print(parsed_args), '')

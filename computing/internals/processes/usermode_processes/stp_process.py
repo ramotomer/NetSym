@@ -1,13 +1,18 @@
+from __future__ import annotations
+
 from os import linesep
-from typing import Optional, Union, TypeVar, Type, Any
+from typing import Optional, Union, TypeVar, Type, Any, TYPE_CHECKING
 
 from address.mac_address import MACAddress
 from computing.internals.processes.abstracts.process import Process, WaitingForPacketWithTimeout, ReturnedPacket, \
-    Timeout
+    Timeout, T_ProcessCode
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
 from packets.packet import Packet
+
+if TYPE_CHECKING:
+    from computing.internals.interface import Interface
 
 T = TypeVar('T', bound='BID')
 
@@ -80,7 +85,7 @@ class BID:
 
     def __str__(self) -> str:
         """The short string representation of the BID"""
-        return f"{self.priority}{self.mac}"
+        return f"{self.priority}/{self.mac}"
 
     def __hash__(self) -> int:
         """For using this as dictionary keys"""
@@ -168,10 +173,9 @@ class STPProcess(Process):
         """
         return self.my_bid == self.root_bid
 
-    def _send_packet(self):
+    def _send_packet(self) -> None:
         """
         Sends the STP packet with the information of the current state of the switch.
-        :return: None
         """
         # TODO: are STP sockets a thing? should they be?
         self.computer.send_stp(
@@ -304,7 +308,7 @@ class STPProcess(Process):
         """Returns whether or not the root has disappeared and did not report for a long time"""
         return MainLoop.instance.time_since(self.root_declaration_time) > self.root_timeout
 
-    def _port_disappeared(self, port):
+    def _port_hasnt_seen_stp_packets_lately(self, port):
         """
         Returns whether or not the given interface received any STP packets lately.
         If it has not, it should be removed from the STP interfaces list.
@@ -349,13 +353,12 @@ class STPProcess(Process):
         for port in self.stp_ports:
             self._update_root(self.my_bid, 0, MainLoop.instance.time(), port)
 
-    def _learn_from_packet(self, packet, receiving_port):
+    def _learn_from_packet(self, packet: Packet, receiving_port: Interface) -> None:
         """
         Learns from a new packet (adds a new interface to the `stp_ports`, updates the root and updates the
         distances of existing interfaces to the root)
         :param packet: a `Packet` that contains STP
-        :param receiving_port: an `Interface` object that the packet was captured on.
-        :return: None
+        :param receiving_port: the `Interface` that the packet was captured on.
         """
         packet_root_bid = BID.root_from_stp(packet["STP"])
         packet_root_declaration_time = MainLoop.instance.time() - packet["STP"].age
@@ -372,15 +375,14 @@ class STPProcess(Process):
         elif packet_root_bid == self.root_bid:  # if a packet was received with a root that you already know, update your distance.
             self._update_distance(packet["STP"].path_cost, packet_root_declaration_time, receiving_port)
 
-    def _update_disconnected_ports(self):
+    def _remove_disconnected_ports(self) -> None:
         """
         Removes the disconnected interfaces from the `stp_ports` dictionary.
         If a port is suddenly disconnected like this, the tree is not stable anymore, and we update the sending speed.
         We also remove ports that did not receive a packet for a long time, They do not count as STP ports anymore.
-        :return: None
         """
         for port in list(self.stp_ports.keys()):
-            if not port.is_connected() or self._port_disappeared(port):
+            if not port.is_connected() or self._port_hasnt_seen_stp_packets_lately(port):
                 self.computer.print("Lost a port! recalculating...")
 
                 if port.is_blocked:
@@ -388,12 +390,11 @@ class STPProcess(Process):
 
                 del self.stp_ports[port]
 
-    def code(self):
+    def code(self) -> T_ProcessCode:
         """
         The actual code of the STP process.
         It sends out its-own information and waits and learns from the other STP packets' information.
         Updates its-own information accordingly.
-        :return: yields `WaitingForPacket` namedtuple-s.
         """
         self.computer.print("Start STP...")
 
@@ -404,18 +405,18 @@ class STPProcess(Process):
 
             stp_packets = ReturnedPacket()
             yield WaitingForPacketWithTimeout(lambda p: ("STP" in p), stp_packets, Timeout(0))
-            self._update_disconnected_ports()
+            self._remove_disconnected_ports()
 
             for packet, packet_metadata in stp_packets.packets.items():
                 self._learn_from_packet(packet, receiving_port=packet_metadata.interface)
 
             self._set_interface_states()
 
-            if self._root_not_updated_for(seconds=PROTOCOLS.STP.TREE_STABLIZING_MAX_TIME):
+            if self._root_not_updated_for(PROTOCOLS.STP.TREE_STABLIZING_MAX_TIME):
                 self._block_blocked_ports()
                 self._tree_is_probably_stable()
 
-            self._update_disconnected_ports()
+            self._remove_disconnected_ports()
 
             if self._root_disappeared():
                 self.computer.print("Lost root! recalculating....")
