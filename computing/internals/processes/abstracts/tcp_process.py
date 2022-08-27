@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import random
 from abc import ABCMeta, abstractmethod
 from collections import deque
 from functools import reduce
 from operator import attrgetter, concat
-from typing import Optional, Callable, List, Tuple, Union
+from typing import Optional, Callable, List, Tuple, Union, TYPE_CHECKING
 
 from recordclass import recordclass
 
@@ -18,6 +20,9 @@ from packets.all import TCP
 from packets.packet import Packet
 from usefuls.funcs import insort
 from usefuls.funcs import split_by_size
+
+if TYPE_CHECKING:
+    from computing.computer import Computer
 
 NotAckedPacket = recordclass("NotAckedPacket", [  # this is like a `namedtuple` but it is mutable!
     "packet",
@@ -36,7 +41,7 @@ def get_tcp_packet_data_length(tcp_packet: Packet) -> int:
     Returns the length of the data of the TCP packet
     """
     try:
-        return len(tcp_packet["TCP"].payload.build())
+        return len(tcp_packet["TCP"].payload.build()) or 1
     except IndexError:
         return 1
 
@@ -73,7 +78,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
 
     def __init__(self,
                  pid: int,
-                 computer,
+                 computer: Computer,
                  dst_ip: Optional[IPAddress] = None,
                  dst_port: Optional[int] = None,
                  src_port: Optional[int] = None,
@@ -338,9 +343,8 @@ class TCPProcess(Process, metaclass=ABCMeta):
     def _end_session(self) -> None:
         """
         Ends the current session. For the client that kills the process after it is done, this does nothing
-        This is mostly for servers that server multiple clients in the same process. It resets everything and gets ready
+        This is mostly for servers that serve multiple clients in the same process. It resets everything and gets ready
         to serve another client.
-        :return:
         """
         self.sending_window.clear()
         self.receiving_window.clear()
@@ -621,7 +625,7 @@ class ReceivingWindow:
         """
         for packet in self.window[:]:
             if is_number_acking_packet(self.ack_number, packet):
-                received_data.append(packet["TCP"].data)
+                received_data.append(str(packet["TCP"].payload.build()))
                 self.window.remove(packet)
             else:
                 break  # the window is sorted by the sequence number.

@@ -1,6 +1,5 @@
 from collections import namedtuple
 
-from address.mac_address import MACAddress
 from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket
 from consts import *
 from exceptions import *
@@ -73,7 +72,7 @@ class SwitchingProcess(Process):
         :param source_leg: the `Interface` object from which it was received.
         :return: a list of interface that the packet should be sent on.
         """
-        dst_mac = MACAddress(packet["Ether"].dst_mac)
+        dst_mac = packet["Ether"].dst_mac
 
         if self.computer.is_hub or dst_mac.is_broadcast() or (dst_mac not in self.switching_table):
             return [leg for leg in self.computer.interfaces if leg is not source_leg and leg.is_connected()]  # flood!!!

@@ -470,9 +470,12 @@ class Computer:
 
         if not any(self._does_packet_match_tcp_socket_fourtuple(socket, packet)
                    for socket in self.sockets if socket.kind == COMPUTER.SOCKETS.TYPES.SOCK_STREAM) and \
-                not {OPCODES.TCP.RST} <= packet["TCP"].flags:
-            self.send_to(packet["Ether"].src_mac, packet["IP"].src_ip,
-                         TCP(dport=packet["TCP"].dst_port, sport=packet["TCP"].src_port, seq=0,
+                not (OPCODES.TCP.RST & packet["TCP"].flags):
+            self.send_to(packet["Ether"].src_mac,
+                         packet["IP"].src_ip,
+                         TCP(dst_port=packet["TCP"].dst_port,
+                             src_port=packet["TCP"].src_port,
+                             sequence_number=0,
                              flags=OPCODES.TCP.RST))
 
     def _handle_udp(self, returned_packet):
@@ -493,7 +496,7 @@ class Computer:
 
         for socket in self.sockets:
             if self._does_packet_match_udp_socket_fourtuple(socket, packet):
-                socket.received.append(ReturnedUDPPacket(packet["UDP"].data, packet["IP"].src_ip, packet["UDP"].src_port))
+                socket.received.append(ReturnedUDPPacket(packet["UDP"].payload, packet["IP"].src_ip, packet["UDP"].src_port))
 
     def _does_packet_match_socket_fourtuple(self, socket, packet):
         """

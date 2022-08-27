@@ -3,6 +3,7 @@ import os
 from math import sqrt
 
 import pyglet
+from scapy.layers.dhcp import DHCPTypes
 
 from exceptions import TCPDoneReceiving
 
@@ -465,7 +466,7 @@ class PACKET:
     TYPE_TO_OPCODE_FUNCTION = {
         "ARP": lambda arp: arp.opcode,
         "ICMP": (lambda icmp: (icmp.type, icmp.code) if icmp.type == OPCODES.ICMP.TYPES.UNREACHABLE else icmp.type),
-        "DHCP": lambda dhcp: dhcp.parsed_options.message_type,
+        "DHCP": lambda dhcp: DHCPTypes.get(dhcp.parsed_options.message_type, dhcp.parsed_options.message_type),
         "TCP": get_dominant_tcp_flag,
     }
 

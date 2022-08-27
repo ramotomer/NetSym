@@ -1,4 +1,9 @@
+from __future__ import annotations
+
 from collections import namedtuple
+from typing import TYPE_CHECKING
+
+import scapy
 
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
@@ -7,6 +12,9 @@ from consts import OPCODES, COMPUTER, PORTS, PROTOCOLS
 from exceptions import *
 from packets.all import DHCP, BOOTP, IP, UDP
 from usefuls.funcs import get_the_one
+
+if TYPE_CHECKING:
+    from computing.internals.interface import Interface
 
 DHCPData = namedtuple("DHCPData", [
     "given_ip",
@@ -48,17 +56,6 @@ class DHCPClient(Process):
         self.computer.update_routing_table()
         self.computer.set_default_gateway(dhcp_pack["DHCP"].data.given_gateway, given_ip)
         self.computer.graphics.update_text()
-
-    # def validate_offer(self, dhcp_offer):
-    #     """
-    #     Receives a `Packet` parses it, validates it and returns the server MAC address.
-    #     :return: a `MACAddress` object.
-    #     """
-    #     server_mac = dhcp_offer["Ether"].src_mac
-    #     offered_ip = dhcp_offer["DHCP"].data.given_ip
-    #     if not self.computer.validate_dhcp_given_ip(offered_ip):
-    #         raise AddressError("did not validate IP from DHCP server!!! (probably two interfaces have the same address)")
-    #     return server_mac
 
     @staticmethod
     def build_dhcp_discover(interface):
@@ -107,10 +104,10 @@ class DHCPClient(Process):
         session_socket = get_the_one(self.sockets, lambda s: s.interface == session_interface, ThisCodeShouldNotBeReached)
 
         session_socket.send(self.build_dhcp_request(
-            server_mac=dhcp_offer["Ether"].src_mac,
-            session_interface=session_interface,
-            server_ip=dhcp_offer["IP"].src_ip,
-            requested_ip=dhcp_offer["BOOTP"].your_ip
+            session_interface= session_interface,
+            server_mac=        dhcp_offer["Ether"].src_mac,
+            server_ip=         dhcp_offer["IP"].src_ip,
+            requested_ip=      dhcp_offer["BOOTP"].your_ip
         ))
         yield from session_socket.block_until_received()
         dhcp_pack = session_socket.receive()[0]
@@ -159,26 +156,28 @@ class DHCPServer(Process):
         """
         self.interface_to_dhcp_data = {
             interface: DHCPData(IPAddress.copy(interface.ip),
-                                self.default_gateway.same_subnet_interfaces(interface.ip)[0].ip, None) \
+                                self.default_gateway.same_subnet_interfaces(interface.ip)[0].ip, None)
             for interface in self.computer.interfaces if interface.has_ip()
         }
 
     def raise_on_unknown_packet(self, packet, interface):
         """When a DHCP packet with an unknown opcode is received"""
-        raise UnknownPacketTypeError("DHCP type unknown")
+        raise UnknownPacketTypeError(f"DHCP type unknown, {packet['DHCP'].parsed_options.message_type}")
 
     @staticmethod
-    def build_dhcp_offer(client_mac, offered_ip, interface):
+    def build_dhcp_offer(client_mac: MACAddress,
+                         offered_ip: IPAddress,
+                         interface: Interface) -> scapy.packet.Packet:
         return interface.ethernet_wrap(client_mac,
-                                       IP(interface.ip, offered_ip, PROTOCOLS.DHCP.DEFAULT_TTL) /
-                                       UDP(PORTS.DHCP_SERVER, PORTS.DHCP_CLIENT) /
+                                       IP(src_ip=str(interface.ip), dst_ip=str(offered_ip), ttl=PROTOCOLS.DHCP.DEFAULT_TTL) /
+                                       UDP(src_port=PORTS.DHCP_SERVER, dst_port=PORTS.DHCP_CLIENT) /
                                        BOOTP(opcode=OPCODES.BOOTP.REPLY,
                                              client_mac=client_mac.as_bytes(),
-                                             your_ip=offered_ip,
-                                             server_ip=interface.ip) /
+                                             your_ip=str(offered_ip),
+                                             server_ip=str(interface.ip)) /
                                        DHCP(options=[
                                            ('message-type', OPCODES.DHCP.PACK),
-                                           ('subnet_mask', IPAddress.mask_from_number(interface.ip.subnet_mask)),
+                                           ('subnet_mask', str(IPAddress.mask_from_number(interface.ip.subnet_mask))),
                                            ('server_id', str(interface.ip)),
                                        ]))
 
@@ -193,8 +192,8 @@ class DHCPServer(Process):
         :return:
         """
         return session_interface.ethernet_wrap(client_mac,
-                                               IP(src_ip=session_interface.ip, dst_ip=str(offered_ip), ttl=PROTOCOLS.DHCP.DEFAULT_TTL) /
-                                               UDP(PORTS.DHCP_SERVER, PORTS.DHCP_CLIENT) /
+                                               IP(src_ip=str(session_interface.ip), dst_ip=str(offered_ip), ttl=PROTOCOLS.DHCP.DEFAULT_TTL) /
+                                               UDP(src_port=PORTS.DHCP_SERVER, dst_port=PORTS.DHCP_CLIENT) /
                                                BOOTP(opcode=OPCODES.BOOTP.REPLY,
                                                      client_mac=client_mac.as_bytes(),
                                                      your_ip=str(offered_ip),

@@ -1,8 +1,11 @@
 import random
+from typing import Union, TypeVar, Type
 
 from consts import ADDRESSES
 from exceptions import *
 from usefuls.funcs import is_hex
+
+T = TypeVar('T', bound='MACAddress')
 
 
 class MACAddress:
@@ -12,7 +15,7 @@ class MACAddress:
 
     generated_addresses = []
 
-    def __init__(self, string_mac):
+    def __init__(self: T, string_mac: Union[T, str]) -> None:
         """
         Initiates a MACAddress object from a ip_layer
         :param string_mac: The string mac ('aa:bb:cc:11:22:76' for example)
@@ -31,15 +34,15 @@ class MACAddress:
         self.__class__.generated_addresses.append(string_mac)
 
     @property
-    def vendor(self):
+    def vendor(self) -> str:
         return ADDRESSES.MAC.SEPARATOR.join(self.string_mac.split(ADDRESSES.MAC.SEPARATOR)[0:3])
 
-    def is_broadcast(self):
+    def is_broadcast(self) -> bool:
         """Returns if a MAC address is the broadcast MAC or not"""
         return self.string_mac == ADDRESSES.MAC.BROADCAST
 
     @classmethod
-    def broadcast(cls):
+    def broadcast(cls: Type[T]) -> T:
         """
         This is constructor that returns a broadcast MAC address object.
         :return: a MACAddress with the broadcast MAC.
@@ -47,7 +50,7 @@ class MACAddress:
         return cls(ADDRESSES.MAC.BROADCAST)
 
     @classmethod
-    def randomac(cls):
+    def randomac(cls: Type[T]) -> T:
         """
         A constructor that returns a randomized mac address.
         Returns a different one each time.
@@ -60,7 +63,7 @@ class MACAddress:
         return randomized_string
 
     @classmethod
-    def stp_multicast(cls):
+    def stp_multicast(cls: Type[T]) -> T:
         """
         a constructor.
         The STP multicast address.
@@ -69,16 +72,16 @@ class MACAddress:
         return cls(ADDRESSES.MAC.STP_MULTICAST)
 
     @classmethod
-    def no_mac(cls):
+    def no_mac(cls: Type[T]) -> T:
         """a constructor that Returns the MAC of 0s"""
         return cls("00:00:00:00:00:00")
 
-    def is_no_mac(self):
+    def is_no_mac(self) -> bool:
         """Returns whether or not this mac is the 0s mac"""
         return self.string_mac == "00:00:00:00:00:00"
 
     @classmethod
-    def copy(cls, mac_address):
+    def copy(cls: Type[T], mac_address: T) -> T:
         """
         Copy the mac address and return a new different object.
         :param mac_address: a `MACAddress` object.
@@ -87,17 +90,15 @@ class MACAddress:
         return cls(mac_address.string_mac)
 
     @staticmethod
-    def is_valid(address):
+    def is_valid(address: str) -> bool:
         """
         Receives a ip_layer that is supposed to be a mac address and returns whether
         or not it is a valid address.
-        :param address: The string address
-        :return: Whether or not it is valid.
         """
         splitted_address = address.split(ADDRESSES.MAC.SEPARATOR)
         return len(splitted_address) == 6 and all([is_hex(part) and len(part) == 2 for part in splitted_address])
 
-    def as_bytes(self):
+    def as_bytes(self) -> bytes:
         """
         Returns a byte representation of the MAC address
         :return: a `bytes` object which is the representation of the mac address.
@@ -105,23 +106,23 @@ class MACAddress:
         address_as_numbers = [int(hex_num, 16) for hex_num in self.string_mac.split(ADDRESSES.MAC.SEPARATOR)]
         return bytes(address_as_numbers)
 
-    def as_number(self):
+    def as_number(self) -> int:
         """
         Returns the MAC address as one number (00:11:22:33:44:55:66 -> 0x112233445566)
         :return: an integer which is the MAC address
         """
         return int(''.join(hex_part for hex_part in self.string_mac.split(ADDRESSES.MAC.SEPARATOR)), base=16)
 
-    def __eq__(self, other):
+    def __eq__(self: T, other: Union[str, T]) -> bool:
         """Determines whether two MAC addresses are equal or not"""
         if isinstance(other, str):
             other = MACAddress(other)
         return self.string_mac.lower() == other.string_mac.lower()
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Determines the hash of the `MACAddress` object"""
         return hash(repr(self))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """The ip_layer representation of the MAC address"""
         return self.string_mac.upper()

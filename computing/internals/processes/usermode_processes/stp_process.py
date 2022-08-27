@@ -1,11 +1,15 @@
 from os import linesep
+from typing import Optional, Union, TypeVar, Type, Any
 
+from address.mac_address import MACAddress
 from computing.internals.processes.abstracts.process import Process, WaitingForPacketWithTimeout, ReturnedPacket, \
     Timeout
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
 from packets.packet import Packet
+
+T = TypeVar('T', bound='BID')
 
 
 class BID:
@@ -15,19 +19,22 @@ class BID:
     I consists of a priority and the switches MAC address (one of them).
     """
 
-    def __init__(self, priority, mac, computer_name=None):
+    def __init__(self,
+                 priority: int,
+                 mac: Union[MACAddress, str],
+                 computer_name: Optional[str] = None) -> None:
         """
         Initiates a BID object.
         :param priority: The priority of the switch
         :param mac: one of the `MACAddress`-s of the switch.
         """
         self.priority = priority
-        self.mac = mac
+        self.mac = MACAddress(mac)
         self.computer_name = computer_name
         self.done_loading = True
 
     @property
-    def value(self):
+    def value(self) -> int:
         """
         The numerical value of the BID.
         :return: an integer value of the BID..
@@ -35,7 +42,7 @@ class BID:
         return int(str(self.priority) + str(self.mac.as_number()))
 
     @classmethod
-    def root_from_stp(cls, packet):
+    def root_from_stp(cls: Type[T], packet: Packet) -> T:
         """
         Take in an STP packet and return the root BID
         """
@@ -45,7 +52,7 @@ class BID:
         return cls(stp.root_id, stp.root_mac)
 
     @classmethod
-    def bridge_from_stp(cls, packet):
+    def bridge_from_stp(cls: Type[T], packet: Packet) -> T:
         """
         Take in an STP packet and return the BID of the sending switch
         """
@@ -54,7 +61,7 @@ class BID:
             stp = packet["STP"]
         return cls(stp.bridge_id, stp.bridge_mac)
 
-    def __gt__(self, other):
+    def __gt__(self, other: Any) -> bool:
         """
         Allows to use the `this_BID > other_BID` notation
         :param other: another `BID` object or a number.
@@ -66,20 +73,20 @@ class BID:
             return self.value > other.value
         raise STPError(f"Cannot compare BID with this type: {type(other).__name__}!!!!")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """The String representation of the BID"""
         return f"{self.priority}{self.mac}" \
             f"{f' ({self.computer_name})' if self.computer_name is not None else ''}"
 
-    def __str__(self):
+    def __str__(self) -> str:
         """The short string representation of the BID"""
         return f"{self.priority}{self.mac}"
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """For using this as dictionary keys"""
         return hash(self.value)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Returns whether or not two BID objects are equal"""
         return self.value == other.value
 
@@ -166,7 +173,6 @@ class STPProcess(Process):
         Sends the STP packet with the information of the current state of the switch.
         :return: None
         """
-        self.computer.send()
         # TODO: are STP sockets a thing? should they be?
         self.computer.send_stp(
             self.my_bid,
@@ -354,11 +360,11 @@ class STPProcess(Process):
         packet_root_bid = BID.root_from_stp(packet["STP"])
         packet_root_declaration_time = MainLoop.instance.time() - packet["STP"].age
 
-        self.root_timeout = packet["STP"].max_age
-        self.stp_ports[receiving_port].last_time_got_packet = MainLoop.instance.time()
-
         if receiving_port not in self.stp_ports:  # if a new interface received an STP packet, add it to the known ones.
             self._add_port(receiving_port)
+
+        self.root_timeout = packet["STP"].max_age
+        self.stp_ports[receiving_port].last_time_got_packet = MainLoop.instance.time()
 
         if packet_root_bid < self.root_bid:  # if there is a new root that is better than yours, update yours
             self._update_root(packet_root_bid, packet["STP"].path_cost, packet_root_declaration_time, receiving_port)
