@@ -2,11 +2,10 @@ from address.mac_address import MACAddress
 from computing.computer import Computer, COMPUTER
 from computing.internals.filesystem.filesystem import Filesystem
 from computing.internals.processes.kernelmode_processes.switching_process import SwitchingProcess
-from computing.internals.processes.usermode_processes.stp_process import STPProcess
+from computing.internals.processes.usermode_processes.stp_process import STPProcess, BID
 from computing.internals.routing_table import RoutingTable
 from computing.internals.wireless_interface import WirelessInterface
 from consts import OS, PROTOCOLS, IMAGES, CONNECTIONS, ADDRESSES
-from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.all import LLC, STP
 
@@ -63,15 +62,9 @@ class Switch(Computer):
         if not self.process_scheduler.is_usermode_process_running_by_type(STPProcess) and self.interfaces:
             self.process_scheduler.start_usermode_process(STPProcess)
 
-    def send_stp(self, sender_bid, root_bid, distance_to_root, root_declaration_time, sending_interval, root_timeout):
+    def send_stp(self, sender_bid: BID, root_bid: BID, distance_to_root: int, age: int, sending_interval: int, root_max_age: int) -> None:
         """
         Sends an STP packet with the given information on all interfaces. (should only be used on a switch)
-        :param sender_bid: a `BID` object of the sending switch.
-        :param root_bid: a `BID` object of the root switch.
-        :param distance_to_root: The switch's distance to the root switch.
-        :param root_declaration_time: The timestamp of the last time the root announced itself
-        :param sending_interval: (seconds) The amount of time until the next periodic packet
-        :param root_timeout: (seconds) How long do you wait before you forget the root when you don't hear from it
         """
         for interface in self.interfaces:
             interface.send_with_ethernet(MACAddress.stp_multicast(),
@@ -84,8 +77,8 @@ class Switch(Computer):
                                             path_cost=distance_to_root,
                                             bridge_id=sender_bid.priority,
                                             bridge_mac=str(sender_bid.mac),
-                                            age=int(MainLoop.instance.time_since(root_declaration_time)),
-                                            max_age=root_timeout,
+                                            age=age,
+                                            max_age=root_max_age,
                                             hello_time=sending_interval,
                                          ))
 

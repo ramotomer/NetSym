@@ -36,7 +36,9 @@ class BrctlShowbrCommand(Command):
 bridge:
     {'bridge id': <23}{str(stp_process.my_bid): >23}
     {'designated root id': <23}{str(stp_process.root_bid): >23}
-    {'time since seen root': <23}{MainLoop.instance.time_since(stp_process.root_declaration_time): >23.2}
+    {'time since seen root': <23}{int(MainLoop.instance.time_since(stp_process.root_declaration_time)): >23}
+    {'max root timeout': <23}{stp_process.root_timeout: >23.2}
+    {'root age': <23}{stp_process.root_age: >23}
 """
         interfaces_info = []
         for id_, (port, stp_port) in enumerate(stp_process.stp_ports.items()):

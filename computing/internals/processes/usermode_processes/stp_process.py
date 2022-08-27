@@ -9,6 +9,7 @@ from computing.internals.processes.abstracts.process import Process, WaitingForP
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
+from packets.all import STP
 from packets.packet import Packet
 
 if TYPE_CHECKING:
@@ -134,14 +135,18 @@ class STPProcess(Process):
         self.root_bid = self.my_bid
         self.stp_ports = {}  # format: {`Interface`: `STPPort`}
 
-        self.root_declaration_time = MainLoop.instance.time()
         self.last_root_changing_time = MainLoop.instance.time()
         self.last_sending_time = MainLoop.instance.time()
         self.last_port_blocking_time = MainLoop.instance.time()
 
         self.sending_interval = PROTOCOLS.STP.NORMAL_SENDING_INTERVAL
         self.tree_stable = False
+
         self.root_timeout = PROTOCOLS.STP.ROOT_MAX_DISAPPEARING_TIME
+        self.root_declaration_time = MainLoop.instance.time()
+        self.root_age = 0
+        self.root_max_age = PROTOCOLS.STP.DEFAULT_ROOT_MAX_AGE
+        self._root_disappeared = False
 
     @property
     def root_port(self):
@@ -166,14 +171,20 @@ class STPProcess(Process):
         except NoSuchInterfaceError:
             return 0
 
-    def _i_am_root(self):
+    @staticmethod
+    def connection_length_to_path_cost(connection_length: float) -> int:
+        """
+        Calculates the cost of a path by the length of the nearest connection that it contains
+        """
+        return int(100 * connection_length)
+
+    def _am_i_root(self) -> bool:
         """
         Returns whether or not I am the current root of the tree.
-        :return: `bool`
         """
         return self.my_bid == self.root_bid
 
-    def _send_packet(self) -> None:
+    def _flood_stp_packets(self) -> None:
         """
         Sends the STP packet with the information of the current state of the switch.
         """
@@ -182,52 +193,39 @@ class STPProcess(Process):
             self.my_bid,
             self.root_bid,
             self.distance_to_root,
-            MainLoop.instance.time() if self._i_am_root() else self.root_declaration_time,
+            0 if self._am_i_root() else (self.root_age + 1),
             sending_interval=self.sending_interval,
-            root_timeout=PROTOCOLS.STP.ROOT_MAX_DISAPPEARING_TIME,
+            root_max_age=PROTOCOLS.STP.ROOT_MAX_DISAPPEARING_TIME,
         )
         self.last_sending_time = MainLoop.instance.time()
 
-    def _update_root(self, new_root_bid, distance_to_new_root, root_declaration_time, receiving_port):
+    def _update_root(self, new_root: BID, distance_to_root: int, root_age: int, receiving_port: Interface) -> None:
         """
         Updates the root switch according to the information from other received STP packets.
-        :param new_root_bid: The `BID` of the new root.
-        :param distance_to_new_root: the distance that the switch that sent this STP packet reports it has to the root switch.
-        :param receiving_port: The `Interface` that received the STP packet.
-        :return: None
         """
-        if MainLoop.instance.time_since(root_declaration_time) > PROTOCOLS.STP.ROOT_MAX_DISAPPEARING_TIME:
-            return
-
-        self.root_bid = new_root_bid
+        self.root_bid = new_root
         self.last_root_changing_time = MainLoop.instance.time()
-        if root_declaration_time > self.root_declaration_time:
-            self.root_declaration_time = root_declaration_time
+        self.root_declaration_time = MainLoop.instance.time()
+        self.root_age = root_age
 
         if self.tree_stable:
-            self._tree_unstable_again()  # if the root is updated, the tree is not really stable!
+            self._set_tree_unstable_again()  # if the root is updated, the tree is not really stable!
 
         if receiving_port not in self.stp_ports:
             self._add_port(receiving_port)
-        self._update_distance(distance_to_new_root, root_declaration_time, receiving_port)
+        self._update_distance(distance_to_root, receiving_port)
 
-    def _update_distance(self, distance_to_root, root_declaration_time, receiving_port):
+    def _update_distance(self, distance_to_root: int, receiving_port: Interface) -> None:
         """
         Updates the distance to the root that a certain interface keeps.
         The information comes from a received STP packet with the same root_bid
-        :param distance_to_root: The distance to the root that is reported in the received packet.
-        :param receiving_port: The `Interface` that received that packet (it is the one that will be updated)
-        :return: None
         """
-        if root_declaration_time > self.root_declaration_time:
-            self.root_declaration_time = root_declaration_time
-
-        if self._i_am_root():
+        if self._am_i_root():
             self.stp_ports[receiving_port].distance_to_root = 0
         else:
-            self.stp_ports[receiving_port].distance_to_root = distance_to_root + receiving_port.connection_length
+            self.stp_ports[receiving_port].distance_to_root = distance_to_root + self.connection_length_to_path_cost(receiving_port.connection_length)
 
-    def _add_port(self, interface):
+    def _add_port(self, interface: Interface) -> None:
         """
         Adds a new `Interface` to the `self.stp_ports` dictionary.
         An interface turns to an 'stp interface' when it receives an STP packet.
@@ -255,7 +253,7 @@ class STPProcess(Process):
 
     def _is_root_port(self, port):
         """Receives an STP interface of the switch and decides if it is a root port"""
-        if self._i_am_root():
+        if self._am_i_root():
             return False
         return port is self.root_port
 
@@ -268,9 +266,9 @@ class STPProcess(Process):
         :param port: an `Interface` object.
         :return: whether or not this interface should be designated. (`bool`)
         """
-        if self._i_am_root():
+        if self._am_i_root():
             return True
-        other_interface_distance_to_root = self.stp_ports[port].distance_to_root - port.connection_length
+        other_interface_distance_to_root = self.stp_ports[port].distance_to_root - self.connection_length_to_path_cost(port.connection_length)
         return other_interface_distance_to_root > self.distance_to_root
 
     def _set_interface_states(self):
@@ -290,7 +288,7 @@ class STPProcess(Process):
         return f"""
     STP info:
 ----------------------------------------------
-    my BID: {self.my_bid}                   {"(ROOT!)" if self._i_am_root() else ""}
+    my BID: {self.my_bid}                   {"(ROOT!)" if self._am_i_root() else ""}
     root BID: {self.root_bid!r}
     distance to root: {self.distance_to_root}
     root declaration time: {str(MainLoop.instance.time_since(self.root_declaration_time))[:5]} seconds ago
@@ -304,10 +302,6 @@ class STPProcess(Process):
         """Returns whether or not the root was updated in the last `seconds` seconds."""
         return MainLoop.instance.time_since(self.last_root_changing_time) > seconds
 
-    def _root_disappeared(self):
-        """Returns whether or not the root has disappeared and did not report for a long time"""
-        return MainLoop.instance.time_since(self.root_declaration_time) > self.root_timeout
-
     def _port_hasnt_seen_stp_packets_lately(self, port):
         """
         Returns whether or not the given interface received any STP packets lately.
@@ -318,8 +312,8 @@ class STPProcess(Process):
 
     def _block_blocked_ports(self):
         """Blocks the `BLOCKED_PORT`-s and unblocks the other ones."""
-        if MainLoop.instance.time_since(self.last_port_blocking_time) < PROTOCOLS.STP.BLOCKED_INTERFACE_UPDATE_INTERVAL:
-            return
+        # if MainLoop.instance.time_since(self.last_port_blocking_time) < PROTOCOLS.STP.BLOCKED_INTERFACE_UPDATE_INTERVAL:
+        #     return
 
         self.last_port_blocking_time = MainLoop.instance.time()
         for port in self.stp_ports:
@@ -338,7 +332,7 @@ class STPProcess(Process):
             self.tree_stable = True
             self.computer.print("STP Tree stable!")
 
-    def _tree_unstable_again(self):
+    def _set_tree_unstable_again(self):
         """
         This is called if the tree was thought to be stable but then the root was updated, Takes the STP process
         back to the unstable state
@@ -350,8 +344,9 @@ class STPProcess(Process):
 
     def _recalculate_root(self):
         """Restarts the root calculation process with itself as the new root"""
+        self._root_disappeared = False
         for port in self.stp_ports:
-            self._update_root(self.my_bid, 0, MainLoop.instance.time(), port)
+            self._update_root(self.my_bid, 0, -1, port)
 
     def _learn_from_packet(self, packet: Packet, receiving_port: Interface) -> None:
         """
@@ -360,20 +355,40 @@ class STPProcess(Process):
         :param packet: a `Packet` that contains STP
         :param receiving_port: the `Interface` that the packet was captured on.
         """
-        packet_root_bid = BID.root_from_stp(packet["STP"])
-        packet_root_declaration_time = MainLoop.instance.time() - packet["STP"].age
+        stp_layer = packet["STP"]
+        packet_root_bid = BID.root_from_stp(stp_layer)
 
         if receiving_port not in self.stp_ports:  # if a new interface received an STP packet, add it to the known ones.
             self._add_port(receiving_port)
 
-        self.root_timeout = packet["STP"].max_age
+        self.root_max_age = stp_layer.max_age
         self.stp_ports[receiving_port].last_time_got_packet = MainLoop.instance.time()
 
+        if stp_layer.age >= stp_layer.max_age:
+            return
+
         if packet_root_bid < self.root_bid:  # if there is a new root that is better than yours, update yours
-            self._update_root(packet_root_bid, packet["STP"].path_cost, packet_root_declaration_time, receiving_port)
+            self._update_root(packet_root_bid, stp_layer.path_cost, stp_layer.age, receiving_port)
 
         elif packet_root_bid == self.root_bid:  # if a packet was received with a root that you already know, update your distance.
-            self._update_distance(packet["STP"].path_cost, packet_root_declaration_time, receiving_port)
+            self._update_root_age(stp_layer)
+            self._update_distance(stp_layer.path_cost, receiving_port)
+
+    def _update_root_age(self, stp_layer: STP) -> None:
+        """
+        Learn the age of the root by a packet and update all attributes accordingly
+        """
+        if stp_layer.age > self.root_age and MainLoop.instance.time_since(self.root_declaration_time) < self.root_timeout:
+            return
+
+        if self._am_i_root():
+            self.root_age = -1
+
+        if stp_layer.age > self.root_age:
+            self._root_disappeared = True
+
+        self.root_declaration_time = MainLoop.instance.time()
+        self.root_age = stp_layer.age
 
     def _remove_disconnected_ports(self) -> None:
         """
@@ -383,7 +398,7 @@ class STPProcess(Process):
         """
         for port in list(self.stp_ports.keys()):
             if not port.is_connected() or self._port_hasnt_seen_stp_packets_lately(port):
-                self.computer.print("Lost a port! recalculating...")
+                self.computer.print(f"port '{port.name}' disconnected!")
 
                 if port.is_blocked:
                     port.unblock()
@@ -401,7 +416,7 @@ class STPProcess(Process):
         while True:
 
             if MainLoop.instance.time_since(self.last_sending_time) > self.sending_interval:
-                self._send_packet()
+                self._flood_stp_packets()
 
             stp_packets = ReturnedPacket()
             yield WaitingForPacketWithTimeout(lambda p: ("STP" in p), stp_packets, Timeout(0))
@@ -411,16 +426,18 @@ class STPProcess(Process):
                 self._learn_from_packet(packet, receiving_port=packet_metadata.interface)
 
             self._set_interface_states()
+            self._block_blocked_ports()
 
             if self._root_not_updated_for(PROTOCOLS.STP.TREE_STABLIZING_MAX_TIME):
-                self._block_blocked_ports()
                 self._tree_is_probably_stable()
 
             self._remove_disconnected_ports()
 
-            if self._root_disappeared():
+            if self._root_disappeared:
                 self.computer.print("Lost root! recalculating....")
                 self._recalculate_root()
+                self._flood_stp_packets()
+                # TODO: deleting the root does not work yet!!! It cannot forget the old root... :(
 
     def __repr__(self):
         """The string representation of the STP process"""

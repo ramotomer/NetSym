@@ -61,7 +61,7 @@ def with_attribute_type_casting_by_suffix(class_, attribute_suffix_to_type):
                 raise AttributeError_(f"{self!r} has no attribute '{e.args[0]}'")
 
             for suffix, new_type in attribute_suffix_to_type.items():
-                if isinstance(original_value, str) and original_value.endswith(suffix):
+                if isinstance(original_value, str) and item.endswith(suffix):
                     return new_type(original_value)
             return original_value
 
