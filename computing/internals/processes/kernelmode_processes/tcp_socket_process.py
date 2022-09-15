@@ -44,6 +44,7 @@ class TCPSocketProcess(TCPProcess, metaclass=ABCMeta):
 
     def on_connection_reset(self):
         self.socket.close()
+        super(TCPSocketProcess, self).on_connection_reset()
 
     def code(self):
         """"""

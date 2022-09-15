@@ -257,7 +257,7 @@ class STPProcess(Process):
             return False
         return port is self.root_port
 
-    def _is_designated(self, port):
+    def _should_be_designated(self, port):
         """
         Finds out if an stp interface should be designated.
         Every STP interface has another STP switch behind it. Every interface now checks if that switch has a higher
@@ -277,7 +277,7 @@ class STPProcess(Process):
             if self._is_root_port(port):
                 self._set_state(port, PROTOCOLS.STP.ROOT_PORT)
 
-            elif self._is_designated(port):
+            elif self._should_be_designated(port):
                 self._set_state(port, PROTOCOLS.STP.DESIGNATED_PORT)
 
             else:  # the port will be blocked, since it has no state!
@@ -346,7 +346,7 @@ class STPProcess(Process):
         """Restarts the root calculation process with itself as the new root"""
         self._root_disappeared = False
         for port in self.stp_ports:
-            self._update_root(self.my_bid, 0, -1, port)
+            self._update_root(self.my_bid, 0, -1, port)  # set self to be the root
 
     def _learn_from_packet(self, packet: Packet, receiving_port: Interface) -> None:
         """

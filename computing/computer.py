@@ -473,8 +473,8 @@ class Computer:
                 not (OPCODES.TCP.RST & packet["TCP"].flags):
             self.send_to(packet["Ether"].src_mac,
                          packet["IP"].src_ip,
-                         TCP(dst_port=packet["TCP"].dst_port,
-                             src_port=packet["TCP"].src_port,
+                         TCP(dst_port=packet["TCP"].src_port,
+                             src_port=packet["TCP"].dst_port,
                              sequence_number=0,
                              flags=OPCODES.TCP.RST))
 

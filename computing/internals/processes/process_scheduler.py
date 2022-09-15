@@ -3,7 +3,8 @@ from contextlib import contextmanager
 
 from recordclass import recordclass
 
-from consts import COMPUTER
+from computing.internals.processes.abstracts.process import ProcessInternalError, Process
+from consts import COMPUTER, debugp
 from exceptions import NoSuchProcessError
 from gui.main_loop import MainLoop
 from usefuls.funcs import get_the_one
@@ -99,8 +100,14 @@ class ProcessScheduler:
         """
         return self.__details_by_mode[mode].currently_running_process is not None
 
-    def is_running_a_process(self):
+    def is_running_a_process(self) -> bool:
         return any(self.is_running_a_process_in_this_mode(mode) for mode in COMPUTER.PROCESSES.MODES.ALL_MODES)
+
+    def is_inside_this_process(self, process_instance: Process) -> bool:
+        """
+        Is the code currently running from inside the `code` function of this specific process instance?
+        """
+        return any(self.get_currently_running_process(mode) == process_instance for mode in COMPUTER.PROCESSES.MODES.ALL_MODES)
 
     def get_process_count(self, mode):
         return len(self.__details_by_mode[mode].waiting_processes) + int(self.is_running_a_process_in_this_mode(mode))
@@ -146,6 +153,9 @@ class ProcessScheduler:
             try:
                 return next(process.process)
             except StopIteration:
+                return None
+            except ProcessInternalError:
+                debugp(f"process was killed using error!")
                 return None
 
     def _start_new_processes(self, mode):

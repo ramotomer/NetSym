@@ -56,7 +56,7 @@ class TTL:
 
 
 class TCPFlag(object):
-    def __init__(self, name, value):
+    def __init__(self, name: str, value: int) -> None:
         self.name = name
         self.value = value
 
@@ -67,23 +67,27 @@ class TCPFlag(object):
         return int(other)
         # raise TypeError(f"Type '{type(other)}' has no absolute value! only `TCPFlag` and `int` have!!")
 
-    def __or__(self, other):
+    def __or__(self, other) -> int:
         return self.value | self.absolute_value(other)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.name
 
-    def __add__(self, other):
+    def __add__(self, other) -> str:
         return self.name + str(other)
 
-    def __int__(self):
+    def __int__(self) -> int:
         return int(self.value)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return self.value == self.absolute_value(other)
 
     def __hash__(self):
         return hash((self.name, self.value))
+
+    def __bool__(self) -> bool:
+        """whether or not any flags are set"""
+        return bool(self.value)
 
 
 class OPCODES:
@@ -167,7 +171,7 @@ class PROTOCOLS:
         STABLE_SENDING_INTERVAL =           6   / STP_RELATIVE_SPEED
         BLOCKED_INTERFACE_UPDATE_INTERVAL = 10  / STP_RELATIVE_SPEED
         TREE_STABLIZING_MAX_TIME =          20  / STP_RELATIVE_SPEED
-        ROOT_MAX_DISAPPEARING_TIME =        20  / STP_RELATIVE_SPEED
+        ROOT_MAX_DISAPPEARING_TIME =        10  / STP_RELATIVE_SPEED
         MAX_CONNECTION_DISAPPEARED_TIME =   20  / STP_RELATIVE_SPEED   # in seconds
 
         DEFAULT_ROOT_MAX_AGE = 20

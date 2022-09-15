@@ -12,7 +12,7 @@ from recordclass import recordclass
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import Process, WaitingForPacketWithTimeout, Timeout, \
     ReturnedPacket, \
-    NoNeedForPacket, WaitingFor, T_ProcessCode
+    NoNeedForPacket, WaitingFor, T_ProcessCode, ProcessInternalError
 from consts import *
 from exceptions import TCPDataLargerThanMaxSegmentSize
 from gui.main_loop import MainLoop
@@ -34,6 +34,10 @@ SackEdges = recordclass("SackEdges", [
     "left",
     "right",
 ])
+
+
+class ProcessInternalError_TCPConnectionWasReset(ProcessInternalError):
+    """This is used to kill the process if the connection was reset :)"""
 
 
 def get_tcp_packet_data_length(tcp_packet: Packet) -> int:
@@ -139,7 +143,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         Creates and sends an ACK packet for the given `Packet` that was received from the other side.
         """
         is_retransmission = False
-        additional_flags = OPCODES.TCP.NO_FLAGS if not additional_flags else additional_flags
+        additional_flags = OPCODES.TCP.NO_FLAGS if additional_flags is None else additional_flags
 
         if packet["TCP"].sequence_number == self.receiving_window.ack_number:
             # ^ the received packet is in-order
@@ -230,7 +234,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         This function should be overridden
         Specify what should be done once received an RST packet
         """
-        pass
+        raise ProcessInternalError_TCPConnectionWasReset
 
     def hello_handshake(self) -> T_ProcessCode:
         """
@@ -254,9 +258,6 @@ class TCPProcess(Process, metaclass=ABCMeta):
 
         tcp_syn_ack_list = []
         yield from self.handle_tcp_and_receive(tcp_syn_ack_list, is_blocking=True, insert_flag_packets_to_received_data=True)
-        if self.kill_me:
-            self.computer.print("Server unavailable :(!")
-            return
 
         syn_ack, = tcp_syn_ack_list
         self._update_from_handshake_packet(syn_ack)
@@ -421,8 +422,6 @@ class TCPProcess(Process, metaclass=ABCMeta):
 
             for packet in received_packets.packets:
                 yield from self._handle_packet_and_receive(packet, received_data, insert_flag_packets_to_received_data)
-                if self.kill_me:
-                    return
 
             self.receiving_window.add_data_and_remove_from_window(received_data)
 
@@ -468,7 +467,6 @@ class TCPProcess(Process, metaclass=ABCMeta):
             yield from self.goodbye_handshake(initiate=False)
 
         if OPCODES.TCP.RST & tcp_layer.flags:
-            self.kill_me = True
             self.on_connection_reset()
             return
 
