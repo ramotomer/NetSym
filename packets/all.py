@@ -102,13 +102,13 @@ BOOTP = with_automatic_address_type_casting(
     define_attribute_aliases(
         BOOTP,
         {
-            "opcode":      "op",
-            "client_mac":  "chaddr",
-            "client_ip":   "ciaddr",
-            "your_ip":     "yiaddr",
-            "server_ip":   "siaddr",
-            "server_name": "sname",
-            "gateway_ip":  "giaddr",
+            "opcode":          "op",
+            "client_mac":      "chaddr",
+            "client_ip":       "ciaddr",
+            "your_ip":         "yiaddr",
+            "server_ip":       "siaddr",
+            "server_name":     "sname",
+            "relay_agent_ip":  "giaddr",
         }
     )
 )

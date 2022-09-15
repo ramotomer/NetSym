@@ -51,10 +51,10 @@ class DHCPClient(Process):
         :param dhcp_pack: a `Packet` object that contains DHCP.
         :return: None
         """
-        given_ip = dhcp_pack["DHCP"].data.given_ip
+        given_ip = dhcp_pack["BOOTP"].your_ip
         session_interface.ip = given_ip
         self.computer.update_routing_table()
-        self.computer.set_default_gateway(dhcp_pack["DHCP"].data.given_gateway, given_ip)
+        self.computer.set_default_gateway(dhcp_pack["DHCP"].parsed_options.router, given_ip)
         self.computer.graphics.update_text()
 
     @staticmethod
@@ -196,10 +196,10 @@ class DHCPServer(Process):
                                                UDP(src_port=PORTS.DHCP_SERVER, dst_port=PORTS.DHCP_CLIENT) /
                                                BOOTP(opcode=OPCODES.BOOTP.REPLY,
                                                      client_mac=client_mac.as_bytes(),
-                                                     your_ip=str(offered_ip),
-                                                     gateway_ip=str(offered_gateway)) /
+                                                     your_ip=str(offered_ip)) /
                                                DHCP(options=[
-                                                   ('message-type', OPCODES.DHCP.PACK)
+                                                   ('message-type', OPCODES.DHCP.PACK),
+                                                   ('router', str(offered_gateway)),
                                                ]))
 
     def send_pack(self, request_packet, interface):
