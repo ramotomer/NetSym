@@ -44,10 +44,9 @@ def get_tcp_packet_data_length(tcp_packet: Packet) -> int:
     """
     Returns the length of the data of the TCP packet
     """
-    try:
-        return len(tcp_packet["TCP"].payload.build()) or 1
-    except IndexError:
-        return 1
+    if (OPCODES.TCP.SYN & tcp_packet["TCP"].flags) or (OPCODES.TCP.FIN & tcp_packet["TCP"].flags):
+        return 1  # handshake ghost byte
+    return len(tcp_packet["TCP"].payload.build())
 
 
 def is_number_acking_packet(ack_number: int, packet: Packet) -> bool:
@@ -396,7 +395,9 @@ class TCPProcess(Process, metaclass=ABCMeta):
         """
         if MainLoop.instance.time_since(self.last_packet_sent_time) > PROTOCOLS.TCP.SENDING_INTERVAL:
             if self.sending_window.sent:
-                self.computer.send(self.sending_window.sent.popleft())
+                packet = self.sending_window.sent.popleft()
+                debugp(f"{self.computer.name:<20}: TCP({get_dominant_tcp_flag(packet['TCP'])}, {packet['TCP'].sequence_number}, {packet['TCP'].ack_number})")
+                self.computer.send(packet)
                 self.last_packet_sent_time = MainLoop.instance.time()
 
     def handle_tcp_and_receive(self,
@@ -421,7 +422,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
             yield WaitingForPacketWithTimeout(self._my_tcp_packets, received_packets, Timeout(0.01))
 
             for packet in received_packets.packets:
-                yield from self._handle_packet_and_receive(packet, received_data, insert_flag_packets_to_received_data)
+                yield from self._handle_packet(packet, received_data, insert_flag_packets_to_received_data)
 
             self.receiving_window.add_data_and_remove_from_window(received_data)
 
@@ -434,10 +435,10 @@ class TCPProcess(Process, metaclass=ABCMeta):
             if not is_blocking:
                 return
 
-    def _handle_packet_and_receive(self,
-                                   packet: Packet,
-                                   received_data: List,
-                                   insert_flag_packets_to_received_data: bool) -> None:
+    def _handle_packet(self,
+                       packet: Packet,
+                       received_data: List,
+                       insert_flag_packets_to_received_data: bool) -> T_ProcessCode:
         """
         Receives a packet and handles it, sends ack, learns, and adds the data to a given `received_data` list.
         If it is a FIN or RST, reacts accordingly.
@@ -623,7 +624,7 @@ class ReceivingWindow:
         """
         for packet in self.window[:]:
             if is_number_acking_packet(self.ack_number, packet):
-                received_data.append(str(packet["TCP"].payload.build()))
+                received_data.append(packet["TCP"].payload.build())
                 self.window.remove(packet)
             else:
                 break  # the window is sorted by the sequence number.

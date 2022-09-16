@@ -63,7 +63,7 @@ class DAYTIMEClientProcess(Process):
             return
 
         yield from self.socket.block_until_received()
-        self.computer.print(f"Got datetime! {self.socket.receive()}")
+        self.computer.print(f"Got datetime! {self.socket.receive().decode('ascii')}")
         yield from self.socket.block_until_closed()
 
     def __repr__(self):

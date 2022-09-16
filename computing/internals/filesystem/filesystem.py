@@ -38,7 +38,7 @@ class Filesystem:
         return filesystem
 
     @classmethod
-    def is_absolute_path(cls, path):
+    def is_absolute_path(cls, path: str) -> bool:
         """
         returns the answer to the damn question in the title of the method!!! hell, why do i even document....
         :param path:

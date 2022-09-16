@@ -12,7 +12,7 @@ from address.ip_address import IPAddress
 from computing.computer import Computer
 from computing.internals.frequency import Frequency
 from computing.internals.interface import Interface
-from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEClientProcess
+from computing.internals.processes.usermode_processes.ftp_process import ClientFTPProcess
 from computing.internals.processes.usermode_processes.stp_process import STPProcess
 from computing.internals.wireless_interface import WirelessInterface
 from computing.router import Router
@@ -1254,7 +1254,7 @@ class UserInterface:
         self.selected_object.computer.open_port(13, "TCP")
         self.tab_through_selected()
         self.tab_through_selected()
-        self.selected_object.computer.process_scheduler.start_usermode_process(DAYTIMEClientProcess, IPAddress("192.168.1.2"))
+        self.selected_object.computer.process_scheduler.start_usermode_process(ClientFTPProcess, IPAddress("192.168.1.2"))
 
     def register_window(self, window, *buttons):
         """
