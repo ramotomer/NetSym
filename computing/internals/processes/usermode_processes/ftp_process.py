@@ -34,6 +34,7 @@ class ServerFTPSessionProcess(Process):
         received = self.socket.receive().decode("ascii")
 
         if received.startswith("FTP: "):
+            # TODO: actually implement the FTP protocol with a layer - as it should behave
             filename = received.split()[received.split().index("FTP:") + 1]
 
             with self.computer.filesystem.at_path(self.cwd, filename) as file:
