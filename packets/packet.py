@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TypeVar, TYPE_CHECKING
+from typing import TypeVar, TYPE_CHECKING, Tuple
 
 import scapy
 
@@ -87,6 +87,15 @@ class Packet:
                                     default=layer_class)(**self.data.getlayer(layer_class).fields)
             final_data = (final_data / new_layer) if final_data is not None else new_layer
         self.data = final_data
+
+    def summary(self, discarded_protocols: Tuple[str] = ("Ether", "IP", "Raw")) -> str:
+        """
+        Return a short string which is a summary line of the packet
+        Uses the scapy `packet.summary` method - but removes some redundant text from it.
+        You can choose what protocols to ignore using the `discarded_protocols` parameter
+        """
+        scapy_summary = scapy.layers.l2.Ether(self.data.build()).summary()
+        return ' / '.join([layer for layer in scapy_summary.split(' / ') if layer not in discarded_protocols])
 
     def __contains__(self, item: str) -> bool:
         """

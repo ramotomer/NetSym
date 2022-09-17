@@ -1243,7 +1243,7 @@ class UserInterface:
         :return:
         """
         new_computers = [self.create_computer_with_ip() for _ in range(6)]
-        self.create_device(Switch)
+        self.create_device(Hub)
         self.smart_connect()
         for i, location in enumerate(
                 circular_coordinates(MainWindow.main_window.get_mouse_location(), 150, len(new_computers))):
