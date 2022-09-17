@@ -8,6 +8,7 @@ from recordclass import recordclass
 from address.ip_address import IPAddress
 from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEClientProcess
 from computing.internals.processes.usermode_processes.ddos_process import DDOSProcess
+from computing.internals.processes.usermode_processes.dhcp_process import DHCPServer
 from computing.internals.processes.usermode_processes.ftp_process import ClientFTPProcess
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
@@ -269,14 +270,14 @@ Name: {self.computer.name}
             "size": [self.sprite.scale_x, self.sprite.scale_y],
             "os": self.computer.os,
             "interfaces": [interface.graphics.dict_save() for interface in self.computer.interfaces],
-            "open_tcp_ports": self.computer.open_tcp_ports,
-            "open_udp_ports": self.computer.open_udp_ports,
+            "open_tcp_ports": self.computer.get_open_ports("TCP"),
+            "open_udp_ports": self.computer.get_open_ports("UDP"),
             "routing_table": self.computer.routing_table.dict_save(),
             "filesystem": self.computer.filesystem.dict_save(),
         }
 
         if self.class_name == "Router":
-            dict_["is_dhcp_server"] = self.computer.is_dhcp_server
+            dict_["is_dhcp_server"] = self.computer.process_scheduler.is_usermode_process_running(DHCPServer)
 
         return dict_
 

@@ -199,7 +199,10 @@ class MainWindow(pyglet.window.Window):
         """
         if any(symbol == other_symbol for other_symbol, _ in self._ignored_keys.values()) and not is_manually_called:
             # Due to the way pyWinhook works - this actually means the key is released - so turn off the modifier
-            self.pressed_keys.remove(symbol)
+            try:
+                self.pressed_keys.remove(symbol)
+            except KeyError:
+                print("weird... key was released but never pressed?")
             return
 
         self.pressed_keys.add(symbol)
@@ -212,7 +215,10 @@ class MainWindow(pyglet.window.Window):
         :param modifiers:  additional keys that are pressed (ctrl, shift, caps lock, etc..)
         :return:  None
         """
-        self.pressed_keys.remove(symbol)
+        try:
+            self.pressed_keys.remove(symbol)
+        except KeyError:
+            print("weird... key was released but never pressed?")
 
     def _on_resize(self) -> None:
         """

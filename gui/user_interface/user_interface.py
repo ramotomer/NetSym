@@ -8,7 +8,7 @@ import random
 from collections import namedtuple, defaultdict
 from functools import reduce
 from operator import concat, attrgetter
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from pyglet.window import key
 
@@ -162,6 +162,7 @@ class UserInterface:
         self.saving_file_class_name_to_class = {
             class_.__name__: class_ for class_ in (Computer, Switch, Router, Hub, Antenna)
         }
+        self.__saving_file = None
 
         self.computers = []
         self.connection_data = []
@@ -189,9 +190,7 @@ class UserInterface:
             ((self.start_all_stp, "start STP (ctrl+shift+s)"), {"key": (key.S, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT)}),
             ((self.delete_all_packets, "delete all packets (Shift+d)"), {"key": (key.D, KEYBOARD.MODIFIERS.SHIFT)}),
             ((self.delete_all, "delete all (^d)"), {"key": (key.D, KEYBOARD.MODIFIERS.CTRL)}),
-            ((with_args(self.ask_user_for, str, "save file as:", self._save_to_file_with_override_safety), "save to file(^s)"),
-             {"key": (key.S, KEYBOARD.MODIFIERS.CTRL)}),
-            # TODO: saving to files does not work :(
+            ((self._save_or_ask_user_for_filename_and_then_save, "save to file(^s)"), {"key": (key.S, KEYBOARD.MODIFIERS.CTRL)}),
             ((self._ask_user_for_load_file, "load from file (^o)"), {"key": (key.O, KEYBOARD.MODIFIERS.CTRL)}),
             ((self.open_help, "help (shift+/)"), {"key": (key.SLASH, KEYBOARD.MODIFIERS.SHIFT)}),
         ]
@@ -223,6 +222,19 @@ class UserInterface:
     @property
     def active_window(self):
         return self.__active_window
+
+    @property
+    def saving_file(self) -> Optional[str]:
+        return self.__saving_file
+
+    @saving_file.setter
+    def saving_file(self, value: Optional[str]) -> None:
+        self.__saving_file = value
+
+        new_window_name = WINDOWS.MAIN.NAME
+        if self.__saving_file is not None:
+            new_window_name += ": " + self.__saving_file
+        MainWindow.main_window.set_caption(new_window_name)
 
     @active_window.setter
     def active_window(self, window):
@@ -788,7 +800,7 @@ class UserInterface:
         except IndexError:
             pass
 
-    def delete_all(self):
+    def delete_all(self, reset_saving_file: bool = True) -> None:
         """
         Deletes all of the objects and graphics objects that exist.
         Totally clears the screen.
@@ -812,6 +824,9 @@ class UserInterface:
         self.connection_data.clear()
         self.frequencies.clear()
         self.set_mode(MODES.NORMAL)
+
+        if reset_saving_file:
+            self.saving_file = None
 
     def delete_all_packets(self):
         """
@@ -1331,12 +1346,13 @@ class UserInterface:
         """
         DeviceCreationWindow(self)
 
-    def _connect_interfaces_by_name(self, start_computer_name,
-                                    end_computer_name,
-                                    start_interface_name,
-                                    end_interface_name,
-                                    connection_packet_loss=0,
-                                    connection_speed=CONNECTIONS.DEFAULT_SPEED):
+    def _connect_interfaces_by_name(self,
+                                    start_computer_name: str,
+                                    end_computer_name: str,
+                                    start_interface_name: str,
+                                    end_interface_name: str,
+                                    connection_packet_loss: float = 0.0,
+                                    connection_speed: int = CONNECTIONS.DEFAULT_SPEED) -> None:
         """
         Connects two computers' interfaces by names of the computers and the interfaces
         """
@@ -1358,7 +1374,16 @@ class UserInterface:
         connection.set_pl(connection_packet_loss)
         connection.set_speed(connection_speed)
 
-    def _save_to_file_with_override_safety(self, filename):
+    def _save_or_ask_user_for_filename_and_then_save(self) -> None:
+        """
+        If the simulation state was once saved already - remember the file name and do not ask for it again
+        """
+        if self.saving_file is None:
+            self.ask_user_for(str, "save file as:", self._save_to_file_with_override_safety)
+            return
+        self._save_to_file_with_override_safety(self.saving_file)
+
+    def _save_to_file_with_override_safety(self, filename: str) -> None:
         """
         Saves all of the state of the simulation at the moment into a file, that we can
         later load into an empty simulation, and get all of the computers, interface, and connections.
@@ -1369,7 +1394,7 @@ class UserInterface:
         else:
             self.save_to_file(filename)
 
-    def save_to_file(self, filename):
+    def save_to_file(self, filename: str) -> None:
         """
         Save the state of the simulation to a file named filename
         :param filename:
@@ -1386,6 +1411,7 @@ class UserInterface:
 
         os.makedirs(DIRECTORIES.SAVES, exist_ok=True)
         json.dump(dict_to_file, open(os.path.join(DIRECTORIES.SAVES, f"{filename}.json"), "w"), indent=4)
+        self.saving_file = filename
 
     def load_from_file(self, filename):
         """
@@ -1397,6 +1423,7 @@ class UserInterface:
         except FileNotFoundError:
             raise PopupWindowWithThisError("There is not such file!!!")
 
+        self.saving_file = filename
         self._create_map_from_file_dict(dict_from_file)
 
     def _create_map_from_file_dict(self, dict_from_file):
@@ -1405,7 +1432,7 @@ class UserInterface:
         :param dict_from_file:
         :return:
         """
-        self.delete_all()
+        self.delete_all(reset_saving_file=False)
 
         for computer_dict in dict_from_file["computers"]:
             class_ = self.saving_file_class_name_to_class[computer_dict["class"]]
@@ -1413,9 +1440,9 @@ class UserInterface:
             computer.show(*computer_dict["location"])
             self.computers.append(computer)
             for port in computer_dict["open_tcp_ports"]:
-                computer.open_tcp_port(port)
+                computer.open_port(port, "TCP")
             for port in computer_dict["open_udp_ports"]:
-                computer.open_udp_port(port)
+                computer.open_port(port, "UDP")
 
         for connection_dict in dict_from_file["connections"]:
             self._connect_interfaces_by_name(

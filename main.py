@@ -11,3 +11,5 @@ if __name__ == '__main__':
     main_loop = MainLoop(main_window)
     pyglet.clock.schedule_interval(main_window.update, WINDOWS.MAIN.FRAME_RATE)
     pyglet.app.run()
+
+    # TODO: BUG: pressing `delete` in a shell deletes the device you have selected
