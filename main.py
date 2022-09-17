@@ -12,5 +12,4 @@ if __name__ == '__main__':
     pyglet.clock.schedule_interval(main_window.update, WINDOWS.MAIN.FRAME_RATE)
     pyglet.app.run()
 
-    # TODO: there are errors with removing connections and the routing table
     # TODO: deleting a packet mid-way does not really delete it :(

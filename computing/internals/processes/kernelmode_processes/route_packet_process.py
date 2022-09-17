@@ -1,5 +1,13 @@
-from computing.internals.processes.abstracts.process import Process, WaitingFor
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from computing.internals.processes.abstracts.process import Process, WaitingFor, T_ProcessCode
 from consts import OPCODES
+
+if TYPE_CHECKING:
+    from computing.computer import Computer
+    from packets.packet import Packet
 
 
 class RoutePacket(Process):
@@ -8,19 +16,19 @@ class RoutePacket(Process):
     `decide_routing_interfaces` method.
     The process is of routing a single packet over the router.
     """
-    def __init__(self, pid, computer, packet):
+    def __init__(self, pid: int, computer: Computer, packet: Packet) -> None:
         """
         Initiates the process with the given packet to route and the routing computer.
         """
         super(RoutePacket, self).__init__(pid, computer)
-        self.packet = packet
+        self.packet: Packet = packet
 
-    def _is_packet_routable(self):
+    def _is_packet_routable(self) -> bool:
         """
         Checks the given packet and make sure that it is valid and can be routed.
         :return:
         """
-        if not self.packet.is_valid() or "IP" not in self.packet:
+        if not self.packet.is_valid() or ("IP" not in self.packet):
             return False
 
         if self.packet["IP"].dst_ip is None or self.packet["IP"].src_ip is None:
@@ -34,7 +42,7 @@ class RoutePacket(Process):
 
         return True
 
-    def _decrease_ttl(self):
+    def _decrease_ttl(self) -> bool:
         """
         Decrease the TTL of the packet, if it is 0, sends an ICMP Time Exceeded
         :return: a bool telling whether the time (TTL) of the packet was exceeded (reached 0).
@@ -47,7 +55,7 @@ class RoutePacket(Process):
         self.packet["IP"].ttl -= 1
         return False
 
-    def _destination_unreachable(self):
+    def _destination_unreachable(self) -> bool:
         """
         Tests if the destination of the packet is unreachable. If it is, send an `ICMP_UNREACHABLE` and return True.
         If not, return False
@@ -57,12 +65,13 @@ class RoutePacket(Process):
         routing_interface = self.computer.routing_table[dst_ip].ip_address
         gateway = self.computer.routing_table.default_gateway.ip_address
 
-        if routing_interface == gateway and gateway is None:
+        if (routing_interface == gateway and gateway is None) or \
+           self.computer.get_interface_with_ip(self.computer.routing_table[dst_ip].interface_ip).no_carrier:
             self._send_icmp_unreachable()
             return True
         return False
 
-    def _send_icmp_unreachable(self):
+    def _send_icmp_unreachable(self) -> None:
         """Sends to the sender of the routed packet, an ICMP unreachable"""
         sender_ip = self.packet["IP"].src_ip
         dst_ip = self.packet["IP"].dst_ip
@@ -72,7 +81,7 @@ class RoutePacket(Process):
                                    OPCODES.ICMP.TYPES.UNREACHABLE,
                                    f"Unreachable: {dst_ip}")
 
-    def code(self):
+    def code(self) -> T_ProcessCode:
         """
         Receives the packet in the constructor, routes it to the correct subnet (the correct interface of the router).
         It has to send ARPs first sometimes. Does all of that.
@@ -99,6 +108,6 @@ class RoutePacket(Process):
 
             self.computer.send_with_ethernet(self.computer.arp_cache[ip_for_the_mac].mac, dst_ip, self.packet["IP"])
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """The string representation of the process"""
         return "[kroute]"

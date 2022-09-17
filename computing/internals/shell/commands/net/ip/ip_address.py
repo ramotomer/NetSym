@@ -37,13 +37,14 @@ class IpAddressCommand(Command):
         type_2 = 'loopback' if type_ == 'LOOPBACK' else 'ether'
 
         is_up = 'UP' if interface.is_powered_on else 'DOWN'
-        is_blocked = ', BLOCKED' if interface.is_blocked else ''
+        is_blocked = ',BLOCKED' if interface.is_blocked else ''
+        is_no_carrier = ',NO CARRIER' if interface.no_carrier else ''
 
         ip_info = ""
         if interface.ip is not None:
             ip_info = f"\n    inet {repr(interface.ip)} brd {str(interface.ip.subnet_broadcast())} scope global"
 
-        return f"""{index}: {interface.name} <{type_},{is_up}{is_blocked}>
+        return f"""{index}: {interface.name} <{type_},{is_up}{is_blocked}{is_no_carrier}>
     link/{type_2} {interface.mac} brd {MACAddress.broadcast()}{ip_info}
 """
 

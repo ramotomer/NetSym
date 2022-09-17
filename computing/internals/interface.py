@@ -71,6 +71,10 @@ class Interface:
             return None
         return self.connection.connection.deliver_time
 
+    @property
+    def no_carrier(self):
+        return not self.is_connected()
+
     @classmethod
     def random_name(cls) -> str:
         """Returns a random Interface name"""
