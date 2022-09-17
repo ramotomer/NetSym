@@ -560,6 +560,7 @@ class UserInterface:
 
         if self.active_window is None:
             self._create_selecting_square()
+        # AnimationGraphics(ANIMATIONS.EXPLOSION, *MainWindow.main_window.get_mouse_location())  # for debugging
 
     def pin_active_window_to(self, direction):
         """

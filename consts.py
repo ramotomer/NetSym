@@ -455,7 +455,9 @@ class VIEW:
 class ANIMATIONS:
     EXPLOSION = "explosion.png"
 
-    FRAME_RATE = 0.1
+    SIZE = 16
+
+    FRAME_RATE = 1 / 15.
     X_COUNT, Y_COUNT = 5, 3
 
 
