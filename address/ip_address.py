@@ -1,13 +1,17 @@
+from typing import TypeVar, Union, Type, Optional
+
 from consts import ADDRESSES, MESSAGES
 from exceptions import InvalidAddressError, AddressTooLargeError
 from usefuls.funcs import bindigits
+
+T = TypeVar('T', bound='IPAddress')
 
 
 class IPAddress:
     """
     This class represents an IP address in the program.
     """
-    def __init__(self, string_ip):
+    def __init__(self: T, string_ip: Union[str, T]) -> None:
         """
         Initiates a IPAddress object from a ip_layer
         :param string_ip: The ip ('132.23.245.1/24' for example or '1.1.1.1')
@@ -27,25 +31,25 @@ class IPAddress:
         if not self.is_valid(ip) or not self.is_valid_subnet_mask(subnet_mask):
             raise InvalidAddressError(MESSAGES.INVALID_IP_ADDRESS + ' ' + str(string_ip))
 
-        self.string_ip = ip
-        self.subnet_mask = int(subnet_mask)
+        self.string_ip: str = ip
+        self.subnet_mask: int = int(subnet_mask)
 
     @classmethod
-    def broadcast(cls):
+    def broadcast(cls: Type[T]) -> T:
         """A constructor to create a broadcast address"""
         return cls("255.255.255.255/32")
 
     @classmethod
-    def no_address(cls):
+    def no_address(cls: Type[T]) -> T:
         """A constructor to the address that is used where there is no IP address (0.0.0.0)"""
         return cls("0.0.0.0/0")
 
     @classmethod
-    def loopback(cls):
+    def loopback(cls: Type[T]) -> T:
         """A constructor for the loopback address"""
         return cls("127.0.0.1/8")
 
-    def is_same_subnet(self, other):
+    def is_same_subnet(self: T, other: T) -> bool:
         """
         Receives another ip address and returns if they are in the same subnet.
         :param other: The other IPAddress object to check.
@@ -58,7 +62,7 @@ class IPAddress:
 
         return my_masked_address == other_masked_address
 
-    def is_broadcast(self):
+    def is_broadcast(self) -> bool:
         """
         Returns if the IP address is a broadcast address or not.
         :return:
@@ -66,7 +70,7 @@ class IPAddress:
         _, _, _, last_byte = self.string_ip.split(ADDRESSES.IP.SEPARATOR)
         return int(last_byte) == 255  # I had some thinking if to put in constant, decided not to...
 
-    def is_private_address(self):
+    def is_private_address(self) -> bool:
         """
         Returns whether or not the IP address is a private one, that cannot be routed on the internet
         :return: bool
@@ -78,7 +82,7 @@ class IPAddress:
         }
         return any(subnet.is_same_subnet(self) for subnet in private_subnets)
 
-    def is_internet_address(self):
+    def is_internet_address(self) -> bool:
         """
         Returns whether or not the address can be routed on the internet
         :return: bool
@@ -86,7 +90,7 @@ class IPAddress:
         return not self.is_private_address()
 
     @classmethod
-    def increased(cls, address):
+    def increased(cls: Type[T], address: T) -> T:
         """
         Receives an IP address and returns a copy of it which is increased by one.
         (192.168.1.1 /24  -->  192.168.1.2 /24)
@@ -101,12 +105,12 @@ class IPAddress:
             raise AddressTooLargeError(f"Cannot increase {address!r} since it is the maximum address for its subnet.")
         return increased
 
-    def increase(self):
+    def increase(self) -> None:
         """Increases the IP address by one. If the IP is at max, raise `AddressTooLargeError`"""
         increased = self.__class__.increased(self)
         self.string_ip = increased.string_ip
 
-    def expected_gateway(self):
+    def expected_gateway(self: T) -> T:
         """
         Returns the expected IP address of this subnet (for example if this IP is 192.168.1.5/24 it will return 192.168.1.1)
         :return: an `IPAddress` object.
@@ -115,7 +119,7 @@ class IPAddress:
         splitted[3] = '1'
         return self.__class__(ADDRESSES.IP.SEPARATOR.join(splitted) + '/' + str(self.subnet_mask))
 
-    def subnet(self):
+    def subnet(self: T) -> T:
         """
         returns the subnet of this ip address (for example 192.168.1.20/16 -> 192.168.0.0/16)
         :return: an `IPAddress` object.
@@ -125,7 +129,7 @@ class IPAddress:
         masked_address_bin = '0b' + bin(masked_address)[2:].zfill(ADDRESSES.IP.BIT_LENGTH)
         return self.from_bits(masked_address_bin, int(self.subnet_mask))
 
-    def subnet_broadcast(self):
+    def subnet_broadcast(self: T) -> T:
         """
         The broadcast address that fits this ip address
         :return:
@@ -138,7 +142,7 @@ class IPAddress:
         return self.from_bits(masked_address_bin, int(self.subnet_mask))
 
     @staticmethod
-    def as_bytes(address):
+    def as_bytes(address: str) -> bytearray:
         """
         Returns a byte representation of the IP address
         :param address: The string address
@@ -148,7 +152,7 @@ class IPAddress:
         return bytearray(address_as_numbers)
 
     @staticmethod
-    def is_valid(address):
+    def is_valid(address: str) -> bool:
         """
         Receives a ip_layer that is supposed to be an ip address and returns whether
         or not it is a valid address.
@@ -162,7 +166,7 @@ class IPAddress:
             all([part.isdigit() and 0 <= int(part) < 256 for part in splitted_address])
 
     @staticmethod
-    def is_valid_subnet_mask(subnet_mask):
+    def is_valid_subnet_mask(subnet_mask: str) -> bool:
         """
         Receives a subnet mask in the numerical form ('24' or '16') and decides if
         it is valid or not.
@@ -172,7 +176,7 @@ class IPAddress:
         return isinstance(subnet_mask, str) and subnet_mask.isdigit() and 0 <= int(subnet_mask) <= ADDRESSES.IP.BIT_LENGTH
 
     @staticmethod
-    def mask_from_number(number):
+    def mask_from_number(number: int) -> str:
         """
         Receive a numeral simple representation of the subnet mask (24) and
         return the long 'mask' form ('255.255.255.0')
@@ -184,7 +188,7 @@ class IPAddress:
         return ADDRESSES.IP.SEPARATOR.join([str(int(byte, 2)) for byte in grouped_as_bytes])
 
     @classmethod
-    def as_bits(cls, address):
+    def as_bits(cls, address: str) -> str:
         """
         Returns a binary representation of the IP address.
         :param address: a string address to turn into bits.
@@ -193,7 +197,7 @@ class IPAddress:
         return '0b' + ''.join([bin(byte)[2:].zfill(8) for byte in cls.as_bytes(address)])
 
     @classmethod
-    def from_bits(cls, bits, subnet_mask=24):
+    def from_bits(cls: Type[T], bits: str, subnet_mask: int = 24) -> T:
         """
         Creates an IP from a bit representation of one and a subnet mask.
         :param bits: a string binary number.
@@ -208,7 +212,7 @@ class IPAddress:
         return cls('.'.join([str(int(byte, 2)) for byte in grouped_as_bytes]) + '/' + str(subnet_mask))
 
     @classmethod
-    def copy(cls, other):
+    def copy(cls: Type[T], other: T) -> T:
         """
         Receive an IPAddress and return a copy of that object.
         :param other: IPAddress object
@@ -216,7 +220,7 @@ class IPAddress:
         """
         return cls(other.string_ip + ADDRESSES.IP.SUBNET_SEPARATOR + str(other.subnet_mask))
 
-    def __eq__(self, other):
+    def __eq__(self: T, other: Optional[Union[str, T]]) -> bool:
         """Test whether two ip addresses are equal or not (does no include subnet mask)"""
         if other is None:
             return False
@@ -224,14 +228,14 @@ class IPAddress:
         return self.string_ip == other.string_ip
         # ^ maybe i broke something when i did not also check the subnet mask, take into consideration....
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Allows the IPAddress object to be a key in a dictionary or a set"""
         return hash(repr(self))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """The string representation of the IP address"""
         return f"{self.string_ip} /{self.subnet_mask}"
 
-    def __str__(self):
+    def __str__(self) -> str:
         """The shorter string representation of the IP address"""
         return self.string_ip
