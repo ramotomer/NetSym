@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple, defaultdict
+from typing import Iterator, Union
 
 from recordclass import recordclass
 
@@ -21,6 +22,10 @@ WaitingForPacketWithTimeout = namedtuple("WaitingForPacketWithTimeout", "conditi
 WaitingFor = namedtuple("WaitingFor", "condition")
 
 
+T_WaitingFor = Union[WaitingFor, WaitingForPacket, WaitingForPacketWithTimeout]
+T_ProcessCode = Iterator[T_WaitingFor]
+
+
 class Process(metaclass=ABCMeta):
     """
     This class is a process in the computer class.
@@ -39,6 +44,8 @@ class Process(metaclass=ABCMeta):
 
     The `process` property of the Process is a generator of the code, the value
     of the `self.code()` method call.
+
+    If a `ProcessInternalError` is raised within your `code` function - the process will be killed but the program will continue running! :)
     """
     def __init__(self, pid, computer):
         """
@@ -64,11 +71,14 @@ class Process(metaclass=ABCMeta):
         """
         pass
 
-    def die(self):
+    def die(self) -> None:
+        """
+        Kills the process!
+        After this function is called, the process will not run a single line of code - ever...
         """
         self.kill_me = True
-        """
-        self.kill_me = True
+        if self.computer.process_scheduler.is_inside_this_process(self):
+            raise ProcessInternalError_Suicide
 
     def set_killing_signals_handler(self, handler):
         """
@@ -202,3 +212,11 @@ class NoNeedForPacket(ReturnedPacket):
     A process that is waiting for some packet must yield a `ReturnedPacket` in his `WaitingForPacket`, this is the way to
     ignore that packet without raising errors.
     """
+
+
+class ProcessInternalError(Exception):
+    """If this exception is raised inside a code of a process, the process will be terminated but the rest of NetSym will continue"""
+
+
+class ProcessInternalError_Suicide(ProcessInternalError):
+    """This indicates a self-enflicted death of the process"""

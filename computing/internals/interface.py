@@ -6,7 +6,7 @@ from computing.connection import Connection
 from computing.loopback_connection import LoopbackConnection
 from consts import *
 from exceptions import *
-from packets.ethernet import Ethernet
+from packets.all import Ether
 from packets.packet import Packet
 
 
@@ -81,16 +81,16 @@ class Interface:
         :param packet: a `Packet` object.
         :return: whether the destination MAC address is of this Interface
         """
-        return self.mac == packet["Ethernet"].dst_mac or packet["Ethernet"].dst_mac.is_no_mac()
+        return (self.mac == packet["Ether"].dst_mac) or packet["Ether"].dst_mac.is_no_mac()
 
-    def is_for_me(self, packet):
+    def is_for_me(self, packet: Packet) -> bool:
         """
         Receives a packet and determines whether it is destined for this Interface (or is broadcast)
         On the second layer
         :param packet: a `Packet` object.
         :return: whether the destination MAC address is of this Interface
         """
-        return self.is_directly_for_me(packet) or (packet["Ethernet"].dst_mac.is_broadcast())
+        return self.is_directly_for_me(packet) or (packet["Ether"].dst_mac.is_broadcast())
 
     def has_ip(self):
         """Returns whether the Interface has an IP address"""
@@ -102,6 +102,7 @@ class Interface:
         :param ip_address: IPAddress
         :return: boolean
         """
+        ip_address = IPAddress(ip_address)
         return self.has_ip() and self.ip.string_ip == ip_address.string_ip
 
     def is_connected(self):
@@ -236,11 +237,12 @@ class Interface:
         :param dst_mac: a `MACAddress` object of the destination of the packet.
         :return: the ready `Packet` object
         """
-        return Packet(Ethernet(self.mac, dst_mac, data))
+        return Packet(Ether(src_mac=str(self.mac), dst_mac=str(dst_mac)) / data)
 
     def send_with_ethernet(self, dst_mac, protocol):
         """
         Receives a `Protocol` object, wraps it with ethernet and sends it.
+        :param dst_mac: `MACAddress` object which will be the destination address of the ethernet frame
         :param protocol: a `Protocol` instance.
         :return: None
         """

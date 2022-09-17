@@ -12,7 +12,7 @@ from address.ip_address import IPAddress
 from computing.computer import Computer
 from computing.internals.frequency import Frequency
 from computing.internals.interface import Interface
-from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEClientProcess
+from computing.internals.processes.usermode_processes.ftp_process import ClientFTPProcess
 from computing.internals.processes.usermode_processes.stp_process import STPProcess
 from computing.internals.wireless_interface import WirelessInterface
 from computing.router import Router
@@ -352,7 +352,16 @@ class UserInterface:
                 text = self.packet_from_graphics_object(graphics_object).multiline_repr()
 
         x, y = self.viewing_text_location
-        self.object_view = ObjectView(sprite, Text(text, x, y, max_width=WINDOWS.SIDE.WIDTH), graphics_object)
+        self.object_view = ObjectView(
+            sprite,
+            Text(
+                text, x, y,
+                max_width=(WINDOWS.SIDE.WIDTH - WINDOWS.SIDE.VIEWING_OBJECT.TEXT.PADDING[0]),
+                align=TEXT.ALIGN.LEFT,
+                padding=WINDOWS.SIDE.VIEWING_OBJECT.TEXT.PADDING
+            ),
+            graphics_object,
+        )
         self.adjust_viewed_text_to_buttons(buttons_id + 1)
 
     def adjust_viewed_text_to_buttons(self, buttons_id):
@@ -1234,7 +1243,7 @@ class UserInterface:
         :return:
         """
         new_computers = [self.create_computer_with_ip() for _ in range(6)]
-        self.create_device(Switch)
+        self.create_device(Hub)
         self.smart_connect()
         for i, location in enumerate(
                 circular_coordinates(MainWindow.main_window.get_mouse_location(), 150, len(new_computers))):
@@ -1245,7 +1254,7 @@ class UserInterface:
         self.selected_object.computer.open_port(13, "TCP")
         self.tab_through_selected()
         self.tab_through_selected()
-        self.selected_object.computer.process_scheduler.start_usermode_process(DAYTIMEClientProcess, IPAddress("192.168.1.2"))
+        self.selected_object.computer.process_scheduler.start_usermode_process(ClientFTPProcess, IPAddress("192.168.1.2"))
 
     def register_window(self, window, *buttons):
         """

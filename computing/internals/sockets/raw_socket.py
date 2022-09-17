@@ -20,7 +20,6 @@ class RawSocket(Socket):
         """
         super(RawSocket, self).__init__(computer, kind=COMPUTER.SOCKETS.TYPES.SOCK_RAW)
         self.is_connected = True
-        self.allow_being_broken = True
 
         self.filter = None
         self.interface = INTERFACES.NO_INTERFACE

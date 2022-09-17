@@ -1,7 +1,8 @@
 import copy
 
-from consts import *
 from packets.protocol import Protocol
+
+from consts import *
 
 
 class TCP(Protocol):
@@ -55,7 +56,7 @@ class TCP(Protocol):
         for flag in OPCODES.TCP.FLAGS_DISPLAY_PRIORITY:
             if flag in self.flags:
                 return flag if not self.is_retransmission else flag + OPCODES.TCP.RETRANSMISSION
-        return OPCODES.NO_.CP_FLAGS
+        return OPCODES.NO_TCP_FLAGS
 
     @property
     def true_flags_string(self):

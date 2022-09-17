@@ -1,14 +1,13 @@
 from address.mac_address import MACAddress
 from computing.computer import Computer, COMPUTER
-from computing.internals.interface import Interface
 from computing.internals.filesystem.filesystem import Filesystem
 from computing.internals.processes.kernelmode_processes.switching_process import SwitchingProcess
-from computing.internals.processes.usermode_processes.stp_process import STPProcess
+from computing.internals.processes.usermode_processes.stp_process import STPProcess, BID
 from computing.internals.routing_table import RoutingTable
 from computing.internals.wireless_interface import WirelessInterface
-from consts import OS, PROTOCOLS, IMAGES, CONNECTIONS
+from consts import OS, PROTOCOLS, IMAGES, CONNECTIONS, ADDRESSES
 from gui.tech.computer_graphics import ComputerGraphics
-from packets.stp import STP, LogicalLinkControl
+from packets.all import LLC, STP
 
 
 class Switch(Computer):
@@ -52,7 +51,7 @@ class Switch(Computer):
         :return: whether it is for me or not.
         """
         if self.stp_enabled:
-            return (super(Switch, self).is_for_me(packet)) or (packet["Ethernet"].dst_mac == MACAddress.stp_multicast())
+            return (super(Switch, self).is_for_me(packet)) or (packet["Ether"].dst_mac == MACAddress.stp_multicast())
         return super(Switch, self).is_for_me(packet)
 
     def start_stp(self):
@@ -63,18 +62,25 @@ class Switch(Computer):
         if not self.process_scheduler.is_usermode_process_running_by_type(STPProcess) and self.interfaces:
             self.process_scheduler.start_usermode_process(STPProcess)
 
-    def send_stp(self, sender_bid, root_bid, distance_to_root, root_declaration_time):
+    def send_stp(self, sender_bid: BID, root_bid: BID, distance_to_root: int, age: int, sending_interval: int, root_max_age: int) -> None:
         """
         Sends an STP packet with the given information on all interfaces. (should only be used on a switch)
-        :param sender_bid: a `BID` object of the sending switch.
-        :param root_bid: a `BID` object of the root switch.
-        :param distance_to_root: The switch's distance to the root switch.
-        :return: None
         """
         for interface in self.interfaces:
             interface.send_with_ethernet(MACAddress.stp_multicast(),
-                                         LogicalLinkControl(
-                                             STP(sender_bid, root_bid, distance_to_root, root_declaration_time)))
+                                         LLC(src_service_access_point=ADDRESSES.LLC.STP_SAP,
+                                             dst_service_access_point=ADDRESSES.LLC.STP_SAP,
+                                             control_field=ADDRESSES.LLC.STP_CONTROL_FIELD) /
+                                         STP(
+                                            root_id=root_bid.priority,
+                                            root_mac=str(root_bid.mac),
+                                            path_cost=distance_to_root,
+                                            bridge_id=sender_bid.priority,
+                                            bridge_mac=str(sender_bid.mac),
+                                            age=age,
+                                            max_age=root_max_age,
+                                            hello_time=sending_interval,
+                                         ))
 
     @classmethod
     def from_dict_load(cls, dict_):

@@ -1,8 +1,13 @@
-from typing import Tuple
+from __future__ import annotations
+
+from typing import Tuple, TYPE_CHECKING
 
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import Process
 from consts import COMPUTER, PORTS, PROTOCOLS
+
+if TYPE_CHECKING:
+    from computing.computer import Computer
 
 
 class EchoServerProcess(Process):
@@ -32,8 +37,12 @@ class EchoServerProcess(Process):
 
 
 class EchoClientProcess(Process):
-    def __init__(self, pid, computer, server_address: Tuple[IPAddress, int], data,
-                 count=PROTOCOLS.ECHO_SERVER.DEFAULT_REQUEST_COUNT):
+    def __init__(self,
+                 pid: int,
+                 computer: Computer,
+                 server_address: Tuple[IPAddress, int],
+                 data: str,
+                 count: int = PROTOCOLS.ECHO_SERVER.DEFAULT_REQUEST_COUNT) -> None:
         super(EchoClientProcess, self).__init__(pid, computer)
         self.server_address = server_address
         self.data = data
@@ -52,10 +61,10 @@ class EchoClientProcess(Process):
         self.socket.connect(self.server_address)
 
         for _ in range(self.count):
-            self.socket.send(self.data)
+            self.socket.send(self.data.encode("ascii"))
             self.computer.print(f"echoing: {self.data}")
             yield from self.socket.block_until_received()
-            data = self.socket.receive()[0]
+            data = self.socket.receive()[0].decode("ascii")
             if data == self.data:
                 self.computer.print(f"echo server: {data}\n:)")
                 continue

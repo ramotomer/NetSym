@@ -1,14 +1,19 @@
 import cmath
 import datetime
+from contextlib import contextmanager
 from functools import reduce
 from math import sin, cos, pi, atan
 from operator import mul
+from typing import Dict, Any, Iterable, Callable
 
 from consts import *
 from exceptions import WrongUsageError
 
 
-def get_the_one(iterable, condition, raises=None):
+def get_the_one(iterable: Iterable,
+                condition: Callable,
+                raises: Callable = None,
+                default: Any = None) -> Any:
     """
     Receives an iterable and a condition and returns the first item in the
     iterable that the condition is true for.
@@ -17,6 +22,7 @@ def get_the_one(iterable, condition, raises=None):
     :param iterable: An iterable object.
     :param condition: A boolean function that takes one argument.
     :param raises: The exception this function will raise if it does not find.
+    :param default: A default value to return if no matching value is found
     :return: The item with that condition or None
     """
     for item in iterable:
@@ -24,10 +30,10 @@ def get_the_one(iterable, condition, raises=None):
             return item
     if raises is not None:
         raise raises(f'Failed to "get_the_one" since it does not exist in your iterable: {iterable}')
-    return None
+    return default
 
 
-def is_hex(string):
+def is_hex(string: str) -> bool:
     """
     returns if a ip_layer is a hexadecimal digit or not
     """
@@ -300,3 +306,48 @@ def split_with_escaping(string, separator=' ', escaping_char='"', remove_empty_s
     if remove_empty_spaces:
         splitted = [string for string in splitted if len(string) > 0]
     return splitted
+
+
+@contextmanager
+def temporary_attribute_values(object_, attribute_value_mapping):
+    """
+    A `contextmanager` that takes in an instance of an object.
+    The function allows us to temporarily change the values of
+        the object's attributes - perform some logic - and set them back. Example:
+
+        >>> object_.attribute_name     # == 1
+        >>> with temporary_attribute_values(object_, {'attribute_name': 34}):
+        >>>    object_.attribute_name # ==  34
+        >>> object_.attribute_name     # ==  1
+    """
+    old_mapping = {attr: getattr(object_, attr) for attr in attribute_value_mapping}
+    try:
+        for attr, new_value in attribute_value_mapping.items():
+            setattr(object_, attr, new_value)
+        yield object_
+    finally:
+        for attr, new_value in old_mapping.items():
+            setattr(object_, attr, new_value)
+
+
+def reverse_dict(dict_):
+    """
+    Take in a dict and reverse the keys and the values.
+    If some values are duplicate - raise
+    """
+    reversed_dict_ = {value: [] for value in dict_.values()}
+    for key, value in dict_.items():
+        reversed_dict_[value].append(key)
+
+    if any(len(key_list) != 1 for key_list in reversed_dict_.values()):
+        raise KeyError(f"Cannot reverse dict {dict_}! Duplicate values found. Conflict: {reversed_dict_}")
+
+    return {value: key_list[0] for value, key_list in reversed_dict_.items()}
+
+
+def change_dict_key_names(dict_: Dict[Any, Any], key_name_mapping: Dict[Any, Any]) -> Dict[Any, Any]:
+    """
+    Receive a dict and a mapping between old and new names
+    change the keys of the dict to their new names (if they appear in the mapping)
+    """
+    return {key_name_mapping.get(key, key): value for key, value in dict_.items()}

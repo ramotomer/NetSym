@@ -26,10 +26,10 @@ class RoutePacket(Process):
         if self.packet["IP"].dst_ip is None or self.packet["IP"].src_ip is None:
             return False
 
-        if "0.0.0.0" in [self.packet["IP"].dst_ip.string_ip, self.packet["IP"].src_ip.string_ip]:
+        if "0.0.0.0" in [str(self.packet["IP"].dst_ip), str(self.packet["IP"].src_ip)]:
             return False
 
-        if self.packet["IP"].src_ip.is_broadcast() or self.packet["Ethernet"].dst_mac.is_broadcast():
+        if self.packet["IP"].src_ip.is_broadcast() or self.packet["Ether"].dst_mac.is_broadcast():
             return False
 
         return True
@@ -69,7 +69,7 @@ class RoutePacket(Process):
 
         self.computer.send_ping_to(self.computer.arp_cache[sender_ip].mac,
                                    self.packet["IP"].src_ip,
-                                   OPCODES.ICMP.UNREACHABLE,
+                                   OPCODES.ICMP.TYPES.UNREACHABLE,
                                    f"Unreachable: {dst_ip}")
 
     def code(self):

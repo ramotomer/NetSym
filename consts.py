@@ -3,6 +3,7 @@ import os
 from math import sqrt
 
 import pyglet
+from scapy.layers.dhcp import DHCPTypes
 
 from exceptions import TCPDoneReceiving
 
@@ -18,6 +19,7 @@ def debugp(*strings):
 
 SENDING_GRAT_ARPS = False
 
+
 class ADDRESSES:
     class MAC:
         BROADCAST = 'ff:ff:ff:ff:ff:ff'
@@ -32,6 +34,10 @@ class ADDRESSES:
         SUBNET_SEPARATOR = '/'
         DEFAULT_SUBNET_MASK = '24'
         BIT_LENGTH = 32
+
+    class LLC:
+        STP_SAP = 0x42
+        STP_CONTROL_FIELD = 0x3
 
 
 class OS:
@@ -49,43 +55,85 @@ class TTL:
     MAX = 255
 
 
+class TCPFlag(object):
+    def __init__(self, name: str, value: int) -> None:
+        self.name = name
+        self.value = value
+
+    @classmethod
+    def absolute_value(cls, other):
+        if isinstance(other, cls):
+            return other.value
+        return int(other)
+        # raise TypeError(f"Type '{type(other)}' has no absolute value! only `TCPFlag` and `int` have!!")
+
+    def __or__(self, other) -> int:
+        return self.value | self.absolute_value(other)
+
+    def __repr__(self) -> str:
+        return self.name
+
+    def __add__(self, other) -> str:
+        return self.name + str(other)
+
+    def __int__(self) -> int:
+        return int(self.value)
+
+    def __eq__(self, other) -> bool:
+        return self.value == self.absolute_value(other)
+
+    def __hash__(self):
+        return hash((self.name, self.value))
+
+    def __bool__(self) -> bool:
+        """whether or not any flags are set"""
+        return bool(self.value)
+
+
 class OPCODES:
     class ARP:
-        REPLY = "ARP reply"
-        REQUEST = "ARP request"
+        REQUEST = 1
+        REPLY = 2
         GRAT = "gratuitous ARP"
 
     class ICMP:
-        REQUEST = "ping request"
-        REPLY = "ping reply"
-        TIME_EXCEEDED = "ICMP Time Exceeded!"
-        UNREACHABLE = "ICMP Unreachable"
-        PORT_UNREACHABLE = "ICMP Port Unreachable"
+        class TYPES:
+            REQUEST = 8
+            REPLY = 0
+            TIME_EXCEEDED = 11
+            UNREACHABLE = 3
+
+        class CODES:
+            NETWORK_UNREACHABLE = 0
+            PORT_UNREACHABLE = 3
 
     class DHCP:
-        DISCOVER = "DHCP Discover"
-        OFFER = "DHCP Offer"
-        REQUEST = "DHCP Request"
-        PACK = "DHCP Pack"
+        DISCOVER = "discover"
+        OFFER = "offer"
+        REQUEST = "request"
+        PACK = "ack"
 
     class FTP:
         REQUEST_PACKET = "FTP Request"
         DATA_PACKET = "FTP Data"
 
     class TCP:
-        ACK = "ACK"
-        SYN = "SYN"
-        FIN = "FIN"
-        RST = "RST"
-        PSH = "PSH"
+        FIN =      TCPFlag("FIN",      0b00001)
+        SYN =      TCPFlag("SYN",      0b00010)
+        RST =      TCPFlag("RST",      0b00100)
+        PSH =      TCPFlag("PSH",      0b01000)
+        ACK =      TCPFlag("ACK",      0b10000)
+        NO_FLAGS = TCPFlag("No Flags", 0b00000)
         RETRANSMISSION = " retransmission"
-        NO_FLAGS = None
-        FLAGS = {ACK, FIN, PSH, SYN, RST}
         FLAGS_DISPLAY_PRIORITY = [SYN, FIN, RST, PSH, ACK]
 
     class DNS:
         REQUEST = 'request'
         REPLY = 'reply'
+
+    class BOOTP:
+        REQUEST = "BOOTREQUEST"
+        REPLY = "BOOTREPLY"
 
 
 class PROTOCOLS:
@@ -116,12 +164,17 @@ class PROTOCOLS:
 
     class STP:
         DEFAULT_SWITCH_PRIORITY = 32768
-        NORMAL_SENDING_INTERVAL = 1.7  # seconds
-        STABLE_SENDING_INTERVAL = 6  # seconds
-        BLOCKED_INTERFACE_UPDATE_INTERVAL = 10  # seconds
-        TREE_STABLIZING_MAX_TIME = 30  # seconds
-        ROOT_MAX_DISAPPEARING_TIME = 40
-        MAX_CONNECTION_DISAPPEARED_TIME = 40
+
+        STP_RELATIVE_SPEED = 1
+
+        NORMAL_SENDING_INTERVAL =           1.7 / STP_RELATIVE_SPEED
+        STABLE_SENDING_INTERVAL =           6   / STP_RELATIVE_SPEED
+        BLOCKED_INTERFACE_UPDATE_INTERVAL = 10  / STP_RELATIVE_SPEED
+        TREE_STABLIZING_MAX_TIME =          20  / STP_RELATIVE_SPEED
+        ROOT_MAX_DISAPPEARING_TIME =        10  / STP_RELATIVE_SPEED
+        MAX_CONNECTION_DISAPPEARED_TIME =   20  / STP_RELATIVE_SPEED   # in seconds
+
+        DEFAULT_ROOT_MAX_AGE = 20
 
         ROOT_PORT = "ROOT"
         DESIGNATED_PORT = "DESIGNATED"
@@ -255,6 +308,10 @@ class WINDOWS:
     class SIDE:
         WIDTH = 230
         COLOR = COLORS.LIGHT_GRAY
+
+        class VIEWING_OBJECT:
+            class TEXT:
+                PADDING = (7, -10)
 
     class POPUP:
         STACKING_PADDING = 10, -10
@@ -399,6 +456,13 @@ class ANIMATIONS:
     X_COUNT, Y_COUNT = 5, 3
 
 
+def get_dominant_tcp_flag(tcp):
+    for flag in OPCODES.TCP.FLAGS_DISPLAY_PRIORITY:
+        if int(tcp.flags) & int(flag):
+            return flag
+    return OPCODES.TCP.NO_FLAGS
+
+
 class PACKET:
     class DIRECTION:
         RIGHT = 'R'
@@ -408,8 +472,15 @@ class PACKET:
         INCOMING = 'INCOMING'
         OUTGOING = 'OUTGOING'
 
+    TYPE_TO_OPCODE_FUNCTION = {
+        "ARP": lambda arp: arp.opcode,
+        "ICMP": (lambda icmp: (icmp.type, icmp.code) if icmp.type == OPCODES.ICMP.TYPES.UNREACHABLE else icmp.type),
+        "DHCP": lambda dhcp: DHCPTypes.get(dhcp.parsed_options.message_type, dhcp.parsed_options.message_type),
+        "TCP": get_dominant_tcp_flag,
+    }
+
     TYPE_TO_IMAGE = {
-        "Ethernet": IMAGES.PACKETS.ETHERNET,
+        "Ether": IMAGES.PACKETS.ETHERNET,
         "IP": IMAGES.PACKETS.IP,
         "UDP": IMAGES.PACKETS.UDP,
         "STP": IMAGES.PACKETS.STP,
@@ -425,11 +496,11 @@ class PACKET:
             OPCODES.DHCP.PACK: IMAGES.PACKETS.DHCP.PACK,
         },
         "ICMP": {
-            OPCODES.ICMP.REQUEST: IMAGES.PACKETS.ICMP.REQUEST,
-            OPCODES.ICMP.REPLY: IMAGES.PACKETS.ICMP.REPLY,
-            OPCODES.ICMP.TIME_EXCEEDED: IMAGES.PACKETS.ICMP.TIME_EXCEEDED,
-            OPCODES.ICMP.UNREACHABLE: IMAGES.PACKETS.ICMP.UNREACHABLE,
-            OPCODES.ICMP.PORT_UNREACHABLE: IMAGES.PACKETS.ICMP.PORT_UNREACHABLE,
+            OPCODES.ICMP.TYPES.REQUEST: IMAGES.PACKETS.ICMP.REQUEST,
+            OPCODES.ICMP.TYPES.REPLY: IMAGES.PACKETS.ICMP.REPLY,
+            OPCODES.ICMP.TYPES.TIME_EXCEEDED: IMAGES.PACKETS.ICMP.TIME_EXCEEDED,
+            (OPCODES.ICMP.TYPES.UNREACHABLE, OPCODES.ICMP.CODES.NETWORK_UNREACHABLE): IMAGES.PACKETS.ICMP.UNREACHABLE,
+            (OPCODES.ICMP.TYPES.UNREACHABLE, OPCODES.ICMP.CODES.PORT_UNREACHABLE): IMAGES.PACKETS.ICMP.PORT_UNREACHABLE,
         },
         "TCP": {
             OPCODES.TCP.SYN: IMAGES.PACKETS.TCP.SYN,
@@ -437,10 +508,10 @@ class PACKET:
             OPCODES.TCP.RST: IMAGES.PACKETS.TCP.RST,
             OPCODES.TCP.PSH: IMAGES.PACKETS.TCP.PSH,
             OPCODES.TCP.ACK: IMAGES.PACKETS.TCP.ACK,
-            OPCODES.TCP.ACK + OPCODES.TCP.RETRANSMISSION: IMAGES.PACKETS.TCP.ACK_RETRANSMISSION,
-            OPCODES.TCP.PSH + OPCODES.TCP.RETRANSMISSION: IMAGES.PACKETS.TCP.PSH_RETRANSMISSION,
-            OPCODES.TCP.SYN + OPCODES.TCP.RETRANSMISSION: IMAGES.PACKETS.TCP.SYN_RETRANSMISSION,
-            OPCODES.TCP.FIN + OPCODES.TCP.RETRANSMISSION: IMAGES.PACKETS.TCP.FIN_RETRANSMISSION,
+            OPCODES.TCP.ACK.name + OPCODES.TCP.RETRANSMISSION: IMAGES.PACKETS.TCP.ACK_RETRANSMISSION,
+            OPCODES.TCP.PSH.name + OPCODES.TCP.RETRANSMISSION: IMAGES.PACKETS.TCP.PSH_RETRANSMISSION,
+            OPCODES.TCP.SYN.name + OPCODES.TCP.RETRANSMISSION: IMAGES.PACKETS.TCP.SYN_RETRANSMISSION,
+            OPCODES.TCP.FIN.name + OPCODES.TCP.RETRANSMISSION: IMAGES.PACKETS.TCP.FIN_RETRANSMISSION,
             OPCODES.TCP.NO_FLAGS: IMAGES.PACKETS.TCP.PACKET,
         },
         "FTP": {
@@ -483,7 +554,7 @@ class INTERFACES:
     NO_INTERFACE = ''
 
     class TYPE:
-        ETHERNET = "Ethernet"
+        ETHERNET = "Ether"
         WIFI = "Wifi"
 
 

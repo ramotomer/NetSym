@@ -1,7 +1,7 @@
 from computing.internals.shell.commands.command import Command, CommandOutput
-from computing.internals.shell.commands.net.ip_address import IpAddressCommand
-from computing.internals.shell.commands.net.ip_link import IpLinkCommand
-from computing.internals.shell.commands.net.ip_route import IpRouteCommand
+from computing.internals.shell.commands.net.ip.ip_address import IpAddressCommand
+from computing.internals.shell.commands.net.ip.ip_link import IpLinkCommand
+from computing.internals.shell.commands.net.ip.ip_route import IpRouteCommand
 
 
 class Ip(Command):
@@ -13,7 +13,7 @@ class Ip(Command):
         initiates the command.
         :param computer: 
         """
-        super(Ip, self).__init__('ip', 'manage ip settings', computer, shell)
+        super(Ip, self).__init__('ip', 'manage and display ip settings', computer, shell)
         self.parser.add_argument('object', metavar='object', type=str, nargs='?', help='type of ip command to run')
         self.parser.add_argument('args', metavar='args', nargs='*', type=str, help='rest of the arguments')
 

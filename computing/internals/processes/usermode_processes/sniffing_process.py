@@ -1,5 +1,5 @@
-from computing.internals.processes.abstracts.process import Process
-from consts import COMPUTER, INTERFACES, OPCODES
+from computing.internals.processes.abstracts.process import Process, ReturnedPacket
+from consts import COMPUTER, INTERFACES
 from exceptions import SocketIsClosedError
 
 
@@ -27,28 +27,12 @@ class SniffingProcess(Process):
         self.socket.close()
 
     @staticmethod
-    def _get_sniffed_packet_info_line(returned_packet):
+    def _get_sniffed_packet_info_line(returned_packet: ReturnedPacket) -> str:
         """
         Return the line that is printed when the packet is sniffed.
-        :param returned_packet: a `ReturnedPacket` object
-        :return:
         """
         packet, packet_metadata = returned_packet.packet_and_metadata
-
-        deepest = packet.deepest_layer()
-        line = deepest.opcode if hasattr(deepest, "opcode") else type(deepest).__name__
-        if 'TCP' in packet:
-            line = f"TCP {' '.join([f for f in OPCODES.TCP.FLAGS_DISPLAY_PRIORITY if f in packet['TCP'].flags])}"
-
-        if 'IP' in packet:
-            l3_protocol = 'IP'
-        elif 'ARP' in packet:
-            l3_protocol = 'ARP'
-        else:
-            return line
-
-        src_ip, dst_ip = packet[l3_protocol].src_ip, packet[l3_protocol].dst_ip
-        return f"{line} {packet_metadata.direction} {src_ip!s} > {dst_ip!s}"
+        return f"{packet_metadata.direction} {packet.summary()}"
 
     def code(self):
         self.computer.print(f"started sniffing on {self.interface_name}")

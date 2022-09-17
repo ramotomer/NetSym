@@ -31,9 +31,10 @@ class ServerFTPSessionProcess(Process):
         The actual code of the process
         """
         yield from self.socket.block_until_received()
-        received = self.socket.receive()
+        received = self.socket.receive().decode("ascii")
 
         if received.startswith("FTP: "):
+            # TODO: actually implement the FTP protocol with a layer - as it should behave
             filename = received.split()[received.split().index("FTP:") + 1]
 
             with self.computer.filesystem.at_path(self.cwd, filename) as file:
@@ -68,11 +69,11 @@ class ClientFTPProcess(Process):
 
         self.socket.send(f"FTP: {self.filename}")
 
-        data = ''
+        data = b''
         while self.socket.is_connected and not self.socket.is_closed:
             data += self.socket.receive()
             yield from self.socket.block_until_received_or_closed()
-        self.computer.filesystem.output_to_file(data, self.filename.split("/")[-1], self.cwd)
+        self.computer.filesystem.output_to_file(data.decode("ascii"), self.filename.split("/")[-1], self.cwd)
 
         yield from self.socket.close_when_done_transmitting()
 

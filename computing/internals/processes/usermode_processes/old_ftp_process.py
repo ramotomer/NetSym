@@ -1,6 +1,5 @@
 from computing.internals.processes.abstracts.tcp_process import TCPProcess
 from consts import *
-from packets.ftp import FTP
 
 
 class FTPProcess(TCPProcess):

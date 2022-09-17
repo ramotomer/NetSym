@@ -85,11 +85,13 @@ class RoutingTable:
         :return: None
         """
         arguments = (destination_ip, gateway_ip, interface_ip)
-        if any(not isinstance(address, IPAddress) for address in arguments) and gateway_ip is not ADDRESSES.IP.ON_LINK:
+        if any(not isinstance(address, (IPAddress, str)) for address in arguments) and gateway_ip is not ADDRESSES.IP.ON_LINK:
             raise NoIPAddressError(
-                f"One of the arguments to this function is not an IPAddress object!!!!! ({arguments})")
+                f"One of the arguments to this function is not a string or IPAddress object!!!!! ({arguments})")
 
-        self.dictionary[destination_ip] = RoutingTableItem(gateway_ip, interface_ip)
+        if gateway_ip is not ADDRESSES.IP.ON_LINK:
+            gateway_ip = IPAddress(gateway_ip)
+        self.dictionary[IPAddress(destination_ip)] = RoutingTableItem(gateway_ip, IPAddress(interface_ip))
 
     def route_delete(self, destination_ip):
         """
@@ -97,6 +99,7 @@ class RoutingTable:
         :param destination_ip: The destination IP address and netmask
         :return: None
         """
+        destination_ip = IPAddress(destination_ip)
         if destination_ip not in self.dictionary:
             raise RoutingTableError(f"Cannot remove route. it is not in the routing table {destination_ip}!!!")
         del self.dictionary[destination_ip]
@@ -108,6 +111,7 @@ class RoutingTable:
         the routing table.
         :return: None
         """
+        interface_ip = IPAddress(interface_ip)
         send_to = self.default_gateway.ip_address
         if send_to is None or send_to.is_same_subnet(interface_ip):
             send_to = ADDRESSES.IP.ON_LINK
@@ -120,7 +124,7 @@ class RoutingTable:
         """
         Removes an interface from the routing table.
         (This is also used when changing an interface's ip address)
-        :param interface_ip:
+        :param interface:
         :return:
         """
         if not interface.has_ip():
@@ -134,8 +138,9 @@ class RoutingTable:
         :param item: The key. Has to be an `IPAddress` object.
         :return: a `RoutingTableItem` object.
         """
-        if not isinstance(item, IPAddress):
-            raise InvalidAddressError(f"Key of a routing table must be an IPAddress object!!! not {type(item)} like {repr(item)}")
+        if not isinstance(item, (IPAddress, str)):
+            raise InvalidAddressError(f"Key of a routing table must be a string or an IPAddress object!!! not {type(item)} like {repr(item)}")
+        item = IPAddress(item)
 
         possible_addresses = list(filter(lambda destination: destination.is_same_subnet(item), self.dictionary))
         most_fitting_destination = max(possible_addresses, key=lambda address: address.subnet_mask)
@@ -152,10 +157,10 @@ class RoutingTable:
         :param value: a `RoutingTableItem` object.
         :return: None
         """
-        if not isinstance(key, IPAddress):
-            raise InvalidAddressError("Key of a routing table must be an IPAddress object!!!")
+        if not isinstance(key, (IPAddress, str)):
+            raise InvalidAddressError(f"Key of a routing table must be a string or an IPAddress object!!! not {type(key)} like {key}")
 
-        self.dictionary[key] = value
+        self.dictionary[IPAddress(key)] = value
 
     def __str__(self):
         """string representation of the routing table"""
