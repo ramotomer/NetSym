@@ -20,6 +20,9 @@ def debugp(*strings):
 SENDING_GRAT_ARPS = False
 
 
+t_time = float
+
+
 class ADDRESSES:
     class MAC:
         BROADCAST = 'ff:ff:ff:ff:ff:ff'

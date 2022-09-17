@@ -130,6 +130,7 @@ class Connection:
         is_dropped = (random.random() < self.packet_loss)
         self.sent_packets.append(SentPacket(packet, MainLoop.instance.time(), direction, is_dropped))
         packet.show(self.graphics, direction, is_opaque=self.is_blocked)  # initiate the `GraphicsObject` of the packet.
+        # TODO: BUG: is_opaque does not work even when connections are blocked :(
 
     def reach_destination(self, sent_packet):
         """
