@@ -54,7 +54,7 @@ class DHCPClient(Process):
         given_ip = dhcp_pack["BOOTP"].your_ip
         session_interface.ip = given_ip
         self.computer.update_routing_table()
-        self.computer.set_default_gateway(dhcp_pack["DHCP"].parsed_options.router, given_ip)
+        self.computer.set_default_gateway(IPAddress(dhcp_pack["DHCP"].parsed_options.router), given_ip)
         self.computer.graphics.update_text()
 
     @staticmethod
