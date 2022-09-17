@@ -48,8 +48,6 @@ class PacketGraphics(ImageGraphics):
             is_pressable=True,
         )
 
-        self.is_packet = True
-
         self.connection_graphics = connection_graphics
         self.direction = direction
         self.progress = 0

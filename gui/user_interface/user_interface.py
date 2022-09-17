@@ -3,6 +3,7 @@ from __future__ import annotations
 import functools
 import json
 import operator
+import pprint
 import random
 from collections import namedtuple, defaultdict
 from functools import reduce
@@ -287,7 +288,7 @@ class UserInterface:
         draw_line(self.source_of_line_drag.location, MainWindow.main_window.get_mouse_location(), color=color)
         self.source_of_line_drag.mark_as_selected_non_resizable()
 
-        destination = MainLoop.instance.get_object_the_mouse_is_on()
+        destination = self.get_object_the_mouse_is_on()
         if destination is not None:
             destination.mark_as_selected_non_resizable()
 
@@ -298,7 +299,7 @@ class UserInterface:
         :return:
         """
         if self.selected_object is not None and \
-                self.selected_object.is_packet and \
+                isinstance(self.selected_object, PacketGraphics) and \
                 self.packet_from_graphics_object(self.selected_object) is None:
             self.set_mode(MODES.NORMAL)
 
@@ -354,7 +355,7 @@ class UserInterface:
                           scale_y=VIEW.IMAGE_SIZE / sprite.image.height)
             MainLoop.instance.insert_to_loop(sprite.draw)
 
-            if graphics_object.is_packet:
+            if isinstance(graphics_object, PacketGraphics):
                 text = self.packet_from_graphics_object(graphics_object).multiline_repr()
 
         x, y = self.viewing_text_location
@@ -689,9 +690,16 @@ class UserInterface:
         This is called when we start to drag the connection from computer to the next in connecting mode
         :return:
         """
-        self.source_of_line_drag = MainLoop.instance.get_object_the_mouse_is_on()
+        self.source_of_line_drag = self.get_object_the_mouse_is_on()
         if self.source_of_line_drag is None or self.is_mouse_in_side_window():
             self.set_mode(MODES.NORMAL)
+
+    @staticmethod
+    def get_object_the_mouse_is_on():
+        """
+        Get the object the mouse is on - but exclude buttons
+        """
+        return MainLoop.instance.get_object_the_mouse_is_on(exclude_types=[Button])
 
     def end_device_visual_connecting(self, action):
         """
@@ -699,7 +707,7 @@ class UserInterface:
         :param action: a function that is called with the two devices.
         :return:
         """
-        connected = MainLoop.instance.get_object_the_mouse_is_on()
+        connected = self.get_object_the_mouse_is_on()
         if self.is_mouse_in_side_window() or connected is None:
             self.set_mode(MODES.NORMAL)
             return
@@ -785,7 +793,9 @@ class UserInterface:
         Totally clears the screen.
         :return: None
         """
-        for object_ in list(filter(lambda go: not go.is_button, MainLoop.instance.graphics_objects)):
+        for object_ in list(filter(
+                lambda go: not isinstance(go, Button) and not (isinstance(go, Text) and go.is_button),
+                MainLoop.instance.graphics_objects)):
             MainLoop.instance.unregister_graphics_object(object_)
 
         self.selected_object = None
@@ -1025,9 +1035,9 @@ class UserInterface:
         print(MainWindow.main_window.get_mouse_location())
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
         goes = list(filter(lambda go: not isinstance(go, UserInterfaceGraphicsObject), MainLoop.instance.graphics_objects))
-        print(f"graphicsObject-s (no buttons or texts): {goes}")
+        pprint.pprint(f"graphicsObject-s (no buttons or texts): {goes}")
         print(f"computers, {len(self.computers)}, connections, {len(self.connection_data)},"
-              f"packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}")
+              f"packets: {len(list(filter(lambda go: isinstance(go, PacketGraphics), MainLoop.instance.graphics_objects)))}")
         print(f"running processes: ", end='')
         for computer in self.computers:
             processes = [f"{waiting_process.process} of {computer}" for waiting_process in computer.waiting_processes]
@@ -1541,7 +1551,7 @@ class UserInterface:
         if self.is_mouse_in_side_window():
             return
 
-        object_the_mouse_is_on = MainLoop.instance.get_object_the_mouse_is_on()
+        object_the_mouse_is_on = self.get_object_the_mouse_is_on()
 
         self.dragged_object = object_the_mouse_is_on
         if (not isinstance(object_the_mouse_is_on, UserInterfaceGraphicsObject)) or isinstance(object_the_mouse_is_on, PopupWindow):

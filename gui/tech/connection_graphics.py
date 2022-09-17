@@ -57,7 +57,6 @@ class ConnectionGraphics(GraphicsObject):
         self.regular_color = CONNECTIONS.COLOR if not packet_loss else CONNECTIONS.PL_COLOR
         self.color = self.regular_color
         self.marked_as_blocked = False
-        self.is_connection = True
         self.buttons_id = None
         self.x, self.y = 0, 0  # isn't used, just to avoid errors!
 

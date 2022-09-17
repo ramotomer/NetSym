@@ -469,7 +469,7 @@ def get_dominant_tcp_flag(tcp):
 class PACKET:
     class DIRECTION:
         RIGHT = 'R'
-        LEFT = 'L'  # do not change value! Some things depend on it TODO: understand if this is desired
+        LEFT = 'L'  # do not change value! Some things depend on it
         WIRELESS = 'W'
 
         INCOMING = 'INCOMING'

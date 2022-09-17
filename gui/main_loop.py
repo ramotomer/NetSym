@@ -1,4 +1,5 @@
 import time
+from typing import Type, Iterable
 
 from exceptions import NoSuchGraphicsObjectError, AttributeError_
 from usefuls.funcs import get_the_one
@@ -82,8 +83,6 @@ class MainLoop:
 
         self.remove_from_loop(graphics_object.draw)
         self.remove_from_loop(graphics_object.move)
-
-        # TODO: BUG: loopback connection graphics stays after deleting computers!!!
 
         if hasattr(graphics_object, "child_graphics_objects"):
             for child in graphics_object.child_graphics_objects:
@@ -175,13 +174,13 @@ class MainLoop:
         for marked_object in self.main_window.user_interface.marked_objects:
             marked_object.mark_as_selected_non_resizable()
 
-    def get_object_the_mouse_is_on(self):
+    def get_object_the_mouse_is_on(self, exclude_types: Iterable[Type] = ()):
         """
         Returns the `GraphicsObject` that should be selected if the mouse is pressed
         (so the object that the mouse is on right now) or `None` if the mouse is not resting upon any object.
         :return: a `GraphicsObject` or None.
         """
-        return get_the_one(reversed(self.graphics_objects), lambda go: go.is_mouse_in() and not go.is_button)
+        return get_the_one(reversed(self.graphics_objects), lambda go: go.is_mouse_in() and not isinstance(go, tuple(exclude_types)))
 
     def graphics_objects_of_types(self, *types):
         """

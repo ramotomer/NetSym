@@ -1,8 +1,6 @@
 from abc import ABCMeta
 from itertools import product
 
-import pyglet
-
 from consts import *
 from exceptions import NoSuchGraphicsObjectError, PopupWindowWithThisError
 from gui.abstracts.graphics_object import GraphicsObject
@@ -29,8 +27,6 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         self.scale_factor = scale_factor
         self.is_opaque = is_opaque
         self.sprite = None
-
-        self.is_image = True
 
         self.resizing_dots = []
 
