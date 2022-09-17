@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import functools
 import json
 import operator
@@ -5,6 +7,7 @@ import random
 from collections import namedtuple, defaultdict
 from functools import reduce
 from operator import concat, attrgetter
+from typing import TYPE_CHECKING
 
 from pyglet.window import key
 
@@ -25,7 +28,6 @@ from gui.main_window import MainWindow
 from gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
 from gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from gui.tech.computer_graphics import ComputerGraphics
-from gui.tech.connection_graphics import ConnectionGraphics
 from gui.tech.interface_graphics import InterfaceGraphics
 from gui.tech.packet_graphics import PacketGraphics
 from gui.user_interface.button import Button
@@ -40,6 +42,10 @@ from gui.user_interface.selecting_square import SelectingSquare
 from gui.user_interface.text_graphics import Text
 from usefuls.funcs import get_the_one, distance, with_args, called_in_order, circular_coordinates, sum_tuples, \
     scale_tuple
+
+if TYPE_CHECKING:
+    from computing.connection import Connection
+
 
 ObjectView = namedtuple("ObjectView", [
     "sprite",
@@ -805,36 +811,45 @@ class UserInterface:
         for connection, _, _ in self.connection_data:
             connection.stop_packets()
 
+    def remove_computer(self, computer: Computer) -> None:
+        """
+        Removes a computer from the simulation (but NOT the ComputerGraphics object)
+        """
+        self.computers.remove(computer)
+
+    def remove_connection(self, connection: Connection) -> None:
+        """
+        Take in a connection and disconnect it from the computers in both sides
+        """
+        for connection_data in self.connection_data:
+            other_connection, computer1, computer2 = connection_data
+            if connection is other_connection:
+                computer1.disconnect(connection)
+                computer2.disconnect(connection)
+                self.connection_data.remove(connection_data)
+                break
+
+    def remove_interface(self, interface):
+        """
+        Remove an interface and disconnect everything it is connected to
+        """
+        computer = get_the_one(self.computers, (lambda c: interface in c.interfaces), NoSuchInterfaceError)
+        if interface.is_connected:
+            connection = interface.connection.connection
+            self.delete(connection.graphics)
+        computer.add_remove_interface(interface.name)
+
     def delete(self, graphics_object):
         """
         Receives a graphics object, deletes it from the main loop and disconnects it (if it is a computer).
         :param graphics_object: a `GraphicsObject` to delete.
         :return: None
         """
-        MainLoop.instance.unregister_graphics_object(graphics_object)
+        graphics_object.delete(self)
         self.selected_object = None
         self.dragged_object = None
 
-        if isinstance(graphics_object, ComputerGraphics):
-            self.computers.remove(graphics_object.computer)
-            self._delete_connections_to(graphics_object.computer)
-
-        elif isinstance(graphics_object, ConnectionGraphics):
-            for connection, computer1, computer2 in self.connection_data:
-                if connection is graphics_object.connection:
-                    computer1.disconnect(connection)
-                    computer2.disconnect(connection)
-                    break
-
-        elif isinstance(graphics_object, InterfaceGraphics):
-            interface = graphics_object.interface
-            computer = get_the_one(self.computers, (lambda c: interface in c.interfaces), NoSuchInterfaceError)
-            if interface.is_connected:
-                connection = interface.connection.connection
-                self.delete(connection.graphics)
-            computer.add_remove_interface(interface.name)
-
-    def _delete_connections_to(self, computer):
+    def delete_connections_to(self, computer):
         """
         Delete all of the connections to a computer!
         Also delete all of the packets inside of them.

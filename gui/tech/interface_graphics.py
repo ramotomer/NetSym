@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from address.mac_address import MACAddress
 from consts import *
 from exceptions import *
@@ -6,6 +10,9 @@ from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rectangle
 from usefuls.funcs import distance, with_args, get_the_one
+
+if TYPE_CHECKING:
+    from gui.user_interface.user_interface import UserInterface
 
 
 class InterfaceGraphics(GraphicsObject):
@@ -156,3 +163,10 @@ class InterfaceGraphics(GraphicsObject):
             "is_blocked": self.interface.is_blocked,
             "type_": self.interface.type,
         }
+
+    def delete(self, user_interface: UserInterface) -> None:
+        """
+        Delete the interface!
+        """
+        super(InterfaceGraphics, self).delete(user_interface)
+        user_interface.remove_interface(self.interface)

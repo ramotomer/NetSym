@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from collections import namedtuple
 from math import acos, sin
+from typing import TYPE_CHECKING, Tuple
 
 from consts import *
 from exceptions import *
@@ -10,6 +13,12 @@ from gui.shape_drawing import draw_line
 from gui.shape_drawing import draw_rectangle
 from usefuls.funcs import distance
 from usefuls.funcs import with_args, get_the_one
+
+if TYPE_CHECKING:
+    from computing.connection import Connection
+    from gui.tech.computer_graphics import ComputerGraphics
+    from gui.user_interface.user_interface import UserInterface
+
 
 Computers = namedtuple("Computers", [
     "start",
@@ -28,7 +37,11 @@ class ConnectionGraphics(GraphicsObject):
     This is a GraphicsObject subclass which displays a connection.
     It shows the graphics of the connection (a line) between the two endpoints it is connected to.
     """
-    def __init__(self, connection, computer_graphics_start, computer_graphics_end, packet_loss=0):
+    def __init__(self,
+                 connection: Connection,
+                 computer_graphics_start: ComputerGraphics,
+                 computer_graphics_end: ComputerGraphics,
+                 packet_loss: float = 0) -> None:
         """
         Initiates the Connection Graphics object which is basically a line between
         two dots (the two ends of the connection).
@@ -67,15 +80,15 @@ class ConnectionGraphics(GraphicsObject):
             )
 
     @property
-    def length(self):  # the length of the connection.
+    def length(self) -> float:  # the length of the connection.
         return distance(self.interfaces.start.location, self.interfaces.end.location)
 
-    def update_color_by_pl(self, packet_loss):
+    def update_color_by_pl(self, packet_loss: float) -> None:
         """Updates the color of the connection according to the pl of the connection"""
         self.regular_color = CONNECTIONS.COLOR if not packet_loss else CONNECTIONS.PL_COLOR
         self.color = self.regular_color
 
-    def is_mouse_in(self):
+    def is_mouse_in(self) -> bool:
         """Returns whether or not the mouse is close enough to the connection for it to count as pressed"""
         if any(interface is None for interface in self.interfaces):
             pass
@@ -98,7 +111,7 @@ class ConnectionGraphics(GraphicsObject):
         mouse_distance_to_connection = a * sin(beta)
         return mouse_distance_to_connection <= CONNECTIONS.MOUSE_TOUCH_SENSITIVITY
 
-    def get_coordinates(self, direction=PACKET.DIRECTION.RIGHT):
+    def get_coordinates(self, direction: str = PACKET.DIRECTION.RIGHT) -> Tuple[float, float, float, float]:
         """
         Return a tuple of the coordinates at the start and the end of the connection.
         Receives a `direction` that the we look at the connection from (to know which is the end and which is the start)
@@ -112,7 +125,7 @@ class ConnectionGraphics(GraphicsObject):
             return self.interfaces.end.x, self.interfaces.end.y, self.interfaces.start.x, self.interfaces.start.y
         raise WrongUsageError("a packet can only go left or right!")
 
-    def get_computer_coordinates(self, direction=PACKET.DIRECTION.RIGHT):
+    def get_computer_coordinates(self, direction: str = PACKET.DIRECTION.RIGHT) -> Tuple[float, float, float, float]:
         """
         Return a tuple of the coordinates at the start and the end of the connection.
         Receives a `direction` that we look at the connection from (to know which is the end and which is the start)
@@ -126,7 +139,7 @@ class ConnectionGraphics(GraphicsObject):
             return self.computers.end.x, self.computers.end.y, self.computers.start.x, self.computers.start.y
         raise WrongUsageError("a packet can only go left or right!")
 
-    def packet_location(self, direction, progress):
+    def packet_location(self, direction: str, progress: float) -> Tuple[float, float]:
         """
         Returns the location of the packet in the connection based of its direction and its progress in it
         This method knows the start and end coordinates of the travel of the packet
@@ -142,7 +155,7 @@ class ConnectionGraphics(GraphicsObject):
         return ((((end_x - start_x) * progress) + start_x),
                 (((end_y - start_y) * progress) + start_y))
 
-    def mark_as_selected(self):
+    def mark_as_selected(self) -> None:
         """
         Marks a rectangle around a `GraphicsObject` that is selected.
         Only call this function if the object is selected.
@@ -158,7 +171,7 @@ class ConnectionGraphics(GraphicsObject):
             outline_color=SELECTED_OBJECT.COLOR,
         )
 
-    def draw(self):
+    def draw(self) -> None:
         """
         Draws the connection (The line) between its end point and its start point.
         :return: None
@@ -167,7 +180,7 @@ class ConnectionGraphics(GraphicsObject):
         sx, sy, ex, ey = self.get_coordinates()
         draw_line((sx, sy), (ex, ey), color)
 
-    def start_viewing(self, user_interface):
+    def start_viewing(self, user_interface: UserInterface) -> Tuple[pyglet.sprite.Sprite, str, int]:
         """
         Starts the viewing of this object in the side window.
         :return: None
@@ -184,14 +197,14 @@ class ConnectionGraphics(GraphicsObject):
 
         return copied_sprite, self.generate_view_text(), self.buttons_id
 
-    def end_viewing(self, user_interface):
+    def end_viewing(self, user_interface: UserInterface) -> None:
         """
         Removes the buttons that were added in the start of the viewing.
         :return: None
         """
         user_interface.remove_buttons(self.buttons_id)
 
-    def generate_view_text(self):
+    def generate_view_text(self) -> str:
         """
         Generates the text that is under the buttons in the side-window when the connection is viewed.
         :return: None
@@ -201,7 +214,7 @@ class ConnectionGraphics(GraphicsObject):
             f"{self.connection.speed} pixels/second\ndeliver time: {str(self.connection.deliver_time)[:4]} seconds" \
             f"\nPL percent: {self.connection.packet_loss}"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Connection Graphics"
 
     def dict_save(self):
@@ -230,3 +243,12 @@ class ConnectionGraphics(GraphicsObject):
                             ).name,
             },
         }
+
+    def delete(self, user_interface: UserInterface) -> None:
+        """
+        Delete the connection and disconnect it from both sides
+        :param user_interface:
+        :return:
+        """
+        super(ConnectionGraphics, self).delete(user_interface)
+        user_interface.remove_connection(self.connection)

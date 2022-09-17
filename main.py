@@ -11,5 +11,3 @@ if __name__ == '__main__':
     main_loop = MainLoop(main_window)
     pyglet.clock.schedule_interval(main_window.update, WINDOWS.MAIN.FRAME_RATE)
     pyglet.app.run()
-
-    # TODO: deleting a packet mid-way does not really delete it :(
