@@ -32,15 +32,14 @@ class Packet:
         self.data = data
         self.graphics = None
 
-    def show(self, connection_graphics: ConnectionGraphics, direction: str, is_opaque: bool = False) -> None:
+    def show(self, connection_graphics: ConnectionGraphics, direction: str) -> None:
         """
         This signals the packet that it starts to be sent and that where it
         is sent from and to (Graphically).
         :param connection_graphics: the graphics_object of the connection the packet is currently in
         :param direction: The direction that the packet is going in the connection.
-        :param is_opaque: whether or not the packet is opaque (in a blocked connection)
         """
-        self.graphics = PacketGraphics(self.deepest_layer(), connection_graphics, direction, is_opaque)
+        self.graphics = PacketGraphics(self.deepest_layer(), connection_graphics, direction)
 
     def deepest_layer(self) -> scapy.packet.Packet:
         """

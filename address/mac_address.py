@@ -39,7 +39,7 @@ class MACAddress:
 
     def is_broadcast(self) -> bool:
         """Returns if a MAC address is the broadcast MAC or not"""
-        return self.string_mac == ADDRESSES.MAC.BROADCAST
+        return self.string_mac.lower() == ADDRESSES.MAC.BROADCAST.lower()
 
     @classmethod
     def broadcast(cls: Type[T]) -> T:

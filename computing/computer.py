@@ -661,8 +661,6 @@ class Computer:
         self.routing_table.add_interface(interface.ip)
         self.graphics.update_text()
 
-    # TODO: deleting an interface and then connecting the device does not work well
-
     def remove_ip(self, interface: Interface) -> None:
         """
         Removes the ip of an interface.

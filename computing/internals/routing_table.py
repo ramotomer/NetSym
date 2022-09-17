@@ -118,7 +118,6 @@ class RoutingTable:
 
         self.route_add(interface_ip.subnet(), send_to, interface_ip)
         self.route_add(IPAddress(interface_ip.string_ip + "/32"), IPAddress.loopback(), IPAddress.loopback())
-        # TODO: BUG: when a computer doesn't have an IP and we give it one after it is created it cant send itself pings
 
     def delete_interface(self, interface):
         """

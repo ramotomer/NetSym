@@ -27,8 +27,7 @@ class PacketGraphics(ImageGraphics):
     def __init__(self,
                  deepest_layer: scapy.packet.Packet,
                  connection_graphics: ConnectionGraphics,
-                 direction: str,
-                 is_opaque: bool = False) -> None:
+                 direction: str) -> None:
         """
         This method initiates a `PacketGraphics` instance.
         :param deepest_layer: The deepest packet layer in the packet.
@@ -44,7 +43,6 @@ class PacketGraphics(ImageGraphics):
             connection_graphics.get_computer_coordinates(direction)[1],
             centered=True,
             scale_factor=IMAGES.SCALE_FACTORS.PACKETS,
-            is_opaque=is_opaque,
             is_pressable=True,
         )
 
@@ -57,6 +55,13 @@ class PacketGraphics(ImageGraphics):
         self.drop_animation = None
 
         self.buttons_id = None
+
+    @property
+    def should_be_transparent(self):
+        """
+        This property should be overridden - at any given time, the object will become transparent If and Only If this returns `True`
+        """
+        return self.connection_graphics.connection.is_blocked
 
     def move(self) -> None:
         """
