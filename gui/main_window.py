@@ -264,8 +264,11 @@ class MainWindow(pyglet.window.Window):
         """
         This function updates the program every time the clock ticks, about 60
         times a second.
+
         Currently it exists because `pyglet` is a stupid module.
+
+        The actual main function of the code is `on_draw`
+
         :param time_interval: The time since the last update
-        :return: None
         """
         pass
