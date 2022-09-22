@@ -1,6 +1,7 @@
 # this cannot import from anything!!! (almost)
 import os
 from math import sqrt
+from typing import Tuple
 
 import pyglet
 from scapy.layers.dhcp import DHCPTypes
@@ -21,6 +22,7 @@ SENDING_GRAT_ARPS = False
 
 
 t_time = float
+t_color = Tuple[int, int, int]
 
 
 class ADDRESSES:

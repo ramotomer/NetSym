@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List, Optional, Set
+
 from consts import *
 from exceptions import WrongUsageError
 from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
@@ -8,6 +12,9 @@ from gui.user_interface.button import Button
 from gui.user_interface.text_graphics import Text
 from usefuls.funcs import with_args
 
+if TYPE_CHECKING:
+    from gui.user_interface.user_interface import UserInterface
+
 
 class PopupWindow(UserInterfaceGraphicsObject):
     """
@@ -15,10 +22,17 @@ class PopupWindow(UserInterfaceGraphicsObject):
     It can contain buttons, text and maybe images?
     """
 
-    def __init__(self, x, y, text, user_interface, buttons,
-                 width=WINDOWS.POPUP.TEXTBOX.WIDTH, height=WINDOWS.POPUP.TEXTBOX.HEIGHT,
-                 color=WINDOWS.POPUP.TEXTBOX.OUTLINE_COLOR, title="window!",
-                 outline_width=SHAPES.RECT.DEFAULT_OUTLINE_WIDTH):
+    def __init__(self,
+                 x: float,
+                 y: float,
+                 text: str,
+                 user_interface: UserInterface,
+                 buttons: List[Button],
+                 width: float = WINDOWS.POPUP.TEXTBOX.WIDTH,
+                 height: float = WINDOWS.POPUP.TEXTBOX.HEIGHT,
+                 color: t_color = WINDOWS.POPUP.TEXTBOX.OUTLINE_COLOR,
+                 title: str = "window!",
+                 outline_width: int = SHAPES.RECT.DEFAULT_OUTLINE_WIDTH) -> None:
         """
         Initiates the `PopupWindow` object.
         :param x, y: the location of the bottom left corner of the window
@@ -69,11 +83,11 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self._pinned_directions = set()
 
     @property
-    def location(self):
+    def location(self) -> Tuple[float, float]:
         return self.x, self.y
 
     @location.setter
-    def location(self, value):
+    def location(self, value: Tuple[float, float]) -> None:
         # this is the way the `UserInterface` moves the `selected_object`
         self.x, self.y = value
         self._x_before_pinning, self._y_before_pinning = value
@@ -81,16 +95,16 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self._size_before_pinning = self.width, self.height
 
     @property
-    def is_pinned(self):
+    def is_pinned(self) -> bool:
         return bool(self._pinned_directions)
 
-    def get_exit_button_padding(self):
+    def get_exit_button_padding(self) -> Tuple[float, float]:
         return self.width - WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT, self.height
 
-    def get_title_text_padding(self):
+    def get_title_text_padding(self) -> Tuple[float, float]:
         return (self.width / 2) + 2, self.height + 22
 
-    def is_mouse_in(self):
+    def is_mouse_in(self) -> bool:
         """
         Returns whether or not the mouse is pressing the upper part of the window (where it can be moved)
         :return: `bool`
@@ -99,23 +113,23 @@ class PopupWindow(UserInterfaceGraphicsObject):
         return self.x < x < self.x + self.width and \
                self.y < y < self.y + self.height + WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT
 
-    def mark_as_selected(self):
+    def mark_as_selected(self) -> None:
         """
         required for the API
         :return: None
         """
         pass
 
-    def delete(self):
+    def delete(self, user_interface: Optional[UserInterface] = None) -> None:
         """
         Deletes the window and removes it from the UserInterface.popup_windows list
         :return: None
         """
-        MainLoop.instance.unregister_graphics_object(self)
+        super(PopupWindow, self).delete(user_interface)
         self.remove_buttons()
         self.unregister_from_user_interface()
 
-    def draw(self):
+    def draw(self) -> None:
         """
         Draws the popup window (text box) on the screen.
         Basically a rectangle.
@@ -135,7 +149,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
             color=outline_color,
         )
 
-    def activate(self):
+    def activate(self) -> None:
         """
         Marks the window as activated
         :return:
@@ -143,7 +157,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.exit_button.color = self.outline_color
         self.__is_active = True
 
-    def deactivate(self):
+    def deactivate(self) -> None:
         """
         Marks the window as deactivated
         :return:
@@ -151,16 +165,15 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.exit_button.color = WINDOWS.POPUP.DEACTIVATED_COLOR
         self.__is_active = False
 
-    def resize(self, width, height):
+    def resize(self, width: float, height: float) -> None:
         self.width, self.height = width, height
         self.exit_button.padding = self.get_exit_button_padding()
         self.title_text.resize(self.get_title_text_padding(), width)
 
-    def pin_to(self, direction):
+    def pin_to(self, direction: str) -> None:
         """
         Pin the window to one side like the effect windows has when you press Winkey+arrow
-        :param direction:
-        :return:
+        :param direction: one of `WINDOWS.POPUP.DIRECTIONS`
         """
         if not self.is_pinned:
             self._x_before_pinning, self._y_before_pinning = self.x, self.y
@@ -200,7 +213,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
                 else:
                     self.make_like_before_pinned()
 
-    def maximize(self):
+    def maximize(self) -> None:
         """
         Make the window the size of the whole screen
         """
@@ -208,7 +221,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.resize((MainWindow.main_window.width - WINDOWS.SIDE.WIDTH), MainWindow.main_window.height - WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT)
         self._pinned_directions = {WINDOWS.POPUP.DIRECTIONS.UP}
 
-    def make_split_screen(self, direction):
+    def make_split_screen(self, direction: str) -> None:
         """
         Set the size and location of the window to be exactly half of the screen
         :param direction: What half of the screen should that be 'right' or 'left'
@@ -226,7 +239,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
 
         self._pinned_directions = {direction}
 
-    def make_quarter_screen(self, directions):
+    def make_quarter_screen(self, directions: Set[str]) -> None:
         """
         Set the size and location of the window to be exactly a quarter of the screen
         :param directions: What quarter of the screen should that be. A `set` of two directions. Like: {'right', 'up'}
@@ -249,7 +262,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
 
         self._pinned_directions = directions
 
-    def make_like_before_pinned(self):
+    def make_like_before_pinned(self) -> None:
         """
         Set the size and location of the window to be just like before the window was pinned
         """
@@ -257,5 +270,5 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.resize(*self._size_before_pinning)
         self._pinned_directions = set()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"PopupWindow(title='{self.child_graphics_objects[0].text}')"

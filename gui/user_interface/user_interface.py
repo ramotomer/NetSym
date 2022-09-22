@@ -804,7 +804,6 @@ class UserInterface:
         """
         Deletes all of the objects and graphics objects that exist.
         Totally clears the screen.
-        :return: None
         """
         for object_ in list(filter(
                 lambda go: not isinstance(go, Button) and not (isinstance(go, Text) and go.is_button),

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import reduce
 from operator import ior as binary_or
-from typing import Tuple, TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any, Union
 
 import pyWinhook
 
@@ -66,10 +66,18 @@ class MainWindow(pyglet.window.Window):
 
     @property
     def _active_keyboard_modifiers(self) -> int:
+        """
+        Return the currently pressed keys that affect other keys (they are called modifiers - shift, ctrl, alt, etc...)
+        :return: a bitmap of the modifiers according to the bits in `KEYBOARD.MODIFIERS`
+        """
         no_modifier = KEYBOARD.MODIFIERS.NONE
         return reduce(binary_or, [KEYBOARD.MODIFIERS.KEY_TO_MODIFIER.get(key, no_modifier) for key in self.pressed_keys], no_modifier)
 
     def block_keyboard_escape_keys(self, event: pyWinhook.HookManager.KeyboardEvent) -> bool:
+        """
+        This function is a new handler we write. It is set to handle the event of pressing down a key.
+        We tell it - if the pressed key is one we want to ignore - ignore it.
+        """
         for pywinhook_key, (pyglet_key, _) in self._ignored_keys.items():
             # pywinhook is the library we use for trapping the winkey and pyglet we use for everything else
             if event.Key.lower() == pywinhook_key:

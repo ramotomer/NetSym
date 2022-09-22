@@ -1,9 +1,17 @@
+from __future__ import annotations
+
 from collections import namedtuple
+from typing import TYPE_CHECKING
 
 from consts import COLORS, CONSOLE, COMPUTER
 from gui.main_loop import MainLoop
 from gui.tech.shell_graphics import ShellGraphics
 from gui.user_interface.popup_windows.popup_window import PopupWindow
+
+if TYPE_CHECKING:
+    from computing.computer import Computer
+    from gui.user_interface.user_interface import UserInterface
+
 
 ChildrenGraphicsObjects = namedtuple("ChildrenGraphicsObjects", [
     'title_text',
@@ -16,9 +24,10 @@ class PopupConsole(PopupWindow):
     """
     A console in a popup window that you can also write in.
     """
-    def __init__(self, user_interface, computer):
+    def __init__(self, user_interface: UserInterface, computer: Computer) -> None:
+        x, y = CONSOLE.SHELL.START_LOCATION
         super(PopupConsole, self).__init__(
-            *CONSOLE.SHELL.START_LOCATION,
+            x, y,
             '',
             user_interface,
             [],
@@ -35,7 +44,7 @@ class PopupConsole(PopupWindow):
         self.computer = computer
         self.computer.output_method = COMPUTER.OUTPUT_METHOD.SHELL
 
-        shell = ShellGraphics(*self.location, f"Shell on {computer.name}\n", computer, self)
+        shell = ShellGraphics(self.x, self.y, f"Shell on {computer.name}\n", computer, self)
         shell.width, shell.height = self.width, self.height
         shell.set_parent_graphics(self)
         shell.show()
@@ -53,8 +62,8 @@ class PopupConsole(PopupWindow):
     def shell(self):
         return self.child_graphics_objects.shell
 
-    def delete(self):
-        super(PopupConsole, self).delete()
+    def delete(self, user_interface: UserInterface = None) -> None:
+        super(PopupConsole, self).delete(user_interface)
         self.computer.active_shells.remove(self.shell)
         if not self.computer.active_shells:
             self.computer.output_method = COMPUTER.OUTPUT_METHOD.CONSOLE
