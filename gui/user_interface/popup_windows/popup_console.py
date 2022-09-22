@@ -28,28 +28,18 @@ class PopupConsole(PopupWindow):
         x, y = CONSOLE.SHELL.START_LOCATION
         super(PopupConsole, self).__init__(
             x, y,
-            '',
             user_interface,
-            [],
             color=COLORS.PINK,
             title='console',
             width=CONSOLE.SHELL.WIDTH,
             height=CONSOLE.SHELL.HEIGHT,
         )
 
-        title_text, info_text, exit_button = self.child_graphics_objects[:3]
-        # TODO: ^ disgusting!!!!
-        MainLoop.instance.unregister_graphics_object(info_text)
+        title_text, exit_button = self.child_graphics_objects
 
         self.computer = computer
         self.computer.output_method = COMPUTER.OUTPUT_METHOD.SHELL
-
-        shell = ShellGraphics(self.x, self.y, f"Shell on {computer.name}\n", computer, self)
-        shell.width, shell.height = self.width, self.height
-        shell.set_parent_graphics(self)
-        shell.show()
-        self.computer.active_shells.append(shell)
-        MainLoop.instance.move_to_front(shell)
+        shell = self._generate_computer_shell()
 
         self.child_graphics_objects = ChildrenGraphicsObjects(
             title_text,
@@ -57,6 +47,19 @@ class PopupConsole(PopupWindow):
             shell,
         )
         MainLoop.instance.move_to_front(shell.child_graphics_objects.input_line)
+
+    def _generate_computer_shell(self) -> ShellGraphics:
+        """
+        Creates the shell (graphics)object that rides the window object - And performs all of the required logic upon it
+        That object contains the actual `Shell` object that holds all the actual logic of the shell
+        """
+        shell = ShellGraphics(self.x, self.y, f"Shell on {self.computer.name}\n", self.computer, self)
+        shell.width, shell.height = self.width, self.height
+        shell.set_parent_graphics(self)
+        shell.show()
+        self.computer.active_shells.append(shell)
+        MainLoop.instance.move_to_front(shell)
+        return shell
 
     @property
     def shell(self):

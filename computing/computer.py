@@ -4,7 +4,7 @@ import random
 from collections import namedtuple
 from functools import reduce
 from operator import concat
-from typing import Tuple, TYPE_CHECKING, Optional, List, Union, TypeVar, Type, Callable
+from typing import TYPE_CHECKING, Optional, List, Union, TypeVar, Type, Callable
 
 import scapy
 from recordclass import recordclass
@@ -714,7 +714,7 @@ class Computer:
         else:
             self.start_sniffing(interface_name, is_promisc)
 
-    def new_packets_since(self, time_: t_time) -> List[ReceivedPacket]:
+    def new_packets_since(self, time_: T_Time) -> List[ReceivedPacket]:
         """
         Returns a list of all the new `ReceivedPacket`s that were received in the last `seconds` seconds.
         :param time_: a number of seconds.

@@ -260,7 +260,7 @@ class MainWindow(pyglet.window.Window):
         """
         self.set_is_ignoring_keyboard_escape_keys(False)
 
-    def update(self, time_interval: t_time) -> None:
+    def update(self, time_interval: T_Time) -> None:
         """
         This function updates the program every time the clock ticks, about 60
         times a second.

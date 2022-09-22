@@ -1,5 +1,5 @@
 import random
-from typing import Optional, Union, Tuple, TypeVar, Type, List, Any
+from typing import Optional, Union, TypeVar, Type, List, Any
 
 import scapy
 
@@ -62,7 +62,7 @@ class Interface:
         self.display_color = display_color
 
     @property
-    def connection_length(self) -> Optional[t_time]:
+    def connection_length(self) -> Optional[T_Time]:
         """
         The length of the connection this `Interface` is connected to. (The time a packet takes to go through it in seconds)
         :return: a number of seconds.

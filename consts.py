@@ -21,8 +21,8 @@ def debugp(*strings):
 SENDING_GRAT_ARPS = False
 
 
-t_time = float
-t_color = Tuple[int, int, int]
+T_Time = float
+T_Color = Tuple[int, int, int]
 
 
 class ADDRESSES:

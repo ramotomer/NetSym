@@ -25,32 +25,37 @@ class PopupWindow(UserInterfaceGraphicsObject):
     def __init__(self,
                  x: float,
                  y: float,
-                 text: str,
                  user_interface: UserInterface,
-                 buttons: List[Button],
+                 buttons: Optional[List[Button]] = None,
                  width: float = WINDOWS.POPUP.TEXTBOX.WIDTH,
                  height: float = WINDOWS.POPUP.TEXTBOX.HEIGHT,
-                 color: t_color = WINDOWS.POPUP.TEXTBOX.OUTLINE_COLOR,
+                 color: T_Color = WINDOWS.POPUP.TEXTBOX.OUTLINE_COLOR,
                  title: str = "window!",
                  outline_width: int = SHAPES.RECT.DEFAULT_OUTLINE_WIDTH) -> None:
         """
         Initiates the `PopupWindow` object.
         :param x, y: the location of the bottom left corner of the window
-        :param text: the text for `self._text` attribute.
         :param user_interface: the UserInterface object that holds all of the windows
         :param buttons: a list of buttons that will be displayed on this window. The `X` button is not included.
         """
         super(PopupWindow, self).__init__(x, y)
+        buttons = buttons or []
+
         self.width, self.height = width, height
         self.__is_active = False
         self.outline_color = color
         self.outline_width = outline_width
         self.creation_time = MainLoop.instance.time()
 
-        self.title_text = Text(title, self.x, self.y, self, self.get_title_text_padding(),
-                               color=COLORS.BLACK, align='left', max_width=self.width)
-        information_text = Text(text, self.x, self.y, self, ((self.width / 2), self.height - 25), max_width=self.width)
-        # TODO: if PopupConsole does not have `information_text` - it should not be in the parent class `PopupWindow`!!!!
+        self.title_text = Text(
+            title,
+            self.x, self.y,
+            self,
+            self.get_title_text_padding(),
+            color=COLORS.BLACK,
+            align='left',
+            max_width=self.width
+        )
 
         for button in buttons:
             button.set_parent_graphics(self, (button.x - self.x, button.y - self.y))
@@ -71,10 +76,8 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.remove_buttons = None
         self.child_graphics_objects = [
             self.title_text,
-            information_text,
             self.exit_button,
-            *buttons,
-        ]
+        ] + buttons
         user_interface.register_window(self, self.exit_button, *buttons)
         self.unregister_from_user_interface = with_args(user_interface.unregister_window, self)
 
