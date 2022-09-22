@@ -1,3 +1,6 @@
+from collections import Callable
+from typing import List, Union
+
 from pyglet.window import key
 
 from consts import KEYBOARD
@@ -23,7 +26,11 @@ class KeyWriter:
                        key.NUM_SUBTRACT: '-',
                    }}
 
-    def __init__(self, append_function, delete_function, submit_action=lambda: None, exit_action=lambda: None):
+    def __init__(self,
+                 append_function: Callable,
+                 delete_function: Callable,
+                 submit_action: Callable = lambda: None,
+                 exit_action: Callable = lambda: None) -> None:
         """
         Initiates the key_writer.
         :param append_function: append text to the writing. (must receive one string)
@@ -41,16 +48,16 @@ class KeyWriter:
             (key.BACKSPACE, KEYBOARD.MODIFIERS.NONE): self.delete,
         }
 
-    def add_key_mapping(self, symbol, action):
+    def add_key_mapping(self, symbol: int, action: Callable) -> None:
         """
         Adds a new action to occur when a given key is pressed.
         :param symbol: `key.*` or a list of them
-        :param action: function
+        :param action: what to do when that key is inserted
         :return:
         """
         self.add_key_combination(symbol, KEYBOARD.MODIFIERS.NONE, action)
 
-    def add_key_combination(self, symbol, modifiers, action):
+    def add_key_combination(self, symbol: Union[int, List[int]], modifiers: int, action: Callable) -> None:
         """
         Adds a combination of key and modifiers to the mapping.
         This is checked first!
@@ -69,13 +76,13 @@ class KeyWriter:
 
         self.key_combination_dict[(symbol, modifiers)] = action
 
-    def pressed(self, symbol, modifiers):
+    def pressed(self, symbol: int, modifiers: int) -> bool:
         """
         This is called when the user is typing the string into the `PopupTextBox`.
-        :param symbol: a string of the key that was pressed.
+        :param symbol: `key.*` of what key was pressed
         :param modifiers: a bitwise representation of what other button were also pressed
         (KEYBOARD.MODIFIERS.SHIFT, etc...)
-        :return: `bool` - whether or not the pressed key had any effect
+        :return: whether or not the pressed key had any effect
         """
         if (symbol, modifiers) in self.key_combination_dict:
             self.key_combination_dict[(symbol, modifiers)]()

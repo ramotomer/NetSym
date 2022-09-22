@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from recordclass import recordclass
 
 from computing.internals.processes.abstracts.process import ProcessInternalError, Process
-from consts import COMPUTER, debugp
+from consts import COMPUTER
 from exceptions import NoSuchProcessError
 from gui.main_loop import MainLoop
 from usefuls.funcs import get_the_one
@@ -155,7 +155,6 @@ class ProcessScheduler:
             except StopIteration:
                 return None
             except ProcessInternalError:
-                debugp(f"process was killed using error!")
                 return None
 
     def _start_new_processes(self, mode):

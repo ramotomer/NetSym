@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import functools
 import json
 import operator
+import pprint
 import random
 from collections import namedtuple, defaultdict
 from functools import reduce
 from operator import concat, attrgetter
+from typing import TYPE_CHECKING, Optional
 
 from pyglet.window import key
 
@@ -25,7 +29,6 @@ from gui.main_window import MainWindow
 from gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
 from gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from gui.tech.computer_graphics import ComputerGraphics
-from gui.tech.connection_graphics import ConnectionGraphics
 from gui.tech.interface_graphics import InterfaceGraphics
 from gui.tech.packet_graphics import PacketGraphics
 from gui.user_interface.button import Button
@@ -40,6 +43,10 @@ from gui.user_interface.selecting_square import SelectingSquare
 from gui.user_interface.text_graphics import Text
 from usefuls.funcs import get_the_one, distance, with_args, called_in_order, circular_coordinates, sum_tuples, \
     scale_tuple
+
+if TYPE_CHECKING:
+    from computing.connection import Connection
+
 
 ObjectView = namedtuple("ObjectView", [
     "sprite",
@@ -155,6 +162,7 @@ class UserInterface:
         self.saving_file_class_name_to_class = {
             class_.__name__: class_ for class_ in (Computer, Switch, Router, Hub, Antenna)
         }
+        self.__saving_file = None
 
         self.computers = []
         self.connection_data = []
@@ -182,9 +190,7 @@ class UserInterface:
             ((self.start_all_stp, "start STP (ctrl+shift+s)"), {"key": (key.S, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT)}),
             ((self.delete_all_packets, "delete all packets (Shift+d)"), {"key": (key.D, KEYBOARD.MODIFIERS.SHIFT)}),
             ((self.delete_all, "delete all (^d)"), {"key": (key.D, KEYBOARD.MODIFIERS.CTRL)}),
-            ((with_args(self.ask_user_for, str, "save file as:", self._save_to_file_with_override_safety), "save to file(^s)"),
-             {"key": (key.S, KEYBOARD.MODIFIERS.CTRL)}),
-            # TODO: saving to files does not work :(
+            ((self._save_or_ask_user_for_filename_and_then_save, "save to file(^s)"), {"key": (key.S, KEYBOARD.MODIFIERS.CTRL)}),
             ((self._ask_user_for_load_file, "load from file (^o)"), {"key": (key.O, KEYBOARD.MODIFIERS.CTRL)}),
             ((self.open_help, "help (shift+/)"), {"key": (key.SLASH, KEYBOARD.MODIFIERS.SHIFT)}),
         ]
@@ -216,6 +222,19 @@ class UserInterface:
     @property
     def active_window(self):
         return self.__active_window
+
+    @property
+    def saving_file(self) -> Optional[str]:
+        return self.__saving_file
+
+    @saving_file.setter
+    def saving_file(self, value: Optional[str]) -> None:
+        self.__saving_file = value
+
+        new_window_name = WINDOWS.MAIN.NAME
+        if self.__saving_file is not None:
+            new_window_name += ": " + self.__saving_file
+        MainWindow.main_window.set_caption(new_window_name)
 
     @active_window.setter
     def active_window(self, window):
@@ -281,7 +300,7 @@ class UserInterface:
         draw_line(self.source_of_line_drag.location, MainWindow.main_window.get_mouse_location(), color=color)
         self.source_of_line_drag.mark_as_selected_non_resizable()
 
-        destination = MainLoop.instance.get_object_the_mouse_is_on()
+        destination = self.get_object_the_mouse_is_on()
         if destination is not None:
             destination.mark_as_selected_non_resizable()
 
@@ -292,7 +311,7 @@ class UserInterface:
         :return:
         """
         if self.selected_object is not None and \
-                self.selected_object.is_packet and \
+                isinstance(self.selected_object, PacketGraphics) and \
                 self.packet_from_graphics_object(self.selected_object) is None:
             self.set_mode(MODES.NORMAL)
 
@@ -348,7 +367,7 @@ class UserInterface:
                           scale_y=VIEW.IMAGE_SIZE / sprite.image.height)
             MainLoop.instance.insert_to_loop(sprite.draw)
 
-            if graphics_object.is_packet:
+            if isinstance(graphics_object, PacketGraphics):
                 text = self.packet_from_graphics_object(graphics_object).multiline_repr()
 
         x, y = self.viewing_text_location
@@ -553,6 +572,7 @@ class UserInterface:
 
         if self.active_window is None:
             self._create_selecting_square()
+        # AnimationGraphics(ANIMATIONS.EXPLOSION, *MainWindow.main_window.get_mouse_location())  # for debugging
 
     def pin_active_window_to(self, direction):
         """
@@ -683,9 +703,16 @@ class UserInterface:
         This is called when we start to drag the connection from computer to the next in connecting mode
         :return:
         """
-        self.source_of_line_drag = MainLoop.instance.get_object_the_mouse_is_on()
+        self.source_of_line_drag = self.get_object_the_mouse_is_on()
         if self.source_of_line_drag is None or self.is_mouse_in_side_window():
             self.set_mode(MODES.NORMAL)
+
+    @staticmethod
+    def get_object_the_mouse_is_on():
+        """
+        Get the object the mouse is on - but exclude buttons
+        """
+        return MainLoop.instance.get_object_the_mouse_is_on(exclude_types=[Button])
 
     def end_device_visual_connecting(self, action):
         """
@@ -693,7 +720,7 @@ class UserInterface:
         :param action: a function that is called with the two devices.
         :return:
         """
-        connected = MainLoop.instance.get_object_the_mouse_is_on()
+        connected = self.get_object_the_mouse_is_on()
         if self.is_mouse_in_side_window() or connected is None:
             self.set_mode(MODES.NORMAL)
             return
@@ -773,13 +800,14 @@ class UserInterface:
         except IndexError:
             pass
 
-    def delete_all(self):
+    def delete_all(self, reset_saving_file: bool = True) -> None:
         """
         Deletes all of the objects and graphics objects that exist.
         Totally clears the screen.
-        :return: None
         """
-        for object_ in list(filter(lambda go: not go.is_button, MainLoop.instance.graphics_objects)):
+        for object_ in list(filter(
+                lambda go: not isinstance(go, Button) and not (isinstance(go, Text) and go.is_button),
+                MainLoop.instance.graphics_objects)):
             MainLoop.instance.unregister_graphics_object(object_)
 
         self.selected_object = None
@@ -796,6 +824,9 @@ class UserInterface:
         self.frequencies.clear()
         self.set_mode(MODES.NORMAL)
 
+        if reset_saving_file:
+            self.saving_file = None
+
     def delete_all_packets(self):
         """
         Deletes all of the packets from all of the connections.
@@ -805,36 +836,45 @@ class UserInterface:
         for connection, _, _ in self.connection_data:
             connection.stop_packets()
 
+    def remove_computer(self, computer: Computer) -> None:
+        """
+        Removes a computer from the simulation (but NOT the ComputerGraphics object)
+        """
+        self.computers.remove(computer)
+
+    def remove_connection(self, connection: Connection) -> None:
+        """
+        Take in a connection and disconnect it from the computers in both sides
+        """
+        for connection_data in self.connection_data:
+            other_connection, computer1, computer2 = connection_data
+            if connection is other_connection:
+                computer1.disconnect(connection)
+                computer2.disconnect(connection)
+                self.connection_data.remove(connection_data)
+                break
+
+    def remove_interface(self, interface):
+        """
+        Remove an interface and disconnect everything it is connected to
+        """
+        computer = get_the_one(self.computers, (lambda c: interface in c.interfaces), NoSuchInterfaceError)
+        if interface.is_connected:
+            connection = interface.connection.connection
+            self.delete(connection.graphics)
+        computer.add_remove_interface(interface.name)
+
     def delete(self, graphics_object):
         """
         Receives a graphics object, deletes it from the main loop and disconnects it (if it is a computer).
         :param graphics_object: a `GraphicsObject` to delete.
         :return: None
         """
-        MainLoop.instance.unregister_graphics_object(graphics_object)
+        graphics_object.delete(self)
         self.selected_object = None
         self.dragged_object = None
 
-        if isinstance(graphics_object, ComputerGraphics):
-            self.computers.remove(graphics_object.computer)
-            self._delete_connections_to(graphics_object.computer)
-
-        elif isinstance(graphics_object, ConnectionGraphics):
-            for connection, computer1, computer2 in self.connection_data:
-                if connection is graphics_object.connection:
-                    computer1.disconnect(connection)
-                    computer2.disconnect(connection)
-                    break
-
-        elif isinstance(graphics_object, InterfaceGraphics):
-            interface = graphics_object.interface
-            computer = get_the_one(self.computers, (lambda c: interface in c.interfaces), NoSuchInterfaceError)
-            if interface.is_connected:
-                connection = interface.connection.connection
-                self.delete(connection.graphics)
-            computer.add_remove_interface(interface.name)
-
-    def _delete_connections_to(self, computer):
+    def delete_connections_to(self, computer):
         """
         Delete all of the connections to a computer!
         Also delete all of the packets inside of them.
@@ -1010,9 +1050,9 @@ class UserInterface:
         print(MainWindow.main_window.get_mouse_location())
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
         goes = list(filter(lambda go: not isinstance(go, UserInterfaceGraphicsObject), MainLoop.instance.graphics_objects))
-        print(f"graphicsObject-s (no buttons or texts): {goes}")
+        pprint.pprint(f"graphicsObject-s (no buttons or texts): {goes}")
         print(f"computers, {len(self.computers)}, connections, {len(self.connection_data)},"
-              f"packets: {len(list(filter(lambda go: go.is_packet, MainLoop.instance.graphics_objects)))}")
+              f"packets: {len(list(filter(lambda go: isinstance(go, PacketGraphics), MainLoop.instance.graphics_objects)))}")
         print(f"running processes: ", end='')
         for computer in self.computers:
             processes = [f"{waiting_process.process} of {computer}" for waiting_process in computer.waiting_processes]
@@ -1305,12 +1345,13 @@ class UserInterface:
         """
         DeviceCreationWindow(self)
 
-    def _connect_interfaces_by_name(self, start_computer_name,
-                                    end_computer_name,
-                                    start_interface_name,
-                                    end_interface_name,
-                                    connection_packet_loss=0,
-                                    connection_speed=CONNECTIONS.DEFAULT_SPEED):
+    def _connect_interfaces_by_name(self,
+                                    start_computer_name: str,
+                                    end_computer_name: str,
+                                    start_interface_name: str,
+                                    end_interface_name: str,
+                                    connection_packet_loss: float = 0.0,
+                                    connection_speed: int = CONNECTIONS.DEFAULT_SPEED) -> None:
         """
         Connects two computers' interfaces by names of the computers and the interfaces
         """
@@ -1332,7 +1373,16 @@ class UserInterface:
         connection.set_pl(connection_packet_loss)
         connection.set_speed(connection_speed)
 
-    def _save_to_file_with_override_safety(self, filename):
+    def _save_or_ask_user_for_filename_and_then_save(self) -> None:
+        """
+        If the simulation state was once saved already - remember the file name and do not ask for it again
+        """
+        if self.saving_file is None:
+            self.ask_user_for(str, "save file as:", self._save_to_file_with_override_safety)
+            return
+        self._save_to_file_with_override_safety(self.saving_file)
+
+    def _save_to_file_with_override_safety(self, filename: str) -> None:
         """
         Saves all of the state of the simulation at the moment into a file, that we can
         later load into an empty simulation, and get all of the computers, interface, and connections.
@@ -1343,7 +1393,7 @@ class UserInterface:
         else:
             self.save_to_file(filename)
 
-    def save_to_file(self, filename):
+    def save_to_file(self, filename: str) -> None:
         """
         Save the state of the simulation to a file named filename
         :param filename:
@@ -1360,6 +1410,7 @@ class UserInterface:
 
         os.makedirs(DIRECTORIES.SAVES, exist_ok=True)
         json.dump(dict_to_file, open(os.path.join(DIRECTORIES.SAVES, f"{filename}.json"), "w"), indent=4)
+        self.saving_file = filename
 
     def load_from_file(self, filename):
         """
@@ -1371,6 +1422,7 @@ class UserInterface:
         except FileNotFoundError:
             raise PopupWindowWithThisError("There is not such file!!!")
 
+        self.saving_file = filename
         self._create_map_from_file_dict(dict_from_file)
 
     def _create_map_from_file_dict(self, dict_from_file):
@@ -1379,7 +1431,7 @@ class UserInterface:
         :param dict_from_file:
         :return:
         """
-        self.delete_all()
+        self.delete_all(reset_saving_file=False)
 
         for computer_dict in dict_from_file["computers"]:
             class_ = self.saving_file_class_name_to_class[computer_dict["class"]]
@@ -1387,9 +1439,9 @@ class UserInterface:
             computer.show(*computer_dict["location"])
             self.computers.append(computer)
             for port in computer_dict["open_tcp_ports"]:
-                computer.open_tcp_port(port)
+                computer.open_port(port, "TCP")
             for port in computer_dict["open_udp_ports"]:
-                computer.open_udp_port(port)
+                computer.open_port(port, "UDP")
 
         for connection_dict in dict_from_file["connections"]:
             self._connect_interfaces_by_name(
@@ -1526,7 +1578,7 @@ class UserInterface:
         if self.is_mouse_in_side_window():
             return
 
-        object_the_mouse_is_on = MainLoop.instance.get_object_the_mouse_is_on()
+        object_the_mouse_is_on = self.get_object_the_mouse_is_on()
 
         self.dragged_object = object_the_mouse_is_on
         if (not isinstance(object_the_mouse_is_on, UserInterfaceGraphicsObject)) or isinstance(object_the_mouse_is_on, PopupWindow):

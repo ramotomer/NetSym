@@ -4,7 +4,7 @@ import random
 from collections import namedtuple
 from functools import reduce
 from operator import concat
-from typing import Tuple, TYPE_CHECKING, Optional, List, Union, TypeVar, Type, Callable
+from typing import TYPE_CHECKING, Optional, List, Union, TypeVar, Type, Callable
 
 import scapy
 from recordclass import recordclass
@@ -47,7 +47,6 @@ if TYPE_CHECKING:
 
 
 T = TypeVar('T', bound='Computer')
-t_time = float
 
 
 ReceivedPacket = namedtuple("ReceivedPacket", "packet metadata")
@@ -93,6 +92,8 @@ class Computer:
         },
     }
 
+    EXISTING_COMPUTER_NAMES = set()
+
     def __init__(self, name: Optional[str] = None, os: str = OS.WINDOWS, gateway: Optional[IPAddress] = None, *interfaces: Interface) -> None:
         """
         Initiates a Computer object.
@@ -101,7 +102,12 @@ class Computer:
         :param gateway: an IPAddress object which is the address of the computer's default gateway.
         :param interfaces: An interface list of the computer.
         """
-        self.name = name if name is not None else self.random_name()
+        if name is not None:
+            self.name = name
+            self.EXISTING_COMPUTER_NAMES.add(name)
+        else:
+            self.name = self.random_name()
+
         self.os = os
         self.default_gateway = gateway  # an IPAddress object of the default gateway of this computer
 
@@ -189,14 +195,18 @@ class Computer:
                          name: Optional[str] = None) -> T:
         return cls(name, OS.WINDOWS, None, WirelessInterface(MACAddress.randomac(), IPAddress(ip_address), frequency=frequency))
 
-    @staticmethod
-    def random_name() -> str:
+    @classmethod
+    def random_name(cls) -> str:
         """
         Randomize a computer name based on his operating system.
         Theoretically can randomize the same name twice, but unlikely.
         :return: a random string that is the name.
         """
-        return ''.join([random.choice(COMPUTER_NAMES), str(random.randint(0, 100))])
+        name = ''.join([random.choice(COMPUTER_NAMES), str(random.randint(0, 100))])
+        if name in cls.EXISTING_COMPUTER_NAMES:
+            name = cls.random_name()
+        cls.EXISTING_COMPUTER_NAMES.add(name)
+        return name
 
     def show(self, x, y):
         """
@@ -651,8 +661,6 @@ class Computer:
         self.routing_table.add_interface(interface.ip)
         self.graphics.update_text()
 
-    # TODO: deleting an interface and then connecting the device does not work well
-
     def remove_ip(self, interface: Interface) -> None:
         """
         Removes the ip of an interface.
@@ -674,7 +682,9 @@ class Computer:
             raise PopupWindowWithThisError("name too short!!!")
         if not any(char.isalpha() for char in name):
             raise PopupWindowWithThisError("name must contain letters!!!")
+        self.EXISTING_COMPUTER_NAMES.remove(self.name)
         self.name = name
+        self.EXISTING_COMPUTER_NAMES.add(self.name)
         self.graphics.update_text()
 
     def start_sniffing(self, interface_name: Optional[str] = INTERFACES.ANY_INTERFACE, is_promisc: bool = False) -> None:
@@ -704,7 +714,7 @@ class Computer:
         else:
             self.start_sniffing(interface_name, is_promisc)
 
-    def new_packets_since(self, time_: t_time) -> List[ReceivedPacket]:
+    def new_packets_since(self, time_: T_Time) -> List[ReceivedPacket]:
         """
         Returns a list of all the new `ReceivedPacket`s that were received in the last `seconds` seconds.
         :param time_: a number of seconds.

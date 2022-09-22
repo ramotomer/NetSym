@@ -1,6 +1,6 @@
 import pyglet
 
-from consts import *
+from consts import WINDOWS
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.user_interface.user_interface import UserInterface
@@ -11,7 +11,3 @@ if __name__ == '__main__':
     main_loop = MainLoop(main_window)
     pyglet.clock.schedule_interval(main_window.update, WINDOWS.MAIN.FRAME_RATE)
     pyglet.app.run()
-
-    # TODO: make sure no two computers or interfaces have the same name!
-    # TODO: there are errors with removing connections and the routing table
-    # TODO: deleting a packet mid-way does not really delete it :(

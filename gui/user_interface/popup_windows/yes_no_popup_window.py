@@ -1,39 +1,54 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Callable
+
 from pyglet.window import key
 
 from consts import *
 from gui.user_interface.button import Button
-from gui.user_interface.popup_windows.popup_window import PopupWindow
+from gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText
 from usefuls.funcs import called_in_order
 
+if TYPE_CHECKING:
+    from gui.user_interface.user_interface import UserInterface
 
-class YesNoPopupWindow(PopupWindow):
+
+class YesNoPopupWindow(PopupWindowContainingText):
     """
     This is a window that asks a yes/no question, performs an action according to each button
     """
-    def __init__(self, text, user_interface, yes_action=lambda: None, no_action=lambda: None):
+    def __init__(self,
+                 text: str,
+                 user_interface: UserInterface,
+                 yes_action: Callable = lambda: None,
+                 no_action: Callable = lambda: None) -> None:
         """
         :param user_interface: the UserInterface object
-        :param yes_action: function that is called when the yes button is pressed.
-        :param no_action:
+        :param yes_action: function that is called when the 'yes' button is pressed.
+        :param no_action: function that is called when the 'no' button is pressed.
         """
+        yes_x, yes_y = WINDOWS.POPUP.YES_BUTTON_COORDINATES
+        no_x, no_y = WINDOWS.POPUP.NO_BUTTON_COORDINATES
+
         buttons = [
             Button(
-                *WINDOWS.POPUP.YES_BUTTON_COORDINATES,
+                yes_x, yes_y,
                 called_in_order(yes_action, self.delete),
                 "yes",
                 width=WINDOWS.POPUP.SUBMIT_BUTTON.WIDTH,
                 key=(key.ENTER, KEYBOARD.MODIFIERS.NONE),
             ),
             Button(
-                *WINDOWS.POPUP.NO_BUTTON_COORDINATES,
+                no_x, no_y,
                 called_in_order(no_action, self.delete),
                 "no",
                 width=WINDOWS.POPUP.SUBMIT_BUTTON.WIDTH,
             ),
         ]
 
+        textbox_x, textbox_y = WINDOWS.POPUP.TEXTBOX.COORDINATES
         super(YesNoPopupWindow, self).__init__(
-            *WINDOWS.POPUP.TEXTBOX.COORDINATES,
+            textbox_x, textbox_y,
             text=text,
             user_interface=user_interface,
             buttons=buttons,

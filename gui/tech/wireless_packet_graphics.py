@@ -20,8 +20,6 @@ class WirelessPacketGraphics(GraphicsObject):
     def __init__(self, center_x, center_y, deepest_layer, frequency_object):
         super(WirelessPacketGraphics, self).__init__(center_x, center_y)
 
-        self.is_packet = True
-
         self.frequency_object = frequency_object
         self.direction = PACKET.DIRECTION.WIRELESS
         self.distance = 0

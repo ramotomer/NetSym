@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 from os import linesep
+from typing import TYPE_CHECKING
 
 from recordclass import recordclass
 
 from address.ip_address import IPAddress
 from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEClientProcess
 from computing.internals.processes.usermode_processes.ddos_process import DDOSProcess
+from computing.internals.processes.usermode_processes.dhcp_process import DHCPServer
 from computing.internals.processes.usermode_processes.ftp_process import ClientFTPProcess
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
@@ -16,6 +20,12 @@ from gui.user_interface.popup_windows.popup_console import PopupConsole
 from gui.user_interface.popup_windows.popup_error import PopupError
 from gui.user_interface.text_graphics import Text
 from usefuls.funcs import with_args
+
+if TYPE_CHECKING:
+    from computing.internals.interface import Interface
+    from computing.computer import Computer
+    from gui.user_interface.user_interface import UserInterface
+
 
 ChildGraphicsObjects = recordclass("ChildGraphicsObjects", [
     "text",
@@ -32,7 +42,12 @@ class ComputerGraphics(ImageGraphics):
     It inherits from `ImageGraphics` because there is an image of the computer that should just be drawn.
     This class adds to it the text that exists under a computer.
     """
-    def __init__(self, x, y, computer, image=IMAGES.COMPUTERS.COMPUTER, scale_factor=IMAGES.SCALE_FACTORS.SPRITES):
+    def __init__(self,
+                 x: float,
+                 y: float,
+                 computer: Computer,
+                 image: str = IMAGES.COMPUTERS.COMPUTER,
+                 scale_factor: float = IMAGES.SCALE_FACTORS.SPRITES) -> None:
         """
         The graphics objects of computers.
         :param x:
@@ -48,7 +63,6 @@ class ComputerGraphics(ImageGraphics):
             is_pressable=True,
             scale_factor=scale_factor,
         )
-        self.is_computer = True
         self.computer = computer
         self.class_name = self.computer.__class__.__name__
         self.original_image = image
@@ -67,42 +81,42 @@ class ComputerGraphics(ImageGraphics):
         self.update_text_location()
 
     @property
-    def console_location(self):
+    def console_location(self) -> Tuple[float, float]:
         return MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2) - (CONSOLE.WIDTH / 2), CONSOLE.Y
 
     @property
-    def should_be_transparent(self):
+    def should_be_transparent(self) -> bool:
         return not self.computer.is_powered_on
 
-    def draw(self):
+    def draw(self) -> None:
         self.update_image()
         super(ComputerGraphics, self).draw()
 
-    def generate_text(self):
+    def generate_text(self) -> str:
         """
         Generates the text under the computer.
         :return: a string with the information that should be displayed there.
         """
         return '\n'.join([self.computer.name] + [str(interface.ip) for interface in self.computer.interfaces if interface.has_ip()])
 
-    def update_text(self):
+    def update_text(self) -> None:
         """Sometimes the ip_layer of the computer is changed and we want to text to change as well"""
         self.child_graphics_objects.text.set_text(self.generate_text())
 
-    def _is_server(self):
+    def _is_server(self) -> bool:
         """
         :return: Whether or not the computer should be displayed as a server - by the ports that are open on it
         """
-        return set(self.computer.get_open_ports()) & set(PORTS.SERVER_PORTS)
+        return bool(set(self.computer.get_open_ports()) & set(PORTS.SERVER_PORTS))
 
-    def update_image(self):
+    def update_image(self) -> None:
         """
         Refreshes the image according to the current computer state
         """
         self.change_image(IMAGES.COMPUTERS.SERVER if self._is_server() else self.original_image)
         self.child_graphics_objects.process_list.set_list([port for port in self.computer.get_open_ports() if port in PORTS.SERVER_PORTS])
 
-    def start_viewing(self, user_interface):
+    def start_viewing(self, user_interface: UserInterface) -> Tuple[pyglet.sprite.Sprite, str, int]:
         """
         Starts viewing the computer graphics object in the side-window view.
         :param user_interface: the `UserInterface` object we can use the methods of it.
@@ -182,12 +196,12 @@ class ComputerGraphics(ImageGraphics):
         self.buttons_id = user_interface.add_buttons(buttons)
         return self.copy_sprite(self.sprite), self.generate_view_text(), self.buttons_id
 
-    def end_viewing(self, user_interface):
+    def end_viewing(self, user_interface: UserInterface) -> None:
         """Ends the viewing of the object in the side window"""
         user_interface.remove_buttons(self.buttons_id)
         self.child_graphics_objects.console.hide()
 
-    def _open_shell(self, user_interface):
+    def _open_shell(self, user_interface: UserInterface) -> None:
         """
         Opens a shell window on the computer
         :return:
@@ -197,7 +211,7 @@ class ComputerGraphics(ImageGraphics):
             return
         PopupConsole(user_interface, self.computer)
 
-    def generate_view_text(self):
+    def generate_view_text(self) -> str:
         """
         Generates the text that will be shown in the side window when this computer is pressed.
         :return: a long string.
@@ -214,36 +228,34 @@ Name: {self.computer.name}
 {f'addresses: {linesep + addresses}' if addresses else ""}
 """
 
-    def add_interface(self, interface):
+    def add_interface(self, interface: Interface) -> None:
         """
         Adds an interface to the viewed interfaces.
-        :param interface: `Interface`
-        :return:
         """
         self.child_graphics_objects.interface_list.add(interface)
 
-    def interface_distance(self):
+    def interface_distance(self) -> float:
         """
         Calculates the distance that the interface should be away from the computer.
         :return:
         """
         return min(self.width, self.height) * INTERFACES.COMPUTER_DISTANCE_RATIO
 
-    def update_text_location(self):
+    def update_text_location(self) -> None:
         """
         updates the location of the text (the padding) according to the size of the computer
         :return:
         """
         self.child_graphics_objects.text.padding = 0, (-self.height / 2) + TEXT.DEFAULT_Y_PADDING
 
-    def resize(self, width_diff, height_diff, constrain_proportions=False):
+    def resize(self, width_diff: float, height_diff: float, constrain_proportions: bool = False) -> None:
         super(ComputerGraphics, self).resize(width_diff, height_diff, constrain_proportions)
         self.update_text_location()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"ComputerGraphics ({self.computer.name})"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"ComputerGraphics of computer '{self.computer}'"
 
     def dict_save(self):
@@ -258,13 +270,21 @@ Name: {self.computer.name}
             "size": [self.sprite.scale_x, self.sprite.scale_y],
             "os": self.computer.os,
             "interfaces": [interface.graphics.dict_save() for interface in self.computer.interfaces],
-            "open_tcp_ports": self.computer.open_tcp_ports,
-            "open_udp_ports": self.computer.open_udp_ports,
+            "open_tcp_ports": self.computer.get_open_ports("TCP"),
+            "open_udp_ports": self.computer.get_open_ports("UDP"),
             "routing_table": self.computer.routing_table.dict_save(),
             "filesystem": self.computer.filesystem.dict_save(),
         }
 
         if self.class_name == "Router":
-            dict_["is_dhcp_server"] = self.computer.is_dhcp_server
+            dict_["is_dhcp_server"] = self.computer.process_scheduler.is_usermode_process_running(DHCPServer)
 
         return dict_
+
+    def delete(self, user_interface: UserInterface) -> None:
+        """
+        Delete the computer graphics object
+        """
+        super(ComputerGraphics, self).delete(user_interface)
+        user_interface.remove_computer(self.computer)
+        user_interface.delete_connections_to(self.computer)

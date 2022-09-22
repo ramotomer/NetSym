@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from computing.computer import Computer
 # from computing.nat import NAT
 from computing.router import Router
@@ -5,11 +9,14 @@ from computing.switch import Switch, Hub, Antenna
 # from computing.internet import Internet
 from consts import *
 from gui.user_interface.popup_windows.image_button import ImageButton
-from gui.user_interface.popup_windows.popup_window import PopupWindow
+from gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText
 from usefuls.funcs import with_args, called_in_order
 
+if TYPE_CHECKING:
+    from gui.user_interface.user_interface import UserInterface
 
-class DeviceCreationWindow(PopupWindow):
+
+class DeviceCreationWindow(PopupWindowContainingText):
     """
     This is a popup window that allows you to create a device in your network.
     """
@@ -23,11 +30,12 @@ class DeviceCreationWindow(PopupWindow):
         # Internet: (IMAGES.COMPUTERS.INTERNET, "(alt+i)"),
     }
 
-    def __init__(self, user_interface):
+    def __init__(self, user_interface: UserInterface) -> None:
         """
         Initiates the window.
         """
-        width = len(self.DEVICE_TO_IMAGE) * (WINDOWS.POPUP.DEVICE_CREATION.BUTTON_SIZE + WINDOWS.POPUP.DEVICE_CREATION.BUTTON_GAP) - WINDOWS.POPUP.DEVICE_CREATION.BUTTON_GAP
+        width = len(self.DEVICE_TO_IMAGE) * (
+                    WINDOWS.POPUP.DEVICE_CREATION.BUTTON_SIZE + WINDOWS.POPUP.DEVICE_CREATION.BUTTON_GAP) - WINDOWS.POPUP.DEVICE_CREATION.BUTTON_GAP
         height = WINDOWS.POPUP.TEXTBOX.HEIGHT
         x, y = WINDOWS.MAIN.WIDTH / 2 - width / 2, WINDOWS.MAIN.HEIGHT / 2 - height / 2
         buttons = [

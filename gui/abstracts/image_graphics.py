@@ -1,7 +1,6 @@
 from abc import ABCMeta
 from itertools import product
-
-import pyglet
+from typing import Tuple, Set
 
 from consts import *
 from exceptions import NoSuchGraphicsObjectError, PopupWindowWithThisError
@@ -21,46 +20,49 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
     """
     PARENT_DIRECTORY = DIRECTORIES.IMAGES
 
-    def __init__(self, image_name, x, y, centered=False, is_in_background=False, scale_factor=IMAGES.SCALE_FACTORS.SPRITES,
-                 is_opaque=False, is_pressable=False):
+    def __init__(self,
+                 image_name: str,
+                 x: float,
+                 y: float,
+                 centered: bool = False,
+                 is_in_background: bool = False,
+                 scale_factor: float = IMAGES.SCALE_FACTORS.SPRITES,
+                 is_pressable: bool = False) -> None:
         super(ImageGraphics, self).__init__(x, y, False, centered, is_in_background, is_pressable=is_pressable)
         self.image_name = add_path_basename_if_needed(self.PARENT_DIRECTORY, image_name or IMAGES.IMAGE_NOT_FOUND)
 
         self.scale_factor = scale_factor
-        self.is_opaque = is_opaque
         self.sprite = None
-
-        self.is_image = True
 
         self.resizing_dots = []
 
         MainLoop.instance.register_graphics_object(self, is_in_background)
 
     @property
-    def location(self):
+    def location(self) -> Tuple[float, float]:
         return self.x, self.y
 
     @location.setter
-    def location(self, value):
+    def location(self, value: Tuple[float, float]) -> None:
         self.x, self.y = value
 
         for dot in self.resizing_dots:
             dot.update_object_location()
 
     @property
-    def width(self):
+    def width(self) -> float:
         return self.sprite.width
 
     @property
-    def height(self):
+    def height(self) -> float:
         return self.sprite.height
 
     @property
-    def size(self):
+    def size(self) -> Tuple[float, float]:
         return self.width, self.height
 
     @property
-    def corners(self):
+    def corners(self) -> Set[Tuple[float, float]]:
         if not self.centered:
             return {
                 (self.x, self.y),
@@ -76,7 +78,7 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         }
 
     @staticmethod
-    def get_image_sprite(image_name, x=0, y=0, is_opaque=False, scale_factor=IMAGES.SCALE_FACTORS.VIEWING_OBJECTS):
+    def get_image_sprite(image_name, x=0, y=0, scale_factor=IMAGES.SCALE_FACTORS.VIEWING_OBJECTS):
         """
         Receives an image_name and x and y coordinates and returns a `pyglet.sprite.Sprite`
         object that can be displayed on the screen.
@@ -84,12 +86,10 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         :param image_name: come on bro....
         :param x:
         :param y:
-        :param is_opaque:
         :param scale_factor:
         :return: `pyglet.sprite.Sprite` object
         """
         returned = pyglet.sprite.Sprite(pyglet.image.load(image_name), x=x, y=y)
-        returned.opacity = IMAGES.TRANSPARENCY.HIGH if is_opaque else IMAGES.TRANSPARENCY.LOW
         returned.update(scale_x=scale_factor, scale_y=scale_factor)
         return returned
 
@@ -252,7 +252,7 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         :return: None
         """
         try:
-            self.sprite = self.get_image_sprite(self.image_name, self.x, self.y, self.is_opaque)
+            self.sprite = self.get_image_sprite(self.image_name, self.x, self.y)
         except FileNotFoundError:
             print(f"Error on finding path '{self.image_name}' :(")
             image_not_found_image_path = os.path.join(DIRECTORIES.IMAGES, IMAGES.IMAGE_NOT_FOUND)

@@ -31,8 +31,8 @@ class DDOSProcess(Process):
                 MACAddress.broadcast(),
                 IPAddress.broadcast(),
                 UDP(
-                    sport=69420,
-                    dport=69420,
+                    src_port=42069,
+                    dst_port=42069,
                 ) / "DDOS",
             )
             yield WaitingFor(Timeout(self.sending_interval).is_done)

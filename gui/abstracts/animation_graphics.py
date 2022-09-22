@@ -1,13 +1,9 @@
 import time
-
-import pyglet
+from typing import Tuple
 
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_loop import MainLoop
-
-
-# TODO: fix explosion animation!
 
 
 class AnimationGraphics(ImageGraphics):
@@ -16,8 +12,17 @@ class AnimationGraphics(ImageGraphics):
     """
     PARENT_DIRECTORY = DIRECTORIES.ANIMATIONS
 
-    def __init__(self, image_name, x, y, is_looping=False, x_count=ANIMATIONS.X_COUNT, y_count=ANIMATIONS.Y_COUNT,
-                 image_width=IMAGES.SIZE, image_height=IMAGES.SIZE, frame_rate=ANIMATIONS.FRAME_RATE, scale=1.0):
+    def __init__(self,
+                 image_name: str,
+                 x: float,
+                 y: float,
+                 is_looping: bool = False,
+                 x_count: int = ANIMATIONS.X_COUNT,
+                 y_count: int = ANIMATIONS.Y_COUNT,
+                 image_width: int = ANIMATIONS.SIZE,
+                 image_height: int = ANIMATIONS.SIZE,
+                 frame_rate: float = ANIMATIONS.FRAME_RATE,
+                 scale: float = 70. / 16.) -> None:
         """
         Initiates the animation graphics
         :param image_name: the name of the image (no need for os.path.join(DIRECTORIES.IMAGES... )
@@ -41,14 +46,19 @@ class AnimationGraphics(ImageGraphics):
         super(AnimationGraphics, self).__init__(image_name, x, y, centered=True)
 
     @property
-    def is_done(self):
+    def is_done(self) -> bool:
         """
         Whether or not the simulation has ended
         :return: bool
         """
         return not self.is_looping and (time.time() - self.start_time) > self.run_time
 
-    def get_animation_sprite(self, image_name, x, y, x_count=ANIMATIONS.X_COUNT, y_count=ANIMATIONS.Y_COUNT):
+    def get_animation_sprite(self,
+                             image_name: str,
+                             x: float,
+                             y: float,
+                             x_count: int = ANIMATIONS.X_COUNT,
+                             y_count: int = ANIMATIONS.Y_COUNT) -> Tuple[float, pyglet.sprite.Sprite]:
         """
         Returns a pyglet.sprite.Sprite object of the animation
         """
@@ -56,12 +66,12 @@ class AnimationGraphics(ImageGraphics):
         sequence = pyglet.image.ImageGrid(image, x_count, y_count,
                                           item_width=self.item_width, item_height=self.item_height)
         textures = pyglet.image.TextureGrid(sequence)
-        animation = pyglet.image.Animation.from_image_sequence(textures[:], self.frame_rate, loop=self.is_looping)
+        animation = pyglet.image.Animation.from_image_sequence(textures[:-3], self.frame_rate, loop=self.is_looping)
         sprite = pyglet.sprite.Sprite(animation, x, y)
         sprite.scale = self.scale
         return animation.get_duration(), sprite
 
-    def load(self):
+    def load(self) -> None:
         """
         Loading an animation is a little different
         :return: None
@@ -73,7 +83,7 @@ class AnimationGraphics(ImageGraphics):
             x, y = self.get_centered_coordinates()
             self.sprite.update(x, y)
 
-    def move(self):
+    def move(self) -> None:
         """
         Moves the object, In the case of an animation, also unregisters it when it is done :)
         :return: None
@@ -85,14 +95,3 @@ class AnimationGraphics(ImageGraphics):
 
     def dict_save(self):
         pass
-
-
-# class LogoAnimation(AnimationGraphics):
-#     """
-#     The animation of the Logo in the start of the simulation.
-#     """
-#     def __init__(self, x, y):
-#         """
-#         Initiates the animation of the logo
-#         """
-#         super(LogoAnimation, self).__init__(LOGO_ANIMATION_IMAGE, x, y, True, 8, 5, 640, 320, 0.2, 0.7)

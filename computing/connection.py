@@ -129,7 +129,7 @@ class Connection:
         """
         is_dropped = (random.random() < self.packet_loss)
         self.sent_packets.append(SentPacket(packet, MainLoop.instance.time(), direction, is_dropped))
-        packet.show(self.graphics, direction, is_opaque=self.is_blocked)  # initiate the `GraphicsObject` of the packet.
+        packet.show(self.graphics, direction)  # initiate the `GraphicsObject` of the packet.
 
     def reach_destination(self, sent_packet):
         """

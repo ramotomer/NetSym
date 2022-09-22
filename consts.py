@@ -1,6 +1,7 @@
 # this cannot import from anything!!! (almost)
 import os
 from math import sqrt
+from typing import Tuple
 
 import pyglet
 from scapy.layers.dhcp import DHCPTypes
@@ -18,6 +19,10 @@ def debugp(*strings):
 
 
 SENDING_GRAT_ARPS = False
+
+
+T_Time = float
+T_Color = Tuple[int, int, int]
 
 
 class ADDRESSES:
@@ -452,7 +457,9 @@ class VIEW:
 class ANIMATIONS:
     EXPLOSION = "explosion.png"
 
-    FRAME_RATE = 0.1
+    SIZE = 16
+
+    FRAME_RATE = 1 / 15.
     X_COUNT, Y_COUNT = 5, 3
 
 
@@ -466,7 +473,7 @@ def get_dominant_tcp_flag(tcp):
 class PACKET:
     class DIRECTION:
         RIGHT = 'R'
-        LEFT = 'L'  # do not change value! Some things depend on it TODO: understand if this is desired
+        LEFT = 'L'  # do not change value! Some things depend on it
         WIRELESS = 'W'
 
         INCOMING = 'INCOMING'

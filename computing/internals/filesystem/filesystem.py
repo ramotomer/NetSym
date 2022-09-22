@@ -16,7 +16,7 @@ class Filesystem:
         """
         self.root_path = FILESYSTEM.ROOT
         self.root = Directory(name=self.root_path, parent=None)
-    # TODO: when saving computer to file, his filesystem does not save!!! work on that
+    # TODO: BUG: when saving computer to file, his filesystem does not save!!!
 
     @classmethod
     def with_default_dirs(cls):

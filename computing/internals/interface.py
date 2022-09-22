@@ -1,4 +1,7 @@
 import random
+from typing import Optional, Union, TypeVar, Type, List, Any
+
+import scapy
 
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
@@ -8,6 +11,8 @@ from consts import *
 from exceptions import *
 from packets.all import Ether
 from packets.packet import Packet
+
+T = TypeVar('T', bound='Interface')
 
 
 class Interface:
@@ -19,8 +24,16 @@ class Interface:
     An interface can be either connected or disconnected to a `ConnectionSide` object, which enables it to move its packets
     down the connection further.
     """
-    def __init__(self, mac=None, ip=None, name=None, connection=None,
-                 display_color=INTERFACES.COLOR, type_=INTERFACES.TYPE.ETHERNET):
+
+    EXISTING_INTERFACE_NAMES = set()
+
+    def __init__(self,
+                 mac: Optional[Union[str, MACAddress]] = None,
+                 ip: Optional[Union[str, IPAddress]] = None,
+                 name: Optional[str] = None,
+                 connection: Optional[Connection] = None,
+                 display_color: Tuple[int] = INTERFACES.COLOR,
+                 type_: str = INTERFACES.TYPE.ETHERNET) -> None:
         """
         Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
         :param mac: a string MAC address ('aa:bb:cc:11:22:76' for example)
@@ -49,7 +62,7 @@ class Interface:
         self.display_color = display_color
 
     @property
-    def connection_length(self):
+    def connection_length(self) -> Optional[T_Time]:
         """
         The length of the connection this `Interface` is connected to. (The time a packet takes to go through it in seconds)
         :return: a number of seconds.
@@ -58,23 +71,31 @@ class Interface:
             return None
         return self.connection.connection.deliver_time
 
-    @staticmethod
-    def random_name():
-        """Returns a random Interface name"""
-        return random.choice(INTERFACE_NAMES) + str(random.randint(0, 10))
+    @property
+    def no_carrier(self):
+        return not self.is_connected()
 
     @classmethod
-    def with_ip(cls, ip_address):
+    def random_name(cls) -> str:
+        """Returns a random Interface name"""
+        name = random.choice(INTERFACE_NAMES) + str(random.randint(0, 10))
+        if name in cls.EXISTING_INTERFACE_NAMES:
+            name = cls.random_name()
+        cls.EXISTING_INTERFACE_NAMES.add(name)
+        return name
+
+    @classmethod
+    def with_ip(cls: Type[T], ip_address: Union[str, IPAddress]) -> T:
         """Constructor for an interface with a given (string) IP address, a random name and a random MAC address"""
         return cls(MACAddress.randomac(), ip_address, cls.random_name())
 
     @classmethod
-    def loopback(cls):
+    def loopback(cls: Type[T]) -> T:
         """Constructor for a loopback interface"""
         connection = LoopbackConnection()
         return cls(MACAddress.no_mac(), IPAddress.loopback(), "loopback", connection.get_side())
 
-    def is_directly_for_me(self, packet):
+    def is_directly_for_me(self, packet: Packet) -> bool:
         """
         Receives a packet and determines whether it is destined directly for this Interface (broadcast is not)
         On the second layer
@@ -92,11 +113,11 @@ class Interface:
         """
         return self.is_directly_for_me(packet) or (packet["Ether"].dst_mac.is_broadcast())
 
-    def has_ip(self):
+    def has_ip(self) -> bool:
         """Returns whether the Interface has an IP address"""
         return self.ip is not None
 
-    def has_this_ip(self, ip_address):
+    def has_this_ip(self, ip_address: Union[str, IPAddress]) -> bool:
         """
         Returns whether or not this interface has the given IP
         :param ip_address: IPAddress
@@ -105,11 +126,11 @@ class Interface:
         ip_address = IPAddress(ip_address)
         return self.has_ip() and self.ip.string_ip == ip_address.string_ip
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         """Returns whether the interface is connected or not"""
         return self.connection is not None
 
-    def set_mac(self, new_mac: MACAddress):
+    def set_mac(self, new_mac: MACAddress) -> None:
         """
         Receive a new mac address and change my MAC to be that mac
         :param new_mac: the new mac
@@ -117,7 +138,7 @@ class Interface:
         """
         self.mac = new_mac
 
-    def set_name(self, name: str):
+    def set_name(self, name: str) -> None:
         """
         Sets the name of the interface to be a new name
         Raises exception if the name is not valid
@@ -133,12 +154,10 @@ class Interface:
 
         self.name = name
 
-    def connect(self, other):
+    def connect(self: T, other: T) -> Connection:
         """
         Connects this interface to another interface, return the `Connection` object.
         If grat arps are enabled, each interface sends a gratuitous arp.
-        :param other: The other `Interface` object to connect to.
-        :return: The `Connection` object.
         """
         if self.is_connected() or other.is_connected():
             raise DeviceAlreadyConnectedError("The interface is connected already!!!")
@@ -146,7 +165,7 @@ class Interface:
         self.connection, other.connection = connection.get_sides()
         return connection
     
-    def disconnect(self):
+    def disconnect(self) -> None:
         """
         Disconnect an interface from its `Connection`.
 
@@ -159,12 +178,11 @@ class Interface:
             raise InterfaceNotConnectedError("Cannot disconnect an interface that is not connected!")
         self.connection = None
 
-    def block(self, accept=None):
+    def block(self, accept: Optional[str] = None) -> None:
         """
         Blocks the connection and does not receive packets from it anymore.
         It only accepts packets that contain the `accept` layer (for example "STP")
         if blocked, does nothing (updates the 'accept')
-        :return: None
         """
         self.is_blocked = True
         self.accepting = accept
@@ -173,7 +191,7 @@ class Interface:
 
         self.graphics.color = INTERFACES.BLOCKED_COLOR
 
-    def unblock(self):
+    def unblock(self) -> None:
         """
         Releases the blocking of the connection and allows it to receive packets again.
         if not blocked, does nothing...
@@ -185,7 +203,7 @@ class Interface:
             self.connection.mark_as_unblocked()
         self.graphics.color = INTERFACES.COLOR
 
-    def toggle_block(self, accept=None):
+    def toggle_block(self, accept: Optional[str] = None) -> None:
         """
         Toggles between block() and unblock()
         :param accept:
@@ -196,7 +214,7 @@ class Interface:
         else:
             self.block(accept)
 
-    def send(self, packet):
+    def send(self, packet: Packet) -> None:
         """
         Receives a packet to send and just sends it!
         for Tomer: if the interface is not connected maybe an error should be raised but
@@ -210,7 +228,7 @@ class Interface:
         if self.is_connected() and (not self.is_blocked or (self.is_blocked and self.accepting in packet)):
             self.connection.send(packet)
 
-    def receive(self):
+    def receive(self) -> Optional[List[Packet]]:
         """
         Returns the packet that was received (if one was received) else, returns None.
         If the interface is not in promiscuous, only returns packets that are directed for it (and broadcast).
@@ -229,7 +247,7 @@ class Interface:
             return packets
         return list(filter(lambda packet: self.is_for_me(packet), packets))
 
-    def ethernet_wrap(self, dst_mac, data):
+    def ethernet_wrap(self, dst_mac: MACAddress, data: scapy.packet.Packet) -> Packet:
         """
         Takes in ip_layer (string, a `Protocol` object...) and wraps it as an `Ethernet` packet ready to be sent.
         :param data: any ip_layer to put in the ethernet packet (ARP, IP, str, more Ethernet, whatever you want, only
@@ -239,7 +257,7 @@ class Interface:
         """
         return Packet(Ether(src_mac=str(self.mac), dst_mac=str(dst_mac)) / data)
 
-    def send_with_ethernet(self, dst_mac, protocol):
+    def send_with_ethernet(self, dst_mac: MACAddress, protocol: scapy.packet.Packet) -> None:
         """
         Receives a `Protocol` object, wraps it with ethernet and sends it.
         :param dst_mac: `MACAddress` object which will be the destination address of the ethernet frame
@@ -248,15 +266,15 @@ class Interface:
         """
         self.send(self.ethernet_wrap(dst_mac, protocol))
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         """Determines which interfaces are equal"""
         return self is other
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """hash of the interface"""
         return hash(id(self))
 
-    def generate_view_text(self):
+    def generate_view_text(self) -> str:
         """
         Generates the text for the side view of the interface
         :return: `str`
@@ -273,12 +291,12 @@ Interface:
         self.is_blocked else ""}
 """
 
-    def __str__(self):
+    def __str__(self) -> str:
         """A shorter string representation of the Interface"""
         mac = f"\n{self.mac}" if not self.mac.is_no_mac() else ""
         return f"{self.name}: {mac}" + ('\n' + repr(self.ip) if self.has_ip() else '')
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """The string representation of the Interface"""
         return f"Interface(name={self.name}, mac={self.mac}, ip={self.ip})"
 

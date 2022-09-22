@@ -1,6 +1,12 @@
+from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
+from typing import Optional, Tuple, Callable, TYPE_CHECKING
 
 from gui.main_loop import MainLoop
+
+if TYPE_CHECKING:
+    from gui.user_interface.user_interface import UserInterface
 
 
 class GraphicsObject(metaclass=ABCMeta):
@@ -16,7 +22,13 @@ class GraphicsObject(metaclass=ABCMeta):
     If this object has an iterable attribute in the name `child_graphics_objects`, when this object is unregistered, all of the
     GraphicsObjects in that iterable are unregistered as well.
     """
-    def __init__(self, x=None, y=None, do_render=True, centered=False, is_in_background=False, is_pressable=False):
+    def __init__(self,
+                 x: Optional[float] = None,
+                 y: Optional[float] = None,
+                 do_render: bool = True,
+                 centered: bool = False,
+                 is_in_background: bool = False,
+                 is_pressable: bool = False) -> None:
         """
         Initiates a graphics object and registers it to the main loop.
         :param x: x coordinate
@@ -32,18 +44,11 @@ class GraphicsObject(metaclass=ABCMeta):
         self.centered = centered
         self.is_pressable = is_pressable
 
-        self.is_button = False
-        self.is_computer = False
-        self.is_packet = False
-        self.is_image = False
-        self.is_connection = False
-        # TODO: this is shit code ^
-
         if self.do_render:
             MainLoop.instance.register_graphics_object(self, is_in_background)
 
     @property
-    def location(self):
+    def location(self) -> Tuple[float, float]:
         """
         The location property of the `GraphicsObject`.
         :return: (self.x, self.y)
@@ -51,25 +56,25 @@ class GraphicsObject(metaclass=ABCMeta):
         return self.x, self.y
 
     @location.setter
-    def location(self, new_location):
+    def location(self, new_location: Tuple[float, float]) -> None:
         self.x, self.y = new_location
 
     @property
-    def can_be_viewed(self):
+    def can_be_viewed(self) -> bool:
         return hasattr(self, "start_viewing") and hasattr(self, "end_viewing")
 
     @property
-    def mark_as_selected_non_resizable(self):
+    def mark_as_selected_non_resizable(self) -> Callable:
         return self.mark_as_selected
 
-    def is_mouse_in(self):
+    def is_mouse_in(self) -> bool:
         """
         Returns whether or not the mouse is located inside this graphics object.
         :return: None
         """
         return False
 
-    def load(self):
+    def load(self) -> None:
         """
         The function that should load the object.
         It is called only once at the start of the object's lifetime.
@@ -78,7 +83,7 @@ class GraphicsObject(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def draw(self):
+    def draw(self) -> None:
         """
         This method should be overridden in any subclasses.
         It should handle the drawing of the object to the screen, it will be called every loop of the program.
@@ -86,7 +91,7 @@ class GraphicsObject(metaclass=ABCMeta):
         """
         pass
 
-    def move(self):
+    def move(self) -> None:
         """
         This method should be overridden in any subclasses.
         It should handle the moving of the object on the screen, it will be called every loop of the program.
@@ -94,24 +99,30 @@ class GraphicsObject(metaclass=ABCMeta):
         """
         pass
 
-    def mark_as_selected(self):
+    def mark_as_selected(self) -> None:
         """
         Marks the graphics object as selected (pressed by the mouse)
         :return:
         """
         pass
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """The string representation of the graphics object"""
         rendered = 'rendered' if self.do_render else 'non-rendered'
         centered = 'centered' if self.centered else 'non-centered'
         return ' '.join([rendered, centered]) + f" GraphicsObject(x={self.x}, y={self.y})"
 
     @abstractmethod
-    def dict_save(self):
+    def dict_save(self) -> None:
         """
         Returns a representation of the object as a dict (that will be converted to string in the end).
         The object should be able to be initiated from the string alone to the exact state that it is in now.
         :return: str
         """
         pass
+
+    def delete(self, user_interface: UserInterface) -> None:
+        """
+        Deletes the graphics object and performs other operations that are necessary for deletion (cleanup)
+        """
+        MainLoop.instance.unregister_graphics_object(self)
