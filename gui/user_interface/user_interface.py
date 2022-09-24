@@ -5,10 +5,10 @@ import json
 import operator
 import pprint
 import random
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 from functools import reduce
 from operator import concat, attrgetter
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, NamedTuple
 
 from pyglet.window import key
 
@@ -45,29 +45,29 @@ from usefuls.funcs import get_the_one, distance, with_args, called_in_order, cir
     scale_tuple
 
 if TYPE_CHECKING:
+    from gui.abstracts.graphics_object import GraphicsObject
     from computing.connection import Connection
 
 
-ObjectView = namedtuple("ObjectView", [
-    "sprite",
-    "text",
-    "viewed_object",
-])
-"""
-A ip_layer structure to represent the current viewing of a GraphicsObject on the side window in VIEW_MODE
-- sprite is the little image that is shown
-- text is a `Text` object of the information about the object
-- viewed_object is a reference to the GraphicsObject that's viewed. 
-"""
+class ObjectView(NamedTuple):
+    """
+    A data structure to represent the current viewing of a GraphicsObject on the side window in VIEW_MODE
+    - sprite is the little image that is shown
+    - text is a `Text` object of the information about the object
+    - viewed_object is a reference to the GraphicsObject that's viewed.
+    """
+    sprite:        pyglet.sprite.Sprite
+    text:          Text
+    viewed_object: GraphicsObject
 
-ConnectionData = namedtuple("ConnectionData", [
-    "connection",
-    "computer1",
-    "computer2",
-])
-"""
-A way to save the connection on the screen together with the computers they are connected to.
-"""
+
+class ConnectionData(NamedTuple):
+    """
+    A way to save the connection on the screen together with the computers they are connected to.
+    """
+    connection: Connection
+    computer1:  Computer
+    computer2:  Computer
 
 
 class UserInterface:
@@ -354,7 +354,7 @@ class UserInterface:
     def start_object_view(self, graphics_object):
         """
         Starts viewing an object on the side window.
-        Creates an `ObjectView` namedtuple which packs together the ip_layer required to view an object.
+        Creates an `ObjectView` which packs together the ip_layer required to view an object.
         :param graphics_object: A graphics object to view.
         :return: None
         """

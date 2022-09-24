@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from collections import namedtuple
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union, NamedTuple
 
 from pyglet.window import key
 
@@ -17,10 +16,9 @@ if TYPE_CHECKING:
     from computing.computer import Computer
 
 
-ChildrenGraphicsObjects = namedtuple("ChildGraphicsObject", [
-        "text",
-        "input_line",
-    ])
+class ChildGraphicsObjects(NamedTuple):
+        text: Text
+        input_line: Text
 
 
 class ShellGraphics(OutputConsole):
@@ -48,7 +46,7 @@ class ShellGraphics(OutputConsole):
         self.computer = computer
         self.carrying_window = carrying_window
 
-        self.child_graphics_objects = ChildrenGraphicsObjects(
+        self.child_graphics_objects = ChildGraphicsObjects(
             self.child_graphics_objects.text,
             Text(
                 CONSOLE.SHELL.PREFIX + CONSOLE.SHELL.CARET, self.x + (self.width / 2), self.y + 20,
