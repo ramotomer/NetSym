@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from collections import namedtuple
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, NamedTuple
 
 from pyglet.window import key
 
@@ -15,13 +14,12 @@ if TYPE_CHECKING:
     from gui.user_interface.user_interface import UserInterface
 
 
-ChildGraphicsObjects = namedtuple("ChildGraphicsObjects", [
-    "title_text",
-    "information_text",
-    "written_text",
-    "submit_button",
-    "exit_button",
-])
+class ChildGraphicsObjects(NamedTuple):
+    title_text:       Text
+    information_text: Text
+    written_text:     Text
+    submit_button:    Button
+    exit_button:      Button
 
 
 class PopupTextBox(PopupWindowContainingText):

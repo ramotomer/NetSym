@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from collections import namedtuple
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 from consts import COLORS, CONSOLE, COMPUTER
 from gui.main_loop import MainLoop
@@ -9,15 +8,16 @@ from gui.tech.shell_graphics import ShellGraphics
 from gui.user_interface.popup_windows.popup_window import PopupWindow
 
 if TYPE_CHECKING:
+    from gui.user_interface.text_graphics import Text
+    from gui.user_interface.button import Button
     from computing.computer import Computer
     from gui.user_interface.user_interface import UserInterface
 
 
-ChildrenGraphicsObjects = namedtuple("ChildrenGraphicsObjects", [
-    'title_text',
-    'exit_button',
-    'shell',
-])
+class ChildrenGraphicsObjects(NamedTuple):
+    title_text:  Text
+    exit_button: Button
+    shell:       ShellGraphics
 
 
 class PopupConsole(PopupWindow):

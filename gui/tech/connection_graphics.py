@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from collections import namedtuple
 from math import acos, sin
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, NamedTuple, Optional
 
 from consts import *
 from exceptions import *
@@ -17,19 +16,24 @@ from usefuls.funcs import with_args, get_the_one
 if TYPE_CHECKING:
     from computing.connection import Connection
     from gui.tech.computer_graphics import ComputerGraphics
+    from gui.tech.interface_graphics import InterfaceGraphics
     from gui.user_interface.user_interface import UserInterface
 
 
-Computers = namedtuple("Computers", [
-    "start",
-    "end",
-])
-"""a ip_layer structure to save the two ComputerGraphics of the two sides of the connection."""
+class Computers(NamedTuple):
+    """
+    A data structure to save the two ComputerGraphics of the two sides of the connection.
+    """
+    start: Optional[ComputerGraphics]
+    end:   Optional[ComputerGraphics]
 
-Interfaces = namedtuple("Interfaces", [
-    "start",
-    "end",
-])
+
+class Interfaces(NamedTuple):
+    """
+    A data structure to save the two InterfaceGraphics of the two sides of the connection.
+    """
+    start: Optional[InterfaceGraphics]
+    end:   Optional[InterfaceGraphics]
 
 
 class ConnectionGraphics(GraphicsObject):

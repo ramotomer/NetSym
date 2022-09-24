@@ -1,16 +1,21 @@
-from collections import namedtuple
+from __future__ import annotations
+
 from os import linesep
+from typing import NamedTuple, Optional
 
 from address.ip_address import IPAddress
 from consts import ADDRESSES
 from exceptions import *
 
-RoutingTableItem = namedtuple("RoutingTableItem", "ip_address interface_ip")
-"""
-a routing table item.
-ip_address is the IP address to send the packet to (on the second layer) - the gateway
-interface is the IPAddress of the interface the packet should be sent on.
-"""
+
+class RoutingTableItem(NamedTuple):
+    """
+    a routing table item.
+    ip_address is the IP address to send the packet to (on the second layer) - the gateway
+    interface is the IPAddress of the interface the packet should be sent on.
+    """
+    ip_address:   Optional[IPAddress]
+    interface_ip: Optional[IPAddress]
 
 
 class RoutingTable:

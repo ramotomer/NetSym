@@ -1,14 +1,17 @@
-from collections import namedtuple
+from __future__ import annotations
 
+from typing import NamedTuple
+
+from computing.internals.interface import Interface
 from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
 
-SwitchTableItem = namedtuple("SwitchTableItem", [
-    "leg",
-    "time",
-])
+
+class SwitchTableItem(NamedTuple):
+    leg:  Interface
+    time: T_Time
 
 
 class SwitchingProcess(Process):

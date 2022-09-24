@@ -1,5 +1,6 @@
-from collections import namedtuple
-from typing import Tuple
+from __future__ import annotations
+
+from typing import Tuple, NamedTuple
 
 from consts import CONSOLE, TEXT
 from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
@@ -7,7 +8,9 @@ from gui.main_loop import MainLoop
 from gui.shape_drawing import draw_rectangle
 from gui.user_interface.text_graphics import Text
 
-ChildGraphicsObjects = namedtuple("ChildGraphicsObject", "text")
+
+class ChildGraphicsObjects(NamedTuple):
+    text: Text
 
 
 class OutputConsole(UserInterfaceGraphicsObject):
