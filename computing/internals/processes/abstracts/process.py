@@ -1,25 +1,96 @@
 from abc import ABCMeta, abstractmethod
-from collections import namedtuple, defaultdict
-from typing import Iterator, Union
+from collections import defaultdict
+from typing import Iterator, Union, NamedTuple, Callable
 
 from recordclass import recordclass
 
-from consts import COMPUTER
+from consts import COMPUTER, T_Time
 from exceptions import *
 from gui.main_loop import MainLoop
 
-WaitingForPacket = namedtuple("WaitingForPacket", "condition value")
-""""
-The condition function must receive one argument (a packet object) and return a bool.
-the value in initialization will be a new `ReturnedPacket` object.
-that object will be filled with the packets that fit the condition and returned to
-the process when it continues running.
 
-The condition should be specific so you don't accidentally catch the wrong packet!
-"""
+class ReturnedPacket:
+    """
+    The proper way to get received packets back from the running computer.
+    `self.packets` is a dictionary with `Packet` keys and the values are `PacketMetadata` objects
+    """
+    def __init__(self, packet=None, metadata=None):
+        self.packets = {}
+        self.packet_iterator = None
 
-WaitingForPacketWithTimeout = namedtuple("WaitingForPacketWithTimeout", "condition value timeout")
-WaitingFor = namedtuple("WaitingFor", "condition")
+        if packet is not None and metadata is not None:
+            self.packets[packet] = metadata
+
+    @property
+    def packet(self):
+        """
+        Returns the a packet that was returned. The next call will give a different
+        result. If there are no more packets left to return, raise `NoSuchPacketError`
+        :return: a `Packet` object that was not yet used.
+        """
+        if len(self.packets) == 1:
+            return list(self.packets)[0]
+
+        if self.packet_iterator is None:
+            self.packet_iterator = iter(self.packets)
+
+        try:
+            return next(self.packet_iterator)
+        except StopIteration:
+            raise NoSuchPacketError("All of the packets were requested from this object already!!")
+
+    @property
+    def packet_and_interface(self):
+        """
+        just like `self.packet` but returns a tuple of (packet, interface)
+        """
+        packet = self.packet
+        return packet, self.packets[packet].interface
+
+    @property
+    def packet_and_metadata(self):
+        """
+        just like `self.packet` but returns a tuple of (packet, PacketMetadata) [actually (packet, self.packets[packet])
+        """
+        packet = self.packet
+        return packet, self.packets[packet]
+
+    def has_packets(self):
+        """Returns whether or not this has any packets inside"""
+        return bool(self.packets)
+
+    def __bool__(self):
+        return bool(self.packets)
+
+    def __iter__(self):
+        """
+        Returns an iterator of a list of tuples (packet, interface)
+        :return:
+        """
+        return iter(list(self.packets.items()))
+
+
+class WaitingForPacket(NamedTuple):
+    """"
+    The condition function must receive one argument (a packet object) and return a bool.
+    the value in initialization will be a new `ReturnedPacket` object.
+    that object will be filled with the packets that fit the condition and returned to
+    the process when it continues running.
+
+    The condition should be specific so you don't accidentally catch the wrong packet!
+    """
+    condition: Callable
+    value: ReturnedPacket
+
+
+class WaitingForPacketWithTimeout(NamedTuple):
+    condition: Callable
+    value: ReturnedPacket
+    timeout: T_Time
+
+
+class WaitingFor(NamedTuple):
+    condition: Callable
 
 
 T_WaitingFor = Union[WaitingFor, WaitingForPacket, WaitingForPacketWithTimeout]
@@ -141,67 +212,6 @@ PacketMetadata = recordclass("PacketMetadata", [
     "time",
     "direction",
 ])
-
-
-class ReturnedPacket:
-    """
-    The proper way to get received packets back from the running computer.
-    `self.packets` is a dictionary with `Packet` keys and the values are `PacketMetadata` objects
-    """
-    def __init__(self, packet=None, metadata=None):
-        self.packets = {}
-        self.packet_iterator = None
-
-        if packet is not None and metadata is not None:
-            self.packets[packet] = metadata
-
-    @property
-    def packet(self):
-        """
-        Returns the a packet that was returned. The next call will give a different
-        result. If there are no more packets left to return, raise `NoSuchPacketError`
-        :return: a `Packet` object that was not yet used.
-        """
-        if len(self.packets) == 1:
-            return list(self.packets)[0]
-
-        if self.packet_iterator is None:
-            self.packet_iterator = iter(self.packets)
-
-        try:
-            return next(self.packet_iterator)
-        except StopIteration:
-            raise NoSuchPacketError("All of the packets were requested from this object already!!")
-
-    @property
-    def packet_and_interface(self):
-        """
-        just like `self.packet` but returns a tuple of (packet, interface)
-        """
-        packet = self.packet
-        return packet, self.packets[packet].interface
-
-    @property
-    def packet_and_metadata(self):
-        """
-        just like `self.packet` but returns a tuple of (packet, PacketMetadata) [actually (packet, self.packets[packet])
-        """
-        packet = self.packet
-        return packet, self.packets[packet]
-
-    def has_packets(self):
-        """Returns whether or not this has any packets inside"""
-        return bool(self.packets)
-
-    def __bool__(self):
-        return bool(self.packets)
-
-    def __iter__(self):
-        """
-        Returns an iterator of a list of tuples (packet, interface)
-        :return:
-        """
-        return iter(list(self.packets.items()))
 
 
 class NoNeedForPacket(ReturnedPacket):

@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import random
-from collections import namedtuple
+from typing import NamedTuple, TYPE_CHECKING
 
 from consts import *
 from exceptions import ConnectionsError
@@ -7,13 +9,18 @@ from exceptions import WrongUsageError, NoSuchConnectionSideError, SomethingWent
 from gui.main_loop import MainLoop
 from gui.tech.connection_graphics import ConnectionGraphics
 
-SentPacket = namedtuple("SentPacket", [
-    "packet",
-    "sending_time",
-    "direction",
-    "is_dropped",
-])
-# ^ a packet that is currently being sent through the connection.
+if TYPE_CHECKING:
+    from packets.packet import Packet
+
+
+class SentPacket(NamedTuple):
+    """
+    a packet that is currently being sent through the connection.
+    """
+    packet:       Packet
+    sending_time: T_Time
+    direction:    str
+    is_dropped:   bool
 
 
 class Connection:
@@ -136,7 +143,7 @@ class Connection:
         Adds the packet to its appropriate destination side's `received_packets` list.
         This is called when the packet finished its route through this connection and is ready to be received at the
         connected `Interface`.
-        :param sent_packet: a `SentPacket` namedtuple.
+        :param sent_packet: a `SentPacket`
         :return: None
         """
         packet, _, direction, _ = sent_packet
@@ -169,7 +176,7 @@ class Connection:
         """
         Receives a SentPacket object and updates its progress on the connection.
         If the packet has reached the end of the connection, make it be received at the appropriate ConnectionSide
-        :param sent_packet: a `SentPacket` namedtuple
+        :param sent_packet: a `SentPacket`
         :return: None
         """
         packet_travel_percent = MainLoop.instance.time_since(sent_packet.sending_time) / self.deliver_time

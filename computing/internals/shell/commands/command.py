@@ -1,20 +1,22 @@
+from __future__ import annotations
+
 import argparse
 from abc import ABCMeta, abstractmethod
-from collections import namedtuple
-from typing import Union
+from typing import Union, NamedTuple
 
 from usefuls.funcs import split_with_escaping
 from usefuls.print_stealer import PrintStealer
 
-CommandOutput = namedtuple("CommandOutput", [
-    "stdout",
-    "stderr",
-])
 
-ParsedCommand = namedtuple("ParsedCommand", [
-    "command_class",
-    "parsed_args",
-])
+class CommandOutput(NamedTuple):
+    stdout: str
+    stderr: str
+
+
+class ParsedCommand(NamedTuple):
+    command_class: Command
+    parsed_args:   argparse.Namespace
+
 
 SyntaxArgumentMessage = str
 

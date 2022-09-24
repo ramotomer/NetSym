@@ -60,7 +60,7 @@ class TCPSocket(L4Socket):
 
     def blocking_connect(self, address: Tuple[IPAddress, int]) -> T_ProcessCode:
         """
-        Same as `accept` only yields a `WaitingFor` namedtuple that waits until the socket is connected
+        Same as `accept` only yields a `WaitingFor` that waits until the socket is connected
         """
         self.connect(address)
         yield WaitingFor(lambda: self.is_connected or self.is_closed)

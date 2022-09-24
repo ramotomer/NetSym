@@ -1,19 +1,22 @@
-from collections import namedtuple
 from contextlib import contextmanager
+from typing import NamedTuple, Optional
 
 from recordclass import recordclass
 
-from computing.internals.processes.abstracts.process import ProcessInternalError, Process
+from computing.internals.processes.abstracts.process import ProcessInternalError, Process, T_WaitingFor
 from consts import COMPUTER
 from exceptions import NoSuchProcessError
 from gui.main_loop import MainLoop
 from usefuls.funcs import get_the_one
 
-WaitingProcess = namedtuple("WaitingProcess", [
-    "process",
-    "waiting_for",
-])
-# ^ a process that is currently waiting for a certain packet.
+
+class WaitingProcess(NamedTuple):
+    """
+    A process that is currently waiting for a certain packet.
+    """
+    process:     Process
+    waiting_for: Optional[T_WaitingFor]
+
 
 SchedulerDetails = recordclass("SchedulerDetails", [
     "startup_processes",

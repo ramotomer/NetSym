@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from collections import namedtuple
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple, Optional
 
 import scapy
 
@@ -16,11 +15,11 @@ from usefuls.funcs import get_the_one
 if TYPE_CHECKING:
     from computing.internals.interface import Interface
 
-DHCPData = namedtuple("DHCPData", [
-    "given_ip",
-    "given_gateway",
-    "given_dns_server",
-])
+
+class DHCPData(NamedTuple):
+    given_ip:         Optional[IPAddress]
+    given_gateway:    Optional[IPAddress]
+    given_dns_server: Optional[IPAddress]
 
 
 class DHCPClient(Process):

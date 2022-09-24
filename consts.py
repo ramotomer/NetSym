@@ -22,7 +22,7 @@ SENDING_GRAT_ARPS = False
 
 
 T_Time = float
-T_Color = Tuple[int, int, int]
+T_Color = Tuple[int, ...]
 
 
 class ADDRESSES:

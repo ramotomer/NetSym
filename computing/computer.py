@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import random
-from collections import namedtuple
 from functools import reduce
 from operator import concat
-from typing import TYPE_CHECKING, Optional, List, Union, Type, Callable
+from typing import TYPE_CHECKING, Optional, List, Union, Type, Callable, NamedTuple
 
 import scapy
 from recordclass import recordclass
@@ -47,8 +46,12 @@ if TYPE_CHECKING:
     from packets.packet import Packet
 
 
-ReceivedPacket = namedtuple("ReceivedPacket", "packet metadata")
-# ^ a packet that was received in this computer  (packet object, receiving time, interface packet is received on)
+class ReceivedPacket(NamedTuple):
+    """
+    a packet that was received in this computer  (packet object, receiving time, interface packet is received on)
+    """
+    packet: Packet
+    metadata: PacketMetadata
 
 
 SocketData = recordclass("SocketData", [

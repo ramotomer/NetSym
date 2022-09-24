@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from collections import namedtuple
-from typing import Tuple, List, Union, Optional, TYPE_CHECKING
+from typing import Tuple, List, Union, Optional, TYPE_CHECKING, NamedTuple
 
 from address.ip_address import IPAddress
 from computing.internals.sockets.l4_socket import L4Socket
@@ -12,11 +11,13 @@ if TYPE_CHECKING:
     from computing.computer import Computer
 
 
-ReturnedUDPPacket = namedtuple("ReturnedUDPPacket", [
-    "data",
-    "src_ip",
-    "src_port",
-])
+class ReturnedUDPPacket(NamedTuple):
+    """
+    A UDP packet with its metadata - which is received from a UDP socket
+    """
+    data:     bytes
+    src_ip:   IPAddress
+    src_port: int
 
 
 class UDPSocket(L4Socket):
