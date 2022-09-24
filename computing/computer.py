@@ -4,7 +4,7 @@ import random
 from collections import namedtuple
 from functools import reduce
 from operator import concat
-from typing import TYPE_CHECKING, Optional, List, Union, TypeVar, Type, Callable
+from typing import TYPE_CHECKING, Optional, List, Union, Type, Callable
 
 import scapy
 from recordclass import recordclass
@@ -12,6 +12,7 @@ from recordclass import recordclass
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
 from computing.internals.arp_cache import ArpCache
+from computing.internals.dns_table import DNSTable
 from computing.internals.filesystem.filesystem import Filesystem
 from computing.internals.interface import Interface
 from computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket, WaitingFor
@@ -35,7 +36,7 @@ from exceptions import *
 from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.all import ICMP, IP, TCP, UDP, ARP
-from packets.usefuls import get_src_port, get_dst_port
+from packets.usefuls.usefuls import get_src_port, get_dst_port
 from usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
@@ -44,9 +45,6 @@ if TYPE_CHECKING:
     from computing.internals.sockets.socket import Socket
     from computing.connection import Connection
     from packets.packet import Packet
-
-
-T = TypeVar('T', bound='Computer')
 
 
 ReceivedPacket = namedtuple("ReceivedPacket", "packet metadata")
@@ -118,9 +116,11 @@ class Computer:
         self.boot_time = MainLoop.instance.time()
 
         self.received = []
-        self.arp_cache = ArpCache()
-        # ^ a dictionary of {<ip address> : ARPCacheItem(<mac address>, <initiation time of this item>)
+
+        self.arp_cache = ArpCache()  # a dictionary of {<ip address> : ARPCacheItem(<mac address>, <initiation time of this item>)
         self.routing_table = RoutingTable.create_default(self)
+        self.dns_table = DNSTable()
+
         self.filesystem = Filesystem.with_default_dirs()
         self.process_scheduler = ProcessScheduler(self)
 
@@ -178,7 +178,7 @@ class Computer:
         return [socket for socket in self.sockets if self.sockets[socket].kind == COMPUTER.SOCKETS.TYPES.SOCK_RAW]
 
     @classmethod
-    def with_ip(cls: Type[T], ip_address: Union[str, IPAddress], name: Optional[str] = None) -> T:
+    def with_ip(cls: Type[Computer], ip_address: Union[str, IPAddress], name: Optional[str] = None) -> Computer:
         """
         This is a constructor for a computer with a given IP address, defaults the rest of the properties.
         :param ip_address: an IP string that one wishes the new `Computer` to have.
@@ -189,10 +189,10 @@ class Computer:
         return computer
 
     @classmethod
-    def wireless_with_ip(cls: Type[T],
+    def wireless_with_ip(cls: Type[Computer],
                          ip_address: Union[str, IPAddress],
                          frequency: float = CONNECTIONS.WIRELESS.DEFAULT_FREQUENCY,
-                         name: Optional[str] = None) -> T:
+                         name: Optional[str] = None) -> Computer:
         return cls(name, OS.WINDOWS, None, WirelessInterface(MACAddress.randomac(), IPAddress(ip_address), frequency=frequency))
 
     @classmethod
@@ -749,12 +749,13 @@ class Computer:
             if self._does_packet_match_udp_socket_fourtuple(socket, packet):
                 socket.received.append(ReturnedUDPPacket(packet["UDP"].payload.build(), packet["IP"].src_ip, packet["UDP"].src_port))
 
-    def select(self, socket_list: List[Socket], timeout: Optional[Union[int, float]] = None) -> T_ProcessCode:
+    @staticmethod
+    def select(socket_list: List[Socket], timeout: Optional[Union[int, float]] = None) -> T_ProcessCode:
         """
         Similar to the `select` syscall of linux
         Loops over all sockets until one of them has something to receive
         The selected socket will later be returned. Use in the format:
-            >>> ready_socket = yield from self.select([socket], timeout)
+            >>> ready_socket = yield from Computer.select([socket], timeout)
 
         This is a generator that yields `WaitingFor` objects
         To use in a computer `Process` - yield from this
@@ -918,7 +919,10 @@ class Computer:
         """
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
         self.send(
-            interface.ethernet_wrap(dst_mac, IP(src=str(interface.ip), dst=str(dst_ip), ttl=TTL.MAX) / ICMP(type=OPCODES.ICMP.TYPES.TIME_EXCEEDED) / data),
+            interface.ethernet_wrap(dst_mac,
+                                    IP(src=str(interface.ip), dst=str(dst_ip), ttl=TTL.MAX) /
+                                    ICMP(type=OPCODES.ICMP.TYPES.TIME_EXCEEDED) /
+                                    data),
             interface
         )
 

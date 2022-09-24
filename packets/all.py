@@ -4,7 +4,7 @@ from scapy.layers.inet import IP, UDP, TCP, ICMP
 from scapy.layers.l2 import Ether, ARP, LLC, STP
 
 from packets.usefuls.dns import dns_resource_record_to_list, dns_query_record_to_list
-from packets.usefuls.usefuls import ScapyOptions
+from packets.usefuls.scapy_options import ScapyOptions
 from usefuls.attribute_renamer import with_parsed_attributes, define_attribute_aliases, with_automatic_address_type_casting, \
     with_attribute_type_casting
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from os import linesep
-from typing import Optional, Union, TypeVar, Type, Any, TYPE_CHECKING
+from typing import Optional, Union, Any, TYPE_CHECKING
 
 from address.mac_address import MACAddress
 from computing.internals.processes.abstracts.process import Process, WaitingForPacketWithTimeout, ReturnedPacket, \
@@ -14,8 +14,6 @@ from packets.packet import Packet
 
 if TYPE_CHECKING:
     from computing.internals.interface import Interface
-
-T = TypeVar('T', bound='BID')
 
 
 class BID:
@@ -48,7 +46,7 @@ class BID:
         return int(str(self.priority) + str(self.mac.as_number()))
 
     @classmethod
-    def root_from_stp(cls: Type[T], packet: Packet) -> T:
+    def root_from_stp(cls, packet: Packet) -> BID:
         """
         Take in an STP packet and return the root BID
         """
@@ -58,7 +56,7 @@ class BID:
         return cls(stp.root_id, stp.root_mac)
 
     @classmethod
-    def bridge_from_stp(cls: Type[T], packet: Packet) -> T:
+    def bridge_from_stp(cls, packet: Packet) -> BID:
         """
         Take in an STP packet and return the BID of the sending switch
         """

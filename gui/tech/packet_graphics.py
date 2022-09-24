@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 
 import scapy
 
@@ -8,7 +8,7 @@ from consts import *
 from gui.abstracts.animation_graphics import AnimationGraphics
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_loop import MainLoop
-from packets.usefuls import get_original_layer_name_by_instance
+from packets.usefuls.usefuls import get_original_layer_name_by_instance
 from usefuls.funcs import with_args
 
 if TYPE_CHECKING:

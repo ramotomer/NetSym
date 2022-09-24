@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import random
-from typing import Optional, Union, TypeVar, Type, List, Any
+from typing import Optional, Union, List, Any
 
 import scapy
 
@@ -11,8 +13,6 @@ from consts import *
 from exceptions import *
 from packets.all import Ether
 from packets.packet import Packet
-
-T = TypeVar('T', bound='Interface')
 
 
 class Interface:
@@ -85,12 +85,12 @@ class Interface:
         return name
 
     @classmethod
-    def with_ip(cls: Type[T], ip_address: Union[str, IPAddress]) -> T:
+    def with_ip(cls, ip_address: Union[str, IPAddress]) -> Interface:
         """Constructor for an interface with a given (string) IP address, a random name and a random MAC address"""
         return cls(MACAddress.randomac(), ip_address, cls.random_name())
 
     @classmethod
-    def loopback(cls: Type[T]) -> T:
+    def loopback(cls) -> Interface:
         """Constructor for a loopback interface"""
         connection = LoopbackConnection()
         return cls(MACAddress.no_mac(), IPAddress.loopback(), "loopback", connection.get_side())
@@ -154,7 +154,7 @@ class Interface:
 
         self.name = name
 
-    def connect(self: T, other: T) -> Connection:
+    def connect(self, other: Interface) -> Connection:
         """
         Connects this interface to another interface, return the `Connection` object.
         If grat arps are enabled, each interface sends a gratuitous arp.

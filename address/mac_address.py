@@ -1,11 +1,11 @@
+from __future__ import annotations
+
 import random
-from typing import Union, TypeVar, Type
+from typing import Union
 
 from consts import ADDRESSES
 from exceptions import *
 from usefuls.funcs import is_hex
-
-T = TypeVar('T', bound='MACAddress')
 
 
 class MACAddress:
@@ -15,7 +15,7 @@ class MACAddress:
 
     generated_addresses = []
 
-    def __init__(self: T, string_mac: Union[T, str]) -> None:
+    def __init__(self, string_mac: Union[MACAddress, str]) -> None:
         """
         Initiates a MACAddress object from a ip_layer
         :param string_mac: The string mac ('aa:bb:cc:11:22:76' for example)
@@ -42,7 +42,7 @@ class MACAddress:
         return self.string_mac.lower() == ADDRESSES.MAC.BROADCAST.lower()
 
     @classmethod
-    def broadcast(cls: Type[T]) -> T:
+    def broadcast(cls) -> MACAddress:
         """
         This is constructor that returns a broadcast MAC address object.
         :return: a MACAddress with the broadcast MAC.
@@ -50,7 +50,7 @@ class MACAddress:
         return cls(ADDRESSES.MAC.BROADCAST)
 
     @classmethod
-    def randomac(cls: Type[T]) -> T:
+    def randomac(cls) -> MACAddress:
         """
         A constructor that returns a randomized mac address.
         Returns a different one each time.
@@ -63,7 +63,7 @@ class MACAddress:
         return randomized_string
 
     @classmethod
-    def stp_multicast(cls: Type[T]) -> T:
+    def stp_multicast(cls) -> MACAddress:
         """
         a constructor.
         The STP multicast address.
@@ -72,7 +72,7 @@ class MACAddress:
         return cls(ADDRESSES.MAC.STP_MULTICAST)
 
     @classmethod
-    def no_mac(cls: Type[T]) -> T:
+    def no_mac(cls) -> MACAddress:
         """a constructor that Returns the MAC of 0s"""
         return cls("00:00:00:00:00:00")
 
@@ -81,7 +81,7 @@ class MACAddress:
         return self.string_mac == "00:00:00:00:00:00"
 
     @classmethod
-    def copy(cls: Type[T], mac_address: T) -> T:
+    def copy(cls, mac_address: MACAddress) -> MACAddress:
         """
         Copy the mac address and return a new different object.
         :param mac_address: a `MACAddress` object.
@@ -113,7 +113,7 @@ class MACAddress:
         """
         return int(''.join(hex_part for hex_part in self.string_mac.split(ADDRESSES.MAC.SEPARATOR)), base=16)
 
-    def __eq__(self: T, other: Union[str, T]) -> bool:
+    def __eq__(self, other: Union[str, MACAddress]) -> bool:
         """Determines whether two MAC addresses are equal or not"""
         if isinstance(other, str):
             other = MACAddress(other)

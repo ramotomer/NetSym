@@ -1,17 +1,17 @@
-from typing import TypeVar, Union, Type, Optional
+from __future__ import annotations
+
+from typing import Union, Optional
 
 from consts import ADDRESSES, MESSAGES
 from exceptions import InvalidAddressError, AddressTooLargeError
 from usefuls.funcs import bindigits
-
-T = TypeVar('T', bound='IPAddress')
 
 
 class IPAddress:
     """
     This class represents an IP address in the program.
     """
-    def __init__(self: T, string_ip: Union[str, T]) -> None:
+    def __init__(self, string_ip: Union[str, IPAddress]) -> None:
         """
         Initiates a IPAddress object from a ip_layer
         :param string_ip: The ip ('132.23.245.1/24' for example or '1.1.1.1')
@@ -35,21 +35,21 @@ class IPAddress:
         self.subnet_mask: int = int(subnet_mask)
 
     @classmethod
-    def broadcast(cls: Type[T]) -> T:
+    def broadcast(cls) -> IPAddress:
         """A constructor to create a broadcast address"""
         return cls("255.255.255.255/32")
 
     @classmethod
-    def no_address(cls: Type[T]) -> T:
+    def no_address(cls) -> IPAddress:
         """A constructor to the address that is used where there is no IP address (0.0.0.0)"""
         return cls("0.0.0.0/0")
 
     @classmethod
-    def loopback(cls: Type[T]) -> T:
+    def loopback(cls) -> IPAddress:
         """A constructor for the loopback address"""
         return cls("127.0.0.1/8")
 
-    def is_same_subnet(self: T, other: T) -> bool:
+    def is_same_subnet(self, other: IPAddress) -> bool:
         """
         Receives another ip address and returns if they are in the same subnet.
         :param other: The other IPAddress object to check.
@@ -90,7 +90,7 @@ class IPAddress:
         return not self.is_private_address()
 
     @classmethod
-    def increased(cls: Type[T], address: T) -> T:
+    def increased(cls, address: IPAddress) -> IPAddress:
         """
         Receives an IP address and returns a copy of it which is increased by one.
         (192.168.1.1 /24  -->  192.168.1.2 /24)
@@ -110,7 +110,7 @@ class IPAddress:
         increased = self.__class__.increased(self)
         self.string_ip = increased.string_ip
 
-    def expected_gateway(self: T) -> T:
+    def expected_gateway(self) -> IPAddress:
         """
         Returns the expected IP address of this subnet (for example if this IP is 192.168.1.5/24 it will return 192.168.1.1)
         :return: an `IPAddress` object.
@@ -119,7 +119,7 @@ class IPAddress:
         splitted[3] = '1'
         return self.__class__(ADDRESSES.IP.SEPARATOR.join(splitted) + '/' + str(self.subnet_mask))
 
-    def subnet(self: T) -> T:
+    def subnet(self) -> IPAddress:
         """
         returns the subnet of this ip address (for example 192.168.1.20/16 -> 192.168.0.0/16)
         :return: an `IPAddress` object.
@@ -129,7 +129,7 @@ class IPAddress:
         masked_address_bin = '0b' + bin(masked_address)[2:].zfill(ADDRESSES.IP.BIT_LENGTH)
         return self.from_bits(masked_address_bin, int(self.subnet_mask))
 
-    def subnet_broadcast(self: T) -> T:
+    def subnet_broadcast(self) -> IPAddress:
         """
         The broadcast address that fits this ip address
         :return:
@@ -197,7 +197,7 @@ class IPAddress:
         return '0b' + ''.join([bin(byte)[2:].zfill(8) for byte in cls.as_bytes(address)])
 
     @classmethod
-    def from_bits(cls: Type[T], bits: str, subnet_mask: int = 24) -> T:
+    def from_bits(cls, bits: str, subnet_mask: int = 24) -> IPAddress:
         """
         Creates an IP from a bit representation of one and a subnet mask.
         :param bits: a string binary number.
@@ -212,7 +212,7 @@ class IPAddress:
         return cls('.'.join([str(int(byte, 2)) for byte in grouped_as_bytes]) + '/' + str(subnet_mask))
 
     @classmethod
-    def copy(cls: Type[T], other: T) -> T:
+    def copy(cls, other: IPAddress) -> IPAddress:
         """
         Receive an IPAddress and return a copy of that object.
         :param other: IPAddress object
@@ -220,7 +220,7 @@ class IPAddress:
         """
         return cls(other.string_ip + ADDRESSES.IP.SUBNET_SEPARATOR + str(other.subnet_mask))
 
-    def __eq__(self: T, other: Optional[Union[str, T]]) -> bool:
+    def __eq__(self, other: Optional[Union[str, IPAddress]]) -> bool:
         """Test whether two ip addresses are equal or not (does no include subnet mask)"""
         if other is None:
             return False

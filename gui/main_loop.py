@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import time
-from typing import Type, Iterable
+from typing import Type, Iterable, Optional
 
 from exceptions import NoSuchGraphicsObjectError, AttributeError_
 from usefuls.funcs import get_the_one
@@ -14,7 +16,7 @@ class MainLoop:
 
     There is only one instance of this class. That instance is saved in the class attribute `MainLoop.instance`
     """
-    instance = None
+    instance: Optional[MainLoop] = None
 
     def __init__(self, main_window):
         """
