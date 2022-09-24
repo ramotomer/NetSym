@@ -133,8 +133,8 @@ class OPCODES:
         FLAGS_DISPLAY_PRIORITY = [SYN, FIN, RST, PSH, ACK]
 
     class DNS:
-        REQUEST = 'request'
-        REPLY = 'reply'
+        QUERY = 'query'
+        ANSWER = 'answer'
 
     class BOOTP:
         REQUEST = "BOOTREQUEST"
@@ -380,7 +380,6 @@ class IMAGES:
         IP = "packets/ip_packet.png"
         UDP = "packets/udp_packet.png"
         STP = "packets/stp_packet.png"
-        DNS = "packets/dns_packet.png"
 
         class ARP:
             REQUEST = "packets/arp_request.png"
@@ -412,10 +411,13 @@ class IMAGES:
             FIN_RETRANSMISSION = "packets/tcp_fin_retransmission.png"
             PACKET = "packets/tcp_packet.png"
 
+        class DNS:
+            QUERY = "packets/dns_query.png"
+            ANSWER = "packets/dns_answer.png"
+
         class FTP:
             REQUEST_PACKET = "packets/ftp_request.png"
             DATA_PACKET = "packets/ftp_data.png"
-
 
     class COMPUTERS:
         COMPUTER = "computers/endpoint.png"
@@ -480,10 +482,11 @@ class PACKET:
         OUTGOING = 'OUTGOING'
 
     TYPE_TO_OPCODE_FUNCTION = {
-        "ARP": lambda arp: arp.opcode,
+        "ARP":  lambda arp: arp.opcode,
         "ICMP": (lambda icmp: (icmp.type, icmp.code) if icmp.type == OPCODES.ICMP.TYPES.UNREACHABLE else icmp.type),
-        "DHCP": lambda dhcp: DHCPTypes.get(dhcp.parsed_options.message_type, dhcp.parsed_options.message_type),
-        "TCP": get_dominant_tcp_flag,
+        "DHCP": (lambda dhcp: DHCPTypes.get(dhcp.parsed_options.message_type, dhcp.parsed_options.message_type)),
+        "TCP":  get_dominant_tcp_flag,
+        "DNS":  (lambda dns: OPCODES.DNS.ANSWER if len(dns.answer_record_count) > 0 else OPCODES.DNS.QUERY),
     }
 
     TYPE_TO_IMAGE = {
@@ -526,8 +529,8 @@ class PACKET:
             OPCODES.FTP.DATA_PACKET: IMAGES.PACKETS.FTP.DATA_PACKET,
         },
         "DNS": {
-            OPCODES.DNS.REQUEST,
-            OPCODES.DNS.REPLY,
+            OPCODES.DNS.QUERY: IMAGES.PACKETS.DNS,
+            OPCODES.DNS.ANSWER: IMAGES.PACKETS.DNS,
         },
     }
 
