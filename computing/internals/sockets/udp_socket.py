@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Tuple, List, Union, Optional, TYPE_CHECKING, NamedTuple
 
+import scapy
+
 from address.ip_address import IPAddress
 from computing.internals.sockets.l4_socket import L4Socket
 from consts import COMPUTER
@@ -13,7 +15,7 @@ if TYPE_CHECKING:
 
 class ReturnedUDPPacket(NamedTuple):
     """
-    A UDP packet with its metadata - which is received from a UDP socket
+    A UDP packet which is received from a UDP socket, with its metadata
     """
     data:     bytes
     src_ip:   IPAddress
@@ -35,7 +37,7 @@ class UDPSocket(L4Socket):
         """
         super(UDPSocket, self).__init__(computer, address_family, COMPUTER.SOCKETS.TYPES.SOCK_DGRAM)
 
-    def sendto(self, data: Union[str, bytes], address: Tuple[IPAddress, int]) -> None:
+    def sendto(self, data: Union[str, bytes, scapy.packet.Packet], address: Tuple[IPAddress, int]) -> None:
         """
         Sends down the socket some data
         """
@@ -45,7 +47,7 @@ class UDPSocket(L4Socket):
         dst_ip, dst_port = address
         self.computer.start_sending_udp_packet(dst_ip, src_port, dst_port, data)
 
-    def send(self, data: Union[str, bytes]) -> None:
+    def send(self, data: Union[str, bytes, scapy.packet.Packet]) -> None:
         """
         Send data to the other party. Only works for connected sockets
         :param data:

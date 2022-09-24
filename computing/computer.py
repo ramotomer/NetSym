@@ -836,7 +836,7 @@ class Computer:
         """
         return self.ip_wrap(dst_mac, dst_ip, UDP(sport=src_port, dport=dst_port) / protocol)
 
-    def start_sending_udp_packet(self, dst_ip: IPAddress, src_port: int, dst_port: int, data: Union[str, bytes]) -> None:
+    def start_sending_udp_packet(self, dst_ip: IPAddress, src_port: int, dst_port: int, data: Union[str, bytes, scapy.packet.Packet]) -> None:
         """
         Takes in some protocol and wraps it up in IP with the appropriate IP addresses and TTL.
         Starts a process to resolve the MAC and once resolved - construct the packet and send it.

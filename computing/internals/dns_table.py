@@ -22,12 +22,19 @@ class DNSTable:
         Create an empty DNS TAble
         """
         self.__table: Dict[str, DNSTableItem] = {}
+        self.transaction_counter = 0
 
     def __getitem__(self, item: str) -> DNSTableItem:
         """
         Resolve a DNS name
         """
         return self.__table[item]
+
+    def add_item(self, name: str, ip_address: IPAddress, ttl: int) -> None:
+        """
+        Adds a new item to the table
+        """
+        self.__table[name] = DNSTableItem(ip_address, ttl, MainLoop.instance.time())
 
     def remove_expired_items(self) -> None:
         """

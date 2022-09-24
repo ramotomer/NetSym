@@ -1,12 +1,19 @@
+from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
-from typing import Iterator, Union, NamedTuple, Callable
+from typing import Iterator, Union, NamedTuple, Callable, TYPE_CHECKING, Optional, Tuple
 
 from recordclass import recordclass
 
-from consts import COMPUTER, T_Time
+from consts import COMPUTER
 from exceptions import *
 from gui.main_loop import MainLoop
+from packets.packet import Packet
+
+if TYPE_CHECKING:
+    from computing.internals.interface import Interface
+    from computing.computer import Computer
 
 
 class ReturnedPacket:
@@ -14,7 +21,7 @@ class ReturnedPacket:
     The proper way to get received packets back from the running computer.
     `self.packets` is a dictionary with `Packet` keys and the values are `PacketMetadata` objects
     """
-    def __init__(self, packet=None, metadata=None):
+    def __init__(self, packet: Optional[Packet] = None, metadata: Optional[PacketMetadata] = None):
         self.packets = {}
         self.packet_iterator = None
 
@@ -22,7 +29,7 @@ class ReturnedPacket:
             self.packets[packet] = metadata
 
     @property
-    def packet(self):
+    def packet(self) -> Packet:
         """
         Returns the a packet that was returned. The next call will give a different
         result. If there are no more packets left to return, raise `NoSuchPacketError`
@@ -40,7 +47,7 @@ class ReturnedPacket:
             raise NoSuchPacketError("All of the packets were requested from this object already!!")
 
     @property
-    def packet_and_interface(self):
+    def packet_and_interface(self) -> Tuple[Packet, Interface]:
         """
         just like `self.packet` but returns a tuple of (packet, interface)
         """
@@ -48,21 +55,21 @@ class ReturnedPacket:
         return packet, self.packets[packet].interface
 
     @property
-    def packet_and_metadata(self):
+    def packet_and_metadata(self) -> Tuple[Packet, PacketMetadata]:
         """
         just like `self.packet` but returns a tuple of (packet, PacketMetadata) [actually (packet, self.packets[packet])
         """
         packet = self.packet
         return packet, self.packets[packet]
 
-    def has_packets(self):
+    def has_packets(self) -> bool:
         """Returns whether or not this has any packets inside"""
         return bool(self.packets)
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return bool(self.packets)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator:
         """
         Returns an iterator of a list of tuples (packet, interface)
         :return:
@@ -86,7 +93,7 @@ class WaitingForPacket(NamedTuple):
 class WaitingForPacketWithTimeout(NamedTuple):
     condition: Callable
     value: ReturnedPacket
-    timeout: T_Time
+    timeout: Timeout
 
 
 class WaitingFor(NamedTuple):
@@ -118,7 +125,7 @@ class Process(metaclass=ABCMeta):
 
     If a `ProcessInternalError` is raised within your `code` function - the process will be killed but the program will continue running! :)
     """
-    def __init__(self, pid, computer):
+    def __init__(self, pid: int, computer: Computer) -> None:
         """
         The process currently has access to all of the computer's resources.
         :param computer: The computer that this process is run on.
@@ -135,7 +142,7 @@ class Process(metaclass=ABCMeta):
         # ^ maps {signum: handler} when handler takes in a signum and returns None
         self.set_killing_signals_handler(lambda signum: self.die())
 
-    def default_signal_handler(self, signum):
+    def default_signal_handler(self, signum: int) -> None:
         """
         The default signal handler. This is called when a signal is sent.
         :return: None
@@ -151,7 +158,7 @@ class Process(metaclass=ABCMeta):
         if self.computer.process_scheduler.is_inside_this_process(self):
             raise ProcessInternalError_Suicide
 
-    def set_killing_signals_handler(self, handler):
+    def set_killing_signals_handler(self, handler: Callable) -> None:
         """
         Receives a function that is a signal handler and sets it to be the handler of all of the signals
         that kill a process
@@ -162,7 +169,7 @@ class Process(metaclass=ABCMeta):
             self.signal_handlers[signum] = handler
 
     @abstractmethod
-    def code(self):
+    def code(self) -> T_ProcessCode:
         """
         The `code` generator is the main function of the process.
         It yields the parameters it needs to continue its run.
@@ -182,7 +189,7 @@ class Timeout:
     """
     tests if a certain time has passed since the creation of this object.
     """
-    def __init__(self, seconds):
+    def __init__(self, seconds: int) -> None:
         """
         Initiates the `Timeout` object.
         :param seconds: the amount of seconds of the timeout
@@ -190,16 +197,16 @@ class Timeout:
         self.seconds = seconds
         self.init_time = MainLoop.instance.time()
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         """
         Returns whether or not the timeout has passed yet or not
         """
         return MainLoop.instance.time_since(self.init_time) > self.seconds
 
-    def is_done(self):
+    def is_done(self) -> bool:
         return bool(self)
 
-    def reset(self):
+    def reset(self) -> None:
         """
         Resets the timeout object's initiation time.
         :return: None

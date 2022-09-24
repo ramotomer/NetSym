@@ -125,7 +125,7 @@ DNS = with_attribute_type_casting(
             "is_response":                         "qr",
             "is_server_authority_for_domain":      "aa",
             "is_truncated":                        "tc",
-            "is_recursive_desired":                "rd",
+            "is_recursion_desired":                "rd",
             "is_recursion_available":              "ra",
             "z__reserved":                         "z",
             "is_authenticated":                    "ad",

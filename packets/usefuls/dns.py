@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import List
+
 from scapy.layers.dns import DNSRR, DNSQR
 
 from usefuls.attribute_renamer import define_attribute_aliases
@@ -24,7 +28,7 @@ DNSQueryRecord = define_attribute_aliases(
 )
 
 
-def dns_resource_record_to_list(dns_resource_records):
+def dns_resource_record_to_list(dns_resource_records: DNSRR) -> List[DNSResourceRecord]:
     """
     Take in the raw scapy format and turn it to something that will be more fun to use
 
@@ -45,7 +49,27 @@ def dns_resource_record_to_list(dns_resource_records):
     #  the objects automatically
 
 
-def dns_query_record_to_list(dns_query_records):
+def list_to_dns_resource_record(list_: List[DNSResourceRecord]) -> DNSRR:
+    """
+
+    :param list_:
+    :return:
+    """
+    returned = None
+    for dns_resource_records in list_:
+        layer = DNSRR(
+            rrname= dns_resource_records.record_name,
+            type=   dns_resource_records.record_type,
+            rclass= dns_resource_records.record_class,
+            ttl=    dns_resource_records.time_to_live,
+            rdlen=  dns_resource_records.record_data_length,
+            rdata = dns_resource_records.record_data,
+        )
+        returned = layer if returned is None else (returned / layer)
+    return returned
+
+
+def dns_query_record_to_list(dns_query_records: DNSQR) -> List[DNSQueryRecord]:
     """
     Take in the raw scapy format and turn it to something that will be more fun to use
 
@@ -53,9 +77,26 @@ def dns_query_record_to_list(dns_query_records):
     """
     return [
         DNSQueryRecord(
-            query_name=       dns_query_records[i].qname,
-            query_type=       dns_query_records[i].qtype,
-            query_class=      dns_query_records[i].qclass,
+            query_name=  dns_query_records[i].qname,
+            query_type=  dns_query_records[i].qtype,
+            query_class= dns_query_records[i].qclass,
         )
         for i in range(len(dns_query_records.layers()))
     ]
+
+
+def list_to_dns_query(list_: List[DNSQueryRecord]) -> DNSQR:
+    """
+
+    :param list_:
+    :return:
+    """
+    returned = None
+    for dns_resource_records in list_:
+        layer = DNSQR(
+            qname=  dns_resource_records.query_name,
+            qtype=  dns_resource_records.query_type,
+            qclass= dns_resource_records.query_class,
+        )
+        returned = layer if returned is None else (returned / layer)
+    return returned

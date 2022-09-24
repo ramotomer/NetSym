@@ -136,6 +136,19 @@ class OPCODES:
         QUERY = 'query'
         ANSWER = 'answer'
 
+        class QUERY_TYPES:
+            HOST_ADDRESS = 'A'
+            AUTHORITATIVE_NAME_SERVER = 'NS'
+            MAIL_DESTINATION = 'MD'
+            MAIL_FORWARDER = 'MF'
+            CANONICAL_NAME_FOR_AN_ALIAS = 'CNAME'
+            ALL_RECORDS = 'ANY'
+            # there are more....
+
+        class QUERY_CLASSES:
+            INTERNET = 'IN'  # this is almost always the class - indicates being on the internet. Does not have much use
+            CHAOS = 'CH'
+
     class BOOTP:
         REQUEST = "BOOTREQUEST"
         REPLY = "BOOTREPLY"
