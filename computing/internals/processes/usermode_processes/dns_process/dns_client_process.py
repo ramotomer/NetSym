@@ -7,7 +7,7 @@ import scapy
 from address.ip_address import IPAddress
 from computing.internals.dns_cache import T_DomainName
 from computing.internals.processes.abstracts.process import Process, T_ProcessCode
-from consts import OPCODES, PROTOCOLS, T_Time
+from consts import OPCODES, PROTOCOLS, T_Time, T_Port, PORTS
 from packets.all import DNS
 from packets.usefuls.dns import list_to_dns_query, DNSQueryRecord
 
@@ -23,18 +23,19 @@ class DNSClientProcess(Process):
     def __init__(self,
                  pid: int,
                  computer: Computer,
-                 server_address: IPAddress,
+                 server_ip: Optional[IPAddress],
                  name_to_resolve: str,
                  default_query_timeout: T_Time = PROTOCOLS.DNS.CLIENT_QUERY_TIMEOUT,
-                 default_retry_count: int = PROTOCOLS.DNS.DEFAULT_RETRY_COUNT) -> None:
+                 default_retry_count: int = PROTOCOLS.DNS.DEFAULT_RETRY_COUNT,
+                 server_port: T_Port = PORTS.DNS) -> None:
         """
         Creates the new process
         :param pid: The process ID of this process
         :param computer: The computer that runs this process
-        :param server_address: the IPAddress of the server
+        :param server_ip: the IPAddress of the server
         """
         super(DNSClientProcess, self).__init__(pid, computer)
-        self._server_address = server_address
+        self._server_address: Tuple[IPAddress, T_Port] = (server_ip, server_port)
         self._name_to_resolve = name_to_resolve
 
         self.socket: Optional[UDPSocket] = None
@@ -59,6 +60,10 @@ class DNSClientProcess(Process):
             self._dns_process_print(f"Name invalid! '{self._name_to_resolve}'")
             return False
 
+        if self._server_address[0] is None:
+            self._dns_process_print(f"No DNS server configured!")
+            return False
+
         return True
 
     def _build_dns_query(self, name_to_resolve: str, is_recursion_desired: bool = True) -> scapy.packet.Packet:
@@ -78,7 +83,7 @@ class DNSClientProcess(Process):
                     query_name=name_to_resolve,
                     query_type=OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS,
                     query_class=OPCODES.DNS.QUERY_CLASSES.INTERNET,
-                )
+                ),
             ]),
         )
         self.computer.dns_cache.transaction_counter += 1
@@ -122,3 +127,6 @@ class DNSClientProcess(Process):
         else:
             self.die(f"ERROR: DNS could not resolve name :(")
             return
+
+    def __repr__(self) -> str:
+        return "dnscd"

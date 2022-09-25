@@ -27,9 +27,11 @@ class Arping(Command):
         if not IPAddress.is_valid(parsed_args.ip):
             return CommandOutput('', "IP address is not valid!")
 
-        self.computer.start_process(ARPProcess,
-                                    IPAddress(parsed_args.ip),
-                                    send_even_if_known=True,
-                                    resend_count=parsed_args.count,
-                                    resend_even_on_success=True)
-        return CommandOutput('', '')
+        self.computer.process_scheduler.start_usermode_process(
+            ARPProcess,
+            IPAddress(parsed_args.ip),
+            send_even_if_known=True,
+            resend_count=parsed_args.count,
+            resend_even_on_success=True,
+        )
+        return CommandOutput('arpinging...', '')

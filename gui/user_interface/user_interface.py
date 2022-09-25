@@ -1294,6 +1294,7 @@ class UserInterface:
         self.selected_object.computer.open_port(13, "TCP")
         self.tab_through_selected()
         self.tab_through_selected()
+        self.selected_object.computer.write_conf_file(COMPUTER.FILES.CONFIGURATIONS.DNS_PATH, {"nameserver": ["192.168.1.254"]})
         self.selected_object.computer.process_scheduler.start_usermode_process(ClientFTPProcess, IPAddress("192.168.1.2"))
 
     def register_window(self, window, *buttons):

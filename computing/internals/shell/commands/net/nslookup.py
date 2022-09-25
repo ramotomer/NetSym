@@ -16,7 +16,6 @@ class Nslookup(Command):
     """
     Command that looks up the ip address of a supplied domain name
     """
-
     def __init__(self, computer: Computer, shell: Shell) -> None:
         """
         initiates the command.
@@ -46,16 +45,16 @@ class Nslookup(Command):
         performs the action of the command
         """
         if not self._is_valid_hostname(parsed_args.hostname):
-            return CommandOutput('', "Hostname is not valid!")
+            return CommandOutput('', "\nERROR: Hostname is not valid!")
 
         if self.computer.dns_server is None:
-            return CommandOutput('', 'No DNS server configured!')
+            return CommandOutput('', '\nERROR: No DNS server configured!')
 
-        self.computer.start_process(
+        self.computer.process_scheduler.start_usermode_process(
             DNSClientProcess,
             self.computer.dns_server,
             parsed_args.hostname,
             default_query_timeout=parsed_args.query_timeout,
-            default_query_count=  parsed_args.retry_count,
+            default_retry_count=  parsed_args.retry_count,
         )
-        return CommandOutput('', '')
+        return CommandOutput('Searching...', '')

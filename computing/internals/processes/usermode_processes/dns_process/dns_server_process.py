@@ -129,3 +129,6 @@ class DNSServerProcess(Process):
 
             self._send_query_answers_to_clients(self._get_resolved_names())
             self._send_error_messages_to_timed_out_clients()
+
+    def __repr__(self) -> str:
+        return "dnssd"

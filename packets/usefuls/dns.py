@@ -23,7 +23,7 @@ DNSQueryRecord = define_attribute_aliases(
     {
         "query_name":         "qname",
         "query_type":         "qtype",
-        "query_class":        "rclass",
+        "query_class":        "qclass",
     }
 )
 

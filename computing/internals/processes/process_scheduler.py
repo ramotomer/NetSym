@@ -381,7 +381,7 @@ class ProcessScheduler:
         self.__details_by_mode[mode].latest_pid += 1
         return self.__details_by_mode[mode].latest_pid
 
-    def start_process(self, mode, process_type, *args):
+    def start_process(self, mode, process_type, *args, **kwargs):
         """
         Receive a `Process` subclass class, and the arguments for it
         (not including the default Computer argument that all processes receive.)
@@ -395,20 +395,20 @@ class ProcessScheduler:
         :return: `int` the process ID of the process that was started
         """
         pid = self.__get_next_pid(mode)
-        self.__details_by_mode[mode].waiting_processes.append(WaitingProcess(process_type(pid, self.computer, *args), None))
+        self.__details_by_mode[mode].waiting_processes.append(WaitingProcess(process_type(pid, self.computer, *args, **kwargs), None))
         return pid
 
-    def start_usermode_process(self, process_type, *args):
+    def start_usermode_process(self, process_type, *args, **kwargs):
         """
         same as `start_process` - but for usermode processes
         """
-        return self.start_process(COMPUTER.PROCESSES.MODES.USERMODE, process_type, *args)
+        return self.start_process(COMPUTER.PROCESSES.MODES.USERMODE, process_type, *args, **kwargs)
 
-    def start_kernelmode_process(self, process_type, *args):
+    def start_kernelmode_process(self, process_type, *args, **kwargs):
         """
         same as `start_process` - but for kernelmode processes
         """
-        return self.start_process(COMPUTER.PROCESSES.MODES.KERNELMODE, process_type, *args)
+        return self.start_process(COMPUTER.PROCESSES.MODES.KERNELMODE, process_type, *args, **kwargs)
 
     def is_process_running_by_type(self, process_type, mode=None):
         """

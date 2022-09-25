@@ -38,11 +38,12 @@ class Command(metaclass=ABCMeta):
         Initiates the command with the computer that ran it.
         :param computer: `Computer`
         """
-        self.computer = computer
-        self.name = name
-        self.shell = shell
+        self.name: str = name
+        self.description: str = description
+        self.computer: Computer = computer
+        self.shell: Shell = shell
+
         self.parser = argparse.ArgumentParser(prog=name, description=description)
-        self.description = description
 
     @abstractmethod
     def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
