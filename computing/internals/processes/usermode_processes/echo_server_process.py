@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import Tuple, TYPE_CHECKING
+from typing import Tuple, TYPE_CHECKING, Optional
 
 from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import Process
+from computing.internals.processes.abstracts.process import Process, T_ProcessCode
 from consts import COMPUTER, PORTS, PROTOCOLS, T_Port
 
 if TYPE_CHECKING:
@@ -11,11 +11,13 @@ if TYPE_CHECKING:
 
 
 class EchoServerProcess(Process):
-    def __init__(self, pid, computer):
+    def __init__(self,
+                 pid: int,
+                 computer: Computer) -> None:
         super(EchoServerProcess, self).__init__(pid, computer)
         self.socket = None
 
-    def code(self):
+    def code(self) -> T_ProcessCode:
         self.socket = self.computer.get_socket(kind=COMPUTER.SOCKETS.TYPES.SOCK_DGRAM, requesting_process_pid=self.pid)
         self.socket.bind((IPAddress.no_address(), PORTS.ECHO_SERVER))
 
@@ -27,12 +29,12 @@ class EchoServerProcess(Process):
                 self.computer.print(f"server echoed: '{udp_returned_packet.data}' "
                                     f"to: {udp_returned_packet.src_ip}")
 
-    def die(self):
-        super(EchoServerProcess, self).die()
+    def die(self, death_message: Optional[str] = None) -> None:
         if self.socket is not None:
             self.socket.close()
+        super(EchoServerProcess, self).die(death_message)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "echosd"
 
 
@@ -50,7 +52,7 @@ class EchoClientProcess(Process):
 
         self.socket = None
 
-    def code(self):
+    def code(self) -> T_ProcessCode:
         if not self.computer.ips:
             self.computer.print(f"Cannot run `echocd` without an IP address :(")
             self.die()
@@ -73,12 +75,12 @@ class EchoClientProcess(Process):
             self.die()
             return
 
-    def die(self):
-        super(EchoClientProcess, self).die()
+    def die(self, death_message: Optional[str] = None) -> None:
         if self.socket is not None:
             self.socket.close()
+        super(EchoClientProcess, self).die(death_message)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         server_ip, server_port = self.server_address
         return f"echocd {server_ip} " \
             f"-p {server_port} " \

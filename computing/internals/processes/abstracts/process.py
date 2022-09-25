@@ -6,7 +6,7 @@ from typing import Iterator, Union, NamedTuple, Callable, TYPE_CHECKING, Optiona
 
 from recordclass import recordclass
 
-from consts import COMPUTER
+from consts import COMPUTER, T_Time
 from exceptions import *
 from gui.main_loop import MainLoop
 from packets.packet import Packet
@@ -86,21 +86,38 @@ class WaitingForPacket(NamedTuple):
 
     The condition should be specific so you don't accidentally catch the wrong packet!
     """
-    condition: Callable
+    condition: Callable[[Packet], bool]
     value: ReturnedPacket
 
 
 class WaitingForPacketWithTimeout(NamedTuple):
-    condition: Callable
+    """
+    Just like `WaitingForPacket` - Indicates the process is waiting for a packet
+    BUT will return control to the process if the timeout is timed out
+    """
+    condition: Callable[[Packet], bool]
     value: ReturnedPacket
     timeout: Timeout
 
 
 class WaitingFor(NamedTuple):
-    condition: Callable
+    """
+    Indicates the process is waiting for a certain condition
+    `condition` is a function that should be called without parameters and return a `bool`
+    """
+    condition: Callable[[], bool]
 
 
-T_WaitingFor = Union[WaitingFor, WaitingForPacket, WaitingForPacketWithTimeout]
+class WaitingForWithTimeout(NamedTuple):
+    """
+    Just like `WaitingFor`
+    BUT will return control to the process if the timeout is timed out
+    """
+    condition: Callable[[], bool]
+    timeout: Timeout
+
+
+T_WaitingFor = Union[WaitingFor, WaitingForWithTimeout, WaitingForPacket, WaitingForPacketWithTimeout]
 T_ProcessCode = Iterator[T_WaitingFor]
 
 
@@ -149,11 +166,14 @@ class Process(metaclass=ABCMeta):
         """
         pass
 
-    def die(self) -> None:
+    def die(self, death_message: Optional[str] = None) -> None:
         """
         Kills the process!
         After this function is called, the process will not run a single line of code - ever...
         """
+        if death_message:
+            self.computer.print(death_message)
+
         self.kill_me = True
         if self.computer.process_scheduler.is_inside_this_process(self):
             raise ProcessInternalError_Suicide
@@ -189,7 +209,7 @@ class Timeout:
     """
     tests if a certain time has passed since the creation of this object.
     """
-    def __init__(self, seconds: int) -> None:
+    def __init__(self, seconds: T_Time) -> None:
         """
         Initiates the `Timeout` object.
         :param seconds: the amount of seconds of the timeout

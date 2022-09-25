@@ -763,6 +763,7 @@ class Computer:
 
         This is a generator that yields `WaitingFor` objects
         To use in a computer `Process` - yield from this
+        If the command ended due to a timeout - None will be returned
         :param socket_list: List[Socket]
         :param timeout: the amount of seconds to wait before returning without a selected socket
         """

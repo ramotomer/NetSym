@@ -257,10 +257,10 @@ class DHCPServer(Process):
             self._bind_interface_to_socket(interface)
 
         while True:
-            ready_socket = yield from self.computer.select(self.sockets, timeout=0.5)
+            ready_socket = yield from self.computer.select(self.sockets, timeout=PROTOCOLS.DHCP.NEW_INTERFACE_DETECTION_TIMEOUT)
             self._detect_new_interfaces()
             if ready_socket is None:
-                continue
+                continue  # This means `select` ended due to timeout!
 
             received_packets = ready_socket.receive()
 

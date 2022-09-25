@@ -3,7 +3,8 @@ from typing import NamedTuple, Optional
 
 from recordclass import recordclass
 
-from computing.internals.processes.abstracts.process import ProcessInternalError, Process, T_WaitingFor
+from computing.internals.processes.abstracts.process import ProcessInternalError, Process, T_WaitingFor, WaitingForPacket, \
+    WaitingForPacketWithTimeout, WaitingFor, WaitingForWithTimeout
 from consts import COMPUTER
 from exceptions import NoSuchProcessError
 from gui.main_loop import MainLoop
@@ -220,10 +221,12 @@ class ProcessScheduler:
         """
         waiting_processes = self.__details_by_mode[mode].waiting_processes
         for waiting_process in waiting_processes[:]:
-            if not hasattr(waiting_process.waiting_for, "value"):
-                if waiting_process.waiting_for.condition():
-                    waiting_processes.remove(waiting_process)
-                    ready_processes.append(waiting_process.process)
+            if not isinstance(waiting_process.waiting_for, (WaitingFor, WaitingForWithTimeout)):
+                continue
+
+            if waiting_process.waiting_for.condition():
+                waiting_processes.remove(waiting_process)
+                ready_processes.append(waiting_process.process)
 
     def _decide_if_process_ready_by_packet(self, waiting_process, received_packet, ready_processes, mode):
         """
@@ -245,7 +248,7 @@ class ProcessScheduler:
         process, waiting_for = waiting_process
         packet, packet_metadata = received_packet.packet_and_metadata
 
-        if not hasattr(waiting_for, "value"):
+        if not isinstance(waiting_for, (WaitingForPacket, WaitingForPacketWithTimeout)):
             return False
 
         if waiting_for.condition(packet):

@@ -165,6 +165,7 @@ class PROTOCOLS:
 
     class DHCP:
         DEFAULT_TTL = 0
+        NEW_INTERFACE_DETECTION_TIMEOUT = 0.5
 
     class TCP:
         MAX_SEQUENCE_NUMBER = 2**32 - 1
@@ -205,6 +206,8 @@ class PROTOCOLS:
 
     class DNS:
         DEFAULT_TIME_TO_LIVE = 5 * 60  # seconds
+        CLIENT_QUERY_TIMEOUT = 12      # seconds
+        DEFAULT_RETRY_COUNT = 3
 
 
 class PORTS:

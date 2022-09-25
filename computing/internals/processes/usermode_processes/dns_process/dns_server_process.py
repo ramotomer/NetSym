@@ -36,12 +36,12 @@ class DNSServerProcess(Process):
 
         self._default_time_to_live = default_time_to_live
 
-    def _is_query_valid(self, udp_packet_data: bytes) -> bool:
+    def _is_query_valid(self, query_bytes: bytes) -> bool:
         """
         Whether or not the server should answer the request that was sent to it
         """
         try:
-            parsed_dns_packet = DNS(udp_packet_data)
+            parsed_dns_packet = self._parse_dns_query(query_bytes)
         except struct.error:
             return False
         return not parsed_dns_packet.opcode.is_response
@@ -92,14 +92,18 @@ class DNSServerProcess(Process):
         """
         Start doing everything that is required in order to resolve the supplied domain name
         """
+        if domain_name in self.computer.dns_table:
+            return  # name is known - no need to resolve :)
+
+        # ...
 
     @staticmethod
-    def _parse_dns_query(udp_packet_data: bytes) -> scapy.packet.Packet:
+    def _parse_dns_query(query_bytes: bytes) -> scapy.packet.Packet:
         """
         Take in raw bytes and return out `DNS` object
         The query should be valid, after it was tested in the `_is_query_valid` method
         """
-        return DNS(udp_packet_data)
+        return DNS(query_bytes)
 
     def code(self) -> T_ProcessCode:
         """
@@ -111,14 +115,14 @@ class DNSServerProcess(Process):
         while True:
             yield from self.socket.block_until_received()
             returned_udp_packets = self.socket.receivefrom()
-            for udp_packet_data, client_ip, client_port in returned_udp_packets:
-                if (client_ip, client_port) in self._active_queries:
+            for udp_packet_data, client_address in returned_udp_packets:
+                if client_address in self._active_queries.values():
                     break  # The client has requested the same address again from the same port! ignore...
 
-                if not self._is_query_valid(udp_packet_data):
-                    break  # Ignore invalid queries
+                if not self._is_query_valid(query_bytes=udp_packet_data):
+                    break  # Query is invalid! ignore...
 
-                dns_query = self._parse_dns_query(udp_packet_data)
+                dns_query = self._parse_dns_query(query_bytes=udp_packet_data)
                 if dns_query.query_count > 1:
                     raise NotImplementedError(f"multiple queries in the same packet! count: {dns_query.query_count}")
                 self._resolve_name(dns_query.queries[0].query_name)
