@@ -25,12 +25,14 @@ from computing.internals.shell.commands.misc.grep import Grep
 from computing.internals.shell.commands.net.arp import Arp
 from computing.internals.shell.commands.net.arping import Arping
 from computing.internals.shell.commands.net.brctl.brctl import Brctl
+from computing.internals.shell.commands.net.dns import Dns
 from computing.internals.shell.commands.net.echoc import Echoc
 from computing.internals.shell.commands.net.echos import Echos
 from computing.internals.shell.commands.net.ip.ip import Ip
 from computing.internals.shell.commands.net.ip.ip_address import IpAddressCommand
 from computing.internals.shell.commands.net.ip.ip_route import IpRouteCommand
 from computing.internals.shell.commands.net.netstat import Netstat
+from computing.internals.shell.commands.net.nslookup import Nslookup
 from computing.internals.shell.commands.net.ping import Ping
 from computing.internals.shell.commands.net.tcpdump import Tcpdump
 from computing.internals.shell.commands.processes.kill import Kill
@@ -54,7 +56,7 @@ class Shell:
 
         self.commands = [Echo, Ls, Cd, Pwd, Touch, Cat, Mkdir, Rm, Uname, Grep,
                          Ip, Arp, Ps, Ping, Arping, Tcpdump, Kill, Hostname, Netstat, Cp, Uptime,
-                         Mv, Alias, Unalias, Help, Head, Tail, Man, Echoc, Echos, Watch, Brctl]
+                         Mv, Alias, Unalias, Help, Head, Tail, Man, Echoc, Echos, Watch, Brctl, Nslookup, Dns]
         self.commands = [command(computer, self) for command in self.commands]
 
         self.parser_commands = {

@@ -123,6 +123,7 @@ class Computer:
         self.arp_cache = ArpCache()  # a dictionary of {<ip address> : ARPCacheItem(<mac address>, <initiation time of this item>)
         self.routing_table = RoutingTable.create_default(self)
         self.dns_table = DNSTable()
+        self.dns_server: Optional[IPAddress] = None
 
         self.filesystem = Filesystem.with_default_dirs()
         self.process_scheduler = ProcessScheduler(self)

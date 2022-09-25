@@ -22,7 +22,7 @@ class Arping(Command):
 
     def action(self, parsed_args):
         """
-        prints out the arguments.
+        performs the action of the command
         """
         if not IPAddress.is_valid(parsed_args.ip):
             return CommandOutput('', "IP address is not valid!")

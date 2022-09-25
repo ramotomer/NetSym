@@ -51,3 +51,25 @@ class DNSTable:
         for domain_name, dns_item in list(self.__table.items()):
             if MainLoop.instance.time_since(dns_item.creation_time) > dns_item.ttl:
                 del self.__table[domain_name]
+
+    def wipe(self) -> None:
+        """
+        Clear the DNS table of all entries
+        """
+        self.__table.clear()
+
+    def __repr__(self) -> str:
+        """
+        A textual representation of the table
+        Can be seen using the `dns -a` command
+        """
+        returned = "DNS Table:\n" + ("-" * 30)
+        for domain_name, table_item in self.__table.items():
+            returned += "\n"
+            returned += f"""
+{'Record Name':.<20}: {domain_name}
+{'Record Type':.<20}: A
+{'Time To Live':.<20}: {table_item.ttl}
+{'A (Host) Record':.<20}: {table_item.ip_address.string_ip}
+"""
+        return returned
