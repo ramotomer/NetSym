@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Tuple, TYPE_CHECKING
+from typing import Tuple, TYPE_CHECKING, Optional
 
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import WaitingFor, T_ProcessCode, WaitingForWithTimeout, Timeout
@@ -80,7 +80,7 @@ class Socket(metaclass=ABCMeta):
         :return:
         """
 
-    def block_until_received(self, timeout: T_Time) -> T_ProcessCode:
+    def block_until_received(self, timeout: Optional[T_Time] = None) -> T_ProcessCode:
         """
         Like `self.receive` but is a generator that process can use `yield from` upon.
         takes in a list, appends it with the received data when the generator is over.

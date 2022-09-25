@@ -233,6 +233,7 @@ class PORTS:
         HTTP: "processes/http_process.png",
         HTTPS: "processes/https_process.png",
         ECHO_SERVER: "processes/echo_server_process.png",
+        DNS: "processes/dns_process.png",
     }
 
 

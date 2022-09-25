@@ -20,6 +20,7 @@ from computing.internals.processes.process_scheduler import ProcessScheduler
 from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEServerProcess
 from computing.internals.processes.usermode_processes.dhcp_process import DHCPClient
 from computing.internals.processes.usermode_processes.dhcp_process import DHCPServer
+from computing.internals.processes.usermode_processes.dns_process.dns_server_process import DNSServerProcess
 from computing.internals.processes.usermode_processes.echo_server_process import EchoServerProcess
 from computing.internals.processes.usermode_processes.ftp_process import ServerFTPProcess
 from computing.internals.processes.usermode_processes.ping_process import SendPing
@@ -88,8 +89,9 @@ class Computer:
         },
         "UDP": {
             PORTS.DHCP_SERVER: DHCPServer,
-            PORTS.ECHO_SERVER: EchoServerProcess,
             # TODO: a bug that i thought of - this port will not really be open because DHCP uses raw sockets
+            PORTS.ECHO_SERVER: EchoServerProcess,
+            PORTS.DNS: DNSServerProcess,
         },
     }
 
