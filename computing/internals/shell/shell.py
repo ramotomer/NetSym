@@ -1,4 +1,5 @@
 import os
+from typing import TYPE_CHECKING, Tuple, List
 
 from computing.internals.shell.commands.command import SyntaxArgumentMessage, CommandOutput
 from computing.internals.shell.commands.filesystem.cat import Cat
@@ -40,13 +41,17 @@ from computing.internals.shell.commands.processes.ps import Ps
 from consts import CONSOLE, FILESYSTEM
 from usefuls.funcs import called_in_order, all_indexes
 
+if TYPE_CHECKING:
+    from computing.computer import Computer
+    from gui.tech.shell_graphics import ShellGraphics
+
 
 class Shell:
     """
     Receives a command string in the CLI and translates it into a command and arguments for the computer
     to run.
     """
-    def __init__(self, computer, shell_graphics):
+    def __init__(self, computer: Computer, shell_graphics: ShellGraphics) -> None:
         """
         Initiates the `Shell` with the computer that it is related to.
         :param computer:
@@ -90,19 +95,17 @@ class Shell:
         self.aliases = {}
 
     @property
-    def cwd_path(self):
+    def cwd_path(self) -> str:
         return self.cwd.full_path
 
     @staticmethod
-    def _unknown_command(command):
+    def _unknown_command(command: str) -> str:
         """
         Returns a string that says that.
-        :param command:
-        :return:
         """
         return f"Unknown command {command}"
 
-    def write_output(self, command_output, filename=None, append=False):
+    def write_output(self, command_output, filename=None, append=False) -> None:
         """
         Writes out nicely the output that is given.
         :param command_output: `CommandOutput`
@@ -119,7 +122,7 @@ class Shell:
         else:
             self.shell_graphics.write(output_string)
 
-    def write_history(self):
+    def write_history(self) -> None:
         """
         Writes out the history
         :return:
@@ -127,7 +130,7 @@ class Shell:
         self.shell_graphics.write('\n'.join(self.history))
 
     @staticmethod
-    def _contains_redirections(string):
+    def _contains_redirections(string) -> bool:
         """
         Returns whether or not a command contains redirections (> or >>)
         :param string:
@@ -136,10 +139,9 @@ class Shell:
         return string.count(CONSOLE.SHELL.REDIRECTION) in {1, 2}
 
     @staticmethod
-    def _handle_redirections(string):
+    def _handle_redirections(string: str) -> Tuple[str, str, bool]:
         """
         :param string:
-        :return: (filename, is_appending)
         """
         is_appending = ((2 * CONSOLE.SHELL.REDIRECTION) in string)
         splitted = string.split(CONSOLE.SHELL.REDIRECTION)
@@ -149,7 +151,7 @@ class Shell:
         return new_string_command, filename, is_appending
 
     @staticmethod
-    def _contains_piping(string):
+    def _contains_piping(string: str) -> bool:
         """
         checks if the string does
         :param string:
@@ -157,7 +159,7 @@ class Shell:
         """
         return CONSOLE.SHELL.PIPING_CHAR in string
 
-    def scroll_up_history(self):
+    def scroll_up_history(self) -> None:
         """
         allows to go up and down the history of commands
         :return:
@@ -171,7 +173,7 @@ class Shell:
             self.shell_graphics.clear_line()
             self.shell_graphics.write_to_line(self.history[::-1][self.history_index])
 
-    def scroll_down_history(self):
+    def scroll_down_history(self) -> None:
         """
         allows to go up and down the history of commands
         :return:
@@ -184,7 +186,7 @@ class Shell:
         self.shell_graphics.write_to_line(([''] + self.history[::-1])[self.history_index + 1])
 
     @staticmethod
-    def _split_by_command_enders_outside_of_quotes(string):
+    def _split_by_command_enders_outside_of_quotes(string: str)  -> List[str]:
         """"""
         indexes = [index for index in all_indexes(string, ';')
                    if string[:index].count("\'") % 2 == 0 and string[:index].count('\"') % 2 == 0]
@@ -197,7 +199,7 @@ class Shell:
         return returned
 
     @classmethod
-    def _does_string_require_split_by_command_enders(cls, string):
+    def _does_string_require_split_by_command_enders(cls, string: str) -> bool:
         """
         Returns that
         :param string:
@@ -206,14 +208,12 @@ class Shell:
         return (CONSOLE.SHELL.END_COMMAND in string) and \
                (len(cls._split_by_command_enders_outside_of_quotes(string)) != 1)
 
-    def execute(self, string, record_in_shell_history=True):
+    def execute(self, string: str, record_in_shell_history: bool = True) -> None:
         """
 
         The main function of the shell. This happens when one presses enter.
 
         Receives the string of a command and writes the output to the screen
-        :param string:
-        :return:
         """
         if not string.split():  # string is empty or all spaces
             return
@@ -249,7 +249,7 @@ class Shell:
         else:
             self.shell_graphics.write(self._unknown_command(command))
 
-    def execute_regular_command(self, full_string):
+    def execute_regular_command(self, full_string: str) -> None:
         """
         operates the command, writes to file, does piping (in the future, and more!)
         :param full_string:
@@ -267,7 +267,7 @@ class Shell:
             self.write_output(self.output_of_command(command), filename=FILESYSTEM.PIPING_FILE)
         self.write_output(self.output_of_command(commands[-1]), filename=output_filename, append=is_appending)
 
-    def output_of_command(self, string):
+    def output_of_command(self, string: str) -> CommandOutput:
         """
         Receive a string command, return its output. (parses and runs it...)
         :param string:
@@ -280,7 +280,7 @@ class Shell:
         return parsed_command.command_class.action(parsed_command.parsed_args)
 
     @staticmethod
-    def _handle_piping(string):
+    def _handle_piping(string: str) -> List[str]:
         """
         Runs all of the commands except the last one, returns it.
         :param string:

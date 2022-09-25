@@ -87,7 +87,7 @@ class Directory:
         self.files[name] = File(name, '')
 
     @property
-    def full_path(self):
+    def full_path(self) -> str:
         if self.parent is self:
             return self.name
         if self.parent.parent is self.parent:
