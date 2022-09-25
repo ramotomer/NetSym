@@ -6,7 +6,7 @@ import scapy
 
 from address.ip_address import IPAddress
 from computing.internals.sockets.l4_socket import L4Socket
-from consts import COMPUTER
+from consts import COMPUTER, T_Port
 from exceptions import *
 
 if TYPE_CHECKING:
@@ -19,7 +19,7 @@ class ReturnedUDPPacket(NamedTuple):
     """
     data:     bytes
     src_ip:   IPAddress
-    src_port: int
+    src_port: T_Port
 
 
 class UDPSocket(L4Socket):
@@ -37,7 +37,7 @@ class UDPSocket(L4Socket):
         """
         super(UDPSocket, self).__init__(computer, address_family, COMPUTER.SOCKETS.TYPES.SOCK_DGRAM)
 
-    def sendto(self, data: Union[str, bytes, scapy.packet.Packet], address: Tuple[IPAddress, int]) -> None:
+    def sendto(self, data: Union[str, bytes, scapy.packet.Packet], address: Tuple[IPAddress, T_Port]) -> None:
         """
         Sends down the socket some data
         """
@@ -70,7 +70,7 @@ class UDPSocket(L4Socket):
         self.assert_is_connected()
         return [self.received.pop(0).data for _ in range(len(self.received))]
 
-    def connect(self, address: Tuple[IPAddress, int]) -> None:
+    def connect(self, address: Tuple[IPAddress, T_Port]) -> None:
         """
         Connect to a listening socket with the given address
         :param address:

@@ -3,7 +3,7 @@ from typing import Tuple
 
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.tcp_process import TCPProcess
-from consts import COMPUTER
+from consts import COMPUTER, T_Port
 
 
 class TCPSocketProcess(TCPProcess, metaclass=ABCMeta):
@@ -95,7 +95,7 @@ class ConnectingTCPSocketProcess(TCPSocketProcess):
     """
     The process of a socket that is initiating the connection to the remote socket.
     """
-    def __init__(self, pid, computer, socket, dst_address: Tuple[IPAddress, int]):
+    def __init__(self, pid, computer, socket, dst_address: Tuple[IPAddress, T_Port]):
         """
         Initiates the process with a src socket and the running computer
         :param computer:

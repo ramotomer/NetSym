@@ -4,7 +4,7 @@ from typing import Tuple, TYPE_CHECKING
 
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import Process
-from consts import COMPUTER, PORTS, PROTOCOLS
+from consts import COMPUTER, PORTS, PROTOCOLS, T_Port
 
 if TYPE_CHECKING:
     from computing.computer import Computer
@@ -40,7 +40,7 @@ class EchoClientProcess(Process):
     def __init__(self,
                  pid: int,
                  computer: Computer,
-                 server_address: Tuple[IPAddress, int],
+                 server_address: Tuple[IPAddress, T_Port],
                  data: str,
                  count: int = PROTOCOLS.ECHO_SERVER.DEFAULT_REQUEST_COUNT) -> None:
         super(EchoClientProcess, self).__init__(pid, computer)

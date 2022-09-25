@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Tuple, Optional
 
 import scapy
 
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import Process, T_ProcessCode
-from consts import COMPUTER, OPCODES
+from consts import OPCODES
 from packets.all import DNS
 from packets.usefuls.dns import list_to_dns_query, DNSQueryRecord
 
 if TYPE_CHECKING:
+    from computing.internals.sockets.udp_socket import UDPSocket
     from computing.computer import Computer
 
 
@@ -29,12 +30,15 @@ class DNSClientProcess(Process):
         self._server_address = server_address
         self._name_to_resolve = name_to_resolve
 
-        self.socket = None
+        self.socket: Optional[UDPSocket] = None
 
     def _build_dns_query(self, name_to_resolve: str, is_recursion_desired: bool = True) -> scapy.packet.Packet:
         """
         Builds the DNS layer of the packet to send to the server
         """
+        if not is_recursion_desired:
+            raise NotImplementedError(f"Only recursive DNS queries are currently supported")
+
         query = DNS(
             transaction_id=self.computer.dns_table.transaction_counter,
             is_response=False,
@@ -62,7 +66,7 @@ class DNSClientProcess(Process):
         """
         The main code of the process
         """
-        self.socket = self.computer.get_socket(kind=COMPUTER.SOCKETS.TYPES.SOCK_DGRAM, requesting_process_pid=self.pid)
+        self.socket = self.computer.get_udp_socket(self.pid)
         self.socket.bind()
         self.socket.connect(self._server_address)
 

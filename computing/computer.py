@@ -307,6 +307,7 @@ class Computer:
         """
         self._cleanup_unused_sockets()
         self.arp_cache.forget_old_items()
+        self.dns_table.forget_old_items()
 
     def add_interface(self,
                       name: Optional[str] = None,
@@ -829,14 +830,14 @@ class Computer:
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
         return interface.ethernet_wrap(dst_mac, IP(src=str(interface.ip), dst=str(dst_ip), ttl=TTL.BY_OS[self.os]) / protocol)
 
-    def udp_wrap(self, dst_mac: MACAddress, dst_ip: IPAddress, src_port: int, dst_port: int, protocol: scapy.packet.Packet) -> Packet:
+    def udp_wrap(self, dst_mac: MACAddress, dst_ip: IPAddress, src_port: T_Port, dst_port: T_Port, protocol: scapy.packet.Packet) -> Packet:
         """
         Takes in some protocol and wraps it up in Ethernet and IP with the appropriate MAC and IP addresses and TTL and UDP with the supplied ports
         all ready to be sent
         """
         return self.ip_wrap(dst_mac, dst_ip, UDP(sport=src_port, dport=dst_port) / protocol)
 
-    def start_sending_udp_packet(self, dst_ip: IPAddress, src_port: int, dst_port: int, data: Union[str, bytes, scapy.packet.Packet]) -> None:
+    def start_sending_udp_packet(self, dst_ip: IPAddress, src_port: T_Port, dst_port: T_Port, data: Union[str, bytes, scapy.packet.Packet]) -> None:
         """
         Takes in some protocol and wraps it up in IP with the appropriate IP addresses and TTL.
         Starts a process to resolve the MAC and once resolved - construct the packet and send it.
@@ -969,16 +970,52 @@ class Computer:
             COMPUTER.SOCKETS.TYPES.SOCK_RAW: RawSocket,
             COMPUTER.SOCKETS.TYPES.SOCK_DGRAM: UDPSocket,
         }[kind](self, address_family)
-        self.sockets[socket] = SocketData(kind=kind,
-                                          local_ip_address=None,
-                                          local_port=None,
-                                          remote_ip_address=None,
-                                          remote_port=None,
-                                          state=COMPUTER.SOCKETS.STATES.UNBOUND,
-                                          pid=requesting_process_pid)
+
+        self.sockets[socket] = SocketData(
+            kind=kind,
+            local_ip_address=None,
+            local_port=None,
+            remote_ip_address=None,
+            remote_port=None,
+            state=COMPUTER.SOCKETS.STATES.UNBOUND,
+            pid=requesting_process_pid,
+        )
         return socket
 
-    def _is_port_taken(self, port: int, kind: int = COMPUTER.SOCKETS.TYPES.SOCK_STREAM) -> bool:
+    def get_udp_socket(self, requesting_process_pid: int) -> UDPSocket:
+        """
+        Allows programs on the computer to acquire a UDP network socket.
+        """
+        returned = self.get_socket(requesting_process_pid, kind=COMPUTER.SOCKETS.TYPES.SOCK_DGRAM)
+        if isinstance(returned, UDPSocket):
+            return returned
+
+        raise ThisCodeShouldNotBeReached(f"Socket {returned} is not a UDPSocket!!! it is a {type(returned)}. "
+                                         f"This means `get_socket` returned the wrong type")
+
+    def get_tcp_socket(self, requesting_process_pid: int) -> TCPSocket:
+        """
+        Allows programs on the computer to acquire a TCP network socket.
+        """
+        returned = self.get_socket(requesting_process_pid)
+        if isinstance(returned, TCPSocket):
+            return returned
+
+        raise ThisCodeShouldNotBeReached(f"Socket {returned} is not a TCPSocket!!! it is a {type(returned)}. "
+                                         f"This means `get_socket` returned the wrong type")
+
+    def get_raw_socket(self, requesting_process_pid: int) -> RawSocket:
+        """
+        Allows programs on the computer to acquire a raw network socket.
+        """
+        returned = self.get_socket(requesting_process_pid)
+        if isinstance(returned, RawSocket):
+            return returned
+
+        raise ThisCodeShouldNotBeReached(f"Socket {returned} is not a RawSocket!!! it is a {type(returned)}. "
+                                         f"This means `get_socket` returned the wrong type")
+
+    def _is_port_taken(self, port: T_Port, kind: int = COMPUTER.SOCKETS.TYPES.SOCK_STREAM) -> bool:
         """
         Returns whether or not a port is already bound to a socket.
         """
@@ -990,7 +1027,7 @@ class Computer:
 
         return any(map(is_registered_on_port, self.sockets.values()))
 
-    def bind_socket(self, socket: Socket, address: Tuple[IPAddress, int]) -> None:
+    def bind_socket(self, socket: Socket, address: Tuple[IPAddress, T_Port]) -> None:
         """
         bind a socket you acquired from the computer to a specific port and address.
         :param socket: a return value of `self.get_socket`

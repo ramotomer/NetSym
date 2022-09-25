@@ -23,6 +23,7 @@ SENDING_GRAT_ARPS = False
 
 T_Time = float
 T_Color = Tuple[int, ...]
+T_Port = int
 
 
 class ADDRESSES:
@@ -201,6 +202,9 @@ class PROTOCOLS:
 
     class ECHO_SERVER:
         DEFAULT_REQUEST_COUNT = 1
+
+    class DNS:
+        DEFAULT_TIME_TO_LIVE = 5 * 60  # seconds
 
 
 class PORTS:

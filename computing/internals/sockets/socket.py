@@ -3,7 +3,7 @@ from typing import Tuple
 
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import WaitingFor
-from consts import COMPUTER
+from consts import COMPUTER, T_Port
 from exceptions import SocketNotBoundError, SocketIsClosedError
 
 
@@ -67,7 +67,7 @@ class Socket(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def bind(self, address: Tuple[IPAddress, int]):
+    def bind(self, address: Tuple[IPAddress, T_Port]):
         """
         Binds the socket to a certain address and port on the computer
         :param address:

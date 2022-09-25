@@ -5,6 +5,8 @@ from address.ip_address import IPAddress
 from consts import T_Time
 from gui.main_loop import MainLoop
 
+T_DomainName = str
+
 
 @dataclass
 class DNSTableItem:
@@ -21,22 +23,28 @@ class DNSTable:
         """
         Create an empty DNS TAble
         """
-        self.__table: Dict[str, DNSTableItem] = {}
+        self.__table: Dict[T_DomainName, DNSTableItem] = {}
         self.transaction_counter = 0
 
-    def __getitem__(self, item: str) -> DNSTableItem:
+    def __getitem__(self, item: T_DomainName) -> DNSTableItem:
         """
         Resolve a DNS name
         """
         return self.__table[item]
 
-    def add_item(self, name: str, ip_address: IPAddress, ttl: int) -> None:
+    def __contains__(self, item: T_DomainName) -> bool:
+        """
+        Whether or not the DNS table contains the supplied name
+        """
+        return item in self.__table
+
+    def add_item(self, name: T_DomainName, ip_address: IPAddress, ttl: int) -> None:
         """
         Adds a new item to the table
         """
         self.__table[name] = DNSTableItem(ip_address, ttl, MainLoop.instance.time())
 
-    def remove_expired_items(self) -> None:
+    def forget_old_items(self) -> None:
         """
         Remove all items in the table that their TTL (time to live) has expired
         """
