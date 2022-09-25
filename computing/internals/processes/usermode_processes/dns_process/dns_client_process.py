@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Tuple, Optional
 import scapy
 
 from address.ip_address import IPAddress
-from computing.internals.dns_table import T_DomainName
+from computing.internals.dns_cache import T_DomainName
 from computing.internals.processes.abstracts.process import Process, T_ProcessCode
 from consts import OPCODES, PROTOCOLS, T_Time
 from packets.all import DNS
@@ -69,7 +69,7 @@ class DNSClientProcess(Process):
             raise NotImplementedError(f"Only recursive DNS queries are currently supported")
 
         query = DNS(
-            transaction_id=self.computer.dns_table.transaction_counter,
+            transaction_id=self.computer.dns_cache.transaction_counter,
             is_response=False,
             is_recursion_desired=is_recursion_desired,
 
@@ -81,14 +81,14 @@ class DNSClientProcess(Process):
                 )
             ]),
         )
-        self.computer.dns_table.transaction_counter += 1
+        self.computer.dns_cache.transaction_counter += 1
         return query
 
     def _extract_dns_answer(self, dns_answer: scapy.packet.Packet) -> Tuple[T_DomainName, IPAddress, int]:
 
         """
         Take in the answer packet that was sent from the server
-        Return the interesting information to insert in the DNS table of the computer
+        Return the interesting information to insert in the DNS cache of the computer
         """
         if dns_answer.answer_record_count > 1:
             raise NotImplementedError(f"Multiple answers in the packet!")
@@ -117,7 +117,7 @@ class DNSClientProcess(Process):
             if received:
                 dns_answer = received[0]
                 _, ip_address, ttl = self._extract_dns_answer(dns_answer)
-                self.computer.dns_table.add_item(self._name_to_resolve, ip_address, ttl)
+                self.computer.dns_cache.add_item(self._name_to_resolve, ip_address, ttl)
                 break
         else:
             self.die(f"ERROR: DNS could not resolve name :(")

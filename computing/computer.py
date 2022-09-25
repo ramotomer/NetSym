@@ -11,7 +11,7 @@ from recordclass import recordclass
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
 from computing.internals.arp_cache import ArpCache
-from computing.internals.dns_table import DNSTable
+from computing.internals.dns_cache import DNSCache
 from computing.internals.filesystem.filesystem import Filesystem
 from computing.internals.interface import Interface
 from computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket, WaitingFor
@@ -122,7 +122,7 @@ class Computer:
 
         self.arp_cache = ArpCache()  # a dictionary of {<ip address> : ARPCacheItem(<mac address>, <initiation time of this item>)
         self.routing_table = RoutingTable.create_default(self)
-        self.dns_table = DNSTable()
+        self.dns_cache = DNSCache()
         self.dns_server: Optional[IPAddress] = None
 
         self.filesystem = Filesystem.with_default_dirs()
@@ -308,7 +308,7 @@ class Computer:
         """
         self._cleanup_unused_sockets()
         self.arp_cache.forget_old_items()
-        self.dns_table.forget_old_items()
+        self.dns_cache.forget_old_items()
 
     def add_interface(self,
                       name: Optional[str] = None,

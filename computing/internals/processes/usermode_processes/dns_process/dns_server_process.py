@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Dict, Tuple, Optional
 import scapy
 
 from address.ip_address import IPAddress
-from computing.internals.dns_table import T_DomainName
+from computing.internals.dns_cache import T_DomainName
 from computing.internals.processes.abstracts.process import Process, T_ProcessCode
 from consts import PORTS, T_Port, PROTOCOLS
 from packets.all import DNS
@@ -53,7 +53,7 @@ class DNSServerProcess(Process):
         :return:
         """
         dns_answer = DNS(
-            transaction_id=self.computer.dns_table.transaction_counter,
+            transaction_id=self.computer.dns_cache.transaction_counter,
             is_response=True,
             is_recursion_desired=True,
             is_recursion_available=True,
@@ -61,11 +61,11 @@ class DNSServerProcess(Process):
                 DNSResourceRecord(
                     record_name=domain_name,
                     time_to_live=self._default_time_to_live,
-                    record_data=self.computer.dns_table[domain_name].ip_address.string_ip,
+                    record_data=self.computer.dns_cache[domain_name].ip_address.string_ip,
                 )
             ])
         )
-        self.computer.dns_table.transaction_counter += 1
+        self.computer.dns_cache.transaction_counter += 1
         return dns_answer
 
     def _get_resolved_names(self) -> T_QueryDict:
@@ -73,7 +73,7 @@ class DNSServerProcess(Process):
         Check if any of the names you should have resolved have been resolved already
         Return them as a list
         """
-        return {name_to_resolve: client for name_to_resolve, client in self._active_queries.items() if name_to_resolve in self.computer.dns_table}
+        return {name_to_resolve: client for name_to_resolve, client in self._active_queries.items() if name_to_resolve in self.computer.dns_cache}
 
     def _send_query_answers_to_clients(self, query_dict: T_QueryDict) -> None:
         """
@@ -92,7 +92,7 @@ class DNSServerProcess(Process):
         """
         Start doing everything that is required in order to resolve the supplied domain name
         """
-        if domain_name in self.computer.dns_table:
+        if domain_name in self.computer.dns_cache:
             return  # name is known - no need to resolve :)
 
         # ...

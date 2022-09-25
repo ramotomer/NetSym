@@ -19,26 +19,26 @@ class Dns(Command):
         initiates the command.
         :param computer:
         """
-        super(Dns, self).__init__('dns', 'print out the dns table of the computer', computer, shell)
+        super(Dns, self).__init__('dns', 'print out the dns cache of the computer', computer, shell)
 
-        self.parser.add_argument('-a', '--all', dest='is_all', action='store_true', help='print out the dns table')
-        self.parser.add_argument('-d', '--delete', dest='is_delete', action='store_true', help='wipe table')
+        self.parser.add_argument('-a', '--all', dest='is_all', action='store_true', help='print out the dns cache')
+        self.parser.add_argument('-d', '--delete', dest='is_delete', action='store_true', help='wipe cache')
 
     def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
         prints out the arguments.
         """
         if parsed_args.is_all:
-            return CommandOutput(repr(self.computer.dns_table), '')
+            return CommandOutput(repr(self.computer.dns_cache), '')
 
         if parsed_args.is_delete:
-            self.computer.dns_table.wipe()
-            return CommandOutput("DNS table wiped successfully! :)", '')
+            self.computer.dns_cache.wipe()
+            return CommandOutput("DNS cache wiped successfully! :)", '')
 
         return CommandOutput(
             '',
             """usage:
-dns -a (to print out the dns table)
-dns -d (delete the dns table)
+dns -a (to print out the dns cache)
+dns -d (delete the dns cache)
 """
         )
