@@ -231,7 +231,8 @@ class DHCPServer(Process):
         socket.send(self.build_dhcp_pack(client_mac,
                                          offered_ip=self.in_session_with[client_mac],
                                          offered_gateway=self.interface_to_dhcp_data[interface].given_gateway,
-                                         session_interface=interface)
+                                         session_interface=interface,
+                                         dns_server=self.dns_server)
                     )
         del self.in_session_with[client_mac]
 

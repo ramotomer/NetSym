@@ -128,7 +128,7 @@ class ComputerGraphics(ImageGraphics):
 
             },
             DHCPServer: {
-                "Set DNS server": with_args(
+                "set DNS server (alt+n)": with_args(
                     user_interface.ask_user_for,
                     IPAddress,
                     MESSAGES.INSERT.DNS_SERVER_FOR_DHCP_SERVER,
@@ -136,6 +136,11 @@ class ComputerGraphics(ImageGraphics):
                 ),
             },
         }
+        all_buttons = {}
+        for process_type, button_dict in process_button_mapping.items():
+            if self.computer.process_scheduler.is_process_running_by_type(process_type):
+                all_buttons.update(button_dict)
+        return all_buttons
 
     def start_viewing(self,
                       user_interface: UserInterface,

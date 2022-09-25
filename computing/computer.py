@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from functools import reduce
 from operator import concat
-from typing import TYPE_CHECKING, Optional, List, Union, Type, Callable, NamedTuple
+from typing import TYPE_CHECKING, Optional, List, Union, Type, Callable, NamedTuple, Dict
 
 import scapy
 from recordclass import recordclass
@@ -125,7 +125,6 @@ class Computer:
         self.arp_cache = ArpCache()  # a dictionary of {<ip address> : ARPCacheItem(<mac address>, <initiation time of this item>)
         self.routing_table = RoutingTable.create_default(self)
         self.dns_cache = DNSCache()
-        self.dns_server: Optional[IPAddress] = None
 
         self.filesystem = Filesystem.with_default_dirs()
         self.process_scheduler = ProcessScheduler(self)
@@ -168,6 +167,42 @@ class Computer:
     def all_interfaces(self) -> List[Interface]:
         """Returns the list of interfaces with the loopback"""
         return self.interfaces + [self.loopback]
+
+    @property
+    def dns_server(self) -> Optional[IPAddress]:
+        """
+        Read the name of the DNS server from the '/etc/resolv.conf'
+        """
+        if not self.filesystem.exists(COMPUTER.FILES.CONFIGURATIONS.DNS_PATH):
+            return None
+
+        address = self.parse_conf_file_format(
+            COMPUTER.FILES.CONFIGURATIONS.DNS_PATH,
+            raise_if_does_not_exist=False
+        ).get('nameserver', [None])[0]  # TODO: what if multiple DNS servers? why only the first?
+
+        if address is not None:
+            return IPAddress(address)
+        return None
+
+    @dns_server.setter
+    def dns_server(self, value: Optional[IPAddress]) -> None:
+        """
+        Set the DNS server (in the /etc/resolv.conf file)
+        """
+        conf_value = self.parse_conf_file_format(
+            COMPUTER.FILES.CONFIGURATIONS.DNS_PATH,
+            raise_if_does_not_exist=False
+        )
+        if value is not None:
+            conf_value['nameserver'] = [str(value)]
+        else:
+            del conf_value['nameserver']
+
+        self.write_conf_file(
+            COMPUTER.FILES.CONFIGURATIONS.DNS_PATH,
+            conf_value,
+        )
 
     def get_open_ports(self, protocol: Optional[str] = None) -> List[int]:
         if protocol is None:
@@ -1078,6 +1113,54 @@ class Computer:
         """
         for socket in list(self.sockets):
             self.remove_socket(socket)
+
+    # -------------------------v file handling and parsing related methods v ---------------------------------------------
+
+    def parse_conf_file_format(self, absolute_path: str, raise_if_does_not_exist: bool = True) -> Dict[str, List[str]]:
+        """
+        Take in a path to a file in the computers filesystem
+        The file should be a `.conf` file in the linux conf format
+        The method returns parsed dict of the configuration
+        Example:
+            the file with contents:
+                ```
+                domain           sales.doc.com
+                nameserver       111.22.3.4
+                nameserver       123.45.6.1
+                ```
+            will return:
+            {
+                'domain': ['sales.doc.com'],
+                'nameserver': ['111.22.3.4', '123.45.6.1'],
+            }
+
+        If the file does not exists - can either raise or return {} (behaviour dictated by the parameter)
+        """
+        if not self.filesystem.exists(absolute_path):
+            if raise_if_does_not_exist:
+                raise FileNotFoundError
+            return {}
+
+        with self.filesystem.at_absolute_path(absolute_path) as f:
+            content = map(str, filter(bool, f.readlines()))
+            parsed = {}
+            for line in content:
+                key, value = line.strip().split()
+                parsed[key] = parsed.get(key, []) + [value]
+        return parsed
+
+    def write_conf_file(self, absolute_path: str, parsed_conf_file: Dict[str, List[str]]) -> None:
+        """
+        Does exactly the reverse of `parse_conf_file_format`
+        """
+        parent_directory = self.filesystem.at_absolute_path(os.path.dirname(absolute_path))
+        parent_directory.make_empty_file(os.path.basename(absolute_path),
+                                         raise_on_exists=False)
+
+        with self.filesystem.at_absolute_path(absolute_path) as f:
+            for key, values in parsed_conf_file.items():
+                for value in values:
+                    f.append(f"{key: <30} {value}")
 
     # ------------------------------- v The main `logic` method of the computer's main loop v --------------------------
 

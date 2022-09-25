@@ -410,7 +410,7 @@ class ProcessScheduler:
         """
         return self.start_process(COMPUTER.PROCESSES.MODES.KERNELMODE, process_type, *args)
 
-    def is_process_running_by_type(self, process_type, mode):
+    def is_process_running_by_type(self, process_type, mode=None):
         """
         Receives a type of a `Process` subclass and returns whether or not there is a process of that type that
         is running.
@@ -418,6 +418,9 @@ class ProcessScheduler:
         :param mode: one of COMPUTER.PROCESSES.MODES.ALL_MODES
         :return: `bool`
         """
+        if mode is None:
+            return any(self.is_process_running_by_type(process_type, any_mode) for any_mode in COMPUTER.PROCESSES.MODES.ALL_MODES)
+
         for process, _ in self.__details_by_mode[mode].waiting_processes:
             if isinstance(process, process_type):
                 return True

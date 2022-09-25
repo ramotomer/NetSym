@@ -821,3 +821,7 @@ class COMPUTER:
             REMOTE_ADDRESS_SPACE_COUNT = 22
             STATE_SPACE_COUNT = 15
             PROTO_SPACE_COUNT = 6
+
+    class FILES:
+        class CONFIGURATIONS:
+            DNS_PATH = "/etc/resolv.conf"

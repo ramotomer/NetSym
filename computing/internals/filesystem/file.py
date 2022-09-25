@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from datetime import datetime
+from typing import Optional, List
 
 from exceptions import FileNotOpenError
 from usefuls.funcs import datetime_from_string
@@ -8,7 +11,7 @@ class File:
     """
     A file in the computers filesystem.
     """
-    def __init__(self, name, content=''):
+    def __init__(self, name: str, content: str = '') -> None:
         """
         Initiated with its contents
         :param content: `str`
@@ -21,7 +24,7 @@ class File:
         self._is_open_for_reading = False
         self._is_open_for_writing = False
 
-    def open(self, read=True, write=True):
+    def open(self, read: bool = True, write: bool = True) -> None:
         """
         open the file and receive a file descriptor for it, in-order to read it.
         :return:
@@ -31,7 +34,7 @@ class File:
         if write:
             self._is_open_for_writing = True
 
-    def read(self):
+    def read(self) -> str:
         """
         Read the files content
         :return:
@@ -40,11 +43,9 @@ class File:
             return self.__content
         raise FileNotOpenError("Cannot read from closed file for reading!")
 
-    def write(self, data):
+    def write(self, data: str) -> None:
         """
         Write data to the file
-        :param data:
-        :return:
         """
         if self._is_open_for_writing:
             self.__content = data
@@ -52,7 +53,7 @@ class File:
         else:
             raise FileNotOpenError("Cannot write to closed file for writing!")
 
-    def append(self, data):
+    def append(self, data: str) -> None:
         """
         Append data to the end of a file.
         :param data:
@@ -60,7 +61,7 @@ class File:
         """
         self.write(self.read() + data)
 
-    def close(self):
+    def close(self) -> None:
         """
         Close the file
         :return:
@@ -68,7 +69,7 @@ class File:
         self._is_open_for_reading = False
         self._is_open_for_writing = False
 
-    def __enter__(self):
+    def __enter__(self) -> File:
         """
         For context-manager syntax
         :return:
@@ -76,7 +77,7 @@ class File:
         self.open()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """
         For context-manager syntax
         :param exc_type:
@@ -110,13 +111,17 @@ class File:
         file.last_edit_time = datetime_from_string(dict_["last_edit_time"])
         return file
 
-    def copy(self, new_name=None):
+    def copy(self, new_name: Optional[str] = None) -> File:
         """
         Returns a new file object, that is identical
         :return:
         """
         name = self.name if new_name is None else new_name
         return self.__class__(name, self.__content)
+
+    def readlines(self) -> List[str]:
+        """read and split by line"""
+        return self.read().splitlines()
 
 
 class PipingFile(File):

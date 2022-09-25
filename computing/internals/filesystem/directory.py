@@ -78,12 +78,14 @@ class Directory:
 
         self.directories[name] = Directory(name=name, parent=self, mount=mount)
 
-    def make_empty_file(self, name):
+    def make_empty_file(self, name, raise_on_exists=True):
         """
         Create an empty file
-        :param name:
-        :return:
         """
+        if name in self.files:
+            if raise_on_exists:
+                raise FileExistsError
+            return
         self.files[name] = File(name, '')
 
     @property

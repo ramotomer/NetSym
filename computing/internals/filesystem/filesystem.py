@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from computing.internals.filesystem.directory import Directory
 from computing.internals.filesystem.file import File, PipingFile
@@ -93,9 +94,9 @@ class Filesystem:
             return self.at_absolute_path(path)
         return cwd.at_relative_path(path)
 
-    def is_file(self, path, cwd: Directory = None):
+    def exists(self, path: str, cwd: Optional[Directory] = None) -> bool:
         """
-        Returns whether or not the path points to a file (and if it even exists at all).
+        Returns whether or not the path points to anything
         :param path: absolute path!
         :param cwd: if the path is not absolute, must supply the current directory.
         :return:
@@ -104,11 +105,19 @@ class Filesystem:
             raise PathError("path must be absolute if no cwd was specified!")
 
         try:
-            item = self.at_path(cwd, path)
+            self.at_path(cwd, path)
         except NoSuchItemError:
             return False
+        return True
 
-        return isinstance(item, File)
+    def is_file(self, path: str, cwd: Optional[Directory] = None) -> bool:
+        """
+        Returns whether or not the path points to a file (and if it even exists at all).
+        :param path: absolute path!
+        :param cwd: if the path is not absolute, must supply the current directory.
+        :return:
+        """
+        return self.exists(path, cwd) and isinstance(self.at_path(cwd, path), File)
 
     def separate_base(self, path):
         """
