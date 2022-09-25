@@ -612,6 +612,13 @@ class Computer:
         self.process_scheduler.kill_all_usermode_processes_by_type(DHCPClient)  # if currently asking for dhcp, stop it
         self.process_scheduler.start_usermode_process(DHCPClient)
 
+    def set_dns_server_for_dhcp_server(self, dns_server: IPAddress) -> None:
+        """
+        Assumes that the computer is a DHCP server
+        Sets the address of the DNS server that the DHCPServer give new clients
+        """
+        self.process_scheduler.get_usermode_process_by_type(DHCPServer).dns_server = dns_server
+
     def open_port(self, port_number: int, protocol: str = "TCP") -> None:
         """
         Opens a port on the computer. Starts the process that is behind it.

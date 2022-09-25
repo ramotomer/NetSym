@@ -278,6 +278,7 @@ class MESSAGES:
         PORT_NUMBER = "Insert a port number to open/close:"
         COMPUTER_NAME = "Insert a new name for the computer:"
         COLOR = "choose a color:"
+        DNS_SERVER_FOR_DHCP_SERVER = "What DNS server should your DHCP server supply?"
 
 
 class DIRECTORIES:

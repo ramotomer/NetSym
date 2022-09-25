@@ -2,18 +2,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, NamedTuple, Optional
 
-import scapy
-
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
-from computing.internals.processes.abstracts.process import Process
+from computing.internals.processes.abstracts.process import Process, T_ProcessCode
 from consts import OPCODES, COMPUTER, PORTS, PROTOCOLS
 from exceptions import *
 from packets.all import DHCP, BOOTP, IP, UDP
 from usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
+    from packets.packet import Packet
     from computing.internals.interface import Interface
+    from computing.computer import Computer
 
 
 class DHCPData(NamedTuple):
@@ -38,11 +38,11 @@ class DHCPClient(Process):
 
     # __init__ is inherited from the parent class
 
-    def __init__(self, pid, computer):
+    def __init__(self, pid: int, computer: Computer) -> None:
         super(DHCPClient, self).__init__(pid, computer)
         self.sockets = []
 
-    def update_routing_table(self, session_interface, dhcp_pack):
+    def update_routing_table(self, session_interface: Interface, dhcp_pack: Packet) -> None:
         """
         Receive the interface that runs the session with the server and the DHCP pack packet that it sent,
         update the routing table accordingly.
@@ -57,7 +57,7 @@ class DHCPClient(Process):
         self.computer.graphics.update_text()
 
     @staticmethod
-    def build_dhcp_discover(interface):
+    def build_dhcp_discover(interface: Interface) -> Packet:
         return interface.ethernet_wrap(MACAddress.broadcast(),
                                        IP(src_ip=str(IPAddress.no_address()), dst_ip=str(IPAddress.broadcast()), ttl=PROTOCOLS.DHCP.DEFAULT_TTL) /
                                        UDP(src_port=PORTS.DHCP_CLIENT, dst_port=PORTS.DHCP_SERVER) /
@@ -65,7 +65,10 @@ class DHCPClient(Process):
                                        DHCP(options=[('message-type', OPCODES.DHCP.DISCOVER)]))
 
     @staticmethod
-    def build_dhcp_request(server_mac, session_interface, server_ip, requested_ip):
+    def build_dhcp_request(server_mac: MACAddress,
+                           session_interface: Interface,
+                           server_ip: IPAddress,
+                           requested_ip: IPAddress) -> Packet:
         """
         Sends a `DHCP_REQUEST` that confirms the address that the server had offered.
         This is sent by the DHCP client.
@@ -84,7 +87,7 @@ class DHCPClient(Process):
                                                              ('requested_addr', requested_ip),
                                                              ('server_id', server_ip)]))
 
-    def code(self):
+    def code(self) -> T_ProcessCode:
         """
         This is main code of the DHCP client.
         :return: None
@@ -112,10 +115,11 @@ class DHCPClient(Process):
         dhcp_pack = session_socket.receive()[0]
 
         self.update_routing_table(session_interface, dhcp_pack.packet)
+        self.computer.dns_server = dhcp_pack.packet["DHCP"].parsed_options.name_server
         self.computer.arp_grat(session_interface)
         self.computer.print("Got Address from DHCP!")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """The string representation of the the process"""
         return "dhcpcd"
 
@@ -129,7 +133,11 @@ class DHCPServer(Process):
     The stages of DHCP are: discover, offer, request and pack
     """
 
-    def __init__(self, pid, computer, default_gateway):
+    def __init__(self,
+                 pid: int,
+                 computer: Computer,
+                 default_gateway: Computer,
+                 dns_server: Optional[IPAddress] = None) -> None:
         """
         Initiates the process
         :param computer: The computer that runs this process.
@@ -139,6 +147,8 @@ class DHCPServer(Process):
         self.default_gateway = default_gateway
         # ^ a `Computer` that is the default gateway of the subnets this server serves.
 
+        self.dns_server = dns_server
+
         self.interface_to_dhcp_data = {}  # interface : DHCPData
         # ^ a mapping for each interface of the server to a ip_layer that it packs for its clients.
         self.update_server_data()
@@ -147,7 +157,7 @@ class DHCPServer(Process):
 
         self.sockets = []
 
-    def update_server_data(self):
+    def update_server_data(self) -> None:
         """
         It updates the `self.interface_to_dhcp_data` dictionary according to this computer's interfaces.
         This is called if for example one of the computer's interfaces is updated in the middle of the process.
@@ -159,14 +169,14 @@ class DHCPServer(Process):
             for interface in self.computer.interfaces if interface.has_ip()
         }
 
-    def raise_on_unknown_packet(self, packet, interface):
+    def raise_on_unknown_packet(self, packet: Packet, interface: Interface) -> None:
         """When a DHCP packet with an unknown opcode is received"""
         raise UnknownPacketTypeError(f"DHCP type unknown, {packet['DHCP'].parsed_options.message_type}")
 
     @staticmethod
     def build_dhcp_offer(client_mac: MACAddress,
                          offered_ip: IPAddress,
-                         interface: Interface) -> scapy.packet.Packet:
+                         interface: Interface) -> Packet:
         return interface.ethernet_wrap(client_mac,
                                        IP(src_ip=str(interface.ip), dst_ip=str(offered_ip), ttl=PROTOCOLS.DHCP.DEFAULT_TTL) /
                                        UDP(src_port=PORTS.DHCP_SERVER, dst_port=PORTS.DHCP_CLIENT) /
@@ -175,33 +185,43 @@ class DHCPServer(Process):
                                              your_ip=str(offered_ip),
                                              server_ip=str(interface.ip)) /
                                        DHCP(options=[
-                                           ('message-type', OPCODES.DHCP.PACK),
+                                           ('message-type', OPCODES.DHCP.OFFER),
                                            ('subnet_mask', str(IPAddress.mask_from_number(interface.ip.subnet_mask))),
                                            ('server_id', str(interface.ip)),
                                        ]))
 
     @staticmethod
-    def build_dhcp_pack(client_mac, offered_ip, offered_gateway, session_interface):
+    def build_dhcp_pack(client_mac: MACAddress,
+                        offered_ip: IPAddress,
+                        offered_gateway: IPAddress,
+                        session_interface: Interface,
+                        dns_server: Optional[IPAddress] = None) -> Packet:
         """
         Sends a `DHCP_PACK` that tells the DHCP client all of the new ip_layer it needs to update (IP, gateway, DNS)
+        :param dns_server: the domain name server to be supplied to clients
         :param client_mac: The `MACAddress` of the client.
         :param session_interface: The `Interface` that is running the session with the client.
         :param offered_ip: The `IPAddress` offered to the client
         :param offered_gateway: The `IPAddress` of the gateway which is offered to the client
         :return:
         """
+        options = [
+            ('message-type', OPCODES.DHCP.PACK),
+            ('router', str(offered_gateway)),
+        ]
+
+        if dns_server is not None:
+            options.append(('name_server', str(dns_server)))
+
         return session_interface.ethernet_wrap(client_mac,
                                                IP(src_ip=str(session_interface.ip), dst_ip=str(offered_ip), ttl=PROTOCOLS.DHCP.DEFAULT_TTL) /
                                                UDP(src_port=PORTS.DHCP_SERVER, dst_port=PORTS.DHCP_CLIENT) /
                                                BOOTP(opcode=OPCODES.BOOTP.REPLY,
                                                      client_mac=client_mac.as_bytes(),
                                                      your_ip=str(offered_ip)) /
-                                               DHCP(options=[
-                                                   ('message-type', OPCODES.DHCP.PACK),
-                                                   ('router', str(offered_gateway)),
-                                               ]))
+                                               DHCP(options=options))
 
-    def send_pack(self, request_packet, interface):
+    def send_pack(self, request_packet: Packet, interface: Interface) -> None:
         """
         Sends the `DHCP_PACK` packet to the destination with all of the details the client had requested.
         """
@@ -215,7 +235,7 @@ class DHCPServer(Process):
                     )
         del self.in_session_with[client_mac]
 
-    def send_offer(self, discover_packet, interface):
+    def send_offer(self, discover_packet: Packet, interface: Interface) -> None:
         """
         This is called when a Discover was received, it sends a `DHCP_OFFER` to the asking computer.
         with an offer for an ip address.
@@ -229,7 +249,7 @@ class DHCPServer(Process):
         socket = get_the_one(self.sockets, lambda s: s.interface == interface, ThisCodeShouldNotBeReached)
         socket.send(self.build_dhcp_offer(client_mac, offered, interface))
 
-    def offer_ip(self, interface):
+    def offer_ip(self, interface: Interface) -> IPAddress:
         """
         Offers the next available IP address for a new client, based on the `Interface` that is serving the DHCP.
         :param interface: the `Interface` that the request came from (to know the subnet)
@@ -247,7 +267,7 @@ class DHCPServer(Process):
             self._bind_interface_to_socket(interface)
             return self.offer_ip(interface)
 
-    def code(self):
+    def code(self) -> T_ProcessCode:
         """
         This is main code of the DHCP server.
         Waits for a DHCP packet for the running computer and runs the appropriate command as a DHCP Server.
@@ -276,7 +296,7 @@ class DHCPServer(Process):
                         self.raise_on_unknown_packet
                     )(packet, interface)
 
-    def _bind_interface_to_socket(self, interface):
+    def _bind_interface_to_socket(self, interface: Interface) -> None:
         """
         Takes in an `Interface` and gets a raw socket from the operation system of the computer
         Binds the socket to the interface with a DHCP packet filter
@@ -285,7 +305,7 @@ class DHCPServer(Process):
         socket.bind(lambda p: "DHCP" in p, interface)
         self.sockets.append(socket)
 
-    def _detect_new_interfaces(self):
+    def _detect_new_interfaces(self) -> None:
         """
         Goes over the interfaces of the computer - if there is an interface
         that does not have a raw-socket bound to it, generate and bind one to it.
@@ -295,6 +315,6 @@ class DHCPServer(Process):
                 # the interface has no socket - it is new
                 self._bind_interface_to_socket(interface)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """The string representation of the the process"""
         return "dhcpsd"
