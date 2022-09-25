@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Dict, Callable
 
 from address.mac_address import MACAddress
 from consts import *
@@ -12,6 +12,8 @@ from gui.shape_drawing import draw_rectangle
 from usefuls.funcs import distance, with_args, get_the_one
 
 if TYPE_CHECKING:
+    from computing.internals.interface import Interface
+    from gui.tech.computer_graphics import ComputerGraphics
     from gui.user_interface.user_interface import UserInterface
 
 
@@ -21,7 +23,11 @@ class InterfaceGraphics(GraphicsObject):
     It is the little square next to computers.
     It allows the user much more control over their computers and to inspect the network interfaces of their computers.
     """
-    def __init__(self, x, y, interface, computer_graphics):
+    def __init__(self,
+                 x: float,
+                 y: float,
+                 interface: Interface,
+                 computer_graphics: ComputerGraphics) -> None:
         """
         initiates the object.
         :param x:
@@ -41,10 +47,10 @@ class InterfaceGraphics(GraphicsObject):
         self.buttons_id = None
 
     @property
-    def computer_location(self):
+    def computer_location(self) -> Tuple[float, float]:
         return self.computer_graphics.location
 
-    def is_mouse_in(self):
+    def is_mouse_in(self) -> bool:
         """
         Returns whether or not the mouse is pressing the interface
         :return:
@@ -53,7 +59,7 @@ class InterfaceGraphics(GraphicsObject):
         return self.real_x - (self.width / 2) < x < self.real_x + (self.width / 2) and \
                self.real_y - (self.height / 2) < y < self.real_y + (self.height / 2)
 
-    def move(self):
+    def move(self) -> None:
         """
         Moves the interface.
         Keeps it within `INTERFACE_DISTANCE_FROM_COMPUTER` pixels away from the computer.
@@ -71,7 +77,7 @@ class InterfaceGraphics(GraphicsObject):
         self.x, self.y = self.real_x, self.real_y
         # ^ keeps the interface in a fixed distance away from the computer despite being dragged.
 
-    def draw(self):
+    def draw(self) -> None:
         """
         Draw the interface.
         :return:
@@ -82,7 +88,7 @@ class InterfaceGraphics(GraphicsObject):
             color=self.color,
         )
 
-    def _create_button_dict(self, user_interface):
+    def _create_button_dict(self, user_interface: UserInterface) -> Dict[str, Callable[[], None]]:
         """
         Creates the dict of the buttons that are displayed in the side window when this object is viewed.
         :param user_interface:
@@ -111,18 +117,21 @@ class InterfaceGraphics(GraphicsObject):
             "block (^b)": with_args(self.interface.toggle_block, "STP"),
         }
 
-    def start_viewing(self, user_interface):
+    def start_viewing(self,
+                      user_interface: UserInterface,
+                      additional_buttons: Optional[Dict[str, Callable[[], None]]] = None) -> Tuple[pyglet.sprite.Sprite, str, int]:
         """
         Starts the side-window-view of the interface.
         :param user_interface: a `UserInterface` object to register the buttons in.
-        :return: `Sprite`, `str`, `int`
+        :param additional_buttons: more buttons
         """
         buttons = self._create_button_dict(user_interface)
+        buttons.update(additional_buttons or {})
         self.buttons_id = user_interface.add_buttons(buttons)
         copied_sprite = ImageGraphics.get_image_sprite(os.path.join(DIRECTORIES.IMAGES, IMAGES.VIEW.INTERFACE))
         return copied_sprite, self.interface.generate_view_text(), self.buttons_id
 
-    def end_viewing(self, user_interface):
+    def end_viewing(self, user_interface: UserInterface) -> None:
         """
         Unregisters the buttons from the `UserInterface` object.
         :param user_interface:
@@ -130,7 +139,7 @@ class InterfaceGraphics(GraphicsObject):
         """
         user_interface.remove_buttons(self.buttons_id)
 
-    def mark_as_selected(self):
+    def mark_as_selected(self) -> None:
         """
         Marks a rectangle around a `GraphicsObject` that is selected.
         Only call this function if the object is selected.
@@ -145,7 +154,7 @@ class InterfaceGraphics(GraphicsObject):
             outline_color=SELECTED_OBJECT.COLOR,
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Interface Graphics ({self.interface.name})"
 
     def dict_save(self):

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from os import linesep
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Dict, Callable
 
 from recordclass import recordclass
 
@@ -116,11 +116,14 @@ class ComputerGraphics(ImageGraphics):
         self.change_image(IMAGES.COMPUTERS.SERVER if self._is_server() else self.original_image)
         self.child_graphics_objects.process_list.set_list([port for port in self.computer.get_open_ports() if port in PORTS.SERVER_PORTS])
 
-    def start_viewing(self, user_interface: UserInterface) -> Tuple[pyglet.sprite.Sprite, str, int]:
+    def start_viewing(self,
+                      user_interface: UserInterface,
+                      additional_buttons: Optional[Dict[str, Callable[[], None]]] = None) -> Tuple[pyglet.sprite.Sprite, str, int]:
         """
         Starts viewing the computer graphics object in the side-window view.
-        :param user_interface: the `UserInterface` object we can use the methods of it.
-        :return: a tuple <display sprite>, <display text>, <new button count>
+
+        parameter user_interface: the `UserInterface` object we can use the methods of it.
+        Returns a tuple <display sprite>, <display text>, <new button count>
         """
         self.child_graphics_objects.console.location = self.console_location
         self.child_graphics_objects.console.show()
@@ -193,6 +196,7 @@ class ComputerGraphics(ImageGraphics):
                 self.color_by_name,
             ),
         }
+        buttons.update(additional_buttons or {})
         self.buttons_id = user_interface.add_buttons(buttons)
         return self.copy_sprite(self.sprite), self.generate_view_text(), self.buttons_id
 
