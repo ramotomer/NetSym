@@ -29,7 +29,12 @@ class Dns(Command):
         prints out the arguments.
         """
         if parsed_args.is_all:
-            return CommandOutput(repr(self.computer.dns_cache), '')
+            return CommandOutput(
+                (f"DNS server: {self.computer.dns_server}:\n"
+                 if self.computer.dns_server is not None else 'No DNS server\n') +
+                repr(self.computer.dns_cache),
+                ''
+            )
 
         if parsed_args.is_delete:
             self.computer.dns_cache.wipe()

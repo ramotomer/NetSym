@@ -508,7 +508,7 @@ class PACKET:
         "ICMP": (lambda icmp: (icmp.type, icmp.code) if icmp.type == OPCODES.ICMP.TYPES.UNREACHABLE else icmp.type),
         "DHCP": (lambda dhcp: DHCPTypes.get(dhcp.parsed_options.message_type, dhcp.parsed_options.message_type)),
         "TCP":  get_dominant_tcp_flag,
-        "DNS":  (lambda dns: OPCODES.DNS.ANSWER if len(dns.answer_record_count) > 0 else OPCODES.DNS.QUERY),
+        "DNS":  (lambda dns: OPCODES.DNS.ANSWER if dns.answer_record_count > 0 else OPCODES.DNS.QUERY),
     }
 
     TYPE_TO_IMAGE = {
@@ -551,8 +551,8 @@ class PACKET:
             OPCODES.FTP.DATA_PACKET: IMAGES.PACKETS.FTP.DATA_PACKET,
         },
         "DNS": {
-            OPCODES.DNS.QUERY: IMAGES.PACKETS.DNS,
-            OPCODES.DNS.ANSWER: IMAGES.PACKETS.DNS,
+            OPCODES.DNS.QUERY: IMAGES.PACKETS.DNS.QUERY,
+            OPCODES.DNS.ANSWER: IMAGES.PACKETS.DNS.ANSWER,
         },
     }
 

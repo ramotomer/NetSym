@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, Dict, List
 
 from computing.internals.filesystem.directory import Directory
 from computing.internals.filesystem.file import File, PipingFile
@@ -224,6 +224,52 @@ class Filesystem:
             dst_dir.directories[new_name] = item
         elif isinstance(item, File):
             dst_dir.files[new_name] = item
+
+    def parse_conf_file_format(self, absolute_path: str, raise_if_does_not_exist: bool = True) -> Dict[str, List[str]]:
+        """
+        Take in a path to a file in the computers filesystem
+        The file should be a `.conf` file in the linux conf format
+        The method returns parsed dict of the configuration
+        Example:
+            the file with contents:
+                ```
+                domain           sales.doc.com
+                nameserver       111.22.3.4
+                nameserver       123.45.6.1
+                ```
+            will return:
+            {
+                'domain': ['sales.doc.com'],
+                'nameserver': ['111.22.3.4', '123.45.6.1'],
+            }
+
+        If the file does not exists - can either raise or return {} (behaviour dictated by the parameter)
+        """
+        if not self.exists(absolute_path):
+            if raise_if_does_not_exist:
+                raise FileNotFoundError
+            return {}
+
+        with self.at_absolute_path(absolute_path) as f:
+            content = map(str, filter(bool, f.readlines()))
+            parsed = {}
+            for line in content:
+                key, value = line.strip().split()
+                parsed[key] = parsed.get(key, []) + [value]
+        return parsed
+
+    def write_conf_file(self, absolute_path: str, parsed_conf_file: Dict[str, List[str]]) -> None:
+        """
+        Does exactly the reverse of `parse_conf_file_format`
+        """
+        parent_directory = self.at_absolute_path(os.path.dirname(absolute_path))
+        parent_directory.make_empty_file(os.path.basename(absolute_path),
+                                         raise_on_exists=False)
+
+        with self.at_absolute_path(absolute_path) as f:
+            for key, values in parsed_conf_file.items():
+                for value in values:
+                    f.append(f"{key: <30} {value}")
 
     def dict_save(self):
         """

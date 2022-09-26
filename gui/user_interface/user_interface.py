@@ -1283,7 +1283,7 @@ class UserInterface:
         :return:
         """
         new_computers = [self.create_computer_with_ip() for _ in range(6)]
-        self.create_device(Hub)
+        self.create_device(Switch)
         self.smart_connect()
         for i, location in enumerate(
                 circular_coordinates(MainWindow.main_window.get_mouse_location(), 150, len(new_computers))):
@@ -1294,7 +1294,7 @@ class UserInterface:
         self.selected_object.computer.open_port(13, "TCP")
         self.tab_through_selected()
         self.tab_through_selected()
-        self.selected_object.computer.write_conf_file(COMPUTER.FILES.CONFIGURATIONS.DNS_PATH, {"nameserver": ["192.168.1.254"]})
+        self.selected_object.computer.dns_server = IPAddress("192.168.1.2")
         self.selected_object.computer.process_scheduler.start_usermode_process(ClientFTPProcess, IPAddress("192.168.1.2"))
 
     def register_window(self, window, *buttons):
