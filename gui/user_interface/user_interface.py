@@ -17,7 +17,6 @@ from computing.computer import Computer
 from computing.internals.frequency import Frequency
 from computing.internals.interface import Interface
 from computing.internals.processes.usermode_processes.dns_process.zone_file_parser import EXAMPLE, parse_zone_file_format, write_zone_file
-from computing.internals.processes.usermode_processes.ftp_process import ClientFTPProcess
 from computing.internals.processes.usermode_processes.stp_process import STPProcess
 from computing.internals.wireless_interface import WirelessInterface
 from computing.router import Router
@@ -1300,7 +1299,7 @@ class UserInterface:
         self.tab_through_selected()
         self.tab_through_selected()
         self.selected_object.computer.dns_server = IPAddress("192.168.1.2")
-        self.selected_object.computer.process_scheduler.start_usermode_process(ClientFTPProcess, IPAddress("192.168.1.2"))
+        # self.selected_object.computer.process_scheduler.start_usermode_process(ClientFTPProcess, IPAddress("192.168.1.2"))
 
     def register_window(self, window, *buttons):
         """

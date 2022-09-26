@@ -7,10 +7,10 @@ from typing import TYPE_CHECKING, Dict, Tuple, Optional
 import scapy
 
 from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode
+from computing.internals.processes.abstracts.process import Process, T_ProcessCode, WaitingFor
 from computing.internals.processes.usermode_processes.dns_process.zone_file_parser import ParsedZoneFile, ZoneFileRecord
 from consts import PORTS, T_Port, COMPUTER, OPCODES, PROTOCOLS
-from exceptions import DNSRouteNotFound
+from exceptions import DNSRouteNotFound, WrongUsageError
 from packets.all import DNS
 from packets.usefuls.dns import *
 
@@ -114,11 +114,17 @@ class DNSServerProcess(Process):
                 parsed_zone_file = ParsedZoneFile.from_zone_file_content(f.read())
             if parsed_zone_file.is_resolvable(name):
                 break
-                # TODO: this is shit code and i am tired
+                # TODO: this is shit code and i am tired. fix later
         else:
             raise DNSRouteNotFound
 
-        ,,,
+        resolved_record = parsed_zone_file.resolve_name(name)
+        if resolved_record.record_type == OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS:
+            self.computer.dns_cache.add_item(resolved_record.record_name, resolved_record.record_data)
+            return
+
+        if resolved_record.record_type == OPCODES.DNS.QUERY_TYPES.AUTHORITATIVE_NAME_SERVER:
+            self.computer.resolve_name(name, dns_server=IPAddress(resolved_record.record_data))
 
     @staticmethod
     def _parse_dns_query(query_bytes: bytes) -> scapy.packet.Packet:
@@ -133,15 +139,18 @@ class DNSServerProcess(Process):
         The main code of the process
         """
         self._init_zone_files()
-
-        self.socket = self.computer.get_udp_socket(self.pid)
-        self.socket.bind((IPAddress.no_address(), PORTS.DNS))
+        self._init_socket()
 
         while True:
-            yield from self.socket.block_until_received()
-            returned_udp_packets = self.socket.receivefrom()
-            for udp_packet_data, client_address in returned_udp_packets:
-                if client_address in self._active_queries.values():
+            self._send_query_answers_to_clients(self._get_resolved_names())
+            self._send_error_messages_to_timed_out_clients()
+
+            yield WaitingFor.nothing()
+            if not self.socket.has_data_to_receive:
+                continue
+
+            for udp_packet_data, client_ip, client_port in self.socket.receivefrom():
+                if (client_ip, client_port) in self._active_queries.values():
                     break  # The client has requested the same address again from the same port! ignore...
 
                 if not self._is_query_valid(query_bytes=udp_packet_data):
@@ -152,11 +161,12 @@ class DNSServerProcess(Process):
                     raise NotImplementedError(f"multiple queries in the same packet! count: {dns_query.query_count}")
                 self._resolve_name(dns_query.queries[0].query_name)
 
-            self._send_query_answers_to_clients(self._get_resolved_names())
-            self._send_error_messages_to_timed_out_clients()
-
     def __repr__(self) -> str:
         return "dnssd"
+
+    def _init_socket(self):
+        self.socket = self.computer.get_udp_socket(self.pid)
+        self.socket.bind((IPAddress.no_address(), PORTS.DNS))
 
     def _init_zone_files(self):
         """
@@ -167,10 +177,15 @@ class DNSServerProcess(Process):
             with zone_file as f:
                 f.write(ParsedZoneFile.with_default_values(domain_name, self.computer).to_zone_file_format())
 
-    def add_dns_record(self, domain_name: T_Hostname, name: T_Hostname, ip_address: IPAddress) -> None:
+    def add_dns_record(self, name: T_Hostname, ip_address: IPAddress, domain_name: Optional[T_Hostname] = None) -> None:
         """
         Add a mapping between an ip and a name in the supplied domain's zone file
         """
+        if domain_name is None:
+            if len(self.domain_names) > 1:
+                raise WrongUsageError(f"Must supply domain_name if server hosts multiple zones")
+            domain_name, = self.domain_names
+
         with self.computer.filesystem.at_absolute_path(self._zone_file_by_domain_name(domain_name)) as zone_file:
             parsed_zone_file = ParsedZoneFile.from_zone_file_content(zone_file.read())
             parsed_zone_file.records.append(

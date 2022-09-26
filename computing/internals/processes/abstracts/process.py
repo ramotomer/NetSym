@@ -107,6 +107,10 @@ class WaitingFor(NamedTuple):
     """
     condition: Callable[[], bool]
 
+    @classmethod
+    def nothing(cls) -> WaitingFor:
+        return WaitingFor(lambda: True)
+
 
 class WaitingForWithTimeout(NamedTuple):
     """
@@ -147,8 +151,8 @@ class Process(metaclass=ABCMeta):
         The process currently has access to all of the computer's resources.
         :param computer: The computer that this process is run on.
         """
-        self.pid = pid
-        self.computer = computer
+        self.pid: int = pid
+        self.computer: Computer = computer
         self.cwd = self.computer.filesystem.root
         self.process = None
         self.kill_me = False

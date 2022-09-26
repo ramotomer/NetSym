@@ -20,6 +20,7 @@ from computing.internals.processes.process_scheduler import ProcessScheduler
 from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEServerProcess
 from computing.internals.processes.usermode_processes.dhcp_process import DHCPClient
 from computing.internals.processes.usermode_processes.dhcp_process import DHCPServer
+from computing.internals.processes.usermode_processes.dns_process.dns_client_process import DNSClientProcess
 from computing.internals.processes.usermode_processes.dns_process.dns_server_process import DNSServerProcess
 from computing.internals.processes.usermode_processes.echo_server_process import EchoServerProcess
 from computing.internals.processes.usermode_processes.ftp_process import ServerFTPProcess
@@ -36,6 +37,7 @@ from exceptions import *
 from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.all import ICMP, IP, TCP, UDP, ARP
+from packets.usefuls.dns import T_Hostname
 from packets.usefuls.usefuls import get_src_port, get_dst_port
 from usefuls.funcs import get_the_one
 
@@ -654,6 +656,24 @@ class Computer:
         """
         self.process_scheduler.get_usermode_process_by_type(DHCPServer).dns_server = dns_server
 
+    def resolve_name(self, name: T_Hostname, dns_server: Optional[IPAddress] = None) -> None:
+        """
+        Start a DNS process to resolve a domain hostname
+        """
+        self.process_scheduler.start_usermode_process(
+            DNSClientProcess,
+            dns_server if dns_server is not None else self.dns_server,
+            name,
+        )
+
+    def add_dns_entry(self, user_inserted_dns_entry_format: str) -> None:
+        """
+        Adds a new mapping between a hostname and an ip address in the computer's DNS zone file
+        :param user_inserted_dns_entry_format: "{hostname} {ipaddress}"
+        """
+        hostname, ip_address = user_inserted_dns_entry_format.split()
+        self.process_scheduler.get_usermode_process_by_type(DNSServerProcess).add_dns_record(hostname, IPAddress(ip_address))
+
     def open_port(self, port_number: int, protocol: str = "TCP") -> None:
         """
         Opens a port on the computer. Starts the process that is behind it.
@@ -819,7 +839,7 @@ class Computer:
                     return socket
             if (timeout is not None) and (start_time + timeout < MainLoop.instance.time()):
                 return None
-            yield WaitingFor(lambda: True)
+            yield WaitingFor.nothing()
 
     def send(self, packet: Packet, interface: Optional[Interface] = None, sending_socket: Optional[RawSocket] = None):
         """
