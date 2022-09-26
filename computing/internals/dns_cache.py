@@ -4,8 +4,7 @@ from typing import Dict
 from address.ip_address import IPAddress
 from consts import T_Time
 from gui.main_loop import MainLoop
-
-T_DomainName = str
+from packets.usefuls.dns import T_Hostname
 
 
 @dataclass
@@ -23,22 +22,22 @@ class DNSCache:
         """
         Create an empty DNS cache
         """
-        self.__cache: Dict[T_DomainName, DNSCacheItem] = {}
+        self.__cache: Dict[T_Hostname, DNSCacheItem] = {}
         self.transaction_counter = 0
 
-    def __getitem__(self, item: T_DomainName) -> DNSCacheItem:
+    def __getitem__(self, item: T_Hostname) -> DNSCacheItem:
         """
         Resolve a DNS name
         """
         return self.__cache[item]
 
-    def __contains__(self, item: T_DomainName) -> bool:
+    def __contains__(self, item: T_Hostname) -> bool:
         """
         Whether or not the DNS cache contains the supplied name
         """
         return item in self.__cache
 
-    def add_item(self, name: T_DomainName, ip_address: IPAddress, ttl: int) -> None:
+    def add_item(self, name: T_Hostname, ip_address: IPAddress, ttl: int) -> None:
         """
         Adds a new item to the cache
         """
@@ -48,9 +47,9 @@ class DNSCache:
         """
         Remove all items in the cache that their TTL (time to live) has expired
         """
-        for domain_name, dns_item in list(self.__cache.items()):
+        for item_name, dns_item in list(self.__cache.items()):
             if MainLoop.instance.time_since(dns_item.creation_time) > dns_item.ttl:
-                del self.__cache[domain_name]
+                del self.__cache[item_name]
 
     def wipe(self) -> None:
         """
@@ -64,10 +63,10 @@ class DNSCache:
         Can be seen using the `dns -a` command
         """
         returned = "DNS Cache:\n" + ("-" * 30)
-        for domain_name, cache_item in self.__cache.items():
+        for item_name, cache_item in self.__cache.items():
             returned += "\n"
             returned += f"""
-{'Record Name':.<20}: {domain_name}
+{'Record Name':.<20}: {item_name}
 {'Record Type':.<20}: A
 {'Time To Live':.<20}: {cache_item.ttl}
 {'A (Host) Record':.<20}: {cache_item.ip_address.string_ip}

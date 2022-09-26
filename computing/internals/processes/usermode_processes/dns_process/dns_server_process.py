@@ -1,14 +1,15 @@
 from __future__ import annotations
 
+import os
 import struct
 from typing import TYPE_CHECKING, Dict, Tuple, Optional
 
 import scapy
 
 from address.ip_address import IPAddress
-from computing.internals.dns_cache import T_DomainName
 from computing.internals.processes.abstracts.process import Process, T_ProcessCode
-from consts import PORTS, T_Port, PROTOCOLS
+from computing.internals.processes.usermode_processes.dns_process.zone_file_parser import ParsedZoneFile, ZoneFileRecord
+from consts import PORTS, T_Port, COMPUTER, OPCODES
 from packets.all import DNS
 from packets.usefuls.dns import *
 
@@ -17,14 +18,14 @@ if TYPE_CHECKING:
     from computing.computer import Computer
 
 
-T_QueryDict = Dict[T_DomainName, Tuple[IPAddress, T_Port]]
+T_QueryDict = Dict[T_Hostname, Tuple[IPAddress, T_Port]]
 
 
 class DNSServerProcess(Process):
     """
     A Domain Name Server process - will resolve a display name to an IPAddress if a client requests
     """
-    def __init__(self, pid: int, computer: Computer, default_time_to_live: int = PROTOCOLS.DNS.DEFAULT_TIME_TO_LIVE) -> None:
+    def __init__(self, pid: int, computer: Computer, domain_names: List[T_Hostname]) -> None:
         """
         Creates the new process
         :param pid: The process ID of this process
@@ -34,7 +35,15 @@ class DNSServerProcess(Process):
         self.socket: Optional[UDPSocket] = None
         self._active_queries: T_QueryDict = {}
 
-        self._default_time_to_live = default_time_to_live
+        self.domain_names = domain_names
+
+    @property
+    def _zone_file_paths(self):
+        return [self._zone_file_by_domain_name(domain_name) for domain_name in self.domain_names]
+
+    @staticmethod
+    def _zone_file_by_domain_name(domain_name: T_Hostname) -> str:
+        return os.path.join(COMPUTER.FILES.CONFIGURATIONS.DNS_ZONE_FILES, domain_name)
 
     def _is_query_valid(self, query_bytes: bytes) -> bool:
         """
@@ -46,10 +55,10 @@ class DNSServerProcess(Process):
             return False
         return not parsed_dns_packet.opcode.is_response
 
-    def _build_dns_answer(self, domain_name: T_DomainName) -> scapy.packet.Packet:
+    def _build_dns_answer(self, record_name: T_Hostname, time_to_live: int) -> scapy.packet.Packet:
         """
 
-        :param domain_name:
+        :param record_name:
         :return:
         """
         dns_answer = DNS(
@@ -59,9 +68,9 @@ class DNSServerProcess(Process):
             is_recursion_available=True,
             answer_records=list_to_dns_resource_record([
                 DNSResourceRecord(
-                    record_name=domain_name,
-                    time_to_live=self._default_time_to_live,
-                    record_data=self.computer.dns_cache[domain_name].ip_address.string_ip,
+                    record_name=record_name,
+                    time_to_live=time_to_live,
+                    record_data=self.computer.dns_cache[record_name].ip_address.string_ip,
                 )
             ])
         )
@@ -80,19 +89,19 @@ class DNSServerProcess(Process):
         Take in all of the queries that are ready to be sent back to the clients
         Send them back to the clients
         """
-        for domain_name, client_address in query_dict.items():
-            self.socket.sendto(self._build_dns_answer(domain_name), client_address)
+        for item_name, client_address in query_dict.items():
+            self.socket.sendto(self._build_dns_answer(item_name), client_address)
 
     def _send_error_messages_to_timed_out_clients(self) -> None:
         """
         Send error messages to the clients whose queries could sadly not be resolved :(
         """
 
-    def _resolve_name(self, domain_name: T_DomainName) -> None:
+    def _resolve_name(self, name: T_Hostname) -> None:
         """
         Start doing everything that is required in order to resolve the supplied domain name
         """
-        if domain_name in self.computer.dns_cache:
+        if name in self.computer.dns_cache:
             return  # name is known - no need to resolve :)
 
         # ...
@@ -109,6 +118,8 @@ class DNSServerProcess(Process):
         """
         The main code of the process
         """
+        self._init_zone_files()
+
         self.socket = self.computer.get_udp_socket(self.pid)
         self.socket.bind((IPAddress.no_address(), PORTS.DNS))
 
@@ -132,3 +143,28 @@ class DNSServerProcess(Process):
 
     def __repr__(self) -> str:
         return "dnssd"
+
+    def _init_zone_files(self):
+        """
+        Generate all zone files with default values
+        """
+        for domain_name in self.domain_names:
+            zone_file = self.computer.filesystem.at_absolute_path(COMPUTER.FILES.CONFIGURATIONS.DNS_ZONE_FILES).make_empty_file(domain_name)
+            with zone_file as f:
+                f.write(ParsedZoneFile.with_default_values(domain_name, self.computer).to_zone_file_format())
+
+    def add_dns_record(self, domain_name: T_Hostname, name: T_Hostname, ip_address: IPAddress) -> None:
+        """
+        Add a mapping between an ip and a name in the supplied domain's zone file
+        """
+        with self.computer.filesystem.at_absolute_path(self._zone_file_by_domain_name(domain_name)) as zone_file:
+            parsed_zone_file = ParsedZoneFile.from_zone_file_content(zone_file.read())
+            parsed_zone_file.records.append(
+                ZoneFileRecord(
+                    name,
+                    OPCODES.DNS.QUERY_CLASSES.INTERNET,
+                    OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS,
+                    ip_address.string_ip
+                )
+            )
+            zone_file.write(parsed_zone_file.to_zone_file_format())

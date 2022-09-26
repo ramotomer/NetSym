@@ -173,11 +173,11 @@ class Computer:
         """
         Read the name of the DNS server from the '/etc/resolv.conf'
         """
-        if not self.filesystem.exists(COMPUTER.FILES.CONFIGURATIONS.DNS_PATH):
+        if not self.filesystem.exists(COMPUTER.FILES.CONFIGURATIONS.DNS_CLIENT_PATH):
             return None
 
         address = self.filesystem.parse_conf_file_format(
-            COMPUTER.FILES.CONFIGURATIONS.DNS_PATH,
+            COMPUTER.FILES.CONFIGURATIONS.DNS_CLIENT_PATH,
             raise_if_does_not_exist=False
         ).get('nameserver', [None])[0]  # TODO: what if multiple DNS servers? why only the first?
 
@@ -191,7 +191,7 @@ class Computer:
         Set the DNS server (in the /etc/resolv.conf file)
         """
         conf_value = self.filesystem.parse_conf_file_format(
-            COMPUTER.FILES.CONFIGURATIONS.DNS_PATH,
+            COMPUTER.FILES.CONFIGURATIONS.DNS_CLIENT_PATH,
             raise_if_does_not_exist=False
         )
         if value is not None:
@@ -200,7 +200,7 @@ class Computer:
             del conf_value['nameserver']
 
         self.filesystem.write_conf_file(
-            COMPUTER.FILES.CONFIGURATIONS.DNS_PATH,
+            COMPUTER.FILES.CONFIGURATIONS.DNS_CLIENT_PATH,
             conf_value,
         )
 

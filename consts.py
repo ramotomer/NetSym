@@ -138,11 +138,14 @@ class OPCODES:
         ANSWER = 'answer'
 
         class QUERY_TYPES:
+            START_OF_AUTHORITY = 'SOA'
+
             HOST_ADDRESS = 'A'
             AUTHORITATIVE_NAME_SERVER = 'NS'
             MAIL_DESTINATION = 'MD'
             MAIL_FORWARDER = 'MF'
             CANONICAL_NAME_FOR_AN_ALIAS = 'CNAME'
+
             ALL_RECORDS = 'ANY'
             # there are more....
 
@@ -824,4 +827,5 @@ class COMPUTER:
 
     class FILES:
         class CONFIGURATIONS:
-            DNS_PATH = "/etc/resolv.conf"
+            DNS_CLIENT_PATH = "/etc/resolv.conf"
+            DNS_ZONE_FILES = "/var/named/"

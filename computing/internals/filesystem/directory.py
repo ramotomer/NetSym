@@ -1,3 +1,5 @@
+from typing import Optional
+
 from computing.internals.filesystem.file import File, PipingFile
 from consts import FILESYSTEM
 from exceptions import NoSuchDirectoryError, NoSuchFileError, DirectoryAlreadyExistsError, WrongUsageError, \
@@ -78,15 +80,16 @@ class Directory:
 
         self.directories[name] = Directory(name=name, parent=self, mount=mount)
 
-    def make_empty_file(self, name, raise_on_exists=True):
+    def make_empty_file(self, name, raise_on_exists=True) -> Optional[File]:
         """
         Create an empty file
         """
         if name in self.files:
             if raise_on_exists:
                 raise FileExistsError
-            return
+            return None
         self.files[name] = File(name, '')
+        return self.files[name]
 
     @property
     def full_path(self) -> str:

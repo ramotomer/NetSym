@@ -16,6 +16,7 @@ from address.ip_address import IPAddress
 from computing.computer import Computer
 from computing.internals.frequency import Frequency
 from computing.internals.interface import Interface
+from computing.internals.processes.usermode_processes.dns_process.zone_file_parser import EXAMPLE, parse_zone_file_format, write_zone_file
 from computing.internals.processes.usermode_processes.ftp_process import ClientFTPProcess
 from computing.internals.processes.usermode_processes.stp_process import STPProcess
 from computing.internals.wireless_interface import WirelessInterface
@@ -1046,6 +1047,9 @@ class UserInterface:
         # print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
         def gos():
             return [go for go in MainLoop.instance.graphics_objects if not isinstance(go, UserInterfaceGraphicsObject)]
+
+        zonefile = parse_zone_file_format(EXAMPLE)
+        str_zonefile = write_zone_file(zonefile)
 
         print(MainWindow.main_window.get_mouse_location())
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0

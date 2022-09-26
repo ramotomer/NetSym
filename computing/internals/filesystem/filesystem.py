@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Union
 
 from computing.internals.filesystem.directory import Directory
 from computing.internals.filesystem.file import File, PipingFile
@@ -69,7 +69,7 @@ class Filesystem:
                 returned += FILESYSTEM.SEPARATOR + name
         return returned
 
-    def at_absolute_path(self, path):
+    def at_absolute_path(self, path) -> Union[File, Directory]:
         """
         Receives an absolute path and returns the file or directory at that location.
         :param path:

@@ -6,6 +6,17 @@ from scapy.layers.dns import DNSRR, DNSQR
 
 from usefuls.attribute_renamer import define_attribute_aliases
 
+T_Hostname = str
+
+
+def canonize_domain_hostname(hostname: T_Hostname) -> T_Hostname:
+    """
+    'example.dom'  -> 'example.dom.'
+    'axempla.dom.' -> 'axempla.dom.'
+    """
+    return hostname.rstrip('.') + '.'
+
+
 DNSResourceRecord = define_attribute_aliases(
     DNSRR,
     {

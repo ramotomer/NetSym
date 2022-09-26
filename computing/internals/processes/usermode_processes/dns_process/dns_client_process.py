@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Tuple, Optional
 import scapy
 
 from address.ip_address import IPAddress
-from computing.internals.dns_cache import T_DomainName
 from computing.internals.processes.abstracts.process import Process, T_ProcessCode
 from consts import OPCODES, PROTOCOLS, T_Time, T_Port, PORTS
 from packets.all import DNS
+from packets.usefuls.dns import T_Hostname
 from packets.usefuls.dns import list_to_dns_query, DNSQueryRecord
 
 if TYPE_CHECKING:
@@ -89,7 +89,7 @@ class DNSClientProcess(Process):
         self.computer.dns_cache.transaction_counter += 1
         return query
 
-    def _extract_dns_answer(self, dns_answer: scapy.packet.Packet) -> Tuple[T_DomainName, IPAddress, int]:
+    def _extract_dns_answer(self, dns_answer: scapy.packet.Packet) -> Tuple[T_Hostname, IPAddress, int]:
 
         """
         Take in the answer packet that was sent from the server
