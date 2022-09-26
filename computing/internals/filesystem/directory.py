@@ -87,8 +87,8 @@ class Directory:
         if name in self.files:
             if raise_on_exists:
                 raise FileExistsError
-            return None
-        self.files[name] = File(name, '')
+        else:
+            self.files[name] = File(name, '')
         return self.files[name]
 
     @property

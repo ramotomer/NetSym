@@ -1296,6 +1296,7 @@ class UserInterface:
         self.tab_through_selected()
         self.selected_object.computer.open_port(21, "TCP")
         self.selected_object.computer.open_port(13, "TCP")
+        self.selected_object.computer.open_port(53, "UDP")
         self.tab_through_selected()
         self.tab_through_selected()
         self.selected_object.computer.dns_server = IPAddress("192.168.1.2")

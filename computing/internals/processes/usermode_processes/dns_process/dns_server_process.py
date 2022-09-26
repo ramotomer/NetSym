@@ -9,7 +9,7 @@ import scapy
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import Process, T_ProcessCode
 from computing.internals.processes.usermode_processes.dns_process.zone_file_parser import ParsedZoneFile, ZoneFileRecord
-from consts import PORTS, T_Port, COMPUTER, OPCODES
+from consts import PORTS, T_Port, COMPUTER, OPCODES, PROTOCOLS
 from packets.all import DNS
 from packets.usefuls.dns import *
 
@@ -25,7 +25,7 @@ class DNSServerProcess(Process):
     """
     A Domain Name Server process - will resolve a display name to an IPAddress if a client requests
     """
-    def __init__(self, pid: int, computer: Computer, domain_names: List[T_Hostname]) -> None:
+    def __init__(self, pid: int, computer: Computer, domain_names: Optional[List[T_Hostname]] = None) -> None:
         """
         Creates the new process
         :param pid: The process ID of this process
@@ -35,7 +35,7 @@ class DNSServerProcess(Process):
         self.socket: Optional[UDPSocket] = None
         self._active_queries: T_QueryDict = {}
 
-        self.domain_names = domain_names
+        self.domain_names = domain_names or PROTOCOLS.DNS.DEFAULT_DOMAIN_NAMES
 
     @property
     def _zone_file_paths(self):
@@ -43,7 +43,7 @@ class DNSServerProcess(Process):
 
     @staticmethod
     def _zone_file_by_domain_name(domain_name: T_Hostname) -> str:
-        return os.path.join(COMPUTER.FILES.CONFIGURATIONS.DNS_ZONE_FILES, domain_name)
+        return os.path.join(COMPUTER.FILES.CONFIGURATIONS.DNS_ZONE_FILES, decanonize_domain_hostname(domain_name) + '.zone')
 
     def _is_query_valid(self, query_bytes: bytes) -> bool:
         """
@@ -149,7 +149,7 @@ class DNSServerProcess(Process):
         Generate all zone files with default values
         """
         for domain_name in self.domain_names:
-            zone_file = self.computer.filesystem.at_absolute_path(COMPUTER.FILES.CONFIGURATIONS.DNS_ZONE_FILES).make_empty_file(domain_name)
+            zone_file = self.computer.filesystem.make_empty_file_with_directory_tree(self._zone_file_by_domain_name(domain_name))
             with zone_file as f:
                 f.write(ParsedZoneFile.with_default_values(domain_name, self.computer).to_zone_file_format())
 

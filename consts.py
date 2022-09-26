@@ -208,6 +208,7 @@ class PROTOCOLS:
         DEFAULT_REQUEST_COUNT = 1
 
     class DNS:
+        DEFAULT_DOMAIN_NAMES = ['very.fun.']
         DEFAULT_TIME_TO_LIVE = 5 * 60  # seconds
         CLIENT_QUERY_TIMEOUT = 12      # seconds
         DEFAULT_RETRY_COUNT = 3

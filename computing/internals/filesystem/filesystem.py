@@ -271,6 +271,29 @@ class Filesystem:
                 for value in values:
                     f.append(f"{key: <30} {value}")
 
+    def create_directory_tree(self, path: str) -> Directory:
+        """
+        Takes in a path and will create directories all throughout it
+            path = "/etc/no/yes" will create in '/etc' a 'no' directory and inside it a 'yes' directory
+            If any of them exist - it is okay just continue
+        """
+        parent_folder_name, subfolder_name = os.path.split(path)
+        if self.exists(path):
+            return self.at_absolute_path(path)
+        parent_folder = self.create_directory_tree(parent_folder_name)  # Nice.
+        subfolder = Directory(subfolder_name, parent_folder)
+        parent_folder.add_item(subfolder)
+        return subfolder
+
+    def make_empty_file_with_directory_tree(self, path: str, raise_on_exists: bool = True) -> Optional[File]:
+        """
+        Creates an empty file at the specified path
+        Returns it
+
+        If any of the parent directories do not exist - creates them
+        """
+        return self.create_directory_tree(os.path.dirname(path)).make_empty_file(os.path.basename(path), raise_on_exists=raise_on_exists)
+
     def dict_save(self):
         """
         Save to dict for json file

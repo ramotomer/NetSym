@@ -17,6 +17,14 @@ def canonize_domain_hostname(hostname: T_Hostname) -> T_Hostname:
     return hostname.rstrip('.') + '.'
 
 
+def decanonize_domain_hostname(hostname: T_Hostname) -> T_Hostname:
+    """
+    'axempla.dom.' -> 'axempla.dom'
+    'example.dom'  -> 'example.dom'
+    """
+    return hostname.rstrip('.')
+
+
 DNSResourceRecord = define_attribute_aliases(
     DNSRR,
     {
