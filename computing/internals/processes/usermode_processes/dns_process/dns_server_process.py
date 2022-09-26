@@ -10,6 +10,7 @@ from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import Process, T_ProcessCode
 from computing.internals.processes.usermode_processes.dns_process.zone_file_parser import ParsedZoneFile, ZoneFileRecord
 from consts import PORTS, T_Port, COMPUTER, OPCODES, PROTOCOLS
+from exceptions import DNSRouteNotFound
 from packets.all import DNS
 from packets.usefuls.dns import *
 
@@ -40,6 +41,10 @@ class DNSServerProcess(Process):
     @property
     def _zone_file_paths(self):
         return [self._zone_file_by_domain_name(domain_name) for domain_name in self.domain_names]
+
+    @property
+    def _zone_files(self):
+        return [self.computer.filesystem.at_absolute_path(path) for path in self._zone_file_paths]
 
     @staticmethod
     def _zone_file_by_domain_name(domain_name: T_Hostname) -> str:
@@ -104,7 +109,16 @@ class DNSServerProcess(Process):
         if name in self.computer.dns_cache:
             return  # name is known - no need to resolve :)
 
-        # ...
+        for zone_file in self._zone_files:
+            with zone_file as f:
+                parsed_zone_file = ParsedZoneFile.from_zone_file_content(f.read())
+            if parsed_zone_file.is_resolvable(name):
+                break
+                # TODO: this is shit code and i am tired
+        else:
+            raise DNSRouteNotFound
+
+        ,,,
 
     @staticmethod
     def _parse_dns_query(query_bytes: bytes) -> scapy.packet.Packet:

@@ -1,19 +1,23 @@
+from __future__ import annotations
+
 import cmath
 import datetime
 from contextlib import contextmanager
 from functools import reduce
 from math import sin, cos, pi, atan
 from operator import mul
-from typing import Dict, Any, Iterable, Callable
+from typing import Dict, Any, Iterable, Callable, TypeVar, Optional, List, Generator
 
 from consts import *
 from exceptions import WrongUsageError
 
+T = TypeVar("T")
 
-def get_the_one(iterable: Iterable,
-                condition: Callable,
+
+def get_the_one(iterable: Iterable[T],
+                condition: Callable[[T], bool],
                 raises: Callable = None,
-                default: Any = None) -> Any:
+                default: Optional[T] = None) -> T:
     """
     Receives an iterable and a condition and returns the first item in the
     iterable that the condition is true for.
@@ -42,7 +46,7 @@ def is_hex(string: str) -> bool:
     return set(string) <= hex_digits
 
 
-def with_args(function, *args, **kwargs):
+def with_args(function: Callable[[...], T], *args: Any, **kwargs: Any) -> Callable[[], T]:
     """
     Receives a function and its arguments.
     returns a function which when called without arguments performs `function(*args, **kwargs)`.
@@ -56,7 +60,7 @@ def with_args(function, *args, **kwargs):
     return returned
 
 
-def distance(p1, p2):
+def distance(p1: Tuple[float, float], p2: Tuple[float, float]):
     """
     Returns the distance between two points.
     :param p1:
@@ -68,17 +72,15 @@ def distance(p1, p2):
     return sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
 
-def split_by_size(string, size):
+def split_by_size(string: str, size: int) -> List[str]:
     """
     Takes the string and splits it up to `size` sized pieces (or less - for the last one).
-    :param string: str
-    :param size: int
     :return: list of strings each of size `size` at most
     """
     return [string[i:i + size] for i in range(0, len(string), size)]
 
 
-def called_in_order(*functions):
+def called_in_order(*functions: Callable[[], Any]) -> Callable[[], None]:
     """
     Receives functions and returns a function performs them one after the other in the order they were received in.
     calls them without arguments.
@@ -91,7 +93,7 @@ def called_in_order(*functions):
     return in_order
 
 
-def get_first(iterable):
+def get_first(iterable: Iterable[T]) -> T:
     """
     Returns one of the iterable's items. Usually the first one.
     :param iterable: an iterable
@@ -101,7 +103,7 @@ def get_first(iterable):
         return item
 
 
-def insort(list_, item, key=lambda t: t):
+def insort(list_: List[T], item: T, key: Callable = lambda t: t) -> None:
     """
     Insert an item into a sorted list by a given key while keeping it sorted.
     :param list_: the list (assumed to be sorted)
@@ -121,9 +123,10 @@ def insort(list_, item, key=lambda t: t):
     list_.insert(low_index, item)
 
 
-def circular_coordinates(center_location: tuple, radius, count, add_gl_coordinate=False):
+def circular_coordinates(center_location: Tuple[float, float], radius: float, count: int, add_gl_coordinate: bool = False) -> Generator:
     """
     a generator of coordinates in a circular fashion around a given point.
+    :param add_gl_coordinate:
     :param center_location: The location of the center
     :param radius: The radius of the circle
     :param count: The count of points

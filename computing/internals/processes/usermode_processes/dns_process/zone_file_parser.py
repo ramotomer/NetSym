@@ -4,9 +4,10 @@ from dataclasses import dataclass
 from typing import List, Optional, Tuple, TYPE_CHECKING
 
 from consts import OPCODES
-from exceptions import FilesystemError
+from exceptions import FilesystemError, DNSRouteNotFound
 from packets.usefuls.dns import T_Hostname
 from packets.usefuls.dns import canonize_domain_hostname
+from usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
     from computing.computer import Computer
@@ -54,6 +55,13 @@ class ZoneFileRecord:
     record_data:  str
     ttl:          Optional[int] = None
 
+    def matches(self, name: T_Hostname) -> bool:
+        """
+        Returns whether or not a supplied hostname can be resolved using this DNS record
+        """
+        return canonize_domain_hostname(name).endswith(canonize_domain_hostname(self.record_name)) and \
+               name[:-len(self.record_name)][-1] == '.'
+
 
 @dataclass
 class ParsedZoneFile:
@@ -100,6 +108,37 @@ class ParsedZoneFile:
 
     def to_zone_file_format(self) -> str:
         return write_zone_file(self)
+
+    def __getitem__(self, item: T_Hostname) -> ZoneFileRecord:
+        return get_the_one(
+            self.records,
+            lambda record: record.record_name == item,
+            raises=KeyError
+        )
+
+    def resolve_name(self, name: T_Hostname) -> ZoneFileRecord:
+        """
+        Receive a name and return the best way you can resolve it using the current zone file
+        whether it is the actual IP address, or another DNS server that will have a more specific answer
+        """
+        most_specific_result = None
+        for zone_file_record in self.records:
+            if zone_file_record.matches(name) and \
+                    zone_file_record.record_type != OPCODES.DNS.QUERY_TYPES.CANONICAL_NAME_FOR_AN_ALIAS and \
+                    (most_specific_result is None or (len(most_specific_result.record_name) < len(zone_file_record.record_name))):
+                    # TODO: add CNAME support
+                most_specific_result = zone_file_record
+        if most_specific_result is None:
+            raise DNSRouteNotFound(f"No good matches found in zone file.\nFile: {repr(self)}")
+        return most_specific_result
+
+    def is_resolvable(self, name: T_Hostname) -> bool:
+        """returns whether or not the supplied name can be resolved by this zone file"""
+        try:
+            self.resolve_name(name)
+        except DNSRouteNotFound:
+            return False
+        return True
 
 
 def parse_zone_file_format(zone_file_content: str) -> ParsedZoneFile:

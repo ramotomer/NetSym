@@ -487,3 +487,15 @@ class TCPSocketConnectionRefused(TCPSocketError):
     """
     Tried connecting a TCP socket but the connection was not successful
     """
+
+
+class DNSError(PacketError):
+    """
+    Exception related to the DNS protocol
+    """
+
+
+class DNSRouteNotFound(DNSError):
+    """
+    Failed to find a good value for a supplied domain name
+    """
