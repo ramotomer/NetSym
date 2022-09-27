@@ -2,17 +2,19 @@ from __future__ import annotations
 
 import os
 import struct
-from typing import TYPE_CHECKING, Dict, Tuple, Optional
+from typing import TYPE_CHECKING, Dict, Tuple
 
 import scapy
 
 from address.ip_address import IPAddress
+from computing.internals.filesystem.file import File
 from computing.internals.processes.abstracts.process import Process, T_ProcessCode, WaitingFor
-from computing.internals.processes.usermode_processes.dns_process.zone_file_parser import ParsedZoneFile, ZoneFileRecord
+from computing.internals.processes.usermode_processes.dns_process.zone import Zone, ZoneRecord
 from consts import PORTS, T_Port, COMPUTER, OPCODES, PROTOCOLS
 from exceptions import DNSRouteNotFound, WrongUsageError
 from packets.all import DNS
 from packets.usefuls.dns import *
+from usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
     from computing.internals.sockets.udp_socket import UDPSocket
@@ -40,15 +42,22 @@ class DNSServerProcess(Process):
 
     @property
     def _zone_file_paths(self):
-        return [self._zone_file_by_domain_name(domain_name) for domain_name in self.domain_names]
+        return [self._zone_file_path_by_domain_name(domain_name) for domain_name in self.domain_names]
 
     @property
     def _zone_files(self):
         return [self.computer.filesystem.at_absolute_path(path) for path in self._zone_file_paths]
 
     @staticmethod
-    def _zone_file_by_domain_name(domain_name: T_Hostname) -> str:
+    def _zone_file_path_by_domain_name(domain_name: T_Hostname) -> str:
         return os.path.join(COMPUTER.FILES.CONFIGURATIONS.DNS_ZONE_FILES, decanonize_domain_hostname(domain_name) + '.zone')
+
+    def _zone_file_by_domain_name(self, domain_name: T_Hostname) -> File:
+        return self.computer.filesystem.at_absolute_path(self._zone_file_path_by_domain_name(domain_name))
+
+    def _zone_by_domain_name(self, domain_name: T_Hostname) -> Zone:
+        with self._zone_file_by_domain_name(domain_name) as zone_file:
+            return Zone.from_file_format(zone_file.read())
 
     def _is_query_valid(self, query_bytes: bytes) -> bool:
         """
@@ -96,6 +105,7 @@ class DNSServerProcess(Process):
         """
         for item_name, client_address in query_dict.items():
             self.socket.sendto(self._build_dns_answer(item_name), client_address)
+            del self._active_queries[item_name]
 
     def _send_error_messages_to_timed_out_clients(self) -> None:
         """
@@ -109,22 +119,20 @@ class DNSServerProcess(Process):
         if name in self.computer.dns_cache:
             return  # name is known - no need to resolve :)
 
-        for zone_file in self._zone_files:
-            with zone_file as f:
-                parsed_zone_file = ParsedZoneFile.from_zone_file_content(f.read())
-            if parsed_zone_file.is_resolvable(name):
-                break
-                # TODO: this is shit code and i am tired. fix later
-        else:
-            raise DNSRouteNotFound
+        domain_name = get_the_one(self.domain_names, DomainHostname(name).endswith, DNSRouteNotFound)
+        zone = self._zone_by_domain_name(domain_name)
 
-        resolved_record = parsed_zone_file.resolve_name(name)
-        if resolved_record.record_type == OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS:
-            self.computer.dns_cache.add_item(resolved_record.record_name, resolved_record.record_data)
-            return
+        for record in zone.alias_records:
+            pass  # TODO: add this
 
-        if resolved_record.record_type == OPCODES.DNS.QUERY_TYPES.AUTHORITATIVE_NAME_SERVER:
-            self.computer.resolve_name(name, dns_server=IPAddress(resolved_record.record_data))
+        for record in zone.host_records:
+            if DomainHostname(name).endswith(record.record_name):
+                self.computer.dns_cache.add_item(record.record_name, record.record_data)
+                return
+
+        for record in zone.name_server_records:
+            if DomainHostname(name).endswith(record.record_name):
+                self.computer.resolve_name(name, dns_server=IPAddress(record.record_data))
 
     @staticmethod
     def _parse_dns_query(query_bytes: bytes) -> scapy.packet.Packet:
@@ -173,9 +181,10 @@ class DNSServerProcess(Process):
         Generate all zone files with default values
         """
         for domain_name in self.domain_names:
-            zone_file = self.computer.filesystem.make_empty_file_with_directory_tree(self._zone_file_by_domain_name(domain_name))
+            zone_file = self.computer.filesystem.make_empty_file_with_directory_tree(self._zone_file_path_by_domain_name(domain_name))
             with zone_file as f:
-                f.write(ParsedZoneFile.with_default_values(domain_name, self.computer).to_zone_file_format())
+                if len(f.read()) == 0:
+                    f.write(Zone.with_default_values(domain_name, self.computer).to_file_format())
 
     def add_dns_record(self, name: T_Hostname, ip_address: IPAddress, domain_name: Optional[T_Hostname] = None) -> None:
         """
@@ -186,14 +195,14 @@ class DNSServerProcess(Process):
                 raise WrongUsageError(f"Must supply domain_name if server hosts multiple zones")
             domain_name, = self.domain_names
 
-        with self.computer.filesystem.at_absolute_path(self._zone_file_by_domain_name(domain_name)) as zone_file:
-            parsed_zone_file = ParsedZoneFile.from_zone_file_content(zone_file.read())
+        with self._zone_file_by_domain_name(domain_name) as zone_file:
+            parsed_zone_file = Zone.from_file_format(zone_file.read())
             parsed_zone_file.records.append(
-                ZoneFileRecord(
+                ZoneRecord(
                     name,
                     OPCODES.DNS.QUERY_CLASSES.INTERNET,
                     OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS,
                     ip_address.string_ip
                 )
             )
-            zone_file.write(parsed_zone_file.to_zone_file_format())
+            zone_file.write(parsed_zone_file.to_file_format())

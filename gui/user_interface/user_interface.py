@@ -16,7 +16,7 @@ from address.ip_address import IPAddress
 from computing.computer import Computer
 from computing.internals.frequency import Frequency
 from computing.internals.interface import Interface
-from computing.internals.processes.usermode_processes.dns_process.zone_file_parser import EXAMPLE, parse_zone_file_format, write_zone_file
+from computing.internals.processes.usermode_processes.dns_process.zone import EXAMPLE, parse_zone_file_format, write_zone_file
 from computing.internals.processes.usermode_processes.stp_process import STPProcess
 from computing.internals.wireless_interface import WirelessInterface
 from computing.router import Router

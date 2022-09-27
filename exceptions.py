@@ -41,6 +41,13 @@ class AddressTooLargeError(AddressError):
     """
 
 
+class InvalidDomainHostnameError(InvalidAddressError):
+    """
+    The supplied domain hostname is invalid
+        (see the `validate_domain_hostname` function for more documentation)
+    """
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 

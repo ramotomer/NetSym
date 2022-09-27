@@ -276,6 +276,25 @@ def my_range(start, end=None, step=1):
         current += step
 
 
+def bool_(o: Any) -> bool:
+    """
+    The typing module is having a hard time with the `filter` function
+    Especially with the fact that the `bool` function takes in an `str`
+
+    The `filter` function is typed like this:
+
+        filter(function: Callable[[T], bool], iterable: Iterable[T]) -> Iterable[T]
+
+        and `bool` takes in an `object`
+
+    This means that `filter` allegedly returns a `Iterable[object]`
+    That fucks up my typing - because usually it returns something with more functionality (like strings) which the type checker sadly does not like
+
+    This function is just like `bool` but it takes in `Any` and not `object`
+    """
+    return bool(o)
+
+
 def split_with_escaping(string, separator=' ', escaping_char='"', remove_empty_spaces=True):
     """
     Just like the builtin `split` - but can handle escaping characters like "-s and not split in between them
@@ -283,6 +302,7 @@ def split_with_escaping(string, separator=' ', escaping_char='"', remove_empty_s
         example:
                         >>> split_with_escaping('and i said "hello w o r l d" ! !')
                         >>> ['and', 'i', 'said', '"hello w o r l d"', '!', '!']
+    :param remove_empty_spaces:
     :param string: the `str` to split
     :param separator: the substring to split by
     :param escaping_char: the character which in between you should not split

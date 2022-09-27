@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from functools import reduce
 from operator import concat
-from typing import TYPE_CHECKING, Optional, List, Union, Type, Callable, NamedTuple
+from typing import TYPE_CHECKING, Optional, List, Union, Type, Callable
 
 import scapy
 from recordclass import recordclass
@@ -47,14 +47,6 @@ if TYPE_CHECKING:
     from computing.internals.sockets.socket import Socket
     from computing.connection import Connection
     from packets.packet import Packet
-
-
-class ReceivedPacket(NamedTuple):
-    """
-    a packet that was received in this computer  (packet object, receiving time, interface packet is received on)
-    """
-    packet: Packet
-    metadata: PacketMetadata
 
 
 SocketData = recordclass("SocketData", [
@@ -122,7 +114,7 @@ class Computer:
         self.loopback = Interface.loopback()
         self.boot_time = MainLoop.instance.time()
 
-        self.received = []
+        self.received: ReturnedPacket = []
 
         self.arp_cache = ArpCache()  # a dictionary of {<ip address> : ARPCacheItem(<mac address>, <initiation time of this item>)
         self.routing_table = RoutingTable.create_default(self)
@@ -656,11 +648,11 @@ class Computer:
         """
         self.process_scheduler.get_usermode_process_by_type(DHCPServer).dns_server = dns_server
 
-    def resolve_name(self, name: T_Hostname, dns_server: Optional[IPAddress] = None) -> None:
+    def resolve_name(self, name: T_Hostname, dns_server: Optional[IPAddress] = None) -> int:
         """
         Start a DNS process to resolve a domain hostname
         """
-        self.process_scheduler.start_usermode_process(
+        return self.process_scheduler.start_usermode_process(
             DNSClientProcess,
             dns_server if dns_server is not None else self.dns_server,
             name,
@@ -783,9 +775,9 @@ class Computer:
         else:
             self.start_sniffing(interface_name, is_promisc)
 
-    def new_packets_since(self, time_: T_Time) -> List[ReceivedPacket]:
+    def new_packets_since(self, time_: T_Time) -> List[ReturnedPacket]:
         """
-        Returns a list of all the new `ReceivedPacket`s that were received in the last `seconds` seconds.
+        Returns a list of all the new `ReturnedPacket`s that were received in the last `seconds` seconds.
         :param time_: a number of seconds.
         """
         return list(filter(lambda rp: rp.packets[rp.packet].time > time_, self.received))

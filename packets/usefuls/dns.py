@@ -1,20 +1,64 @@
 from __future__ import annotations
 
-from typing import List
+from dataclasses import dataclass
+from typing import List, Optional
 
 from scapy.layers.dns import DNSRR, DNSQR
 
+from exceptions import InvalidDomainHostnameError
 from usefuls.attribute_renamer import define_attribute_aliases
 
 T_Hostname = str
 
 
-def canonize_domain_hostname(hostname: T_Hostname) -> T_Hostname:
+def validate_domain_hostname(hostname: T_Hostname) -> None:
+    """
+    Make sure the supplied hostname is valid
+        valid:
+            'hi', 'hello.com', 'www.google.com.', 'eshel.d7149.d8200.dom.'
+
+        invalid:
+            '', '.hello.com.', 'google..com', '.', 'eshel.d7149..', '192.168.1.2'
+    """
+    message = f"Invalid domain hostname!! '{hostname}'"
+    split_hostname = hostname.split('.')
+
+    if not hostname:
+        raise InvalidDomainHostnameError(f"{message} is an empty string")
+
+    if (('' in split_hostname) and (split_hostname[-1] != '')) or split_hostname.count('') > 1:
+        raise InvalidDomainHostnameError(f"{message} contains multiple consecutive dots ('..')")
+
+    if not all(part.isalnum() for part in split_hostname if part):
+        raise InvalidDomainHostnameError(f"{message} - Invalid character in hostname! Only numbers and letters allowed!")
+
+    if any((part and part[0].isnumeric()) for part in split_hostname):
+        raise InvalidDomainHostnameError(f"{message} - Domain names must not start with a number!!")
+
+
+def is_domain_hostname_valid(hostname: T_Hostname) -> bool:
+    """same - but does not raises, returns the answer"""
+    try:
+        validate_domain_hostname(hostname)
+    except InvalidDomainHostnameError:
+        return False
+    return True
+
+
+def is_canonized(hostname: T_Hostname) -> bool:
+    validate_domain_hostname(hostname)
+    return hostname.endswith('.')
+
+
+def canonize_domain_hostname(hostname: T_Hostname, seed: Optional[T_Hostname] = None) -> T_Hostname:
     """
     'example.dom'  -> 'example.dom.'
     'axempla.dom.' -> 'axempla.dom.'
     """
-    return hostname.rstrip('.') + '.'
+    validate_domain_hostname(hostname)
+    if seed:
+        validate_domain_hostname(seed)
+    return f"{hostname.rstrip('.')}.{canonize_domain_hostname(seed) if seed else ''}"
 
 
 def decanonize_domain_hostname(hostname: T_Hostname) -> T_Hostname:
@@ -22,7 +66,45 @@ def decanonize_domain_hostname(hostname: T_Hostname) -> T_Hostname:
     'axempla.dom.' -> 'axempla.dom'
     'example.dom'  -> 'example.dom'
     """
+    validate_domain_hostname(hostname)
     return hostname.rstrip('.')
+
+
+@dataclass
+class DomainHostname:
+    """
+    A class containing much of the logic necessary for domain hostnames
+    """
+    hostname: T_Hostname
+
+    def __init__(self, hostname: T_Hostname) -> None:
+        validate_domain_hostname(hostname)
+        self.hostname = decanonize_domain_hostname(hostname)
+
+    @property
+    def canonized(self):
+        return canonize_domain_hostname(self.hostname)
+
+    @property
+    def domains(self):
+        """
+        'tomer.noyman.fun.' -> ['noyman', 'fun']
+        'hi'                -> []
+        """
+        return self.hostname.split('.', 1)[1].split('.') if self.hostname.count('.') >= 1 else []
+
+    def endswith(self, domain_name: T_Hostname) -> bool:
+        """
+        Returns whether or not this hostname ends with a specified domain name
+
+            ('tomer.noyman.com.', 'noyman.com.') -> True
+            ('tomer.noyman.com.', 'man.com.')    -> False
+        """
+        domain_name = decanonize_domain_hostname(domain_name)
+        if domain_name == self.hostname:
+            return True
+        return all(my_domain == other_domain for my_domain, other_domain in zip(reversed(self.domains), reversed(domain_name.split('.')))) and \
+               self.domains
 
 
 DNSResourceRecord = define_attribute_aliases(
