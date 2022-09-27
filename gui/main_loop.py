@@ -230,7 +230,6 @@ class MainLoop:
         """
         function = None
         try:
-        # if True:
             self.main_window.clear()
 
             self.update_time()

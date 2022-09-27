@@ -3,6 +3,7 @@ from typing import Dict
 
 from address.ip_address import IPAddress
 from consts import T_Time
+from exceptions import WrongUsageError
 from gui.main_loop import MainLoop
 from packets.usefuls.dns import T_Hostname
 
@@ -41,6 +42,9 @@ class DNSCache:
         """
         Adds a new item to the cache
         """
+        if ttl is None:
+            raise WrongUsageError("Do not add a DNS item with TTL (Time to live) which is `None`!!!!")
+
         self.__cache[name] = DNSCacheItem(ip_address, ttl, MainLoop.instance.time())
 
     def forget_old_items(self) -> None:

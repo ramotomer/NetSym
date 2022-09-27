@@ -113,16 +113,18 @@ class DNSClientProcess(Process):
                 "record_data": str(ip_address),
             }))
 
-    def _extract_dns_answer(self, dns_answer: scapy.packet.Packet) -> Tuple[T_Hostname, IPAddress, int, str]:
+    def _extract_dns_answer(self, dns_answer: bytes) -> Tuple[T_Hostname, IPAddress, int, str]:
 
         """
         Take in the answer packet that was sent from the server
         Return the interesting information to insert in the DNS cache of the computer
         """
-        if dns_answer.answer_record_count > 1:
+        parsed_dns_answer = DNS(dns_answer)
+
+        if parsed_dns_answer.answer_record_count > 1:
             raise NotImplementedError(f"Multiple answers in the packet!")
 
-        answer_record, = dns_answer.answer_records
+        answer_record, = parsed_dns_answer.answer_records
         return answer_record.record_name, answer_record.record_data, answer_record.time_to_live, answer_record.record_type
 
     def code(self) -> T_ProcessCode:
@@ -143,11 +145,14 @@ class DNSClientProcess(Process):
             yield from self.socket.block_until_received(timeout=self._query_timeout)
 
             received = self.socket.receive()
-            if received:
+            if received:  # if `received` is empty - that means the socket `block_until_received` was timed out
                 dns_answer = received[0]
                 _, ip_address, ttl, record_type = self._extract_dns_answer(dns_answer)
-                self.computer.dns_cache.add_item(self._name_to_resolve, ip_address, ttl)
+                self.computer.dns_cache.add_item(self._name_to_resolve, IPAddress(ip_address), ttl)
                 self._store_result_in_file(ip_address, ttl, record_type)
+
+                if record_type == OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS:
+                    self._dns_process_print(f"\nAnswer:\n{ip_address}")
                 break
         else:
             self.die(f"ERROR: DNS could not resolve name :(")

@@ -73,7 +73,7 @@ class DNSServerProcess(Process):
             parsed_dns_packet = self._parse_dns_query(query_bytes)
         except struct.error:
             return False
-        return not parsed_dns_packet.opcode.is_response
+        return not parsed_dns_packet.is_response
 
     def _build_dns_answer(self, record_name: T_Hostname, time_to_live: int) -> scapy.packet.Packet:
         """
@@ -97,6 +97,10 @@ class DNSServerProcess(Process):
         self.computer.dns_cache.transaction_counter += 1
         return dns_answer
 
+    def _is_active_client(self, client_ip: IPAddress, client_port: T_Port) -> bool:
+        """Returns whether or not a client with this IP and port currently has an active query """
+        return any(client.client_ip == client_ip and client.client_port == client_port for client in self._active_queries.values())
+
     def _get_resolved_names(self) -> T_QueryDict:
         """
         Check if any of the names you should have resolved have been resolved already
@@ -109,8 +113,8 @@ class DNSServerProcess(Process):
         Take in all of the queries that are ready to be sent back to the clients
         Send them back to the clients
         """
-        for item_name, client_address in query_dict.items():
-            self.socket.sendto(self._build_dns_answer(item_name), client_address)
+        for item_name, client in query_dict.items():
+            self.socket.sendto(self._build_dns_answer(item_name, self.computer.dns_cache[item_name].ttl), (client.client_ip, client.client_port))
             del self._active_queries[item_name]
 
     def _send_error_messages_to_timed_out_clients(self) -> None:
@@ -157,7 +161,12 @@ class DNSServerProcess(Process):
             time_to_live, record_data = file_contents["time_to_live"], file_contents["record_data"]
 
             if record_type == OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS:
-                self.computer.dns_cache.add_item(record_name, record_data)
+                relevant_domain_name = get_the_one(self.domain_names, DomainHostname(record_name).endswith, DNSRouteNotFound)
+                self.computer.dns_cache.add_item(
+                    record_name,
+                    IPAddress(record_data),
+                    time_to_live or self._zone_by_domain_name(relevant_domain_name).default_ttl,
+                )
                 continue
 
             if record_type == OPCODES.DNS.QUERY_TYPES.AUTHORITATIVE_NAME_SERVER:
@@ -175,12 +184,12 @@ class DNSServerProcess(Process):
         domain_name = get_the_one(self.domain_names, DomainHostname(name).endswith, DNSRouteNotFound)
         zone = self._zone_by_domain_name(domain_name)
 
-        for record in zone.alias_records:
-            pass  # TODO: add this
+        # for record in zone.alias_records:
+        #     pass  # TODO: add this
 
         for record in zone.host_records:
             if DomainHostname(name).endswith(record.record_name):
-                self.computer.dns_cache.add_item(record.record_name, record.record_data)
+                self.computer.dns_cache.add_item(record.record_name, IPAddress(record.record_data), record.ttl or zone.default_ttl)
                 return
 
         for record in zone.name_server_records:
@@ -205,7 +214,8 @@ class DNSServerProcess(Process):
         And create the tmp directory in which DNS query results will be saved from other `DNSClientProcess`-s
         """
         for domain_name in self.domain_names:
-            zone_file = self.computer.filesystem.make_empty_file_with_directory_tree(self._zone_file_path_by_domain_name(domain_name))
+            zone_file = self.computer.filesystem.make_empty_file_with_directory_tree(self._zone_file_path_by_domain_name(domain_name),
+                                                                                     raise_on_exists=False)
             with zone_file as f:
                 if len(f.read()) == 0:
                     f.write(Zone.with_default_values(domain_name, self.computer).to_file_format())
@@ -234,7 +244,7 @@ class DNSServerProcess(Process):
                 continue
 
             for udp_packet_data, client_ip, client_port in self.socket.receivefrom():
-                if (client_ip, client_port) in self._active_queries.values():
+                if self._is_active_client(client_ip, client_port):
                     break  # The client has requested the same address again from the same port! ignore...
 
                 if not self._is_query_valid(query_bytes=udp_packet_data):
@@ -243,7 +253,7 @@ class DNSServerProcess(Process):
                 dns_query = self._parse_dns_query(query_bytes=udp_packet_data)
                 if dns_query.query_count > 1:
                     raise NotImplementedError(f"multiple queries in the same packet! count: {dns_query.query_count}")
-                self._resolve_name(dns_query.queries[0].query_name, client_ip, client_port)
+                self._resolve_name(dns_query.queries[0].query_name.decode("ascii"), client_ip, client_port)
 
     def __repr__(self) -> str:
         return "dnssd"

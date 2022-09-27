@@ -256,12 +256,13 @@ class ComputerGraphics(ImageGraphics):
         addresses = linesep.join(str(interface.ip) for interface in self.computer.interfaces if interface.has_ip())
 
         return f"""
-Computer:
+[## Computer ##]
+'{self.computer.name}'
 
-Name: {self.computer.name}
-{f'os: {self.computer.os}' if self.computer.os is not None else ""}
-{f'gateway: {gateway}' if gateway is not None else ""}
-{f'addresses: {linesep + addresses}' if addresses else ""}
+{f'Operation System: {self.computer.os}' if self.computer.os is not None else ""}
+{f'Gateway: {gateway}' if gateway is not None else ""}
+{f'DNS server: {self.computer.dns_server}' if self.computer.dns_server is not None else ""}
+{f'IP Addresses: {linesep + addresses}' if addresses else ""}
 """
 
     def add_interface(self, interface: Interface) -> None:

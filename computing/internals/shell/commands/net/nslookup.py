@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from computing.internals.processes.usermode_processes.dns_process.dns_client_process import DNSClientProcess
 from computing.internals.shell.commands.command import Command, CommandOutput
 from consts import PROTOCOLS
+from packets.usefuls.dns import is_domain_hostname_valid
 
 if TYPE_CHECKING:
     from computing.internals.shell.shell import Shell
@@ -31,20 +32,11 @@ class Nslookup(Command):
                                  default=PROTOCOLS.DNS.CLIENT_QUERY_TIMEOUT,
                                  help='How long to wait until we send again')
 
-    def _is_valid_hostname(self, hostname: str) -> bool:
-        """
-        Return whether or not the hostname is valid!
-
-
-        will be more implemented later hopefully...
-        """
-        return len(hostname) > 0
-
     def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
         performs the action of the command
         """
-        if not self._is_valid_hostname(parsed_args.hostname):
+        if not is_domain_hostname_valid(parsed_args.hostname):
             return CommandOutput('', "\nERROR: Hostname is not valid!")
 
         if self.computer.dns_server is None:
