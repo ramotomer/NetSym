@@ -11,7 +11,7 @@ from address.ip_address import IPAddress
 from computing.internals.filesystem.file import File
 from computing.internals.processes.abstracts.process import Process, T_ProcessCode, WaitingFor
 from computing.internals.processes.usermode_processes.dns_process.zone import Zone, ZoneRecord
-from consts import PORTS, T_Port, OPCODES, PROTOCOLS
+from consts import PORTS, T_Port, OPCODES
 from exceptions import DNSRouteNotFound, WrongUsageError
 from packets.all import DNS
 from packets.usefuls.dns import *
@@ -45,7 +45,12 @@ class DNSServerProcess(Process):
         self.socket: Optional[UDPSocket] = None
         self._active_queries: T_QueryDict = {}
 
-        self.domain_names: List[T_Hostname] = domain_names or PROTOCOLS.DNS.DEFAULT_DOMAIN_NAMES
+        self.__initial_domain_names = list(map(canonize_domain_hostname, (domain_names or [])))
+
+    @property
+    def domain_names(self) -> List[T_Hostname]:
+        return [canonize_domain_hostname(file.name.rsplit('.', 1)[0])
+                for file in self.computer.filesystem.at_absolute_path(COMPUTER.FILES.CONFIGURATIONS.DNS_ZONE_FILES).files.values()]
 
     @property
     def _zone_file_paths(self):
@@ -57,7 +62,7 @@ class DNSServerProcess(Process):
 
     @staticmethod
     def _zone_file_path_by_domain_name(domain_name: T_Hostname) -> str:
-        return os.path.join(COMPUTER.FILES.CONFIGURATIONS.DNS_ZONE_FILES, decanonize_domain_hostname(domain_name) + '.zone')
+        return COMPUTER.FILES.CONFIGURATIONS.DNS_ZONE_FILES + "/" + decanonize_domain_hostname(domain_name) + '.zone'
 
     def _zone_file_by_domain_name(self, domain_name: T_Hostname) -> File:
         return self.computer.filesystem.at_absolute_path(self._zone_file_path_by_domain_name(domain_name))
@@ -153,7 +158,7 @@ class DNSServerProcess(Process):
         """
         tmp_query_files_dir = self.computer.filesystem.at_absolute_path(COMPUTER.FILES.CONFIGURATIONS.DNS_TMP_QUERY_RESULTS_DIR_PATH)
 
-        for file in list(tmp_query_files_dir.files):
+        for file in list(tmp_query_files_dir.files.values()):
             with file as f:
                 file_contents = json.loads(f.read())
             del tmp_query_files_dir.files[file.name]  # file was handled and is no longer necessary - delete!
@@ -239,17 +244,16 @@ class DNSServerProcess(Process):
         self.socket = self.computer.get_udp_socket(self.pid)
         self.socket.bind((IPAddress.no_address(), PORTS.DNS))
 
-    def _init_zone_files(self):
+    def _init_zone_file(self, domain_name: T_Hostname) -> None:
         """
         Generate all zone files with default values
         And create the tmp directory in which DNS query results will be saved from other `DNSClientProcess`-s
         """
-        for domain_name in self.domain_names:
-            zone_file = self.computer.filesystem.make_empty_file_with_directory_tree(self._zone_file_path_by_domain_name(domain_name),
-                                                                                     raise_on_exists=False)
-            with zone_file as f:
-                if len(f.read()) == 0:
-                    f.write(Zone.with_default_values(domain_name, self.computer).to_file_format())
+        zone_file = self.computer.filesystem.make_empty_file_with_directory_tree(self._zone_file_path_by_domain_name(domain_name),
+                                                                                 raise_on_exists=False)
+        with zone_file as f:
+            if len(f.read()) == 0:
+                f.write(Zone.with_default_values(domain_name, self.computer).to_file_format())
 
     def _init_tmp_query_result_files(self):
         """
@@ -262,8 +266,10 @@ class DNSServerProcess(Process):
         The main code of the process
         """
         self._init_tmp_query_result_files()
-        self._init_zone_files()
         self._init_socket()
+
+        for domain_name in self.__initial_domain_names:
+            self._init_zone_file(domain_name)
 
         while True:
             self._send_query_answers_to_clients(self._get_resolved_names())
@@ -309,3 +315,20 @@ class DNSServerProcess(Process):
                 )
             )
             zone_file.write(parsed_zone_file.to_file_format())
+
+    def add_or_remove_zone(self, domain_name: T_Hostname) -> None:
+        """
+        Add a new zone for the DNS server
+        If it exists - deletes it
+        """
+        domain_name = canonize_domain_hostname(domain_name)
+
+        if domain_name in self.domain_names:
+            # remove
+            self.domain_names.remove(domain_name)
+            self.computer.filesystem.delete_file(self._zone_file_path_by_domain_name(domain_name))
+
+        else:
+            # add
+            self.domain_names.append(domain_name)
+            self._init_zone_file(domain_name)

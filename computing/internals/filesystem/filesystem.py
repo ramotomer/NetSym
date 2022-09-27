@@ -294,6 +294,13 @@ class Filesystem:
         """
         return self.create_directory_tree(os.path.dirname(path)).make_empty_file(os.path.basename(path), raise_on_exists=raise_on_exists)
 
+    def delete_file(self, path: str) -> None:
+        """Delete a file in the specified path"""
+        directory_path, filename = os.path.split(path)
+        if not filename:
+            raise FileNotFoundError("Cannot delete the root directory!")
+        del self.at_absolute_path(directory_path).files[filename]
+
     def dict_save(self):
         """
         Save to dict for json file

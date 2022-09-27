@@ -92,8 +92,7 @@ def does_domain_hostname_end_with(hostname, domain_name: T_Hostname, zone_origin
         return False
 
     return all(my_domain == other_domain for my_domain, other_domain in
-               zip(reversed(domain_hostname_split(hostname)), reversed(domain_hostname_split(domain_name)))) and \
-           len(domain_hostname_split(hostname)) > 1
+               zip(reversed(domain_hostname_split(hostname)), reversed(domain_hostname_split(domain_name))))
 
 
 def default_tmp_query_output_file_path(name):

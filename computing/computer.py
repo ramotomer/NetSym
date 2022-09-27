@@ -667,6 +667,13 @@ class Computer:
         hostname, ip_address = user_inserted_dns_entry_format.split()
         self.process_scheduler.get_usermode_process_by_type(DNSServerProcess).add_dns_record(hostname, IPAddress(ip_address))
 
+    def add_remove_dns_zone(self, zone_name: T_Hostname) -> None:
+        """
+        Add a new zone for the DNS server
+        If it exists - deletes it
+        """
+        self.process_scheduler.get_usermode_process_by_type(DNSServerProcess).add_or_remove_zone(zone_name)
+
     def open_port(self, port_number: int, protocol: str = "TCP") -> None:
         """
         Opens a port on the computer. Starts the process that is behind it.

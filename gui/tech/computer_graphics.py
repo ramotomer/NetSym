@@ -130,7 +130,13 @@ class ComputerGraphics(ImageGraphics):
                     str,
                     "Enter the DNS mapping - full hostname and IP address, separated by a space:",
                     self.computer.add_dns_entry
-                )
+                ),
+                "add/remove DNS zone (z)": with_args(
+                    user_interface.ask_user_for,
+                    str,
+                    "Enter the name of your DNS zone:",
+                    self.computer.add_remove_dns_zone,
+                ),
             },
             DHCPServer: {
                 "set DNS server (alt+n)": with_args(
