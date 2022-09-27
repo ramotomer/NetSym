@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
 from typing import List, Optional
 
 from scapy.layers.dns import DNSRR, DNSQR
@@ -52,15 +51,15 @@ def is_canonized(hostname: T_Hostname) -> bool:
     return hostname.endswith('.')
 
 
-def canonize_domain_hostname(hostname: T_Hostname, seed: Optional[T_Hostname] = None) -> T_Hostname:
+def canonize_domain_hostname(hostname: T_Hostname, zone_origin: Optional[T_Hostname] = None) -> T_Hostname:
     """
     'example.dom'  -> 'example.dom.'
     'axempla.dom.' -> 'axempla.dom.'
     """
     validate_domain_hostname(hostname)
-    if seed:
-        validate_domain_hostname(seed)
-    return f"{hostname.rstrip('.')}.{canonize_domain_hostname(seed) if seed else ''}"
+    if zone_origin:
+        validate_domain_hostname(zone_origin)
+    return f"{hostname.rstrip('.')}.{canonize_domain_hostname(zone_origin) if zone_origin and not is_canonized(hostname) else ''}"
 
 
 def decanonize_domain_hostname(hostname: T_Hostname) -> T_Hostname:
@@ -72,41 +71,29 @@ def decanonize_domain_hostname(hostname: T_Hostname) -> T_Hostname:
     return hostname.rstrip('.')
 
 
-@dataclass
-class DomainHostname:
+def domain_hostname_split(hostname: T_Hostname) -> List[T_Hostname]:
     """
-    A class containing much of the logic necessary for domain hostnames
+    'tomer.noyman.fun.' -> ['noyman', 'fun']
+    'hi'                -> []
     """
-    hostname: T_Hostname
+    decanonized = decanonize_domain_hostname(hostname)
+    return decanonized.split('.') if decanonized.count('.') >= 1 else []
 
-    def __init__(self, hostname: T_Hostname) -> None:
-        validate_domain_hostname(hostname)
-        self.hostname = decanonize_domain_hostname(hostname)
 
-    @property
-    def canonized(self):
-        return canonize_domain_hostname(self.hostname)
+def does_domain_hostname_end_with(hostname, domain_name: T_Hostname, zone_origin: Optional[T_Hostname] = None) -> bool:
+    """
+    Returns whether or not this hostname ends with a specified domain name
 
-    @property
-    def domains(self):
-        """
-        'tomer.noyman.fun.' -> ['noyman', 'fun']
-        'hi'                -> []
-        """
-        return self.hostname.split('.', 1)[1].split('.') if self.hostname.count('.') >= 1 else []
+        ('tomer.noyman.com.', 'noyman.com.') -> True
+        ('tomer.noyman.com.', 'man.com.')    -> False
+    """
+    domain_name = canonize_domain_hostname(domain_name, zone_origin)
+    if len(domain_hostname_split(domain_name)) > len(domain_hostname_split(hostname)):  # ^ `domain_name` cannot be longer!
+        return False
 
-    def endswith(self, domain_name: T_Hostname) -> bool:
-        """
-        Returns whether or not this hostname ends with a specified domain name
-
-            ('tomer.noyman.com.', 'noyman.com.') -> True
-            ('tomer.noyman.com.', 'man.com.')    -> False
-        """
-        domain_name = decanonize_domain_hostname(domain_name)
-        if domain_name == self.hostname:
-            return True
-        return all(my_domain == other_domain for my_domain, other_domain in zip(reversed(self.domains), reversed(domain_name.split('.')))) and \
-               self.domains
+    return all(my_domain == other_domain for my_domain, other_domain in
+               zip(reversed(domain_hostname_split(hostname)), reversed(domain_hostname_split(domain_name)))) and \
+           len(domain_hostname_split(hostname)) > 1
 
 
 def default_tmp_query_output_file_path(name):

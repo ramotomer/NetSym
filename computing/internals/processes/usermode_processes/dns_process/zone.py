@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import List, Optional, Tuple, TYPE_CHECKING
 
 from consts import OPCODES
-from exceptions import FilesystemError, DNSRouteNotFound
+from exceptions import FilesystemError
 from packets.usefuls.dns import T_Hostname
 from packets.usefuls.dns import canonize_domain_hostname
 from usefuls.funcs import get_the_one
@@ -73,16 +73,13 @@ class Zone:
     admin_mail_address:               Optional[T_Hostname] = None
 
     @property
-    def host_records(self):
-        return [r for r in self.records if r.record_type == OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS]
+    def host_or_alias_records(self):
+        return [r for r in self.records if r.record_type in [OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS,
+                                                             OPCODES.DNS.QUERY_TYPES.CANONICAL_NAME_FOR_AN_ALIAS]]
 
     @property
     def name_server_records(self):
         return [r for r in self.records if r.record_type == OPCODES.DNS.QUERY_TYPES.AUTHORITATIVE_NAME_SERVER]
-
-    @property
-    def alias_records(self):
-        return [r for r in self.records if r.record_type == OPCODES.DNS.QUERY_TYPES.CANONICAL_NAME_FOR_AN_ALIAS]
 
     @classmethod
     def with_default_values(cls, domain_name: T_Hostname, computer: Computer) -> Zone:
@@ -94,7 +91,7 @@ class Zone:
                 ZoneRecord(domain_name, OPCODES.DNS.QUERY_CLASSES.INTERNET, OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS, ip_address),
                 ZoneRecord('ns', OPCODES.DNS.QUERY_CLASSES.INTERNET, OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS, ip_address),
                 ZoneRecord(domain_name, OPCODES.DNS.QUERY_CLASSES.INTERNET, OPCODES.DNS.QUERY_TYPES.AUTHORITATIVE_NAME_SERVER, 'ns'),
-                ZoneRecord('www', OPCODES.DNS.QUERY_CLASSES.INTERNET, OPCODES.DNS.QUERY_TYPES.CANONICAL_NAME_FOR_AN_ALIAS, domain_name),
+                ZoneRecord(f'www', OPCODES.DNS.QUERY_CLASSES.INTERNET, OPCODES.DNS.QUERY_TYPES.CANONICAL_NAME_FOR_AN_ALIAS, domain_name),
             ],
             serial_number                   = 2020091025,
             slave_refresh_period            = 7200,
@@ -163,22 +160,6 @@ $TTL {self.default_ttl}\n
             raises=KeyError
         )
 
-    def resolve_name(self, name: T_Hostname) -> ZoneRecord:
-        """
-        Receive a name and return the best way you can resolve it using the current zone file
-        whether it is the actual IP address, or another DNS server that will have a more specific answer
-        """
-        most_specific_result = None
-        for zone_file_record in self.records:
-            if zone_file_record.matches(name) and \
-                    zone_file_record.record_type != OPCODES.DNS.QUERY_TYPES.CANONICAL_NAME_FOR_AN_ALIAS and \
-                    (most_specific_result is None or (len(most_specific_result.record_name) < len(zone_file_record.record_name))):
-                    # TODO: add CNAME support
-                most_specific_result = zone_file_record
-        if most_specific_result is None:
-            raise DNSRouteNotFound(f"No good matches found in zone file.\nFile: {repr(self)}")
-        return most_specific_result
-
     @classmethod
     def _parse_record_line(cls, parsed: Zone, record_type: str, splitted_line: List[str]) -> Tuple[Optional[str], Optional[int]]:
         """
@@ -227,3 +208,14 @@ $TTL {self.default_ttl}\n
             else:
                 return
             full_string_lines.remove(line)
+
+    def resolve_cname_alias(self, alias_record: ZoneRecord) -> str:
+        """
+        Take in a CNAME record and return the record that the alias points to
+        :param alias_record:
+        :return:
+        """
+        resolved_record = get_the_one(self.records, lambda r: r.record_name == alias_record.record_data, InvalidZoneFileError)
+        if resolved_record.record_type == OPCODES.DNS.QUERY_TYPES.CANONICAL_NAME_FOR_AN_ALIAS:
+            return self.resolve_cname_alias(resolved_record)
+        return resolved_record.record_data

@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import json
 import struct
-from typing import TYPE_CHECKING, Dict, NamedTuple
+from typing import TYPE_CHECKING, Dict, NamedTuple, Tuple
 
 import scapy
+from scapy.layers.dns import dnstypes
 
 from address.ip_address import IPAddress
 from computing.internals.filesystem.file import File
@@ -14,7 +15,7 @@ from consts import PORTS, T_Port, OPCODES, PROTOCOLS
 from exceptions import DNSRouteNotFound, WrongUsageError
 from packets.all import DNS
 from packets.usefuls.dns import *
-from usefuls.funcs import get_the_one
+from usefuls.funcs import get_the_one, with_args
 
 if TYPE_CHECKING:
     from computing.internals.sockets.udp_socket import UDPSocket
@@ -161,7 +162,7 @@ class DNSServerProcess(Process):
             time_to_live, record_data = file_contents["time_to_live"], file_contents["record_data"]
 
             if record_type == OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS:
-                relevant_domain_name = get_the_one(self.domain_names, DomainHostname(record_name).endswith, DNSRouteNotFound)
+                relevant_domain_name = get_the_one(self.domain_names, with_args(does_domain_hostname_end_with, record_name), DNSRouteNotFound)
                 self.computer.dns_cache.add_item(
                     record_name,
                     IPAddress(record_data),
@@ -172,6 +173,34 @@ class DNSServerProcess(Process):
             if record_type == OPCODES.DNS.QUERY_TYPES.AUTHORITATIVE_NAME_SERVER:
                 self._start_single_dns_query(record_name, IPAddress(record_data))
 
+    @staticmethod
+    def _find_longest_matching_host_record(name: T_Hostname, zone: Zone) -> Tuple[ZoneRecord, str]:
+        """
+        Goes over all of the zone records which are A-s or CNAME-s
+        Finds the one that is most fitting for the name supplied
+
+        Returns (longest_record, longest_record_data) - the data is returned separately because if record is an alias (CNAME) -
+            the data will be different than in the original record!
+
+        If no sufficient records are found - returns (None, None)
+        """
+        longest_record: Optional[ZoneRecord] = None
+        longest_record_data: Optional[str] = None
+
+        for record in zone.host_or_alias_records:
+            if does_domain_hostname_end_with(name, record.record_name, zone_origin=zone.origin):
+                record_data = record.record_data
+
+                if dnstypes.get(record.record_type, record.record_type) == OPCODES.DNS.QUERY_TYPES.CANONICAL_NAME_FOR_AN_ALIAS:  # CNAME records
+                    record_data = zone.resolve_cname_alias(record)
+
+                if longest_record is None or (len(canonize_domain_hostname(record.record_name,         zone.origin)) >
+                                              len(canonize_domain_hostname(longest_record.record_name, zone.origin))):
+                    longest_record = record
+                    longest_record_data = record_data
+
+        return longest_record, longest_record_data
+
     def _resolve_name(self, name: T_Hostname, client_ip: IPAddress, client_port: T_Port) -> None:
         """
         Start doing everything that is required in order to resolve the supplied domain name
@@ -181,20 +210,22 @@ class DNSServerProcess(Process):
         if name in self.computer.dns_cache:
             return  # name is known - no need to resolve :)
 
-        domain_name = get_the_one(self.domain_names, DomainHostname(name).endswith, DNSRouteNotFound)
+        domain_name = get_the_one(self.domain_names, with_args(does_domain_hostname_end_with, name), DNSRouteNotFound)
         zone = self._zone_by_domain_name(domain_name)
+        longest_record, longest_record_data = self._find_longest_matching_host_record(name, zone)
 
-        # for record in zone.alias_records:
-        #     pass  # TODO: add this
+        if longest_record is not None:
+            self.computer.dns_cache.add_item(
+                canonize_domain_hostname(longest_record.record_name, zone.origin),
+                IPAddress(longest_record_data),
+                (longest_record.ttl or zone.default_ttl),
+            )
+            return
 
-        for record in zone.host_records:
-            if DomainHostname(name).endswith(record.record_name):
-                self.computer.dns_cache.add_item(record.record_name, IPAddress(record.record_data), record.ttl or zone.default_ttl)
-                return
-
-        for record in zone.name_server_records:
-            if DomainHostname(name).endswith(record.record_name):
+        for record in zone.name_server_records:                                             # NS records
+            if does_domain_hostname_end_with(name, record.record_name, zone_origin=zone.origin):
                 self._start_single_dns_query(name, IPAddress(record.record_data))
+                return
 
     @staticmethod
     def _parse_dns_query(query_bytes: bytes) -> scapy.packet.Packet:

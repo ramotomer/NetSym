@@ -1207,7 +1207,7 @@ class UserInterface:
         if '(' not in string:
             return None
 
-        _, modified_key = string.lower().split('(')
+        _, modified_key = string.split('(')
         modified_key, _ = modified_key.split(')')
         if modified_key.startswith('^'):
             return ord(modified_key[-1]), KEYBOARD.MODIFIERS.CTRL

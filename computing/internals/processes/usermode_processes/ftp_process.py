@@ -31,7 +31,7 @@ class ServerFTPSessionProcess(Process):
         The actual code of the process
         """
         yield from self.socket.block_until_received()
-        received = self.socket.receive().decode("ascii")
+        received = self.socket
 
         if received.startswith("FTP: "):
             # TODO: actually implement the FTP protocol with a layer - as it should behave

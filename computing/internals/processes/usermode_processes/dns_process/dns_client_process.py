@@ -4,6 +4,7 @@ import json
 from typing import TYPE_CHECKING, Tuple, Optional
 
 import scapy
+from scapy.layers.dns import dnstypes
 
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import Process, T_ProcessCode
@@ -151,7 +152,7 @@ class DNSClientProcess(Process):
                 self.computer.dns_cache.add_item(self._name_to_resolve, IPAddress(ip_address), ttl)
                 self._store_result_in_file(ip_address, ttl, record_type)
 
-                if record_type == OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS:
+                if dnstypes.get(record_type, record_type) == OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS:
                     self._dns_process_print(f"\nAnswer:\n{ip_address}")
                 break
         else:
