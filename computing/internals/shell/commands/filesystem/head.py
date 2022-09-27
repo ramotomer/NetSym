@@ -25,6 +25,6 @@ class Head(Command):
             if isinstance(file, Directory):
                 return CommandOutput('', f"'{file.name}' is a directory!")
             with file:
-                return CommandOutput('\n'.join(file.split('\n')[:parsed_args.count]), '')
+                return CommandOutput('\n'.join(file.read().split('\n')[:parsed_args.count]), '')
         except NoSuchItemError:
             return CommandOutput('', f"Could not read {parsed_args.file}")

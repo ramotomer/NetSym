@@ -90,7 +90,7 @@ class Packet:
         Uses the scapy `packet.summary` method - but removes some redundant text from it.
         You can choose what protocols to ignore using the `discarded_protocols` parameter
         """
-        scapy_summary = scapy.layers.l2.Ether(self.data.build())
+        scapy_summary = scapy.layers.l2.Ether(self.data.build()).summary()
         return ' / '.join([layer for layer in scapy_summary.split(' / ') if layer not in discarded_protocols])
 
     def __contains__(self, item: str) -> bool:
