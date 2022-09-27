@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import os
+import json
 import struct
-from typing import TYPE_CHECKING, Dict, Tuple
+from typing import TYPE_CHECKING, Dict, NamedTuple
 
 import scapy
 
@@ -10,7 +10,7 @@ from address.ip_address import IPAddress
 from computing.internals.filesystem.file import File
 from computing.internals.processes.abstracts.process import Process, T_ProcessCode, WaitingFor
 from computing.internals.processes.usermode_processes.dns_process.zone import Zone, ZoneRecord
-from consts import PORTS, T_Port, COMPUTER, OPCODES, PROTOCOLS
+from consts import PORTS, T_Port, OPCODES, PROTOCOLS
 from exceptions import DNSRouteNotFound, WrongUsageError
 from packets.all import DNS
 from packets.usefuls.dns import *
@@ -21,7 +21,13 @@ if TYPE_CHECKING:
     from computing.computer import Computer
 
 
-T_QueryDict = Dict[T_Hostname, Tuple[IPAddress, T_Port]]
+class ActiveQueryData(NamedTuple):
+    client_ip: IPAddress
+    client_port: T_Port
+    active_query_process_id: Optional[int] = None
+
+
+T_QueryDict = Dict[T_Hostname, ActiveQueryData]
 
 
 class DNSServerProcess(Process):
@@ -38,7 +44,7 @@ class DNSServerProcess(Process):
         self.socket: Optional[UDPSocket] = None
         self._active_queries: T_QueryDict = {}
 
-        self.domain_names = domain_names or PROTOCOLS.DNS.DEFAULT_DOMAIN_NAMES
+        self.domain_names: List[T_Hostname] = domain_names or PROTOCOLS.DNS.DEFAULT_DOMAIN_NAMES
 
     @property
     def _zone_file_paths(self):
@@ -111,11 +117,58 @@ class DNSServerProcess(Process):
         """
         Send error messages to the clients whose queries could sadly not be resolved :(
         """
+        timed_out_clients = {hostname: client for hostname, client in self._active_queries.items()
+                             if client.active_query_process_id is not None and
+                                not self.computer.process_scheduler.is_usermode_process_running(client.active_query_process_id) and
+                                not self.computer.filesystem.exists(default_tmp_query_output_file_path(hostname))}
 
-    def _resolve_name(self, name: T_Hostname) -> None:
+        for hostname, client in timed_out_clients.items():
+            del self._active_queries[hostname]
+
+            pass  # TODO: send an error message...
+
+    def _start_single_dns_query(self, name: T_Hostname, dns_server: IPAddress) -> None:
+        """
+        Start a process of a `DNSClientProcess` that will try another iteration of resolving the supplied name
+        """
+        pid = self.computer.resolve_name(
+            name,
+            dns_server=dns_server,
+            output_to_file=True,
+        )
+        self._active_queries[name].active_query_process_id = pid
+
+    def _continue_sending_my_unfinished_queries(self) -> None:
+        """
+        When resolving a name, the process may be iterative; You ask one server and he passes you to the next and so on...
+        Each of these queries you send is a separate process.
+        When each one of them is done (if it was successful) it leaves behind a file to lead us to the next server
+
+        This function checks for these files, and runs the new processes to continue the search
+        """
+        tmp_query_files_dir = self.computer.filesystem.at_absolute_path(COMPUTER.FILES.CONFIGURATIONS.DNS_TMP_QUERY_RESULTS_DIR_PATH)
+
+        for file in list(tmp_query_files_dir.files):
+            with file as f:
+                file_contents = json.loads(f.read())
+            del tmp_query_files_dir.files[file.name]  # file was handled and is no longer necessary - delete!
+
+            record_name,  record_type = file_contents["record_name"],  file_contents["record_type"]
+            time_to_live, record_data = file_contents["time_to_live"], file_contents["record_data"]
+
+            if record_type == OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS:
+                self.computer.dns_cache.add_item(record_name, record_data)
+                continue
+
+            if record_type == OPCODES.DNS.QUERY_TYPES.AUTHORITATIVE_NAME_SERVER:
+                self._start_single_dns_query(record_name, IPAddress(record_data))
+
+    def _resolve_name(self, name: T_Hostname, client_ip: IPAddress, client_port: T_Port) -> None:
         """
         Start doing everything that is required in order to resolve the supplied domain name
         """
+        self._active_queries[name] = ActiveQueryData(client_ip, client_port)
+
         if name in self.computer.dns_cache:
             return  # name is known - no need to resolve :)
 
@@ -132,7 +185,7 @@ class DNSServerProcess(Process):
 
         for record in zone.name_server_records:
             if DomainHostname(name).endswith(record.record_name):
-                self.computer.resolve_name(name, dns_server=IPAddress(record.record_data))
+                self._start_single_dns_query(name, IPAddress(record.record_data))
 
     @staticmethod
     def _parse_dns_query(query_bytes: bytes) -> scapy.packet.Packet:
@@ -142,16 +195,39 @@ class DNSServerProcess(Process):
         """
         return DNS(query_bytes)
 
+    def _init_socket(self):
+        self.socket = self.computer.get_udp_socket(self.pid)
+        self.socket.bind((IPAddress.no_address(), PORTS.DNS))
+
+    def _init_zone_files(self):
+        """
+        Generate all zone files with default values
+        And create the tmp directory in which DNS query results will be saved from other `DNSClientProcess`-s
+        """
+        for domain_name in self.domain_names:
+            zone_file = self.computer.filesystem.make_empty_file_with_directory_tree(self._zone_file_path_by_domain_name(domain_name))
+            with zone_file as f:
+                if len(f.read()) == 0:
+                    f.write(Zone.with_default_values(domain_name, self.computer).to_file_format())
+
+    def _init_tmp_query_result_files(self):
+        """
+        And create the tmp directory in which DNS query results will be saved from other `DNSClientProcess`-s
+        """
+        self.computer.filesystem.create_directory_tree(COMPUTER.FILES.CONFIGURATIONS.DNS_TMP_QUERY_RESULTS_DIR_PATH)
+
     def code(self) -> T_ProcessCode:
         """
         The main code of the process
         """
+        self._init_tmp_query_result_files()
         self._init_zone_files()
         self._init_socket()
 
         while True:
             self._send_query_answers_to_clients(self._get_resolved_names())
             self._send_error_messages_to_timed_out_clients()
+            self._continue_sending_my_unfinished_queries()
 
             yield WaitingFor.nothing()
             if not self.socket.has_data_to_receive:
@@ -167,24 +243,10 @@ class DNSServerProcess(Process):
                 dns_query = self._parse_dns_query(query_bytes=udp_packet_data)
                 if dns_query.query_count > 1:
                     raise NotImplementedError(f"multiple queries in the same packet! count: {dns_query.query_count}")
-                self._resolve_name(dns_query.queries[0].query_name)
+                self._resolve_name(dns_query.queries[0].query_name, client_ip, client_port)
 
     def __repr__(self) -> str:
         return "dnssd"
-
-    def _init_socket(self):
-        self.socket = self.computer.get_udp_socket(self.pid)
-        self.socket.bind((IPAddress.no_address(), PORTS.DNS))
-
-    def _init_zone_files(self):
-        """
-        Generate all zone files with default values
-        """
-        for domain_name in self.domain_names:
-            zone_file = self.computer.filesystem.make_empty_file_with_directory_tree(self._zone_file_path_by_domain_name(domain_name))
-            with zone_file as f:
-                if len(f.read()) == 0:
-                    f.write(Zone.with_default_values(domain_name, self.computer).to_file_format())
 
     def add_dns_record(self, name: T_Hostname, ip_address: IPAddress, domain_name: Optional[T_Hostname] = None) -> None:
         """

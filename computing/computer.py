@@ -37,7 +37,7 @@ from exceptions import *
 from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.all import ICMP, IP, TCP, UDP, ARP
-from packets.usefuls.dns import T_Hostname
+from packets.usefuls.dns import T_Hostname, default_tmp_query_output_file_path
 from packets.usefuls.usefuls import get_src_port, get_dst_port
 from usefuls.funcs import get_the_one
 
@@ -648,7 +648,7 @@ class Computer:
         """
         self.process_scheduler.get_usermode_process_by_type(DHCPServer).dns_server = dns_server
 
-    def resolve_name(self, name: T_Hostname, dns_server: Optional[IPAddress] = None) -> int:
+    def resolve_name(self, name: T_Hostname, dns_server: Optional[IPAddress] = None, output_to_file: bool = False) -> int:
         """
         Start a DNS process to resolve a domain hostname
         """
@@ -656,6 +656,7 @@ class Computer:
             DNSClientProcess,
             dns_server if dns_server is not None else self.dns_server,
             name,
+            output_result_to_path=default_tmp_query_output_file_path(name) if output_to_file else None,
         )
 
     def add_dns_entry(self, user_inserted_dns_entry_format: str) -> None:

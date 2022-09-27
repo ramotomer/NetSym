@@ -830,3 +830,4 @@ class COMPUTER:
         class CONFIGURATIONS:
             DNS_CLIENT_PATH = "/etc/resolv.conf"
             DNS_ZONE_FILES = "/var/named/"
+            DNS_TMP_QUERY_RESULTS_DIR_PATH = "/tmp/named/"

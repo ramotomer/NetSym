@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import List, Optional
 
 from scapy.layers.dns import DNSRR, DNSQR
 
+from consts import COMPUTER
 from exceptions import InvalidDomainHostnameError
 from usefuls.attribute_renamer import define_attribute_aliases
 
@@ -105,6 +107,10 @@ class DomainHostname:
             return True
         return all(my_domain == other_domain for my_domain, other_domain in zip(reversed(self.domains), reversed(domain_name.split('.')))) and \
                self.domains
+
+
+def default_tmp_query_output_file_path(name):
+    return os.path.join(COMPUTER.FILES.CONFIGURATIONS.DNS_TMP_QUERY_RESULTS_DIR_PATH, name + '.json')
 
 
 DNSResourceRecord = define_attribute_aliases(

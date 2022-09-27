@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING, Tuple, Optional
 
 import scapy
@@ -27,7 +28,8 @@ class DNSClientProcess(Process):
                  name_to_resolve: str,
                  default_query_timeout: T_Time = PROTOCOLS.DNS.CLIENT_QUERY_TIMEOUT,
                  default_retry_count: int = PROTOCOLS.DNS.DEFAULT_RETRY_COUNT,
-                 server_port: T_Port = PORTS.DNS) -> None:
+                 server_port: T_Port = PORTS.DNS,
+                 output_result_to_path: Optional[str] = None) -> None:
         """
         Creates the new process
         :param pid: The process ID of this process
@@ -41,6 +43,12 @@ class DNSClientProcess(Process):
         self.socket: Optional[UDPSocket] = None
         self._query_timeout = default_query_timeout
         self._retry_count = default_retry_count
+
+        self._output_file = output_result_to_path
+
+    @property
+    def _should_store_result_in_file(self) -> bool:
+        return self._output_file is not None
 
     def _dns_process_print(self, message):
         """
@@ -89,7 +97,23 @@ class DNSClientProcess(Process):
         self.computer.dns_cache.transaction_counter += 1
         return query
 
-    def _extract_dns_answer(self, dns_answer: scapy.packet.Packet) -> Tuple[T_Hostname, IPAddress, int]:
+    def _store_result_in_file(self, ip_address: IPAddress, ttl: int, record_type: str) -> None:
+        """
+        Write the output of the query to the file at `self._output_file`
+        The format is json (so I have to write as little code as possible)
+        """
+        if not self._should_store_result_in_file:
+            return
+
+        with self.computer.filesystem.make_empty_file_with_directory_tree(self._output_file) as f:
+            f.write(json.dumps({
+                "record_name": self._name_to_resolve,
+                "record_type": record_type,
+                "time_to_live": ttl,
+                "record_data": str(ip_address),
+            }))
+
+    def _extract_dns_answer(self, dns_answer: scapy.packet.Packet) -> Tuple[T_Hostname, IPAddress, int, str]:
 
         """
         Take in the answer packet that was sent from the server
@@ -99,7 +123,7 @@ class DNSClientProcess(Process):
             raise NotImplementedError(f"Multiple answers in the packet!")
 
         answer_record, = dns_answer.answer_records
-        return answer_record.record_name, answer_record.record_data, answer_record.time_to_live
+        return answer_record.record_name, answer_record.record_data, answer_record.time_to_live, answer_record.record_type
 
     def code(self) -> T_ProcessCode:
         """
@@ -121,8 +145,9 @@ class DNSClientProcess(Process):
             received = self.socket.receive()
             if received:
                 dns_answer = received[0]
-                _, ip_address, ttl = self._extract_dns_answer(dns_answer)
+                _, ip_address, ttl, record_type = self._extract_dns_answer(dns_answer)
                 self.computer.dns_cache.add_item(self._name_to_resolve, ip_address, ttl)
+                self._store_result_in_file(ip_address, ttl, record_type)
                 break
         else:
             self.die(f"ERROR: DNS could not resolve name :(")

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import NamedTuple, Optional, TYPE_CHECKING, List, Type, Tuple, Generator, Any
+from typing import NamedTuple, Optional, TYPE_CHECKING, List, Type, Tuple, Generator, Any, TypeVar
 
 from computing.internals.processes.abstracts.process import ProcessInternalError, Process, T_WaitingFor, WaitingForPacket, \
     WaitingForPacketWithTimeout, WaitingFor, WaitingForWithTimeout, ReturnedPacket
@@ -13,6 +13,9 @@ from usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
     from computing.computer import Computer
+
+
+T = TypeVar("T")
 
 
 class WaitingProcess(NamedTuple):
@@ -296,7 +299,7 @@ class ProcessScheduler:
         """
         return get_the_one(self.get_all_processes(mode), lambda process: process.pid == pid, NoSuchProcessError if raises else None)
 
-    def get_process_by_type(self, process_type: Type[Process], mode: str, raises: bool = True) -> Process:
+    def get_process_by_type(self, process_type: Type[T], mode: str, raises: bool = True) -> T:
         """
         Receives a type of a `Process` subclass and returns the process object of the `Process` that is currently
         running in the computer.
@@ -308,7 +311,7 @@ class ProcessScheduler:
         """
         return get_the_one(self.get_all_processes(mode), lambda process: isinstance(process, process_type), NoSuchProcessError if raises else None)
 
-    def get_usermode_process_by_type(self, process_type: Type[Process], raises: bool = True) -> Process:
+    def get_usermode_process_by_type(self, process_type: Type[T], raises: bool = True) -> T:
         return self.get_process_by_type(process_type, COMPUTER.PROCESSES.MODES.USERMODE, raises)
 
     def get_usermode_process(self, pid: int, raises: bool = True) -> Process:
