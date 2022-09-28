@@ -78,7 +78,11 @@ class ComputerGraphics(ImageGraphics):
 
         self.buttons_id = None
 
-        self.sprite.update(scale_x=self.computer.initial_size[0], scale_y=self.computer.initial_size[1])
+        # debugp(f"Creating computer: {computer.name + ',':<15}scale: {self.scale_factor}")
+        # self._set_size(*self.computer.initial_size)
+        # self.rescale(self.scale_factor, self.scale_factor, constrain_proportions=True)
+        # TODO: make files keep track of the size of computers!!!
+
         self.update_text_location()
 
     @property
@@ -310,7 +314,7 @@ class ComputerGraphics(ImageGraphics):
             "class": self.class_name,
             "location": self.location,
             "name": self.computer.name,
-            "size": [self.sprite.scale_x, self.sprite.scale_y],
+            "scale_factor": self.scale_factor,
             "os": self.computer.os,
             "interfaces": [interface.graphics.dict_save() for interface in self.computer.interfaces],
             "open_tcp_ports": self.computer.get_open_ports("TCP"),

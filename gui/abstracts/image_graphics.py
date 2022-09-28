@@ -313,9 +313,26 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         """
         Receives a diff in the width and height and resizes the object accordingly
         """
-        new_width = self.width + width_diff
-        new_height = self.height + height_diff
+        self._set_size(
+            self.width + width_diff,
+            self.height + height_diff,
+            constrain_proportions
+        )
 
+    def rescale(self, scale_x: float, scale_y: float, constrain_proportions: bool = False) -> None:
+        """
+
+        """
+        self._set_size(
+            self.width * scale_x,
+            self.height * scale_y,
+            constrain_proportions,
+        )
+
+    def _set_size(self, new_width: float, new_height: float, constrain_proportions: bool = False) -> None:
+        """
+
+        """
         new_width = max(SHAPES.CIRCLE.RESIZE_DOT.MINIMAL_RESIZE_SIZE, new_width)
         new_height = max(SHAPES.CIRCLE.RESIZE_DOT.MINIMAL_RESIZE_SIZE, new_height)
 

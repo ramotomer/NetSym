@@ -114,7 +114,7 @@ class Computer:
         self.loopback = Interface.loopback()
         self.boot_time = MainLoop.instance.time()
 
-        self.received: ReturnedPacket = []
+        self.received: List[ReturnedPacket] = []
 
         self.arp_cache = ArpCache()  # a dictionary of {<ip address> : ARPCacheItem(<mac address>, <initiation time of this item>)
         self.routing_table = RoutingTable.create_default(self)
@@ -1196,5 +1196,5 @@ class Computer:
         )
         returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])
         returned.filesystem = Filesystem.from_dict_load(dict_["filesystem"])
-        returned.initial_size = dict_["size"]
+        returned.scale_factor = dict_["scale_factor"]
         return returned
