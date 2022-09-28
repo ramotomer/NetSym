@@ -106,7 +106,7 @@ class DNSClientProcess(Process):
         if not self._should_store_result_in_file:
             return
 
-        with self.computer.filesystem.make_empty_file_with_directory_tree(self._output_file) as f:
+        with self.computer.filesystem.make_empty_file_with_directory_tree(self._output_file, raise_on_exists=False) as f:
             f.write(json.dumps({
                 "record_name": self._name_to_resolve,
                 "record_type": record_type,

@@ -208,6 +208,7 @@ class PROTOCOLS:
         DEFAULT_REQUEST_COUNT = 1
 
     class DNS:
+        ZONE_FILE_ORIGIN_CHARACTER = '@'
         DEFAULT_DOMAIN_NAMES = ['very.fun.']
         DEFAULT_TIME_TO_LIVE = 5 * 60  # seconds
         CLIENT_QUERY_TIMEOUT = 12      # seconds
@@ -273,16 +274,17 @@ class MESSAGES:
     INVALID_IP_ADDRESS = "The IP address is not valid!"
 
     class INSERT:
-        PL = "insert your desired pl (0 <= pl <= 1)!!!"
-        SPEED = "insert your desired connection speed:"
-        IP = "Enter your desired IP for this interface:"
-        GATEWAY = "Enter your desired IP for the gateway:"
-        INTERFACE_INFO = "Insert the name of the interface:"
-        IP_FOR_PROCESS = "Insert an IP to start your process to:"
-        PORT_NUMBER = "Insert a port number to open/close:"
-        COMPUTER_NAME = "Insert a new name for the computer:"
-        COLOR = "choose a color:"
+        PL =                         "insert your desired pl (0 <= pl <= 1)!!!"
+        SPEED =                      "insert your desired connection speed:"
+        IP =                         "Enter your desired IP for this interface:"
+        GATEWAY =                    "Enter your desired IP for the gateway:"
+        INTERFACE_INFO =             "Insert the name of the interface:"
+        IP_FOR_PROCESS =             "Insert an IP to start your process to:"
+        PORT_NUMBER =                "Insert a port number to open/close:"
+        COMPUTER_NAME =              "Insert a new name for the computer:"
+        COLOR =                      "choose a color:"
         DNS_SERVER_FOR_DHCP_SERVER = "What DNS server should your DHCP server supply?"
+        DOMAIN_FOR_DHCP_SERVER =     "What domain name should your DHCP server supply?"
 
 
 class DIRECTORIES:

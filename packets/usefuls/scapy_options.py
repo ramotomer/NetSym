@@ -1,3 +1,6 @@
+from typing import Any
+
+
 class ScapyOptions:
     def __init__(self, options):
         self.options = options
@@ -30,3 +33,9 @@ class ScapyOptions:
 
     def __repr__(self):
         return str(self.options)
+
+    def get(self, item: str, default: Any = None) -> Any:
+        try:
+            return getattr(self, item)
+        except AttributeError:
+            return default

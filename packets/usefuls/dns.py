@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from scapy.layers.dns import DNSRR, DNSQR
 
-from consts import COMPUTER
+from consts import COMPUTER, PROTOCOLS
 from exceptions import InvalidDomainHostnameError
 from usefuls.attribute_renamer import define_attribute_aliases
 
@@ -56,6 +56,11 @@ def canonize_domain_hostname(hostname: T_Hostname, zone_origin: Optional[T_Hostn
     'example.dom'  -> 'example.dom.'
     'axempla.dom.' -> 'axempla.dom.'
     """
+    if hostname == PROTOCOLS.DNS.ZONE_FILE_ORIGIN_CHARACTER:
+        if zone_origin is None:
+            raise InvalidDomainHostnameError(f"if hostname is '{hostname}', zone origin must be supplied!")
+        return canonize_domain_hostname(zone_origin)
+
     validate_domain_hostname(hostname)
     if zone_origin:
         validate_domain_hostname(zone_origin)
@@ -95,7 +100,7 @@ def does_domain_hostname_end_with(hostname, domain_name: T_Hostname, zone_origin
                zip(reversed(domain_hostname_split(hostname)), reversed(domain_hostname_split(domain_name))))
 
 
-def default_tmp_query_output_file_path(name):
+def default_tmp_query_output_file_path(name: T_Hostname) -> str:
     return os.path.join(COMPUTER.FILES.CONFIGURATIONS.DNS_TMP_QUERY_RESULTS_DIR_PATH, name + '.json')
 
 

@@ -5,8 +5,7 @@ from typing import List, Optional, Tuple, TYPE_CHECKING
 
 from consts import OPCODES
 from exceptions import FilesystemError
-from packets.usefuls.dns import T_Hostname
-from packets.usefuls.dns import canonize_domain_hostname
+from packets.usefuls.dns import T_Hostname, canonize_domain_hostname, is_domain_hostname_valid
 from usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
@@ -24,20 +23,16 @@ $TTL 3600                ; default expiration time (in seconds) of all RRs witho
 
 example.com.  IN  SOA   ns.example.com. username.example.com. ( 2020091025 7200 3600 1209600 3600 )
 
-example.com.  IN  NS    ns                    ; ns.example.com is a nameserver for example.com
-example.com.  IN  NS    ns.somewhere.example. ; ns.somewhere.example is a backup nameserver for example.com
-example.com.  IN  MX    10 mail.example.com.  ; mail.example.com is the mailserver for example.com
-@             IN  MX    20 mail2.example.com. ; equivalent to above line, "@" represents zone origin
-@             IN  MX    50 mail3              ; equivalent to above line, but using a relative host name
-example.com.  IN  A     192.0.2.1             ; IPv4 address for example.com
-              IN  AAAA  2001:db8:10::1        ; IPv6 address for example.com
-ns            IN  A     192.0.2.2             ; IPv4 address for ns.example.com
-              IN  AAAA  2001:db8:10::2        ; IPv6 address for ns.example.com
-www           IN  CNAME example.com.          ; www.example.com is an alias for example.com
-wwwtest       IN  CNAME www                   ; wwwtest.example.com is another alias for www.example.com
-mail          IN  A     192.0.2.3             ; IPv4 address for mail.example.com
-mail2         IN  A     192.0.2.4             ; IPv4 address for mail2.example.com
-mail3         IN  A     192.0.2.5             ; IPv4 address for mail3.example.com
+example.com.       IN  A     192.0.2.1             ; IPv4 address for example.com  
+@                  IN  AAAA  2001:db8:10::1        ; IPv6 address for example.com  (@ is replaced by the zone origin)
+ns                 IN  A     192.0.2.2             ; IPv4 address for ns.example.com
+                   IN  AAAA  2001:db8:10::2        ; IPv6 address for ns.example.com
+www                IN  CNAME example.com.          ; www.example.com is an alias for example.com
+wwwtest            IN  CNAME www                   ; wwwtest.example.com is another alias for www.example.com
+mail               IN  A     192.0.2.3             ; IPv4 address for mail.example.com
+mail2              IN  A     192.0.2.4             ; IPv4 address for mail2.example.com
+mail3              IN  A     192.0.2.5             ; IPv4 address for mail3.example.com
+cool.example.com.  IN  NS    192.0.2.254           ; cool.example.com is a nameserver where 'cool.example.com.zone' is located
 """
 
 
@@ -81,6 +76,9 @@ class Zone:
     def name_server_records(self):
         return [r for r in self.records if r.record_type == OPCODES.DNS.QUERY_TYPES.AUTHORITATIVE_NAME_SERVER]
 
+    def __iter__(self):
+        return iter(self.records)
+
     @classmethod
     def with_default_values(cls, domain_name: T_Hostname, computer: Computer) -> Zone:
         domain_name = canonize_domain_hostname(domain_name)
@@ -89,9 +87,9 @@ class Zone:
         return cls(
             records=[
                 ZoneRecord(domain_name, OPCODES.DNS.QUERY_CLASSES.INTERNET, OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS, ip_address),
-                ZoneRecord('ns', OPCODES.DNS.QUERY_CLASSES.INTERNET, OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS, ip_address),
+                ZoneRecord('ns',        OPCODES.DNS.QUERY_CLASSES.INTERNET, OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS, ip_address),
                 ZoneRecord(domain_name, OPCODES.DNS.QUERY_CLASSES.INTERNET, OPCODES.DNS.QUERY_TYPES.AUTHORITATIVE_NAME_SERVER, 'ns'),
-                ZoneRecord(f'www', OPCODES.DNS.QUERY_CLASSES.INTERNET, OPCODES.DNS.QUERY_TYPES.CANONICAL_NAME_FOR_AN_ALIAS, domain_name),
+                ZoneRecord(f'www',      OPCODES.DNS.QUERY_CLASSES.INTERNET, OPCODES.DNS.QUERY_TYPES.CANONICAL_NAME_FOR_AN_ALIAS, domain_name),
             ],
             serial_number                   = 2020091025,
             slave_refresh_period            = 7200,
@@ -209,13 +207,17 @@ $TTL {self.default_ttl}\n
                 return
             full_string_lines.remove(line)
 
-    def resolve_cname_alias(self, alias_record: ZoneRecord) -> str:
+    def resolve_aliasing(self, alias_record: Optional[ZoneRecord]) -> Optional[str]:
         """
-        Take in a CNAME record and return the record that the alias points to
-        :param alias_record:
-        :return:
+        Take in an alias record and return the record_data of the record that the alias refers to
         """
+        if alias_record is None:
+            return None
+
+        if not is_domain_hostname_valid(alias_record.record_data):  # record is not an alias
+            return alias_record.record_data
+
         resolved_record = get_the_one(self.records, lambda r: r.record_name == alias_record.record_data, InvalidZoneFileError)
-        if resolved_record.record_type == OPCODES.DNS.QUERY_TYPES.CANONICAL_NAME_FOR_AN_ALIAS:
-            return self.resolve_cname_alias(resolved_record)
+        if is_domain_hostname_valid(resolved_record.record_data):  # That means `resolved_record` is still an 'alias' record! (alias of an alias)
+            return self.resolve_aliasing(resolved_record)
         return resolved_record.record_data

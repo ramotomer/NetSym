@@ -167,9 +167,6 @@ class Computer:
         """
         Read the name of the DNS server from the '/etc/resolv.conf'
         """
-        if not self.filesystem.exists(COMPUTER.FILES.CONFIGURATIONS.DNS_CLIENT_PATH):
-            return None
-
         address = self.filesystem.parse_conf_file_format(
             COMPUTER.FILES.CONFIGURATIONS.DNS_CLIENT_PATH,
             raise_if_does_not_exist=False
@@ -184,19 +181,32 @@ class Computer:
         """
         Set the DNS server (in the /etc/resolv.conf file)
         """
-        conf_value = self.filesystem.parse_conf_file_format(
-            COMPUTER.FILES.CONFIGURATIONS.DNS_CLIENT_PATH,
-            raise_if_does_not_exist=False
-        )
-        if value is not None:
-            conf_value['nameserver'] = [str(value)]
-        else:
-            del conf_value['nameserver']
+        with self.filesystem.parsed_editable_conf_file(COMPUTER.FILES.CONFIGURATIONS.DNS_CLIENT_PATH, raise_if_does_not_exist=False) as conf_value:
+            if value is not None:
+                conf_value['nameserver'] = [str(value)]
+            else:
+                del conf_value['nameserver']
 
-        self.filesystem.write_conf_file(
+    @property
+    def domain(self) -> Optional[T_Hostname]:
+        """
+        Read the name of the default name of the domain from the '/etc/resolv.conf'
+        """
+        return self.filesystem.parse_conf_file_format(
             COMPUTER.FILES.CONFIGURATIONS.DNS_CLIENT_PATH,
-            conf_value,
-        )
+            raise_if_does_not_exist=False,
+        ).get('domain', [None])[0]
+
+    @domain.setter
+    def domain(self, value: Optional[IPAddress]) -> None:
+        """
+        Set the default name of the domain (in the /etc/resolv.conf file)
+        """
+        with self.filesystem.parsed_editable_conf_file(COMPUTER.FILES.CONFIGURATIONS.DNS_CLIENT_PATH, raise_if_does_not_exist=False) as conf_value:
+            if value is not None:
+                conf_value['domain'] = [str(value)]
+            else:
+                del conf_value['domain']
 
     def get_open_ports(self, protocol: Optional[str] = None) -> List[int]:
         if protocol is None:
@@ -647,6 +657,13 @@ class Computer:
         Sets the address of the DNS server that the DHCPServer give new clients
         """
         self.process_scheduler.get_usermode_process_by_type(DHCPServer).dns_server = dns_server
+
+    def set_domain_for_dhcp_server(self, domain: T_Hostname) -> None:
+        """
+        Assumes that the computer is a DHCP server
+        Sets the default name of the domain that the DHCPServer give new clients
+        """
+        self.process_scheduler.get_usermode_process_by_type(DHCPServer).domain = domain
 
     def resolve_name(self, name: T_Hostname, dns_server: Optional[IPAddress] = None, output_to_file: bool = False) -> int:
         """

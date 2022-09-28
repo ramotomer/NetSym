@@ -8,6 +8,7 @@ from computing.internals.processes.abstracts.process import Process, T_ProcessCo
 from consts import OPCODES, COMPUTER, PORTS, PROTOCOLS
 from exceptions import *
 from packets.all import DHCP, BOOTP, IP, UDP
+from packets.usefuls.dns import T_Hostname
 from usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
@@ -116,6 +117,8 @@ class DHCPClient(Process):
 
         self.update_routing_table(session_interface, dhcp_pack.packet)
         self.computer.dns_server = dhcp_pack.packet["DHCP"].parsed_options.name_server
+        self.computer.domain =     dhcp_pack.packet["DHCP"].parsed_options.domain
+        # TODO ^ this does not work if the router does not supply them :(
         self.computer.arp_grat(session_interface)
         self.computer.print("Got Address from DHCP!")
 
@@ -137,7 +140,8 @@ class DHCPServer(Process):
                  pid: int,
                  computer: Computer,
                  default_gateway: Computer,
-                 dns_server: Optional[IPAddress] = None) -> None:
+                 dns_server: Optional[IPAddress] = None,
+                 domain: Optional[T_Hostname] = None) -> None:
         """
         Initiates the process
         :param computer: The computer that runs this process.
@@ -148,6 +152,7 @@ class DHCPServer(Process):
         # ^ a `Computer` that is the default gateway of the subnets this server serves.
 
         self.dns_server = dns_server
+        self.domain = domain
 
         self.interface_to_dhcp_data = {}  # interface : DHCPData
         # ^ a mapping for each interface of the server to a ip_layer that it packs for its clients.
@@ -195,9 +200,11 @@ class DHCPServer(Process):
                         offered_ip: IPAddress,
                         offered_gateway: IPAddress,
                         session_interface: Interface,
-                        dns_server: Optional[IPAddress] = None) -> Packet:
+                        dns_server: Optional[IPAddress] = None,
+                        domain: Optional[T_Hostname] = None) -> Packet:
         """
         Sends a `DHCP_PACK` that tells the DHCP client all of the new ip_layer it needs to update (IP, gateway, DNS)
+        :param domain:
         :param dns_server: the domain name server to be supplied to clients
         :param client_mac: The `MACAddress` of the client.
         :param session_interface: The `Interface` that is running the session with the client.
@@ -206,12 +213,11 @@ class DHCPServer(Process):
         :return:
         """
         options = [
-            ('message-type', OPCODES.DHCP.PACK),
-            ('router', str(offered_gateway)),
+            ('message-type',   OPCODES.DHCP.PACK),
+            ('router',         str(offered_gateway)),
+            *([('name_server', str(dns_server))] if dns_server is not None else []),
+            *([('domain',      str(domain))] if domain is not None else []),
         ]
-
-        if dns_server is not None:
-            options.append(('name_server', str(dns_server)))
 
         return session_interface.ethernet_wrap(client_mac,
                                                IP(src_ip=str(session_interface.ip), dst_ip=str(offered_ip), ttl=PROTOCOLS.DHCP.DEFAULT_TTL) /
@@ -228,12 +234,14 @@ class DHCPServer(Process):
         client_mac = request_packet["Ether"].src_mac
 
         socket = get_the_one(self.sockets, lambda s: s.interface == interface, ThisCodeShouldNotBeReached)
-        socket.send(self.build_dhcp_pack(client_mac,
-                                         offered_ip=self.in_session_with[client_mac],
-                                         offered_gateway=self.interface_to_dhcp_data[interface].given_gateway,
-                                         session_interface=interface,
-                                         dns_server=self.dns_server)
-                    )
+        socket.send(self.build_dhcp_pack(
+            client_mac,
+            offered_ip=self.in_session_with[client_mac],
+            offered_gateway=self.interface_to_dhcp_data[interface].given_gateway,
+            session_interface=interface,
+            dns_server=self.dns_server,
+            domain=self.domain,
+        ))
         del self.in_session_with[client_mac]
 
     def send_offer(self, discover_packet: Packet, interface: Interface) -> None:

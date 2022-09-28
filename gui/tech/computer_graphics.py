@@ -143,11 +143,17 @@ class ComputerGraphics(ImageGraphics):
                 ),
             },
             DHCPServer: {
-                "set DNS server (alt+n)": with_args(
+                "set DNS server (alt+d)": with_args(
                     user_interface.ask_user_for,
                     IPAddress,
                     MESSAGES.INSERT.DNS_SERVER_FOR_DHCP_SERVER,
                     self.computer.set_dns_server_for_dhcp_server,
+                ),
+                "set domain (shift+alt+d)": with_args(
+                    user_interface.ask_user_for,
+                    str,
+                    MESSAGES.INSERT.DOMAIN_FOR_DHCP_SERVER,
+                    self.computer.set_domain_for_dhcp_server,
                 ),
             },
         }

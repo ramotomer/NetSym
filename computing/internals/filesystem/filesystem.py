@@ -1,5 +1,6 @@
 import os
-from typing import Optional, Dict, List, Union
+from contextlib import contextmanager
+from typing import Optional, Dict, List, Union, Generator
 
 from computing.internals.filesystem.directory import Directory
 from computing.internals.filesystem.file import File, PipingFile
@@ -267,9 +268,21 @@ class Filesystem:
                                          raise_on_exists=False)
 
         with self.at_absolute_path(absolute_path) as f:
+            f.write('')
             for key, values in parsed_conf_file.items():
                 for value in values:
-                    f.append(f"{key: <30} {value}")
+                    f.append(f"{key: <30} {value}\n")
+
+    @contextmanager
+    def parsed_editable_conf_file(self, absolute_path: str, raise_if_does_not_exist: bool = True) -> Generator:
+        """
+
+        """
+        conf_value = self.parse_conf_file_format(absolute_path, raise_if_does_not_exist)
+        try:
+            yield conf_value
+        finally:
+            self.write_conf_file(absolute_path, conf_value)
 
     def create_directory_tree(self, path: str) -> Directory:
         """
