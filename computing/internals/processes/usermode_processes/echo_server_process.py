@@ -18,7 +18,7 @@ class EchoServerProcess(Process):
         self.socket = None
 
     def code(self) -> T_ProcessCode:
-        self.socket = self.computer.get_socket(kind=COMPUTER.SOCKETS.TYPES.SOCK_DGRAM, requesting_process_pid=self.pid)
+        self.socket = self.computer.get_udp_socket(self.pid)
         self.socket.bind((IPAddress.no_address(), PORTS.ECHO_SERVER))
 
         while True:
@@ -26,7 +26,7 @@ class EchoServerProcess(Process):
             udp_returned_packets = self.socket.receivefrom()
             for udp_returned_packet in udp_returned_packets:
                 self.socket.sendto(udp_returned_packet.data, (udp_returned_packet.src_ip, udp_returned_packet.src_port))
-                self.computer.print(f"server echoed: '{udp_returned_packet.data}' "
+                self.computer.print(f"server echoed: '{udp_returned_packet.data.decode('ascii')}' "
                                     f"to: {udp_returned_packet.src_ip}")
 
     def die(self, death_message: Optional[str] = None) -> None:

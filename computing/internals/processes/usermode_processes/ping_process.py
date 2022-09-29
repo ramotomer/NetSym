@@ -1,4 +1,4 @@
-from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket, WaitingFor
+from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket
 from consts import OPCODES, PROTOCOLS
 from exceptions import NoIPAddressError
 from usefuls.funcs import my_range
@@ -15,19 +15,16 @@ class SendPing(Process):
         self.is_sending_to_gateway = False
         self.count = count
 
-    def _send_the_ping(self, ip_for_the_mac):
+    def _send_the_ping(self, dst_mac):
         """
         Does all things necessary to send the ping.
         (decides the interfaces, maps ip to mac and actually sends the ping)
-        :param ip_for_the_mac: The `IPAddress` we use to get the MAC address we send the ping to.
-            (will be of the destination if in the same LAN, otherwise, will be of the gateway)
         :return: None
         """
         if not self.computer.has_ip():
             self.computer.print("Could not send ICMP packets without an IP address!")
             raise NoIPAddressError("The sending computer has no IP address!!!")
 
-        dst_mac = self.computer.arp_cache[ip_for_the_mac].mac
         self.computer.send_ping_to(dst_mac, self.dst_ip, self.ping_opcode)
 
     def ping_reply_from(self, ip_address):
@@ -66,11 +63,10 @@ class SendPing(Process):
             self.computer.print(f"pinging {self.dst_ip} with some bytes")
 
         for _ in my_range(self.count):
-            ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip, self)
-            yield WaitingFor(done_searching)
+            _, dst_mac = yield from self.computer.resolve_ip_address_blocking(self.dst_ip, self)
 
             try:
-                self._send_the_ping(ip_for_the_mac)
+                self._send_the_ping(dst_mac)
             except NoIPAddressError:
                 return
 

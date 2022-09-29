@@ -1,6 +1,5 @@
 from address.mac_address import MACAddress
-from computing.internals.processes.abstracts.process import Process, ReturnedPacket, WaitingForPacketWithTimeout, Timeout, \
-    WaitingFor
+from computing.internals.processes.abstracts.process import Process, ReturnedPacket, WaitingForPacketWithTimeout, Timeout
 from consts import OPCODES, PROTOCOLS
 from usefuls.funcs import my_range
 
@@ -20,7 +19,8 @@ class ARPProcess(Process):
                  requesting_process=None,
                  send_even_if_known=False,
                  resend_count=PROTOCOLS.ARP.RESEND_COUNT,
-                 resend_even_on_success=False):
+                 resend_even_on_success=False,
+                 override_process_name=None):
         """
         Initiates the process with the address to request.
         :param computer:
@@ -32,6 +32,7 @@ class ARPProcess(Process):
         self.send_even_if_known = send_even_if_known
         self.resend_count = resend_count
         self.resend_even_on_success = resend_even_on_success
+        self.override_process_name = override_process_name
 
     def code(self):
         """The code of the process"""
@@ -55,7 +56,7 @@ class ARPProcess(Process):
             # TODO: what if we kill a process while it is ARP searching? this will try to kill it and crash the simulation
 
     def __repr__(self):
-        return f"[karp] {self.address}"
+        return self.override_process_name or f"[karp] {self.address}"
 
 
 class SendPacketWithARPProcess(Process):
@@ -78,13 +79,12 @@ class SendPacketWithARPProcess(Process):
         """
         dst_ip = self.ip_layer.dst_ip
         if not dst_ip.is_broadcast():
-            ip_for_the_mac, done_searching = self.computer.request_address(dst_ip, self, True)
-            yield WaitingFor(done_searching)
+            _, dst_mac = yield from self.computer.resolve_ip_address_blocking(dst_ip, self, True)
         else:
-            ip_for_the_mac = MACAddress.broadcast()
+            dst_mac = MACAddress.broadcast()
 
         self.computer.send_with_ethernet(
-            self.computer.arp_cache[ip_for_the_mac].mac,
+            dst_mac,
             dst_ip,
             self.ip_layer,
         )

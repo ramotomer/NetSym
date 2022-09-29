@@ -12,7 +12,7 @@ from computing.internals.filesystem.file import File
 from computing.internals.processes.abstracts.process import Process, T_ProcessCode, WaitingFor
 from computing.internals.processes.usermode_processes.dns_process.zone import Zone, ZoneRecord
 from consts import PORTS, T_Port, OPCODES
-from exceptions import DNSRouteNotFound, WrongUsageError
+from exceptions import DNSRouteNotFound, WrongUsageError, NoSuchFileError
 from packets.all import DNS
 from packets.usefuls.dns import *
 from usefuls.funcs import get_the_one, with_args
@@ -50,8 +50,11 @@ class DNSServerProcess(Process):
 
     @property
     def domain_names(self) -> List[T_Hostname]:
-        return [canonize_domain_hostname(file.name.rsplit('.', 1)[0])
-                for file in self.computer.filesystem.at_absolute_path(COMPUTER.FILES.CONFIGURATIONS.DNS_ZONE_FILES).files.values()]
+        try:
+            return [canonize_domain_hostname(file.name.rsplit('.', 1)[0])
+                    for file in self.computer.filesystem.at_absolute_path(COMPUTER.FILES.CONFIGURATIONS.DNS_ZONE_FILES).files.values()]
+        except NoSuchFileError:
+            return []
 
     @property
     def _zone_file_paths(self):

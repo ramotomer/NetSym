@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from computing.internals.processes.abstracts.process import Process, WaitingFor, T_ProcessCode
+from computing.internals.processes.abstracts.process import Process, T_ProcessCode
 from consts import OPCODES
 
 if TYPE_CHECKING:
@@ -100,13 +100,13 @@ class RoutePacket(Process):
         assert dst_ip is not None, "error!"
 
         if not time_exceeded:
-            ip_for_the_mac, done_searching = self.computer.request_address(dst_ip, self, False)
-            yield WaitingFor(done_searching)
+            ip_for_the_mac, dst_mac = yield from self.computer.resolve_ip_address_blocking(dst_ip, self, False)
+
             if ip_for_the_mac not in self.computer.arp_cache:          # if no one answered the arp
                 self._send_icmp_unreachable()
                 return
 
-            self.computer.send_with_ethernet(self.computer.arp_cache[ip_for_the_mac].mac, dst_ip, self.packet["IP"])
+            self.computer.send_with_ethernet(dst_mac, dst_ip, self.packet["IP"])
 
     def __repr__(self) -> str:
         """The string representation of the process"""

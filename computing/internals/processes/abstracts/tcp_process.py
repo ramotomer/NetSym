@@ -5,14 +5,14 @@ from abc import ABCMeta, abstractmethod
 from collections import deque
 from functools import reduce
 from operator import attrgetter, concat
-from typing import Optional, Callable, List, Tuple, Union, TYPE_CHECKING
+from typing import Optional, Callable, List, Union, TYPE_CHECKING
 
 from recordclass import recordclass
 
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import Process, WaitingForPacketWithTimeout, Timeout, \
     ReturnedPacket, \
-    NoNeedForPacket, WaitingFor, T_ProcessCode, ProcessInternalError
+    NoNeedForPacket, T_ProcessCode, ProcessInternalError
 from consts import *
 from exceptions import TCPDataLargerThanMaxSegmentSize
 from gui.main_loop import MainLoop
@@ -249,9 +249,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         the initial handshake on the client side. sends syn, waits for syn ack, sends ack.
         :return:
         """
-        ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip, self)
-        yield WaitingFor(done_searching)
-        self.dst_mac = self.computer.arp_cache[ip_for_the_mac].mac
+        ip_for_the_mac, self.dst_mac = yield from self.computer.resolve_ip_address_blocking(self.dst_ip, self)
 
         self.sending_window.add_waiting(self._create_packet(OPCODES.TCP.SYN))
 
@@ -275,9 +273,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         syn, = tcp_syn_list
         self._update_from_handshake_packet(syn)
 
-        ip_for_the_mac, done_searching = self.computer.request_address(self.dst_ip, self)
-        yield WaitingFor(done_searching)
-        self.dst_mac = self.computer.arp_cache[ip_for_the_mac].mac
+        ip_for_the_mac, self.dst_mac = yield from self.computer.resolve_ip_address_blocking(self.dst_ip, self)
 
         self._send_ack_for(syn, OPCODES.TCP.SYN)  # sends SYN ACK
         while not self.sending_window.nothing_to_send():  # while the syn ack was not ACKed

@@ -33,5 +33,6 @@ class Arping(Command):
             send_even_if_known=True,
             resend_count=parsed_args.count,
             resend_even_on_success=True,
+            override_process_name="arping",
         )
         return CommandOutput('arpinging...', '')
