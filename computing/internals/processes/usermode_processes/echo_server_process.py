@@ -4,7 +4,8 @@ from typing import Tuple, TYPE_CHECKING, Optional
 
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import Process, T_ProcessCode
-from consts import COMPUTER, PORTS, PROTOCOLS, T_Port
+from consts import PORTS, PROTOCOLS, T_Port
+from packets.usefuls.dns import T_Hostname
 
 if TYPE_CHECKING:
     from computing.computer import Computer
@@ -42,15 +43,16 @@ class EchoClientProcess(Process):
     def __init__(self,
                  pid: int,
                  computer: Computer,
-                 server_address: Tuple[IPAddress, T_Port],
+                 server: Tuple[T_Hostname, T_Port],
                  data: str,
                  count: int = PROTOCOLS.ECHO_SERVER.DEFAULT_REQUEST_COUNT) -> None:
         super(EchoClientProcess, self).__init__(pid, computer)
-        self.server_address = server_address
+        self.server_host, self.server_port = server
         self.data = data
         self.count = count
 
         self.socket = None
+        self.server_ip: Optional[IPAddress] = None
 
     def code(self) -> T_ProcessCode:
         if not self.computer.ips:
@@ -58,9 +60,10 @@ class EchoClientProcess(Process):
             self.die()
             return
 
-        self.socket = self.computer.get_socket(kind=COMPUTER.SOCKETS.TYPES.SOCK_DGRAM, requesting_process_pid=self.pid)
+        self.server_ip = yield from self.computer.resolve_domain_name(self, self.server_host)
+        self.socket = self.computer.get_udp_socket(self.pid)
         self.socket.bind()
-        self.socket.connect(self.server_address)
+        self.socket.connect((self.server_ip, self.server_port))
 
         for _ in range(self.count):
             self.socket.send(self.data.encode("ascii"))
@@ -81,7 +84,6 @@ class EchoClientProcess(Process):
         super(EchoClientProcess, self).die(death_message)
 
     def __repr__(self) -> str:
-        server_ip, server_port = self.server_address
-        return f"echocd {server_ip} " \
-            f"-p {server_port} " \
+        return f"echocd {self.server_host} " \
+            f"-p {self.server_port} " \
             f"{f'-c {self.count}' if self.count != PROTOCOLS.ECHO_SERVER.DEFAULT_REQUEST_COUNT else ''}"

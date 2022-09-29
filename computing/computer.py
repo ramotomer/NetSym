@@ -735,7 +735,10 @@ class Computer:
         :param user_inserted_dns_entry_format: "{hostname} {ipaddress}"
         """
         hostname, ip_address = user_inserted_dns_entry_format.split()
-        self.process_scheduler.get_usermode_process_by_type(DNSServerProcess).add_dns_record(hostname, IPAddress(ip_address))
+        self.process_scheduler.get_usermode_process_by_type(DNSServerProcess).add_dns_record(
+            canonize_domain_hostname(hostname),
+            IPAddress(ip_address),
+        )
 
     def add_remove_dns_zone(self, zone_name: T_Hostname) -> None:
         """
@@ -933,7 +936,7 @@ class Computer:
         """
         ip_for_the_mac = self.routing_table[ip_address].ip_address
         kill_process = requesting_process if kill_process_if_not_found else None
-        yield from ARPProcess(requesting_process.pid, self, ip_for_the_mac, kill_process).code()
+        yield from ARPProcess(requesting_process.pid, self, ip_for_the_mac.string_ip, kill_process).code()
         return ip_for_the_mac, self.arp_cache[ip_for_the_mac].mac
 
     # ------------------------------- v  Sockets  v ----------------------------------------------------------------------

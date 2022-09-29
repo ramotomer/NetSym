@@ -1275,20 +1275,26 @@ class UserInterface:
         Adds the computers that i create every time i do a test for TCP processes. saves time.
         :return:
         """
+        DEFAULT_DOMAIN = "fun."
         new_computers = [self.create_computer_with_ip() for _ in range(6)]
         self.create_device(Switch)
         self.smart_connect()
-        for i, location in enumerate(
-                circular_coordinates(MainWindow.main_window.get_mouse_location(), 150, len(new_computers))):
-            new_computers[i].graphics.location = location
 
         self.tab_through_selected()
-        self.selected_object.computer.open_port(21, "TCP")
-        self.selected_object.computer.open_port(13, "TCP")
-        self.selected_object.computer.open_port(53, "UDP")
-        self.tab_through_selected()
-        self.tab_through_selected()
-        self.selected_object.computer.dns_server = IPAddress("192.168.1.2")
+        server: Computer = self.selected_object.computer
+        server.open_port(21, "TCP")
+        server.open_port(13, "TCP")
+        server.open_port(53, "UDP")
+        server.add_remove_dns_zone(DEFAULT_DOMAIN)
+
+        for computer, location in zip(new_computers, circular_coordinates(MainWindow.main_window.get_mouse_location(), 150, len(new_computers))):
+            computer.graphics.location = location
+            computer.domain = DEFAULT_DOMAIN
+            computer.dns_server = server.get_ip()
+            server.add_dns_entry(f"{computer.name}.{DEFAULT_DOMAIN} {computer.get_ip().string_ip}")
+
+        # self.tab_through_selected()
+        # self.tab_through_selected()
         # self.selected_object.computer.process_scheduler.start_usermode_process(ClientFTPProcess, IPAddress("192.168.1.2"))
 
     def register_window(self, window, *buttons):

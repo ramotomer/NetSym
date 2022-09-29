@@ -216,13 +216,13 @@ class ComputerGraphics(ImageGraphics):
             ),
             "ask daytime (ctrl+alt+a)": with_args(
                 user_interface.ask_user_for,
-                IPAddress,
+                str,
                 MESSAGES.INSERT.IP_FOR_PROCESS,
                 with_args(self.computer.process_scheduler.start_usermode_process, DAYTIMEClientProcess)
             ),
             "download file (alt+a)": with_args(
                 user_interface.ask_user_for,
-                IPAddress,
+                str,
                 MESSAGES.INSERT.IP_FOR_PROCESS,
                 with_args(self.computer.process_scheduler.start_usermode_process, ClientFTPProcess)
             ),

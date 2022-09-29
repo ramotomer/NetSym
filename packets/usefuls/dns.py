@@ -8,6 +8,7 @@ from scapy.layers.dns import DNSRR, DNSQR
 from consts import COMPUTER, PROTOCOLS
 from exceptions import InvalidDomainHostnameError
 from usefuls.attribute_renamer import define_attribute_aliases
+from usefuls.funcs import is_matching
 
 T_Hostname = str
 
@@ -30,8 +31,8 @@ def validate_domain_hostname(hostname: T_Hostname) -> None:
     if (('' in split_hostname) and (split_hostname[-1] != '')) or split_hostname.count('') > 1:
         raise InvalidDomainHostnameError(f"{message} contains multiple consecutive dots ('..')")
 
-    if not all(part.isalnum() for part in split_hostname if part):
-        raise InvalidDomainHostnameError(f"{message} - Invalid character in hostname! Only numbers and letters allowed!")
+    if not all(is_matching(r"\w+", part) for part in split_hostname if part):
+        raise InvalidDomainHostnameError(f"{message} - Invalid character in hostname! Only numbers, letters and underscores allowed!")
 
     if any((part and part[0].isnumeric()) for part in split_hostname):
         raise InvalidDomainHostnameError(f"{message} - Domain names must not start with a number!!")

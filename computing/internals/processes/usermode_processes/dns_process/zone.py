@@ -148,7 +148,7 @@ class Zone:
         return f"""$ORIGIN {self.origin}
 $TTL {self.default_ttl}\n
 {self.origin} IN SOA {self.authoritative_master_name_server} {self.admin_mail_address} ( {integer_parameters} )\n
-{linesep.join(f"{record.record_name: <13} {record.record_class: <3} {record.record_type: <5} {record.record_data}" for record in self.records)}
+{linesep.join(f"{record.record_name: <30} {record.record_class: <3} {record.record_type: <5} {record.record_data}" for record in self.records)}
 """
 
     def __getitem__(self, item: T_Hostname) -> ZoneRecord:

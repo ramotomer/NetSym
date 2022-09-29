@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import cmath
 import datetime
+import re
 from contextlib import contextmanager
 from functools import reduce
 from math import sin, cos, pi, atan
@@ -35,6 +36,15 @@ def get_the_one(iterable: Iterable[T],
     if raises is not None:
         raise raises(f'Failed to "get_the_one" since it does not exist in your iterable: {iterable}')
     return default
+
+
+def is_matching(pattern, string):
+    """
+    Takes in a regex pattern and a string.
+    Returns whether or not the string fits in the pattern
+    """
+    match = re.match(pattern, string)
+    return (match is not None) and (match.group(0) == string)
 
 
 def is_hex(string: str) -> bool:
