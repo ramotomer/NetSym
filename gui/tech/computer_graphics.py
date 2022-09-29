@@ -64,7 +64,7 @@ class ComputerGraphics(ImageGraphics):
             is_pressable=True,
             scale_factor=scale_factor,
         )
-        self.computer = computer
+        self.computer: Computer = computer
         self.class_name = self.computer.__class__.__name__
         self.original_image = image
 

@@ -775,7 +775,7 @@ class UserInterface:
         return connection
 
     @staticmethod
-    def send_direct_ping(computer_graphics1, computer_graphics2):
+    def send_direct_ping(computer_graphics1: ComputerGraphics, computer_graphics2: ComputerGraphics) -> None:
         """
         Send a ping from `computer1` to `computer2`.
         If one of them does not have an IP address, do nothing.
@@ -785,7 +785,7 @@ class UserInterface:
         """
         computer1, computer2 = computer_graphics1.computer, computer_graphics2.computer
         if computer1.has_ip() and computer2.has_ip():
-            computer1.start_ping_process(computer2.get_ip())
+            computer1.start_ping_process(computer2.get_ip().string_ip)
 
     def send_random_ping(self):
         """
@@ -796,7 +796,7 @@ class UserInterface:
             sending_computer = random.choice([computer for computer in self.computers if computer.has_ip()])
             receiving_computer = random.choice([computer for computer in self.computers
                                                 if computer.has_ip() and computer is not sending_computer])
-            sending_computer.start_ping_process(receiving_computer.get_ip())
+            sending_computer.start_ping_process(receiving_computer.get_ip().string_ip)
         except IndexError:
             pass
 
@@ -1017,16 +1017,6 @@ class UserInterface:
                     self.connect_devices(computer, nearest_router)
         else:
             self.connect_all_to_all()
-
-    def ping_switch_with_ip(self):
-        """
-        Send a ping from a random computer to a switch with an ip. (I used it for testing), if no one uses it it
-        can be deleted.
-        :return: None
-        """
-        switch = get_the_one(self.computers, lambda c: isinstance(c, Switch) and c.has_ip(), NetworkSimulationError)
-        pinging_computer = random.choice([computer for computer in self.computers if computer is not switch])
-        pinging_computer.start_ping_process(switch.get_ip())
 
     def ask_for_dhcp(self):
         """

@@ -7,10 +7,9 @@ import scapy
 from scapy.layers.dns import dnstypes
 
 from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode, ProcessInternalError_InvalidDomainHostname
+from computing.internals.processes.abstracts.process import Process, T_ProcessCode
 from consts import OPCODES, PROTOCOLS, T_Time, T_Port, PORTS
 from packets.all import DNS
-from packets.usefuls.dns import T_Hostname, canonize_domain_hostname
 from packets.usefuls.dns import list_to_dns_query, DNSQueryRecord
 
 if TYPE_CHECKING:
@@ -51,7 +50,7 @@ class DNSClientProcess(Process):
     def _should_store_result_in_file(self) -> bool:
         return self._output_file is not None
 
-    def _dns_process_print(self, message):
+    def _dns_format_print(self, message):
         """
         Print to computer console with a DNS prefix
         """
@@ -62,15 +61,15 @@ class DNSClientProcess(Process):
         Kill the process if any of the parameters are invalid!
         """
         if self._retry_count < 1:
-            self._dns_process_print(f"Retry count must be at least 1, not {self._retry_count}")
+            self._dns_format_print(f"Retry count must be at least 1, not {self._retry_count}")
             return False
 
         if not self._name_to_resolve:
-            self._dns_process_print(f"Name invalid! '{self._name_to_resolve}'")
+            self._dns_format_print(f"Name invalid! '{self._name_to_resolve}'")
             return False
 
         if self._server_address[0] is None:
-            self._dns_process_print(f"No DNS server configured!")
+            self._dns_format_print(f"No DNS server configured!")
             return False
 
         return True
@@ -114,7 +113,7 @@ class DNSClientProcess(Process):
                 "record_data": str(ip_address),
             }))
 
-    def _extract_dns_answer(self, dns_answer: bytes) -> Tuple[T_Hostname, IPAddress, int, str]:
+    def _extract_dns_answer(self, dns_answer: bytes) -> Tuple[IPAddress, int, str]:
 
         """
         Take in the answer packet that was sent from the server
@@ -126,19 +125,19 @@ class DNSClientProcess(Process):
             raise NotImplementedError(f"Multiple answers in the packet!")
 
         answer_record, = parsed_dns_answer.answer_records
-        return answer_record.record_name, answer_record.record_data, answer_record.time_to_live, answer_record.record_type
+        return answer_record.record_data, answer_record.time_to_live, answer_record.record_type
 
-    def _add_default_domain_prefix_if_necessary(self):
+    def _store_dns_answer(self, ip_address: IPAddress, ttl: int, record_type: str) -> None:
         """
-        If the name to resolve was `Hello` and the default domain of the computer was `tomer.noyman.`
-            then the process's name to resolve will be set to `Hello.tomer.noyman.`
+        Take in the parsed DNS answer - and handle it
+            Add to the DNS cache
+            Store in tmp file (for recursive resolution) if necessary
+            Print success message
         """
-        if '.' in self._name_to_resolve:
-            return  # no need for the prefix
-        if self.computer.domain is None:
-            self._dns_process_print('\nERROR: Cannot resolve name! What domain did you mean? No default domain configured :(')  # die
-            raise ProcessInternalError_InvalidDomainHostname
-        self._name_to_resolve = canonize_domain_hostname(self._name_to_resolve, self.computer.domain)
+        self.computer.dns_cache.add_item(self._name_to_resolve, IPAddress(ip_address), ttl)
+        self._store_result_in_file(ip_address, ttl, record_type)
+        if dnstypes.get(record_type, record_type) == OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS:
+            self._dns_format_print(f"\nAnswer:\n{ip_address}")
 
     def code(self) -> T_ProcessCode:
         """
@@ -152,8 +151,11 @@ class DNSClientProcess(Process):
             self.die("ERROR: DNS Process parameters invalid!")
             return
 
-        self._add_default_domain_prefix_if_necessary()
-        self._dns_process_print(f"Resolving name '{self._name_to_resolve}'")
+        self._name_to_resolve = self.computer.add_default_domain_prefix_if_necessary(self._name_to_resolve)
+        if self._name_to_resolve in self.computer.dns_cache:
+            return  # name already in DNS cache - no need to resolve! :)
+        self._dns_format_print(f"Resolving name '{self._name_to_resolve}'")
+
         for _ in range(self._retry_count):
             self.socket.send(self._build_dns_query(self._name_to_resolve))
             yield from self.socket.block_until_received(timeout=self._query_timeout)
@@ -161,13 +163,9 @@ class DNSClientProcess(Process):
             received = self.socket.receive()
             if received:  # if `received` is empty - that means the socket `block_until_received` was timed out
                 dns_answer = received[0]
-                _, ip_address, ttl, record_type = self._extract_dns_answer(dns_answer)
-                self.computer.dns_cache.add_item(self._name_to_resolve, IPAddress(ip_address), ttl)
-                self._store_result_in_file(ip_address, ttl, record_type)
-
-                if dnstypes.get(record_type, record_type) == OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS:
-                    self._dns_process_print(f"\nAnswer:\n{ip_address}")
+                self._store_dns_answer(*self._extract_dns_answer(dns_answer))
                 break
+
         else:
             self.die(f"ERROR: DNS could not resolve name :(")
             return

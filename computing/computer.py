@@ -37,7 +37,7 @@ from exceptions import *
 from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.all import ICMP, IP, TCP, UDP, ARP
-from packets.usefuls.dns import T_Hostname
+from packets.usefuls.dns import T_Hostname, validate_domain_hostname, canonize_domain_hostname
 from packets.usefuls.usefuls import get_src_port, get_dst_port
 from usefuls.funcs import get_the_one
 
@@ -621,7 +621,7 @@ class Computer:
             if packet_metadata.interface.has_this_ip(packet["IP"].dst_ip) or (
                     packet_metadata.interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):
                 # ^ only if the packet is for me also on the third layer!
-                dst_ip = packet["IP"].src_ip
+                dst_ip = packet["IP"].src_ip.string_ip
                 self.start_ping_process(dst_ip, OPCODES.ICMP.TYPES.REPLY)
 
     def _handle_tcp(self, returned_packet: ReturnedPacket) -> None:
@@ -676,14 +676,14 @@ class Computer:
                 self.packet_types_and_handlers[packet_type](returned_packet)
                 continue
 
-    def start_ping_process(self, ip_address: IPAddress, opcode: int = OPCODES.ICMP.TYPES.REQUEST, count: int = 1) -> None:
+    def start_ping_process(self, destination: T_Hostname, opcode: int = OPCODES.ICMP.TYPES.REQUEST, count: int = 1) -> None:
         """
         Starts sending a ping to another computer.
-        :param ip_address: an `IPAddress` object to ping.
+        :param destination:
         :param opcode: the opcode of the ping to send
         :param count: how many pings to send
         """
-        self.process_scheduler.start_usermode_process(SendPing, ip_address, opcode, count)
+        self.process_scheduler.start_usermode_process(SendPing, destination, opcode, count)
 
     # --------------------------------------- v  DHCP and DNS  v -----------------------------------------------------------
 
@@ -710,12 +710,24 @@ class Computer:
         """
         self.process_scheduler.get_usermode_process_by_type(DHCPServer).domain = domain
 
-    def resolve_domain_name(self, name: T_Hostname, dns_server: Optional[IPAddress] = None) -> Generator[T_WaitingFor, Any, IPAddress]:
+    def resolve_domain_name(self,
+                            requesting_process: Process,
+                            name: T_Hostname,
+                            dns_server: Optional[IPAddress] = None) -> Generator[T_WaitingFor, Any, IPAddress]:
         """
+        A generator to `yield from` inside processes
+        The generator eventually will return the IPAddress that matches the supplied domain hostname
+        Can be used like this:
+            >>> ip_address = yield from self.resolve_domain_name(...)
 
+        If the name is a valid IPAddress - just cast it and return :)
         """
-        yield from DNSClientProcess(0, self, (dns_server if dns_server is not None else self.dns_server), name).code()
-        return self.dns_cache[name].ip_address
+        if IPAddress.is_valid(name):
+            return IPAddress(name)
+
+        validate_domain_hostname(name)
+        yield from DNSClientProcess(requesting_process.pid, self, (dns_server if dns_server is not None else self.dns_server), name).code()
+        return self.dns_cache[self.add_default_domain_prefix_if_necessary(name)].ip_address
 
     def add_dns_entry(self, user_inserted_dns_entry_format: str) -> None:
         """
@@ -731,6 +743,15 @@ class Computer:
         If it exists - deletes it
         """
         self.process_scheduler.get_usermode_process_by_type(DNSServerProcess).add_or_remove_zone(zone_name)
+
+    def add_default_domain_prefix_if_necessary(self, name_to_resolve: T_Hostname) -> T_Hostname:
+        """
+        If the name to resolve was `Hello` and the default domain of the computer was `tomer.noyman.`
+            then the process's name to resolve will be set to `Hello.tomer.noyman.`
+        """
+        if ('.' in name_to_resolve) or (self.domain is None):
+            return name_to_resolve  # no need for the prefix
+        return canonize_domain_hostname(name_to_resolve, self.domain)
 
     # ------------------------- v  Packet sending and wrapping  v ---------------------------------------------
 
@@ -912,7 +933,7 @@ class Computer:
         """
         ip_for_the_mac = self.routing_table[ip_address].ip_address
         kill_process = requesting_process if kill_process_if_not_found else None
-        yield from ARPProcess(0, self, ip_for_the_mac, kill_process).code()
+        yield from ARPProcess(requesting_process.pid, self, ip_for_the_mac, kill_process).code()
         return ip_for_the_mac, self.arp_cache[ip_for_the_mac].mac
 
     # ------------------------------- v  Sockets  v ----------------------------------------------------------------------

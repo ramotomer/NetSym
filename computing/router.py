@@ -50,8 +50,11 @@ class Router(Computer):
         self.last_route_check = MainLoop.instance.time()
 
         for received_packet in new_packets:
-            packet = received_packet.packet
-            if "IP" in packet and not self.has_this_ip(packet["IP"].dst_ip) and "DHCP" not in packet:
+            packet, interface = received_packet.packet_and_interface
+            if "IP" in packet and \
+                    not self.has_this_ip(packet["IP"].dst_ip) and \
+                    "DHCP" not in packet and \
+                    packet["Ether"].dst_mac == interface.mac:
                 self.process_scheduler.start_kernelmode_process(RoutePacket, packet)
 
     def logic(self):

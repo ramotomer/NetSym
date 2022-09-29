@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, Optional
 
 from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket, T_ProcessCode
 from consts import OPCODES, PROTOCOLS
 from exceptions import NoIPAddressError
+from packets.usefuls.dns import T_Hostname
 from usefuls.funcs import my_range
 
 if TYPE_CHECKING:
@@ -21,14 +22,16 @@ class SendPing(Process):
     def __init__(self,
                  pid: int,
                  computer: Computer,
-                 ip_address: IPAddress,
+                 destination: T_Hostname,
                  opcode: int = OPCODES.ICMP.TYPES.REQUEST,
                  count: int = 1) -> None:
         super(SendPing, self).__init__(pid, computer)
-        self.dst_ip = ip_address
+        self.destination = destination
         self.ping_opcode = opcode
         self.is_sending_to_gateway = False
         self.count = count
+
+        self.dst_ip: Optional[IPAddress] = None
 
     def _send_the_ping(self, dst_mac: MACAddress) -> None:
         """
@@ -73,6 +76,8 @@ class SendPing(Process):
         If the address is unknown, first it sends an ARP and waits for a reply.
         :return: a generator of `WaitingForPacket` namedtuple-s.
         """
+        self.dst_ip = yield from self.computer.resolve_domain_name(self, self.destination)
+
         if self.ping_opcode == OPCODES.ICMP.TYPES.REQUEST:
             self.computer.print(f"pinging {self.dst_ip} with some bytes")
 
