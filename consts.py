@@ -134,10 +134,12 @@ class OPCODES:
         FLAGS_DISPLAY_PRIORITY = [SYN, FIN, RST, PSH, ACK]
 
     class DNS:
+        SOME_ERROR = 'some_error'  # This is not an actual DNS type - but we want a different image for error packets :)
+
         QUERY = 'query'
         ANSWER = 'answer'
 
-        class QUERY_TYPES:
+        class TYPES:
             START_OF_AUTHORITY = 'SOA'
 
             HOST_ADDRESS = 'A'
@@ -149,9 +151,17 @@ class OPCODES:
             ALL_RECORDS = 'ANY'
             # there are more....
 
-        class QUERY_CLASSES:
+        class CLASSES:
             INTERNET = 'IN'  # this is almost always the class - indicates being on the internet. Does not have much use
             CHAOS = 'CH'
+
+        class RETURN_CODES:
+            OK =              0b000  # 0
+            FORMAT_ERROR =    0b001  # 1
+            SERVER_FAILURE =  0b010  # 2
+            NAME_ERROR =      0b011  # 3
+            NOT_IMPLEMENTED = 0b100  # 4
+            REFUSED =         0b101  # 5
 
     class BOOTP:
         REQUEST = "BOOTREQUEST"
@@ -440,6 +450,7 @@ class IMAGES:
             PACKET = "packets/tcp_packet.png"
 
         class DNS:
+            ERROR = "packets/dns_error.png"
             QUERY = "packets/dns_query.png"
             ANSWER = "packets/dns_answer.png"
 
@@ -500,6 +511,14 @@ def get_dominant_tcp_flag(tcp):
     return OPCODES.TCP.NO_FLAGS
 
 
+def get_dns_opcode(dns):
+    if dns.return_code != OPCODES.DNS.RETURN_CODES.OK:
+        return OPCODES.DNS.SOME_ERROR
+    if dns.answer_record_count > 0:
+        return OPCODES.DNS.ANSWER
+    return OPCODES.DNS.QUERY
+
+
 class PACKET:
     class DIRECTION:
         RIGHT = 'R'
@@ -514,7 +533,7 @@ class PACKET:
         "ICMP": (lambda icmp: (icmp.type, icmp.code) if icmp.type == OPCODES.ICMP.TYPES.UNREACHABLE else icmp.type),
         "DHCP": (lambda dhcp: DHCPTypes.get(dhcp.parsed_options.message_type, dhcp.parsed_options.message_type)),
         "TCP":  get_dominant_tcp_flag,
-        "DNS":  (lambda dns: OPCODES.DNS.ANSWER if dns.answer_record_count > 0 else OPCODES.DNS.QUERY),
+        "DNS":  get_dns_opcode,
     }
 
     TYPE_TO_IMAGE = {
@@ -557,8 +576,9 @@ class PACKET:
             OPCODES.FTP.DATA_PACKET: IMAGES.PACKETS.FTP.DATA_PACKET,
         },
         "DNS": {
-            OPCODES.DNS.QUERY: IMAGES.PACKETS.DNS.QUERY,
-            OPCODES.DNS.ANSWER: IMAGES.PACKETS.DNS.ANSWER,
+            OPCODES.DNS.QUERY:      IMAGES.PACKETS.DNS.QUERY,
+            OPCODES.DNS.ANSWER:     IMAGES.PACKETS.DNS.ANSWER,
+            OPCODES.DNS.SOME_ERROR: IMAGES.PACKETS.DNS.ERROR,
         },
     }
 

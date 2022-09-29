@@ -5,7 +5,8 @@ from typing import Callable, TYPE_CHECKING, Optional
 import scapy
 
 from address.mac_address import MACAddress
-from computing.internals.processes.abstracts.process import Process, ReturnedPacket, WaitingForPacketWithTimeout, Timeout, T_ProcessCode
+from computing.internals.processes.abstracts.process import Process, ReturnedPacket, WaitingForPacketWithTimeout, Timeout, T_ProcessCode, \
+    ProcessInternalError_NoResponseForARP
 from consts import OPCODES, PROTOCOLS
 from packets.usefuls.dns import T_Hostname
 from usefuls.funcs import my_range
@@ -31,7 +32,6 @@ class ARPProcess(Process):
                  pid: int,
                  computer: Computer,
                  destination: T_Hostname,
-                 requesting_process: Optional[Process] = None,
                  send_even_if_known: bool = False,
                  resend_count: int = PROTOCOLS.ARP.RESEND_COUNT,
                  resend_even_on_success: bool = False,
@@ -41,7 +41,6 @@ class ARPProcess(Process):
         """
         super(ARPProcess, self).__init__(pid, computer)
         self.destination = destination
-        self.requesting_process = requesting_process
         self.send_even_if_known = send_even_if_known
         self.resend_count = resend_count
         self.resend_even_on_success = resend_even_on_success
@@ -65,10 +64,7 @@ class ARPProcess(Process):
             elif not self.resend_even_on_success:
                 return
 
-        if self.requesting_process is not None:
-            self.computer.process_scheduler.terminate_process(self.requesting_process, None)
-            # TODO: what if we kill a process while it is ARP searching? this will try to kill it and crash the simulation -
-            #  maybe should raise ProcessInternalError
+        self.die("ERROR! No response for ARP :(", raises=ProcessInternalError_NoResponseForARP)
 
     def __repr__(self) -> str:
         return self.override_process_name or f"[karp] {self.destination}"
@@ -97,7 +93,7 @@ class SendPacketWithARPProcess(Process):
         """
         dst_ip = self.ip_layer.dst_ip
         if not dst_ip.is_broadcast():
-            _, dst_mac = yield from self.computer.resolve_ip_address(dst_ip, self, True)
+            _, dst_mac = yield from self.computer.resolve_ip_address(dst_ip, self)
         else:
             dst_mac = MACAddress.broadcast()
 

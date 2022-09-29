@@ -7,7 +7,8 @@ import scapy
 from scapy.layers.dns import dnstypes
 
 from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode
+from computing.internals.processes.abstracts.process import Process, T_ProcessCode, ProcessInternalError_DNSNameErrorFromServer, \
+    ProcessInternalError_NoResponseForDNSQuery
 from consts import OPCODES, PROTOCOLS, T_Time, T_Port, PORTS
 from packets.all import DNS
 from packets.usefuls.dns import list_to_dns_query, DNSQueryRecord
@@ -89,8 +90,8 @@ class DNSClientProcess(Process):
             queries=list_to_dns_query([
                 DNSQueryRecord(
                     query_name=name_to_resolve,
-                    query_type=OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS,
-                    query_class=OPCODES.DNS.QUERY_CLASSES.INTERNET,
+                    query_type=OPCODES.DNS.TYPES.HOST_ADDRESS,
+                    query_class=OPCODES.DNS.CLASSES.INTERNET,
                 ),
             ]),
         )
@@ -127,6 +128,17 @@ class DNSClientProcess(Process):
         answer_record, = parsed_dns_answer.answer_records
         return answer_record.record_data, answer_record.time_to_live, answer_record.record_type
 
+    def _validate_no_error_in_dns_answer(self, dns_answer: bytes) -> None:
+        """
+        Take in the packet bytes that were received from the socket
+        Return whether or not they contain a DNS error return code
+        """
+        if DNS(dns_answer).return_code != OPCODES.DNS.RETURN_CODES.OK:
+            self.die(
+                "ERROR! DNS server sent an error! name not resolved :(",
+                raises=ProcessInternalError_DNSNameErrorFromServer,
+            )
+
     def _store_dns_answer(self, ip_address: IPAddress, ttl: int, record_type: str) -> None:
         """
         Take in the parsed DNS answer - and handle it
@@ -136,7 +148,7 @@ class DNSClientProcess(Process):
         """
         self.computer.dns_cache.add_item(self._name_to_resolve, IPAddress(ip_address), ttl)
         self._store_result_in_file(ip_address, ttl, record_type)
-        if dnstypes.get(record_type, record_type) == OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS:
+        if dnstypes.get(record_type, record_type) == OPCODES.DNS.TYPES.HOST_ADDRESS:
             self._dns_format_print(f"\nAnswer:\n{ip_address}")
 
     def code(self) -> T_ProcessCode:
@@ -163,12 +175,14 @@ class DNSClientProcess(Process):
             received = self.socket.receive()
             if received:  # if `received` is empty - that means the socket `block_until_received` was timed out
                 dns_answer = received[0]
+                self._validate_no_error_in_dns_answer(dns_answer)
                 self._store_dns_answer(*self._extract_dns_answer(dns_answer))
-                break
+                return
 
-        else:
-            self.die(f"ERROR: DNS could not resolve name :(")
-            return
+        self.die(
+            f"ERROR: DNS server did not respond. name not resolved :(",
+            raises=ProcessInternalError_NoResponseForDNSQuery,
+        )
 
     def __repr__(self) -> str:
         return "dnscd"

@@ -96,4 +96,4 @@ class SendPing(Process):
 
     def __repr__(self) -> str:
         """The string representation of the SendPing process"""
-        return f"ping {self.dst_ip} {f'-n {self.count}' if self.count != PROTOCOLS.ICMP.INFINITY else '-t'}"
+        return f"ping {self.destination} {f'-n {self.count}' if self.count != PROTOCOLS.ICMP.INFINITY else '-t'}"

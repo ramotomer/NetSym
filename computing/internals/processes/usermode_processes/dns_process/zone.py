@@ -69,12 +69,12 @@ class Zone:
 
     @property
     def host_or_alias_records(self):
-        return [r for r in self.records if r.record_type in [OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS,
-                                                             OPCODES.DNS.QUERY_TYPES.CANONICAL_NAME_FOR_AN_ALIAS]]
+        return [r for r in self.records if r.record_type in [OPCODES.DNS.TYPES.HOST_ADDRESS,
+                                                             OPCODES.DNS.TYPES.CANONICAL_NAME_FOR_AN_ALIAS]]
 
     @property
     def name_server_records(self):
-        return [r for r in self.records if r.record_type == OPCODES.DNS.QUERY_TYPES.AUTHORITATIVE_NAME_SERVER]
+        return [r for r in self.records if r.record_type == OPCODES.DNS.TYPES.AUTHORITATIVE_NAME_SERVER]
 
     def __iter__(self):
         return iter(self.records)
@@ -86,10 +86,10 @@ class Zone:
 
         return cls(
             records=[
-                ZoneRecord(domain_name, OPCODES.DNS.QUERY_CLASSES.INTERNET, OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS, ip_address),
-                ZoneRecord('ns',        OPCODES.DNS.QUERY_CLASSES.INTERNET, OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS, ip_address),
-                ZoneRecord(domain_name, OPCODES.DNS.QUERY_CLASSES.INTERNET, OPCODES.DNS.QUERY_TYPES.AUTHORITATIVE_NAME_SERVER, 'ns'),
-                ZoneRecord(f'www',      OPCODES.DNS.QUERY_CLASSES.INTERNET, OPCODES.DNS.QUERY_TYPES.CANONICAL_NAME_FOR_AN_ALIAS, domain_name),
+                ZoneRecord(domain_name, OPCODES.DNS.CLASSES.INTERNET, OPCODES.DNS.TYPES.HOST_ADDRESS, ip_address),
+                ZoneRecord('ns', OPCODES.DNS.CLASSES.INTERNET, OPCODES.DNS.TYPES.HOST_ADDRESS, ip_address),
+                ZoneRecord(domain_name, OPCODES.DNS.CLASSES.INTERNET, OPCODES.DNS.TYPES.AUTHORITATIVE_NAME_SERVER, 'ns'),
+                ZoneRecord(f'www', OPCODES.DNS.CLASSES.INTERNET, OPCODES.DNS.TYPES.CANONICAL_NAME_FOR_AN_ALIAS, domain_name),
             ],
             serial_number                   = 2020091025,
             slave_refresh_period            = 7200,
@@ -168,12 +168,12 @@ $TTL {self.default_ttl}\n
             Note that some lines specify TTL and some dont - that affects the parsing
 
         :param parsed:  The already somewhat parsed `Zone` object
-        :param record_type: one of `OPCODES.DNS.QUERY_TYPES`
+        :param record_type: one of `OPCODES.DNS.TYPES`
         :param splitted_line: the line to parse, splitted by spaces and without inline comments
 
         :return (ip_address, ttl_or_none_if_default)
         """
-        if record_type == OPCODES.DNS.QUERY_TYPES.START_OF_AUTHORITY:
+        if record_type == OPCODES.DNS.TYPES.START_OF_AUTHORITY:
             (parsed.authoritative_master_name_server,
              parsed.admin_mail_address) = splitted_line[3:5]
             (parsed.serial_number,

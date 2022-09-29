@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode
+from computing.internals.processes.abstracts.process import Process, T_ProcessCode, ProcessInternalError_NoResponseForARP
 from consts import OPCODES
 
 if TYPE_CHECKING:
@@ -99,8 +99,9 @@ class RoutePacket(Process):
         if time_exceeded:
             return
 
-        ip_for_the_mac, dst_mac = yield from self.computer.resolve_ip_address(dst_ip, self, False)
-        if ip_for_the_mac not in self.computer.arp_cache:          # if no one answered the arp
+        try:
+            ip_for_the_mac, dst_mac = yield from self.computer.resolve_ip_address(dst_ip, self)
+        except ProcessInternalError_NoResponseForARP:
             self._send_icmp_unreachable()
             return
 

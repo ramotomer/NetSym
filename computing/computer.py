@@ -923,20 +923,17 @@ class Computer:
 
     def resolve_ip_address(self,
                            ip_address: IPAddress,
-                           requesting_process: Process,
-                           kill_process_if_not_found: bool = True) -> Generator[T_WaitingFor, Any, Tuple[IPAddress, MACAddress]]:
+                           requesting_process: Process) -> Generator[T_WaitingFor, Any, Tuple[IPAddress, MACAddress]]:
         """
         Receives an `IPAddress` and sends ARPs to it until it finds it or it did not answer for a long time.
         This function actually starts a process that does that.
         :param ip_address: an `IPAddress` object to look for
         :param requesting_process: the process that is sending the ARP request.
-        :param kill_process_if_not_found: whether or not to kill the process if the arp was not answered
         :return: The actual IP address it is looking for (The IP of your gateway (or the original if in the same subnet))
         and a condition to test whether or not the process is done looking for the IP.
         """
         ip_for_the_mac = self.routing_table[ip_address].ip_address
-        kill_process = requesting_process if kill_process_if_not_found else None
-        yield from ARPProcess(requesting_process.pid, self, ip_for_the_mac.string_ip, kill_process).code()
+        yield from ARPProcess(requesting_process.pid, self, ip_for_the_mac.string_ip).code()
         return ip_for_the_mac, self.arp_cache[ip_for_the_mac].mac
 
     # ------------------------------- v  Sockets  v ----------------------------------------------------------------------
@@ -1247,5 +1244,5 @@ class Computer:
         )
         returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])
         returned.filesystem = Filesystem.from_dict_load(dict_["filesystem"])
-        returned.scale_factor = dict_["scale_factor"]
+        # returned.scale_factor = dict_["scale_factor"]
         return returned

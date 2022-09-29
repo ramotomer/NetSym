@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
-from typing import Iterator, Union, NamedTuple, Callable, TYPE_CHECKING, Optional, Tuple
+from typing import Iterator, Union, NamedTuple, Callable, TYPE_CHECKING, Optional, Tuple, Type
 
 from recordclass import recordclass
 
@@ -170,7 +170,7 @@ class Process(metaclass=ABCMeta):
         """
         pass
 
-    def die(self, death_message: Optional[str] = None) -> None:
+    def die(self, death_message: Optional[str] = None, raises: Optional[Type[BaseException]] = None) -> None:
         """
         Kills the process!
         After this function is called, the process will not run a single line of code - ever...
@@ -179,8 +179,8 @@ class Process(metaclass=ABCMeta):
             self.computer.print(death_message)
 
         self.kill_me = True
-        if self.computer.process_scheduler.is_inside_this_process(self):
-            raise ProcessInternalError_Suicide
+        if self.computer.process_scheduler.is_running_a_process():
+            raise (raises if raises is not None else ProcessInternalError_Suicide)
 
     def set_killing_signals_handler(self, handler: Callable) -> None:
         """
@@ -267,3 +267,21 @@ class ProcessInternalError_InvalidDomainHostname(ProcessInternalError_Suicide, I
     """
     This indicates a self-enflicted death of the process due to an invalid domain hostname
     """
+
+
+class ProcessInternalError_NoResponseForARP(ProcessInternalError):
+    """
+    This indicates a self-enflicted death of the process due to an ARP that was sent but was not responded
+    """
+
+
+class ProcessInternalError_DNSNameErrorFromServer(ProcessInternalError):
+    """
+    This indicates a self-enflicted death of the process due to a DNS query that was sent but was not responded
+    """
+
+
+class ProcessInternalError_NoResponseForDNSQuery(ProcessInternalError):
+    """
+        This indicates a self-enflicted death of the process due to a DNS query that was sent but was not responded
+        """

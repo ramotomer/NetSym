@@ -85,5 +85,5 @@ class Router(Computer):
         )
         returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])
         returned.filesystem = Filesystem.from_dict_load(dict_["filesystem"])
-        returned.scale_factor = dict_["scale_factor"]
+        # returned.scale_factor = dict_["scale_factor"]
         return returned

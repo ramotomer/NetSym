@@ -86,27 +86,34 @@ class DNSServerProcess(Process):
             return False
         return not parsed_dns_packet.is_response
 
-    def _build_dns_answer(self, record_name: T_Hostname, time_to_live: int) -> scapy.packet.Packet:
+    def _build_dns_answer(self, record_name: Optional[T_Hostname], time_to_live: Optional[int]) -> scapy.packet.Packet:
         """
-
-        :param record_name:
-        :return:
+        Takes in a name and TTL and builds a DNS packet that can be sent to the client as an answer to his query
         """
+        is_ok = (record_name is not None) and (time_to_live is not None)
         dns_answer = DNS(
             transaction_id=self.computer.dns_cache.transaction_counter,
             is_response=True,
+            return_code=OPCODES.DNS.RETURN_CODES.OK if is_ok else OPCODES.DNS.RETURN_CODES.NAME_ERROR,
             is_recursion_desired=True,
             is_recursion_available=True,
-            answer_records=list_to_dns_resource_record([
+            answer_records=(list_to_dns_resource_record([
                 DNSResourceRecord(
                     record_name=record_name,
                     time_to_live=time_to_live,
                     record_data=self.computer.dns_cache[record_name].ip_address.string_ip,
                 )
-            ])
+            ]) if is_ok else None)
         )
+        # TODO: add the Query object itself to the DNS answer packet
         self.computer.dns_cache.transaction_counter += 1
         return dns_answer
+
+    def _build_dns_error(self) -> scapy.packet.Packet:
+        """
+        Builds a DNS answer to a client query. This answer signals that the name could sadly not be resolved :(
+        """
+        return self._build_dns_answer(None, None)
 
     def _is_active_client(self, client_ip: IPAddress, client_port: T_Port) -> bool:
         """Returns whether or not a client with this IP and port currently has an active query """
@@ -125,8 +132,8 @@ class DNSServerProcess(Process):
         Send them back to the clients
         """
         for item_name, client in query_dict.items():
-            self.socket.sendto(self._build_dns_answer(item_name, self.computer.dns_cache[item_name].ttl), (client.client_ip, client.client_port))
             del self._active_queries[item_name]
+            self.socket.sendto(self._build_dns_answer(item_name, self.computer.dns_cache[item_name].ttl), (client.client_ip, client.client_port))
 
     def _send_error_messages_to_timed_out_clients(self) -> None:
         """
@@ -139,8 +146,7 @@ class DNSServerProcess(Process):
 
         for hostname, client in timed_out_clients.items():
             del self._active_queries[hostname]
-
-            pass  # TODO: send an error message...
+            self.socket.sendto(self._build_dns_error(), (client.client_ip, client.client_port))
 
     def _start_single_dns_query(self, name: T_Hostname, dns_server: IPAddress) -> None:
         """
@@ -172,7 +178,7 @@ class DNSServerProcess(Process):
             record_name,  record_type = file_contents["record_name"],  file_contents["record_type"]
             time_to_live, record_data = file_contents["time_to_live"], file_contents["record_data"]
 
-            if record_type == OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS:
+            if record_type == OPCODES.DNS.TYPES.HOST_ADDRESS:
                 relevant_domain_name = get_the_one(self.domain_names, with_args(does_domain_hostname_end_with, record_name), DNSRouteNotFound)
                 self.computer.dns_cache.add_item(
                     record_name,
@@ -181,7 +187,7 @@ class DNSServerProcess(Process):
                 )
                 continue
 
-            if record_type == OPCODES.DNS.QUERY_TYPES.AUTHORITATIVE_NAME_SERVER:
+            if record_type == OPCODES.DNS.TYPES.AUTHORITATIVE_NAME_SERVER:
                 self._start_single_dns_query(record_name, IPAddress(record_data))
 
     @staticmethod
@@ -205,8 +211,8 @@ class DNSServerProcess(Process):
 
                 if (len(canonize_domain_hostname(record.record_name,        zone.origin)) >
                    len(canonize_domain_hostname(longest_record.record_name, zone.origin))):
-                    if record.record_type in [OPCODES.DNS.QUERY_TYPES.CANONICAL_NAME_FOR_AN_ALIAS,
-                                              OPCODES.DNS.QUERY_TYPES.AUTHORITATIVE_NAME_SERVER]:
+                    if record.record_type in [OPCODES.DNS.TYPES.CANONICAL_NAME_FOR_AN_ALIAS,
+                                              OPCODES.DNS.TYPES.AUTHORITATIVE_NAME_SERVER]:
                         longest_record = record
         return longest_record
 
@@ -217,8 +223,8 @@ class DNSServerProcess(Process):
         """
         for record in zone:
             if (canonize_domain_hostname(record.record_name, zone.origin) == canonize_domain_hostname(name)) and \
-                    (record.record_type in [OPCODES.DNS.QUERY_TYPES.CANONICAL_NAME_FOR_AN_ALIAS,
-                                            OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS]):
+                    (record.record_type in [OPCODES.DNS.TYPES.CANONICAL_NAME_FOR_AN_ALIAS,
+                                            OPCODES.DNS.TYPES.HOST_ADDRESS]):
                 return record
         return None
 
@@ -245,7 +251,11 @@ class DNSServerProcess(Process):
 
         longest_matching_record = self._find_longest_matching_ns_record(name, zone)  # NS records
         if does_domain_hostname_end_with(name, longest_matching_record.record_name, zone_origin=zone.origin):
-            self._start_single_dns_query(name, IPAddress(zone.resolve_aliasing(longest_matching_record)))
+            dst_ip = IPAddress(zone.resolve_aliasing(longest_matching_record))
+            if self.computer.has_this_ip(dst_ip):
+                self._decline_client_query(client_ip, client_port)
+                return
+            self._start_single_dns_query(name, dst_ip)
 
     @staticmethod
     def _parse_dns_query(query_bytes: bytes) -> scapy.packet.Packet:
@@ -324,8 +334,8 @@ class DNSServerProcess(Process):
             parsed_zone_file.records.append(
                 ZoneRecord(
                     name,
-                    OPCODES.DNS.QUERY_CLASSES.INTERNET,
-                    OPCODES.DNS.QUERY_TYPES.HOST_ADDRESS,
+                    OPCODES.DNS.CLASSES.INTERNET,
+                    OPCODES.DNS.TYPES.HOST_ADDRESS,
                     ip_address.string_ip
                 )
             )
@@ -347,3 +357,13 @@ class DNSServerProcess(Process):
             # add
             self.domain_names.append(domain_name)
             self._init_zone_file(domain_name)
+
+    def _decline_client_query(self, client_ip: IPAddress, client_port: T_Port) -> None:
+        """
+
+        """
+        hostname = [hostname for hostname, client in self._active_queries.items()
+                    if client.client_ip == client_ip and client.client_port == client_port][0]
+
+        self._active_queries[hostname].active_query_process_id = 0
+        # ^ This PID does not exist - This is considered a timed out process - so they will be sent an error message

@@ -1280,11 +1280,11 @@ class UserInterface:
         self.create_device(Switch)
         self.smart_connect()
 
-        self.tab_through_selected()
-        server: Computer = self.selected_object.computer
-        server.open_port(21, "TCP")
-        server.open_port(13, "TCP")
-        server.open_port(53, "UDP")
+        server: Computer = new_computers[0]
+        server.open_port(21,   "TCP")
+        server.open_port(13,   "TCP")
+        server.open_port(53,   "UDP")
+        server.open_port(1000, "UDP")
         server.add_remove_dns_zone(DEFAULT_DOMAIN)
 
         for computer, location in zip(new_computers, circular_coordinates(MainWindow.main_window.get_mouse_location(), 150, len(new_computers))):
@@ -1292,10 +1292,6 @@ class UserInterface:
             computer.domain = DEFAULT_DOMAIN
             computer.dns_server = server.get_ip()
             server.add_dns_entry(f"{computer.name}.{DEFAULT_DOMAIN} {computer.get_ip().string_ip}")
-
-        # self.tab_through_selected()
-        # self.tab_through_selected()
-        # self.selected_object.computer.process_scheduler.start_usermode_process(ClientFTPProcess, IPAddress("192.168.1.2"))
 
     def register_window(self, window, *buttons):
         """
