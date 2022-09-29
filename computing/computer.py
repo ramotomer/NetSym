@@ -83,7 +83,8 @@ class Computer:
         },
         "UDP": {
             PORTS.DHCP_SERVER: DHCPServer,
-            # TODO: a bug that i thought of - this port will not really be open because DHCP uses raw sockets
+            # TODO:  BUG: this port will not really be open because DHCP uses raw sockets - this means no tiny image, and cannot open manually
+            #  or save to files :( bad
             PORTS.ECHO_SERVER: EchoServerProcess,
             PORTS.DNS: DNSServerProcess,
         },
@@ -184,7 +185,7 @@ class Computer:
         with self.filesystem.parsed_editable_conf_file(COMPUTER.FILES.CONFIGURATIONS.DNS_CLIENT_PATH, raise_if_does_not_exist=False) as conf_value:
             if value is not None:
                 conf_value['nameserver'] = [str(value)]
-            else:
+            elif 'nameserver' in conf_value:
                 del conf_value['nameserver']
 
     @property
@@ -205,7 +206,7 @@ class Computer:
         with self.filesystem.parsed_editable_conf_file(COMPUTER.FILES.CONFIGURATIONS.DNS_CLIENT_PATH, raise_if_does_not_exist=False) as conf_value:
             if value is not None:
                 conf_value['domain'] = [str(value)]
-            else:
+            elif 'domain' in conf_value:
                 del conf_value['domain']
 
     @property

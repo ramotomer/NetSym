@@ -12,7 +12,7 @@ class ScapyOptions:
         raise KeyError(f"This scapy options list: {self} has no option '{item}'!")
 
     def __getattr__(self, item):
-        if item == 'options':
+        if item in ['options', 'get']:
             return super(ScapyOptions, self).__getattribute__(item)
 
         try:

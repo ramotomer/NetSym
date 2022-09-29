@@ -219,7 +219,8 @@ class DNSServerProcess(Process):
     @staticmethod
     def _get_exact_host_record(name: T_Hostname, zone: Zone) -> Optional[ZoneRecord]:
         """
-
+        Goes over the Zone file and returns the record that fits the supplied name exactly
+        If one does not exist - return None
         """
         for record in zone:
             if (canonize_domain_hostname(record.record_name, zone.origin) == canonize_domain_hostname(name)) and \
@@ -240,7 +241,7 @@ class DNSServerProcess(Process):
         domain_name = get_the_one(self.domain_names, with_args(does_domain_hostname_end_with, name), DNSRouteNotFound)
         zone = self._zone_by_domain_name(domain_name)
 
-        exact_host_record = self._get_exact_host_record(name, zone)
+        exact_host_record = self._get_exact_host_record(name, zone)                  # A and CNAME records
         if exact_host_record is not None:
             self.computer.dns_cache.add_item(
                 canonize_domain_hostname(exact_host_record.record_name, zone.origin),
@@ -250,12 +251,13 @@ class DNSServerProcess(Process):
             return
 
         longest_matching_record = self._find_longest_matching_ns_record(name, zone)  # NS records
-        if does_domain_hostname_end_with(name, longest_matching_record.record_name, zone_origin=zone.origin):
+        if longest_matching_record is not None:
             dst_ip = IPAddress(zone.resolve_aliasing(longest_matching_record))
             if self.computer.has_this_ip(dst_ip):
+                # ^ This means the desired zone is local on this computer - but a sufficient 'A' record was not found :(
                 self._decline_client_query(client_ip, client_port)
-                return
-            self._start_single_dns_query(name, dst_ip)
+            else:
+                self._start_single_dns_query(name, dst_ip)
 
     @staticmethod
     def _parse_dns_query(query_bytes: bytes) -> scapy.packet.Packet:

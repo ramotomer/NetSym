@@ -116,8 +116,8 @@ class DHCPClient(Process):
         dhcp_pack = session_socket.receive()[0]
 
         self.update_routing_table(session_interface, dhcp_pack.packet)
-        self.computer.dns_server = dhcp_pack.packet["DHCP"].parsed_options.name_server
-        self.computer.domain =     dhcp_pack.packet["DHCP"].parsed_options.domain
+        self.computer.dns_server = dhcp_pack.packet["DHCP"].parsed_options.get('name_server', None)
+        self.computer.domain =     dhcp_pack.packet["DHCP"].parsed_options.get('domain', None)
         # TODO ^ this does not work if the router does not supply them :(
         self.computer.arp_grat(session_interface)
         self.computer.print("Got Address from DHCP!")
