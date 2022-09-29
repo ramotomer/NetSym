@@ -261,3 +261,9 @@ class ProcessInternalError(Exception):
 
 class ProcessInternalError_Suicide(ProcessInternalError):
     """This indicates a self-enflicted death of the process"""
+
+
+class ProcessInternalError_InvalidDomainHostname(ProcessInternalError_Suicide, InvalidDomainHostnameError):
+    """
+    This indicates a self-enflicted death of the process due to an invalid domain hostname
+    """

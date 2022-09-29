@@ -79,7 +79,7 @@ class SendPacketWithARPProcess(Process):
         """
         dst_ip = self.ip_layer.dst_ip
         if not dst_ip.is_broadcast():
-            _, dst_mac = yield from self.computer.resolve_ip_address_blocking(dst_ip, self, True)
+            _, dst_mac = yield from self.computer.resolve_ip_address(dst_ip, self, True)
         else:
             dst_mac = MACAddress.broadcast()
 

@@ -7,10 +7,10 @@ import scapy
 from scapy.layers.dns import dnstypes
 
 from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode
+from computing.internals.processes.abstracts.process import Process, T_ProcessCode, ProcessInternalError_InvalidDomainHostname
 from consts import OPCODES, PROTOCOLS, T_Time, T_Port, PORTS
 from packets.all import DNS
-from packets.usefuls.dns import T_Hostname
+from packets.usefuls.dns import T_Hostname, canonize_domain_hostname
 from packets.usefuls.dns import list_to_dns_query, DNSQueryRecord
 
 if TYPE_CHECKING:
@@ -128,6 +128,18 @@ class DNSClientProcess(Process):
         answer_record, = parsed_dns_answer.answer_records
         return answer_record.record_name, answer_record.record_data, answer_record.time_to_live, answer_record.record_type
 
+    def _add_default_domain_prefix_if_necessary(self):
+        """
+        If the name to resolve was `Hello` and the default domain of the computer was `tomer.noyman.`
+            then the process's name to resolve will be set to `Hello.tomer.noyman.`
+        """
+        if '.' in self._name_to_resolve:
+            return  # no need for the prefix
+        if self.computer.domain is None:
+            self._dns_process_print('\nERROR: Cannot resolve name! What domain did you mean? No default domain configured :(')  # die
+            raise ProcessInternalError_InvalidDomainHostname
+        self._name_to_resolve = canonize_domain_hostname(self._name_to_resolve, self.computer.domain)
+
     def code(self) -> T_ProcessCode:
         """
         The main code of the process
@@ -140,6 +152,7 @@ class DNSClientProcess(Process):
             self.die("ERROR: DNS Process parameters invalid!")
             return
 
+        self._add_default_domain_prefix_if_necessary()
         self._dns_process_print(f"Resolving name '{self._name_to_resolve}'")
         for _ in range(self._retry_count):
             self.socket.send(self._build_dns_query(self._name_to_resolve))

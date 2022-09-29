@@ -10,6 +10,7 @@ import scapy
 from address.ip_address import IPAddress
 from computing.internals.filesystem.file import File
 from computing.internals.processes.abstracts.process import Process, T_ProcessCode, WaitingFor
+from computing.internals.processes.usermode_processes.dns_process.dns_client_process import DNSClientProcess
 from computing.internals.processes.usermode_processes.dns_process.zone import Zone, ZoneRecord
 from consts import PORTS, T_Port, OPCODES
 from exceptions import DNSRouteNotFound, WrongUsageError, NoSuchFileError
@@ -145,10 +146,11 @@ class DNSServerProcess(Process):
         """
         Start a process of a `DNSClientProcess` that will try another iteration of resolving the supplied name
         """
-        pid = self.computer.resolve_name(
+        pid = self.computer.process_scheduler.start_usermode_process(
+            DNSClientProcess,
+            dns_server if dns_server is not None else self.computer.dns_server,
             name,
-            dns_server=dns_server,
-            output_to_file=True,
+            output_result_to_path=default_tmp_query_output_file_path(name),
         )
         self._active_queries[name].active_query_process_id = pid
 

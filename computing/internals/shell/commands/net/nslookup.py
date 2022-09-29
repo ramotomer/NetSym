@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from computing.internals.processes.usermode_processes.dns_process.dns_client_process import DNSClientProcess
 from computing.internals.shell.commands.command import Command, CommandOutput
 from consts import PROTOCOLS
-from packets.usefuls.dns import is_domain_hostname_valid, canonize_domain_hostname
+from packets.usefuls.dns import is_domain_hostname_valid
 
 if TYPE_CHECKING:
     from computing.internals.shell.shell import Shell
@@ -43,11 +43,6 @@ class Nslookup(Command):
 
         if self.computer.dns_server is None:
             return CommandOutput('', '\nERROR: No DNS server configured!')
-
-        if '.' not in hostname:
-            if self.computer.domain is None:
-                return CommandOutput('', '\nERROR: What domain did you mean? No default domain configured :(')
-            hostname = canonize_domain_hostname(hostname, self.computer.domain)
 
         self.computer.process_scheduler.start_usermode_process(
             DNSClientProcess,

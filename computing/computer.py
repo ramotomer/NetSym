@@ -37,7 +37,7 @@ from exceptions import *
 from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.all import ICMP, IP, TCP, UDP, ARP
-from packets.usefuls.dns import T_Hostname, default_tmp_query_output_file_path
+from packets.usefuls.dns import T_Hostname
 from packets.usefuls.usefuls import get_src_port, get_dst_port
 from usefuls.funcs import get_the_one
 
@@ -291,56 +291,6 @@ class Computer:
             # PopupError(message, user_interface)  # Impossible - you need the UserInterface object
             print(message)
 
-    def power(self) -> None:
-        """
-        Powers the computer on or off.
-        """
-        self.is_powered_on = not self.is_powered_on
-
-        for interface in self.all_interfaces:
-            interface.is_powered_on = self.is_powered_on
-            # TODO: add UP and DOWN for interfaces.
-
-        if self.is_powered_on:
-            self.on_startup()
-        else:
-            self.on_shutdown()
-
-    def on_shutdown(self) -> None:
-        """
-        Things the computer should perform as it is shut down.
-        :return:
-        """
-        self.boot_time = None
-        self.process_scheduler.on_shutdown()
-        self.filesystem.wipe_temporary_directories()
-        self._remove_all_sockets()
-        self._close_all_shells()
-
-    def on_startup(self) -> None:
-        """
-        Things the computer should do when it is turned on
-        :return:
-        """
-        self.boot_time = MainLoop.instance.time()
-        self.process_scheduler.run_startup_processes()
-
-    def _cleanup_unused_sockets(self) -> None:
-        """
-        Remove sockets that have no process that is using them
-        """
-        for socket, socket_metadata in list(self.sockets.items()):
-            if not self.process_scheduler.is_usermode_process_running(socket_metadata.pid):
-                self.remove_socket(socket)
-
-    def garbage_cleanup(self) -> None:
-        """
-        This method runs continuously and removes unused resources on the computer (sockets, processes, etc...)
-        """
-        self._cleanup_unused_sockets()
-        self.arp_cache.forget_old_items()
-        self.dns_cache.forget_old_items()
-
     def get_mac(self) -> MACAddress:
         """Returns one of the computer's `MACAddresses`"""
         if not self.macs:
@@ -397,7 +347,51 @@ class Computer:
         """
         return list(filter(lambda rp: rp.packets[rp.packet].time > time_, self.received))
 
-    # --------------------------------------- v  Interface and Connection related methods  v ------------------------------------------------
+    # --------------------------------------- v  Computer power  v ------------------------------------------------
+
+    def power(self) -> None:
+        """
+        Powers the computer on or off.
+        """
+        self.is_powered_on = not self.is_powered_on
+
+        for interface in self.all_interfaces:
+            interface.is_powered_on = self.is_powered_on
+            # TODO: add UP and DOWN for interfaces.
+
+        if self.is_powered_on:
+            self.on_startup()
+        else:
+            self.on_shutdown()
+
+    def on_shutdown(self) -> None:
+        """
+        Things the computer should perform as it is shut down.
+        :return:
+        """
+        self.boot_time = None
+        self.process_scheduler.on_shutdown()
+        self.filesystem.wipe_temporary_directories()
+        self._remove_all_sockets()
+        self._close_all_shells()
+
+    def on_startup(self) -> None:
+        """
+        Things the computer should do when it is turned on
+        :return:
+        """
+        self.boot_time = MainLoop.instance.time()
+        self.process_scheduler.run_startup_processes()
+
+    def garbage_cleanup(self) -> None:
+        """
+        This method runs continuously and removes unused resources on the computer (sockets, processes, etc...)
+        """
+        self._cleanup_unused_sockets()
+        self.arp_cache.forget_old_items()
+        self.dns_cache.forget_old_items()
+
+    # --------------------------------------- v  Interface and Connections  v ------------------------------------------------
 
     def add_interface(self,
                       name: Optional[str] = None,
@@ -487,7 +481,7 @@ class Computer:
             NoSuchInterfaceError
         )
 
-    # --------------------------------------- v  IP and routing related methods  v -----------------------------------------------------------
+    # --------------------------------------- v  IP and routing  v -----------------------------------------------------------
 
     def has_ip(self) -> bool:
         """Returns whether or not this computer has an IP address at all (on any of its interfaces)"""
@@ -595,7 +589,7 @@ class Computer:
         self.routing_table.delete_interface(interface)
         interface.ip = None
 
-    # --------------------------------------- v  Specific protocol handling v -------------------------------------------
+    # --------------------------------------- v  Specific protocol handling  v -------------------------------------------
 
     def _handle_arp(self, returned_packet: ReturnedPacket) -> None:
         """
@@ -691,7 +685,7 @@ class Computer:
         """
         self.process_scheduler.start_usermode_process(SendPing, ip_address, opcode, count)
 
-    # --------------------------------------- v  DHCP and DNS related method!  v -----------------------------------------------------------
+    # --------------------------------------- v  DHCP and DNS  v -----------------------------------------------------------
 
     def ask_dhcp(self) -> None:
         """
@@ -716,16 +710,12 @@ class Computer:
         """
         self.process_scheduler.get_usermode_process_by_type(DHCPServer).domain = domain
 
-    def resolve_name(self, name: T_Hostname, dns_server: Optional[IPAddress] = None, output_to_file: bool = False) -> int:
+    def resolve_domain_name(self, name: T_Hostname, dns_server: Optional[IPAddress] = None) -> Generator[T_WaitingFor, Any, IPAddress]:
         """
-        Start a DNS process to resolve a domain hostname
+
         """
-        return self.process_scheduler.start_usermode_process(
-            DNSClientProcess,
-            dns_server if dns_server is not None else self.dns_server,
-            name,
-            output_result_to_path=default_tmp_query_output_file_path(name) if output_to_file else None,
-        )
+        yield from DNSClientProcess(0, self, (dns_server if dns_server is not None else self.dns_server), name).code()
+        return self.dns_cache[name].ip_address
 
     def add_dns_entry(self, user_inserted_dns_entry_format: str) -> None:
         """
@@ -742,7 +732,7 @@ class Computer:
         """
         self.process_scheduler.get_usermode_process_by_type(DNSServerProcess).add_or_remove_zone(zone_name)
 
-    # -------------------------v Packet sending and wrapping related methods v ---------------------------------------------
+    # ------------------------- v  Packet sending and wrapping  v ---------------------------------------------
 
     def send(self, packet: Packet, interface: Optional[Interface] = None, sending_socket: Optional[RawSocket] = None):
         """
@@ -907,10 +897,10 @@ class Computer:
         """
         return not any(interface.has_this_ip(ip_address) for interface in self.interfaces)
 
-    def resolve_ip_address_blocking(self,
-                                    ip_address: IPAddress,
-                                    requesting_process: Process,
-                                    kill_process_if_not_found: bool = True) -> Generator[T_WaitingFor, Any, Tuple[IPAddress, MACAddress]]:
+    def resolve_ip_address(self,
+                           ip_address: IPAddress,
+                           requesting_process: Process,
+                           kill_process_if_not_found: bool = True) -> Generator[T_WaitingFor, Any, Tuple[IPAddress, MACAddress]]:
         """
         Receives an `IPAddress` and sends ARPs to it until it finds it or it did not answer for a long time.
         This function actually starts a process that does that.
@@ -925,7 +915,7 @@ class Computer:
         yield from ARPProcess(0, self, ip_for_the_mac, kill_process).code()
         return ip_for_the_mac, self.arp_cache[ip_for_the_mac].mac
 
-    # ------------------------------- v Sockets v ----------------------------------------------------------------------
+    # ------------------------------- v  Sockets  v ----------------------------------------------------------------------
 
     def get_socket(self,
                    requesting_process_pid: int,
@@ -1140,6 +1130,14 @@ class Computer:
                "TCP" in packet and \
                self._does_packet_match_socket_fourtuple(socket, packet)
 
+    def _cleanup_unused_sockets(self) -> None:
+        """
+        Remove sockets that have no process that is using them
+        """
+        for socket, socket_metadata in list(self.sockets.items()):
+            if not self.process_scheduler.is_usermode_process_running(socket_metadata.pid):
+                self.remove_socket(socket)
+
     @staticmethod
     def select(socket_list: List[Socket], timeout: Optional[Union[int, float]] = None) -> T_ProcessCode:
         """
@@ -1163,7 +1161,7 @@ class Computer:
                 return None
             yield WaitingFor.nothing()
 
-    # ------------------------------- v The main `logic` method of the computer's main loop v --------------------------
+    # ------------------------------- v  The main `logic` method of the computer's main loop  v --------------------------
 
     def logic(self) -> None:
         """
@@ -1198,7 +1196,7 @@ class Computer:
         """a simple string representation of the computer"""
         return f"{self.name}"
 
-    # ----------------------------------------- v  File Saving methods  v ----------------------------------------
+    # ----------------------------------------- v  File Saving  v ----------------------------------------
 
     @classmethod
     def _interfaces_from_dict(cls, dict_):

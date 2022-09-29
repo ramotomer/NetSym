@@ -100,7 +100,7 @@ class RoutePacket(Process):
         assert dst_ip is not None, "error!"
 
         if not time_exceeded:
-            ip_for_the_mac, dst_mac = yield from self.computer.resolve_ip_address_blocking(dst_ip, self, False)
+            ip_for_the_mac, dst_mac = yield from self.computer.resolve_ip_address(dst_ip, self, False)
 
             if ip_for_the_mac not in self.computer.arp_cache:          # if no one answered the arp
                 self._send_icmp_unreachable()

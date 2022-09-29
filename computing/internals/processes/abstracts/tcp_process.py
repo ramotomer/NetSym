@@ -249,7 +249,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         the initial handshake on the client side. sends syn, waits for syn ack, sends ack.
         :return:
         """
-        ip_for_the_mac, self.dst_mac = yield from self.computer.resolve_ip_address_blocking(self.dst_ip, self)
+        ip_for_the_mac, self.dst_mac = yield from self.computer.resolve_ip_address(self.dst_ip, self)
 
         self.sending_window.add_waiting(self._create_packet(OPCODES.TCP.SYN))
 
@@ -273,7 +273,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         syn, = tcp_syn_list
         self._update_from_handshake_packet(syn)
 
-        ip_for_the_mac, self.dst_mac = yield from self.computer.resolve_ip_address_blocking(self.dst_ip, self)
+        ip_for_the_mac, self.dst_mac = yield from self.computer.resolve_ip_address(self.dst_ip, self)
 
         self._send_ack_for(syn, OPCODES.TCP.SYN)  # sends SYN ACK
         while not self.sending_window.nothing_to_send():  # while the syn ack was not ACKed
