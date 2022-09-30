@@ -304,7 +304,7 @@ class ProcessScheduler:
         Receives a type of a `Process` subclass and returns the process object of the `Process` that is currently
         running in the computer.
         If no such process is running in the computer, raise NoSuchProcessError
-        :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
+        :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClientProcess`)
         :param mode: the mode of the process (one of COMPUTER.PROCESS.MODES.ALL_MODES)
         :param raises: whether or not to raise an exception if no such process exists
         :return: `WaitingProcess` namedtuple
@@ -424,7 +424,7 @@ class ProcessScheduler:
         """
         Receives a type of a `Process` subclass and returns whether or not there is a process of that type that
         is running.
-        :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
+        :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClientProcess`)
         :param mode: one of COMPUTER.PROCESSES.MODES.ALL_MODES
         :return: `bool`
         """
@@ -447,7 +447,7 @@ class ProcessScheduler:
         """
         Receives a type of a `Process` subclass and returns whether or not there is a process of that type that
         is running.
-        :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClient`)
+        :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClientProcess`)
         """
         return self.is_process_running_by_type(process_type, COMPUTER.PROCESSES.MODES.USERMODE)
 
@@ -502,7 +502,7 @@ class ProcessScheduler:
         """
         Takes in a process type and kills all of the waiting processes of that type in this `Computer`.
         They are killed by a signal, unless specified specifically with the `force` param
-        :param process_type: a `Process` subclass type (for example `SendPing` or `DHCPClient`)
+        :param process_type: a `Process` subclass type (for example `SendPing` or `DHCPClientProcess`)
         :param force:
         :return: None
         """

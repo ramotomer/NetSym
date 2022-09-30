@@ -17,13 +17,13 @@ from computing.internals.interface import Interface
 from computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket, WaitingFor, T_WaitingFor
 from computing.internals.processes.kernelmode_processes.arp_process import ARPProcess, SendPacketWithARPProcess
 from computing.internals.processes.process_scheduler import ProcessScheduler
-from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEServerProcess
-from computing.internals.processes.usermode_processes.dhcp_process import DHCPClient
-from computing.internals.processes.usermode_processes.dhcp_process import DHCPServer
+from computing.internals.processes.usermode_processes.daytime_process.daytime_server_process import DAYTIMEServerProcess
+from computing.internals.processes.usermode_processes.dhcp_process.dhcp_client_process import DHCPClientProcess
+from computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
 from computing.internals.processes.usermode_processes.dns_process.dns_client_process import DNSClientProcess
 from computing.internals.processes.usermode_processes.dns_process.dns_server_process import DNSServerProcess
-from computing.internals.processes.usermode_processes.echo_server_process import EchoServerProcess
-from computing.internals.processes.usermode_processes.ftp_process import ServerFTPProcess
+from computing.internals.processes.usermode_processes.echo_server_process.echo_server_process import EchoServerProcess
+from computing.internals.processes.usermode_processes.ftp_process.ftp_server_process import ServerFTPProcess
 from computing.internals.processes.usermode_processes.ping_process import SendPing
 from computing.internals.processes.usermode_processes.sniffing_process import SniffingProcess
 from computing.internals.routing_table import RoutingTable, RoutingTableItem
@@ -82,7 +82,7 @@ class Computer:
             # TODO: add more processes!
         },
         "UDP": {
-            PORTS.DHCP_SERVER: DHCPServer,
+            PORTS.DHCP_SERVER: DHCPServerProcess,
             # TODO:  BUG: this port will not really be open because DHCP uses raw sockets - this means no tiny image, and cannot open manually
             #  or save to files :( bad
             PORTS.ECHO_SERVER: EchoServerProcess,
@@ -573,8 +573,8 @@ class Computer:
         self.remove_ip(interface)
         interface.ip = IPAddress(string_ip)
 
-        if self.process_scheduler.is_usermode_process_running_by_type(DHCPServer):
-            dhcp_server_process = self.process_scheduler.get_usermode_process_by_type(DHCPServer)
+        if self.process_scheduler.is_usermode_process_running_by_type(DHCPServerProcess):
+            dhcp_server_process = self.process_scheduler.get_usermode_process_by_type(DHCPServerProcess)
             dhcp_server_process.update_server_data()
 
         self.routing_table.add_interface(interface.ip)
@@ -690,26 +690,26 @@ class Computer:
 
     def ask_dhcp(self) -> None:
         """
-        Start a `DHCPClient` process to receive an IP address!
+        Start a `DHCPClientProcess` process to receive an IP address!
         One can read more at the 'dhcp_process.py' file.
         :return: None
         """
-        self.process_scheduler.kill_all_usermode_processes_by_type(DHCPClient)  # if currently asking for dhcp, stop it
-        self.process_scheduler.start_usermode_process(DHCPClient)
+        self.process_scheduler.kill_all_usermode_processes_by_type(DHCPClientProcess)  # if currently asking for dhcp, stop it
+        self.process_scheduler.start_usermode_process(DHCPClientProcess)
 
     def set_dns_server_for_dhcp_server(self, dns_server: IPAddress) -> None:
         """
         Assumes that the computer is a DHCP server
-        Sets the address of the DNS server that the DHCPServer give new clients
+        Sets the address of the DNS server that the DHCPServerProcess give new clients
         """
-        self.process_scheduler.get_usermode_process_by_type(DHCPServer).dns_server = dns_server
+        self.process_scheduler.get_usermode_process_by_type(DHCPServerProcess).dns_server = dns_server
 
     def set_domain_for_dhcp_server(self, domain: T_Hostname) -> None:
         """
         Assumes that the computer is a DHCP server
-        Sets the default name of the domain that the DHCPServer give new clients
+        Sets the default name of the domain that the DHCPServerProcess give new clients
         """
-        self.process_scheduler.get_usermode_process_by_type(DHCPServer).domain = domain
+        self.process_scheduler.get_usermode_process_by_type(DHCPServerProcess).domain = domain
 
     def resolve_domain_name(self,
                             requesting_process: Process,
@@ -989,7 +989,7 @@ class Computer:
         """
         Allows programs on the computer to acquire a raw network socket.
         """
-        returned = self.get_socket(requesting_process_pid)
+        returned = self.get_socket(requesting_process_pid, kind=COMPUTER.SOCKETS.TYPES.SOCK_RAW)
         if isinstance(returned, RawSocket):
             return returned
 

@@ -2,7 +2,7 @@ from computing.computer import Computer
 from computing.internals.filesystem.filesystem import Filesystem
 from computing.internals.interface import Interface
 from computing.internals.processes.kernelmode_processes.route_packet_process import RoutePacket
-from computing.internals.processes.usermode_processes.dhcp_process import DHCPServer
+from computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
 from computing.internals.routing_table import RoutingTable
 from consts import *
 from gui.main_loop import MainLoop
@@ -63,9 +63,9 @@ class Router(Computer):
 
         self.route_new_packets()
 
-        if self.is_dhcp_server and not self.process_scheduler.is_usermode_process_running_by_type(DHCPServer):
+        if self.is_dhcp_server and not self.process_scheduler.is_usermode_process_running_by_type(DHCPServerProcess):
             self.print("Started serving DHCP...")
-            self.process_scheduler.start_usermode_process(DHCPServer, self)
+            self.process_scheduler.start_usermode_process(DHCPServerProcess, self)
 
     def __repr__(self):
         """The string representation of the Router"""

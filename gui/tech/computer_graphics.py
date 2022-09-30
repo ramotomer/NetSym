@@ -6,11 +6,11 @@ from typing import TYPE_CHECKING, Optional, Dict, Callable
 from recordclass import recordclass
 
 from address.ip_address import IPAddress
-from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEClientProcess
+from computing.internals.processes.usermode_processes.daytime_process.daytime_client_process import DAYTIMEClientProcess
 from computing.internals.processes.usermode_processes.ddos_process import DDOSProcess
-from computing.internals.processes.usermode_processes.dhcp_process import DHCPServer
+from computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
 from computing.internals.processes.usermode_processes.dns_process.dns_server_process import DNSServerProcess
-from computing.internals.processes.usermode_processes.ftp_process import ClientFTPProcess
+from computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
@@ -142,7 +142,7 @@ class ComputerGraphics(ImageGraphics):
                     self.computer.add_remove_dns_zone,
                 ),
             },
-            DHCPServer: {
+            DHCPServerProcess: {
                 "set DNS server (alt+d)": with_args(
                     user_interface.ask_user_for,
                     IPAddress,
@@ -330,7 +330,7 @@ class ComputerGraphics(ImageGraphics):
         }
 
         if self.class_name == "Router":
-            dict_["is_dhcp_server"] = self.computer.process_scheduler.is_usermode_process_running(DHCPServer)
+            dict_["is_dhcp_server"] = self.computer.process_scheduler.is_usermode_process_running(DHCPServerProcess)
 
         return dict_
 

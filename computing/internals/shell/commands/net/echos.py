@@ -1,4 +1,4 @@
-from computing.internals.processes.usermode_processes.echo_server_process import EchoServerProcess
+from computing.internals.processes.usermode_processes.echo_server_process.echo_server_process import EchoServerProcess
 from computing.internals.shell.commands.command import Command, CommandOutput
 
 

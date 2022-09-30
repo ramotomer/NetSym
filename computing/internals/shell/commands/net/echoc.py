@@ -1,4 +1,4 @@
-from computing.internals.processes.usermode_processes.echo_server_process import EchoClientProcess
+from computing.internals.processes.usermode_processes.echo_server_process.echo_client_process import EchoClientProcess
 from computing.internals.shell.commands.command import Command, CommandOutput
 from consts import PORTS, PROTOCOLS
 

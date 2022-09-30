@@ -11,3 +11,7 @@ if __name__ == '__main__':
     main_loop = MainLoop(main_window)
     pyglet.clock.schedule_interval(main_window.update, WINDOWS.MAIN.FRAME_RATE)
     pyglet.app.run()
+
+# TODO: deleting an interface using the DELETE button does not work
+# TODO: viewing a wireless packet does not work :(
+# TODO: there is no good way to set the default domain and dns server (of computers that did not get address from DHCP)
