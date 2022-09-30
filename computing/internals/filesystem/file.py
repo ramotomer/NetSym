@@ -130,12 +130,12 @@ class PipingFile(File):
     """
     __instance = None
 
-    def __init__(self, content=''):
+    def __init__(self, content: str = '') -> None:
         super(PipingFile, self).__init__('PipingFile', content)
         self.__class__.__instance = self
 
     @classmethod
-    def instance(cls):
+    def instance(cls) -> PipingFile:
         if cls.__instance is None:
             cls.__instance = cls()
         return cls.__instance

@@ -20,7 +20,7 @@ class ReturnedPacket:
     The proper way to get received packets back from the running computer.
     `self.packets` is a dictionary with `Packet` keys and the values are `PacketMetadata` objects
     """
-    def __init__(self, packet: Optional[Packet] = None, metadata: Optional[PacketMetadata] = None):
+    def __init__(self, packet: Optional[Packet] = None, metadata: Optional[PacketMetadata] = None) -> None:
         self.packets = {}
         self.packet_iterator = None
 
@@ -203,7 +203,7 @@ class Process(metaclass=ABCMeta):
         yield WaitingForPacket(lambda p: False, NoNeedForPacket())
         yield WaitingForPacketWithTimeout(lambda p: False, NoNeedForPacket(), Timeout(10))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """The string representation of the Process"""
         return "Unnamed Process"
 

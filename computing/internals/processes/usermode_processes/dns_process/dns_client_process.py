@@ -51,7 +51,7 @@ class DNSClientProcess(Process):
     def _should_store_result_in_file(self) -> bool:
         return self._output_file is not None
 
-    def _dns_format_print(self, message):
+    def _dns_format_print(self, message: str) -> None:
         """
         Print to computer console with a DNS prefix
         """

@@ -6,7 +6,7 @@ from collections import deque
 from dataclasses import dataclass
 from functools import reduce
 from operator import attrgetter, concat
-from typing import Optional, Callable, List, Union, TYPE_CHECKING
+from typing import Optional, Callable, List, Union, TYPE_CHECKING, Iterable
 
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import Process, WaitingForPacketWithTimeout, Timeout, \
@@ -36,7 +36,7 @@ class SackEdges:
     left:  int
     right: int
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[int]:
         return iter((
             self.left,
             self.right,

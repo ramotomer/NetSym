@@ -1,6 +1,15 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Callable, Optional
+
 from computing.internals.processes.abstracts.process import Process, ReturnedPacket
-from consts import COMPUTER, INTERFACES
+from consts import INTERFACES
 from exceptions import SocketIsClosedError
+
+if TYPE_CHECKING:
+    from packets.packet import Packet
+    from computing.internals.interface import Interface
+    from computing.computer import Computer
 
 
 class SniffingProcess(Process):
@@ -8,10 +17,14 @@ class SniffingProcess(Process):
     This is a process object. The process it represents is one that sniffs packets and prints the results to the screen.
 
     """
-    def __init__(self, pid, computer, filter, interface=INTERFACES.ANY_INTERFACE, promisc=False):
+    def __init__(self,
+                 pid: int,
+                 computer: Computer,
+                 filter: Callable[[Packet], bool],
+                 interface: Optional[Interface] = INTERFACES.ANY_INTERFACE, promisc=False):
         super(SniffingProcess, self).__init__(pid, computer)
 
-        self.socket = self.computer.get_socket(self.pid, kind=COMPUTER.SOCKETS.TYPES.SOCK_RAW)
+        self.socket = self.computer.get_raw_socket(self.pid)
         self.socket.bind(filter, interface, promisc)
 
         self.packet_count = 0

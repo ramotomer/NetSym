@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, TYPE_CHECKING
+from typing import List, Optional, Tuple, TYPE_CHECKING, Iterable
 
 from consts import OPCODES
 from exceptions import FilesystemError
@@ -68,15 +68,15 @@ class Zone:
     admin_mail_address:               Optional[T_Hostname] = None
 
     @property
-    def host_or_alias_records(self):
+    def host_or_alias_records(self) -> List[ZoneRecord]:
         return [r for r in self.records if r.record_type in [OPCODES.DNS.TYPES.HOST_ADDRESS,
                                                              OPCODES.DNS.TYPES.CANONICAL_NAME_FOR_AN_ALIAS]]
 
     @property
-    def name_server_records(self):
+    def name_server_records(self) -> List[ZoneRecord]:
         return [r for r in self.records if r.record_type == OPCODES.DNS.TYPES.AUTHORITATIVE_NAME_SERVER]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[ZoneRecord]:
         return iter(self.records)
 
     @classmethod

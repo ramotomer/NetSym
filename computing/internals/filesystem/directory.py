@@ -1,4 +1,6 @@
-from typing import Optional
+from __future__ import annotations
+
+from typing import Optional, Union, Dict
 
 from computing.internals.filesystem.file import File, PipingFile
 from consts import FILESYSTEM
@@ -10,7 +12,12 @@ class Directory:
     """
     A directory on the computers of the simulation.
     """
-    def __init__(self, name, parent, mount=FILESYSTEM.TYPE.EXT4, files=None, directories=None):
+    def __init__(self,
+                 name: str,
+                 parent: Optional[Directory],
+                 mount: str = FILESYSTEM.TYPE.EXT4,
+                 files: Optional[Dict[str, File]] = None,
+                 directories: Optional[Dict[str, Directory]] = None) -> None:
         """
         Initiated with a list of directories and files that are contained in it.
 
@@ -26,23 +33,23 @@ class Directory:
         self.directories[FILESYSTEM.PARENT_DIRECTORY] = parent if parent is not None else self
 
     @property
-    def items(self):
+    def items(self) -> Dict[str, T_ContainedItem]:
         return {**self.directories, **self.files}
 
     @property
-    def contained_directories(self):
+    def contained_directories(self) -> Dict[str, Directory]:
         return {name: directory for name, directory in self.directories.items()
                 if name not in {FILESYSTEM.CWD, FILESYSTEM.PARENT_DIRECTORY}}
 
     @property
-    def parent(self):
+    def parent(self) -> Directory:
         return self.directories[FILESYSTEM.PARENT_DIRECTORY]
 
     @parent.setter
-    def parent(self, dir_):
+    def parent(self, dir_: Directory) -> None:
         self.directories[FILESYSTEM.PARENT_DIRECTORY] = dir_
 
-    def at_relative_path(self, path):
+    def at_relative_path(self, path: str) -> T_ContainedItem:
         """
         Returns a file or directory in the relative path given.
         :param path:
@@ -68,7 +75,7 @@ class Directory:
         except KeyError:
             raise NoSuchFileError(f"File or Directory '{item_name}' do not exist in {cwd.name}")
 
-    def make_sub_dir(self, name, mount=FILESYSTEM.TYPE.EXT4):
+    def make_sub_dir(self, name: str, mount: str = FILESYSTEM.TYPE.EXT4) -> None:
         """
         Creates a new directory under this one.
         :param name:
@@ -80,7 +87,7 @@ class Directory:
 
         self.directories[name] = Directory(name=name, parent=self, mount=mount)
 
-    def make_empty_file(self, name, raise_on_exists=True) -> Optional[File]:
+    def make_empty_file(self, name: str, raise_on_exists: bool = True) -> Optional[File]:
         """
         Create an empty file
         """
@@ -99,7 +106,7 @@ class Directory:
             return self.parent.name + self.name
         return f"{self.parent.full_path}{FILESYSTEM.SEPARATOR}{self.name}"
 
-    def wipe(self):
+    def wipe(self) -> None:
         """
         Deletes everything from the directory
         :return:
@@ -110,7 +117,7 @@ class Directory:
             FILESYSTEM.PARENT_DIRECTORY: self.directories[FILESYSTEM.PARENT_DIRECTORY],
         }
 
-    def add_item(self, item):
+    def add_item(self, item: T_ContainedItem) -> None:
         """
         Adds an item to the directory (could be a file or a directory)
         :param item:
@@ -123,7 +130,7 @@ class Directory:
         else:
             raise WrongUsageError("Only use with files or directories!")
 
-    def pop_item(self, item_name):
+    def pop_item(self, item_name: str) -> T_ContainedItem:
         """
         Removes an item from the directory. (could be File or Directory)
         :param item_name:
@@ -176,5 +183,8 @@ class Directory:
 
         return loaded
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Directory({self.name})"
+
+
+T_ContainedItem = Union[Directory, File]

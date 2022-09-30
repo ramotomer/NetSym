@@ -58,11 +58,11 @@ class DNSServerProcess(Process):
             return []
 
     @property
-    def _zone_file_paths(self):
+    def _zone_file_paths(self) -> List[str]:
         return [self._zone_file_path_by_domain_name(domain_name) for domain_name in self.domain_names]
 
     @property
-    def _zone_files(self):
+    def _zone_files(self) -> List[File]:
         return [self.computer.filesystem.at_absolute_path(path) for path in self._zone_file_paths]
 
     @staticmethod
@@ -267,7 +267,7 @@ class DNSServerProcess(Process):
         """
         return DNS(query_bytes)
 
-    def _init_socket(self):
+    def _init_socket(self) -> None:
         self.socket = self.computer.get_udp_socket(self.pid)
         self.socket.bind((IPAddress.no_address(), PORTS.DNS))
 
@@ -282,7 +282,7 @@ class DNSServerProcess(Process):
             if len(f.read()) == 0:
                 f.write(Zone.with_default_values(domain_name, self.computer).to_file_format())
 
-    def _init_tmp_query_result_files(self):
+    def _init_tmp_query_result_files(self) -> None:
         """
         And create the tmp directory in which DNS query results will be saved from other `DNSClientProcess`-s
         """

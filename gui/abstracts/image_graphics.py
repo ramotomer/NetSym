@@ -203,7 +203,7 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         """
         self.mark_as_selected_non_resizable()
 
-        directions = set(product(range(-1, 2), repeat=2)) - {(0, 0)}
+        directions = set(product((-1, 0, 1), repeat=2)) - {(0, 0)}
         for direction in directions:
             self.show_resizing_dot(direction, constrain_proportions=(0 not in direction))
 

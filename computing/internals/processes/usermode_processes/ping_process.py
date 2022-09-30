@@ -48,7 +48,7 @@ class SendPing(Process):
         """
         Returns a function that tests if the packet given to it is a ping reply for the `ip_address`
         """
-        def tester(packet):
+        def tester(packet: Packet) -> bool:
             if "ICMP" in packet:
                 if packet["ICMP"].type == OPCODES.ICMP.TYPES.REPLY:
                     if packet["IP"].src_ip == ip_address and self.computer.has_this_ip(packet["IP"].dst_ip):

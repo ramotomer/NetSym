@@ -1,6 +1,13 @@
-from abc import ABCMeta
+from __future__ import annotations
 
-from computing.internals.processes.abstracts.process import Process
+from abc import ABCMeta
+from typing import Type, TYPE_CHECKING
+
+from computing.internals.processes.abstracts.process import Process, T_ProcessCode
+from consts import T_Port
+
+if TYPE_CHECKING:
+    from computing.computer import Computer
 
 
 class TCPServerProcess(Process, metaclass=ABCMeta):
@@ -8,14 +15,18 @@ class TCPServerProcess(Process, metaclass=ABCMeta):
     A process that waits for TCP connections.
     For each connection it starts a child process with the connection's `Socket` object
     """
-    def __init__(self, pid, computer, src_port, connection_process_type):
+    def __init__(self,
+                 pid: int,
+                 computer: Computer,
+                 src_port: T_Port,
+                 connection_process_type: Type[Process]) -> None:
         super(TCPServerProcess, self).__init__(pid, computer)
         self.src_port = src_port
         self.connection_process_type = connection_process_type
         self.socket = None
         self.set_killing_signals_handler(self.handle_killing_signals)
 
-    def handle_killing_signals(self, signum):
+    def handle_killing_signals(self, signum: int) -> None:
         """
         Close the socket and die.
         :param signum:
@@ -25,10 +36,11 @@ class TCPServerProcess(Process, metaclass=ABCMeta):
             self.socket.close()
         self.die()
 
-    def code(self):
-        self.socket = self.computer.get_socket(self.pid)
+    def code(self) -> T_ProcessCode:
+        self.socket = self.computer.get_tcp_socket(self.pid)
         self.socket.bind((None, self.src_port))
         self.socket.listen()
+
         while True:
             server_socket = yield from self.socket.blocking_accept(self.pid)
             self.computer.process_scheduler.start_usermode_process(self.connection_process_type, self.socket)

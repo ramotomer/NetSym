@@ -1,12 +1,16 @@
 from __future__ import annotations
 
-from typing import NamedTuple
+from typing import NamedTuple, TYPE_CHECKING, List
 
 from computing.internals.interface import Interface
-from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket
+from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket, T_ProcessCode
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
+
+if TYPE_CHECKING:
+    from packets.packet import Packet
+    from computing.switch import Switch
 
 
 class SwitchTableItem(NamedTuple):
@@ -18,7 +22,7 @@ class SwitchingProcess(Process):
     """
     This is the process that is in charge of switching packets on a computer.
     """
-    def __init__(self, pid, switch):
+    def __init__(self, pid: int, switch: Switch) -> None:
         """
         Initiates the process with a computer that runs it.
         """
@@ -26,12 +30,10 @@ class SwitchingProcess(Process):
         self.switching_table = {}
         # ^ a dictionary mapping mac addresses to the corresponding leg (interface) they sit behind.
 
-    def update_switch_table_from_packets(self, packets):
+    def update_switch_table_from_packets(self, packets: ReturnedPacket) -> None:
         """
         Updates the switch table by looking at the packets that were received since
         the last time this function was called.|
-        :param packets: a list of `ReceivedPackets` which are tuples (packet,time,leg)
-        :return: None
         """
         for packet, packet_metadata in packets:
             try:
@@ -40,7 +42,7 @@ class SwitchingProcess(Process):
                 raise UnknownPacketTypeError("The packet contains no Ethernet layer!!!")
             self.switching_table[src_mac] = SwitchTableItem(leg=packet_metadata.interface, time=MainLoop.instance.time())
 
-    def delete_old_switch_table_items(self):
+    def delete_old_switch_table_items(self) -> None:
         """
         Deletes the old items in the switch table. deletes from the switch table any item that was not updated in the
         last `SWITCH_TABLE_ITEM_LIFETIME` seconds.
@@ -50,7 +52,7 @@ class SwitchingProcess(Process):
             if MainLoop.instance.time_since(switch_table_item.time) > COMPUTER.SWITCH_TABLE.ITEM_LIFETIME:
                 del self.switching_table[src_mac]
 
-    def send_new_packets_to_destinations(self, packets):
+    def send_new_packets_to_destinations(self, packets: ReturnedPacket) -> None:
         """
         Checks all of the packets that were received since the last time this
         function was called and sends them down the correct leg.
@@ -67,7 +69,7 @@ class SwitchingProcess(Process):
                 packet.graphics = None
                 leg.send(packet.copy())
 
-    def where_to_send(self, packet, source_leg):
+    def where_to_send(self, packet: Packet, source_leg: Interface) -> List[Interface]:
         """
         Returns a list of legs that the packet needs to be sent to.
         Here it is decided whether to flood the packet or not.
@@ -84,14 +86,14 @@ class SwitchingProcess(Process):
         # ^ making sure the packet does not return on the destination leg
 
     @staticmethod
-    def is_switchable_packet(packet):
+    def is_switchable_packet(packet: Packet) -> bool:
         """
         Receives a `Packet` object and returns whether or not it can be switched
         :return:
         """
         return "STP" not in packet
 
-    def code(self):
+    def code(self) -> T_ProcessCode:
         """
         The main code of the process
         :return: yield WaitingFor-s
@@ -105,5 +107,5 @@ class SwitchingProcess(Process):
             self.update_switch_table_from_packets(new_packets)
             self.delete_old_switch_table_items()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "[kswitch]"

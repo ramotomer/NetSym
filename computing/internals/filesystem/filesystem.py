@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import os
 from contextlib import contextmanager
-from typing import Optional, Dict, List, Union, Generator
+from typing import Optional, Dict, List, Union, Generator, Tuple
 
-from computing.internals.filesystem.directory import Directory
+from computing.internals.filesystem.directory import Directory, T_ContainedItem
 from computing.internals.filesystem.file import File, PipingFile
 from consts import FILESYSTEM, DIRECTORIES, TRANSFER_FILE
 from exceptions import PathError, NoSuchItemError, CannotBeUsedWithPiping, WrongUsageError
@@ -12,7 +14,7 @@ class Filesystem:
     """
     The filesystem of the computer.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initiates the filesystem with a root directory.
         """
@@ -21,7 +23,7 @@ class Filesystem:
     # TODO: BUG: when saving computer to file, his filesystem does not save!!!
 
     @classmethod
-    def with_default_dirs(cls):
+    def with_default_dirs(cls) -> Filesystem:
         """
         Creates it with some random directories in the root directory.
         :return:
@@ -70,7 +72,7 @@ class Filesystem:
                 returned += FILESYSTEM.SEPARATOR + name
         return returned
 
-    def at_absolute_path(self, path) -> Union[File, Directory]:
+    def at_absolute_path(self, path: str) -> Union[File, Directory]:
         """
         Receives an absolute path and returns the file or directory at that location.
         :param path:
@@ -84,7 +86,7 @@ class Filesystem:
 
         return self.root.at_relative_path(FILESYSTEM.CWD + path)
 
-    def at_path(self, cwd: Directory, path: str):
+    def at_path(self, cwd: Directory, path: str) -> T_ContainedItem:
         """
         Returns what is at a given path, it can be relative or absolute!!!
         :param cwd:
@@ -120,7 +122,7 @@ class Filesystem:
         """
         return self.exists(path, cwd) and isinstance(self.at_path(cwd, path), File)
 
-    def separate_base(self, path):
+    def separate_base(self, path: str) -> Tuple[str, str]:
         """
         Receives a path and returns a tuple of the name of the item and the name of the directory it resides in.
         for example:
@@ -138,13 +140,10 @@ class Filesystem:
             base_dir_path = self.root_path
         return base_dir_path, filename
 
-    def filename_and_dir_from_path(self, cwd, path):
+    def filename_and_dir_from_path(self, cwd: Directory, path: str) -> Tuple[T_ContainedItem, str]:
         """
         Receives the CWD and a path (absolute or relative)
         Returns a tuple, of the containing `Directory` object of the destination file, and its filename.
-        :param cwd: `Directory`
-        :param path: `str`
-        :return:
         """
         if path == FILESYSTEM.PIPING_FILE:
             raise CannotBeUsedWithPiping(
@@ -153,7 +152,7 @@ class Filesystem:
         base_dir_path, filename = self.separate_base(abs_path)
         return self.at_absolute_path(base_dir_path), filename
 
-    def make_dir(self, absolute_path, mount=FILESYSTEM.TYPE.EXT4):
+    def make_dir(self, absolute_path: str, mount: str = FILESYSTEM.TYPE.EXT4) -> None:
         """
         Creates a directory in a given path.
         :param absolute_path: absolute path to the new directory.
@@ -164,7 +163,7 @@ class Filesystem:
         parent_dir = self.at_absolute_path(parent_path)
         parent_dir.make_sub_dir(dirname, mount=mount)
 
-    def wipe_temporary_directories(self, root_dir=None):
+    def wipe_temporary_directories(self, root_dir: Optional[Directory] = None) -> None:
         """
         deletes everything that is mounted on to a temporary directory.
         :return:
@@ -176,7 +175,7 @@ class Filesystem:
                 directory.wipe()
             self.wipe_temporary_directories(root_dir=directory)
 
-    def output_to_file(self, data, path, cwd: Directory = None, append=False):
+    def output_to_file(self, data: str, path: str, cwd: Optional[Directory] = None, append: bool = False) -> None:
         """
         Create the file if it does not exist.
         Can receive both relative or absolute paths.
@@ -204,7 +203,7 @@ class Filesystem:
             else:
                 file.write(data)
 
-    def move_file(self, src_path, dst_path, cwd=None, keep_origin=False):
+    def move_file(self, src_path: str, dst_path: str, cwd: Optional[Directory] = None, keep_origin: bool = False) -> None:
         """
         Move a file. The paths can be relative if a cwd is specified.
         :param src_path:
