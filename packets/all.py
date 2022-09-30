@@ -1,9 +1,12 @@
 from scapy.layers.dhcp import BOOTP, DHCP
+from scapy.layers.dns import DNS
 from scapy.layers.inet import IP, UDP, TCP, ICMP
 from scapy.layers.l2 import Ether, ARP, LLC, STP
 
-from packets.usefuls import ScapyOptions
-from usefuls.attribute_renamer import with_parsed_attributes, define_attribute_aliases, with_automatic_address_type_casting
+from packets.usefuls.dns import dns_resource_record_to_list, dns_query_record_to_list
+from packets.usefuls.scapy_options import ScapyOptions
+from usefuls.attribute_renamer import with_parsed_attributes, define_attribute_aliases, with_automatic_address_type_casting, \
+    with_attribute_type_casting
 
 Ether = with_automatic_address_type_casting(
     define_attribute_aliases(
@@ -113,11 +116,46 @@ BOOTP = with_automatic_address_type_casting(
     )
 )
 DHCP = with_parsed_attributes(DHCP, {"options": ScapyOptions})
+DNS = with_attribute_type_casting(
+    define_attribute_aliases(
+        DNS,
+        {
+            "transaction_id":                      "id",
+
+            "is_response":                         "qr",
+            "is_server_authority_for_domain":      "aa",
+            "is_truncated":                        "tc",
+            "is_recursion_desired":                "rd",
+            "is_recursion_available":              "ra",
+            "z__reserved":                         "z",
+            "is_authenticated":                    "ad",
+            "is_authentication_checking_disabled": "cd",
+
+            "return_code":                         "rcode",
+
+            "query_count":                         "qdcount",
+            "answer_record_count":                 "ancount",
+            "authority_record_count":              "nscount",
+            "additional_record_count":             "arcount",
+
+            "queries":                             "qd",
+            "answer_records":                      "an",
+            "authority_records":                   "ns",
+            "additional_records":                  "ar",
+        }
+    ),
+    {
+        "queries":            dns_query_record_to_list,
+        "answer_records":     dns_resource_record_to_list,
+        "authority_records":  dns_resource_record_to_list,
+        "additional_records": dns_resource_record_to_list,
+    }
+)
 
 
 protocols = [
     Ether,
     ARP, IP, LLC,
     ICMP, UDP, TCP, BOOTP, STP,
-    DHCP,
+    DHCP, DNS,
 ]

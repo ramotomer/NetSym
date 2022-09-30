@@ -1,20 +1,17 @@
 from __future__ import annotations
 
-from typing import TypeVar, TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Tuple
 
 import scapy
 
 from exceptions import *
 from gui.tech.packet_graphics import PacketGraphics
 from packets.all import protocols
-from packets.usefuls import is_raw_layer
+from packets.usefuls.usefuls import is_raw_layer
 from usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
     from gui.tech.connection_graphics import ConnectionGraphics
-
-
-T = TypeVar('T', bound='Packet')
 
 
 class Packet:
@@ -49,7 +46,7 @@ class Packet:
         """
         return self.data.getlayer([layer for layer in self.data.layers() if not is_raw_layer(layer)][-1])
 
-    def copy(self: T) -> T:
+    def copy(self: Packet) -> Packet:
         """
         Return a separate identical instance of the packet object
         """

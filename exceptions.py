@@ -41,6 +41,13 @@ class AddressTooLargeError(AddressError):
     """
 
 
+class InvalidDomainHostnameError(InvalidAddressError):
+    """
+    The supplied domain hostname is invalid
+        (see the `validate_domain_hostname` function for more documentation)
+    """
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -486,4 +493,16 @@ class UnknownLayer4SocketTypeError(UnknownSocketTypeError, L4SocketError):
 class TCPSocketConnectionRefused(TCPSocketError):
     """
     Tried connecting a TCP socket but the connection was not successful
+    """
+
+
+class DNSError(PacketError):
+    """
+    Exception related to the DNS protocol
+    """
+
+
+class DNSRouteNotFound(DNSError):
+    """
+    Failed to find a good value for a supplied domain name
     """

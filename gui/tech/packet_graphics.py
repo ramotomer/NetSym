@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Optional, Dict, Callable
 
 import scapy
 
@@ -8,7 +8,7 @@ from consts import *
 from gui.abstracts.animation_graphics import AnimationGraphics
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_loop import MainLoop
-from packets.usefuls import get_original_layer_name_by_instance
+from packets.usefuls.usefuls import get_original_layer_name_by_instance
 from usefuls.funcs import with_args
 
 if TYPE_CHECKING:
@@ -98,15 +98,19 @@ class PacketGraphics(ImageGraphics):
             return PACKET.TYPE_TO_IMAGE[name][PACKET.TYPE_TO_OPCODE_FUNCTION[name](layer)]
         return PACKET.TYPE_TO_IMAGE[name]
 
-    def start_viewing(self, user_interface: UserInterface) -> Tuple[pyglet.sprite.Sprite, str, int]:
+    def start_viewing(self,
+                      user_interface: UserInterface,
+                      additional_buttons: Optional[Dict[str, Callable[[], None]]] = None) -> Tuple[pyglet.sprite.Sprite, str, int]:
         """
         Starts viewing the packet graphics object in the side-window view.
+        :param additional_buttons: more buttons!!!
         :param user_interface: the `UserInterface` object we can use the methods of it.
         :return: a tuple <display sprite>, <display text>, <new button id>
         """
         buttons = {
             "Drop (alt+d)": with_args(user_interface.drop_packet, self),
         }
+        buttons.update(additional_buttons or {})
         self.buttons_id = user_interface.add_buttons(buttons)
         return self.copy_sprite(self.sprite), '', self.buttons_id
 

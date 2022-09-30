@@ -6,7 +6,7 @@ from typing import Tuple, Optional, TYPE_CHECKING
 
 from address.ip_address import IPAddress
 from computing.internals.sockets.socket import Socket
-from consts import COMPUTER, PORTS
+from consts import COMPUTER, PORTS, T_Port
 from exceptions import *
 
 if TYPE_CHECKING:
@@ -34,11 +34,11 @@ class L4Socket(Socket, metaclass=ABCMeta):
                 f"no such l4 protocol! socket: {self}, type: {self.kind} only known types are: {COMPUTER.SOCKETS.L4_PROTOCOLS}")
 
     @property
-    def remote_address(self) -> Tuple[IPAddress, int]:
+    def remote_address(self) -> Tuple[IPAddress, T_Port]:
         return self.computer.sockets[self].remote_ip_address, self.computer.sockets[self].remote_port
 
     @property
-    def bound_address(self) -> Tuple[IPAddress, int]:
+    def bound_address(self) -> Tuple[IPAddress, T_Port]:
         return self.computer.sockets[self].local_ip_address, self.computer.sockets[self].local_port
 
     def assert_is_connected(self) -> None:
@@ -46,7 +46,7 @@ class L4Socket(Socket, metaclass=ABCMeta):
             raise SocketNotConnectedError("The socket is not connected!!!")
 
     @abstractmethod
-    def connect(self, address: Tuple[IPAddress, int]) -> None:
+    def connect(self, address: Tuple[IPAddress, T_Port]) -> None:
         """
         Connect to a listening socket with the given address
         :param address:

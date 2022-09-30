@@ -10,7 +10,7 @@ class NOPProcess(Process):
 
     def code(self):
         while True:
-            yield WaitingFor(lambda: True)
+            yield WaitingFor.nothing()
 
     def __repr__(self):
         return "nop"

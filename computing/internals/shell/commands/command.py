@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import argparse
 from abc import ABCMeta, abstractmethod
-from typing import Union, NamedTuple
+from typing import Union, NamedTuple, TYPE_CHECKING
 
 from usefuls.funcs import split_with_escaping
 from usefuls.print_stealer import PrintStealer
+
+if TYPE_CHECKING:
+    from computing.computer import Computer
+    from computing.internals.shell.shell import Shell
 
 
 class CommandOutput(NamedTuple):
@@ -25,19 +29,24 @@ class Command(metaclass=ABCMeta):
     """
     A command in the shell
     """
-    def __init__(self, name, description, computer, shell):
+    def __init__(self,
+                 name: str,
+                 description: str,
+                 computer: Computer,
+                 shell: Shell) -> None:
         """
         Initiates the command with the computer that ran it.
         :param computer: `Computer`
         """
-        self.computer = computer
-        self.name = name
-        self.shell = shell
+        self.name: str = name
+        self.description: str = description
+        self.computer: Computer = computer
+        self.shell: Shell = shell
+
         self.parser = argparse.ArgumentParser(prog=name, description=description)
-        self.description = description
 
     @abstractmethod
-    def action(self, parsed_args) -> CommandOutput:
+    def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
         The action that this command activates when called.
         """

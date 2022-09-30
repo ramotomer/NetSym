@@ -1,4 +1,3 @@
-from address.ip_address import IPAddress
 from computing.internals.processes.usermode_processes.echo_server_process import EchoClientProcess
 from computing.internals.shell.commands.command import Command, CommandOutput
 from consts import PORTS, PROTOCOLS
@@ -18,7 +17,7 @@ class Echoc(Command):
         """
         super(Echoc, self).__init__('echoc', 'send a string to an echo server', computer, shell)
 
-        self.parser.add_argument('ip', type=str, help='the echo server ip address')
+        self.parser.add_argument('destination', type=str, help='the echo server ip address or hostname')
         self.parser.add_argument('data', type=str, nargs='*', help='the data to send to the server')
 
         self.parser.add_argument('-p', type=int, dest='port', default=PORTS.ECHO_SERVER, help=f'the server UDP port (default: {PORTS.ECHO_SERVER})')
@@ -31,7 +30,7 @@ class Echoc(Command):
         """
         self.computer.process_scheduler.start_usermode_process(
             EchoClientProcess,
-            (IPAddress(parsed_args.ip), parsed_args.port),
+            (parsed_args.destination, parsed_args.port),
             ' '.join(parsed_args.data),
             parsed_args.count,
         )

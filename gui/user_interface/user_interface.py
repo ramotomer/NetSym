@@ -16,7 +16,7 @@ from address.ip_address import IPAddress
 from computing.computer import Computer
 from computing.internals.frequency import Frequency
 from computing.internals.interface import Interface
-from computing.internals.processes.usermode_processes.ftp_process import ClientFTPProcess
+from computing.internals.processes.usermode_processes.dns_process.zone import EXAMPLE, Zone
 from computing.internals.processes.usermode_processes.stp_process import STPProcess
 from computing.internals.wireless_interface import WirelessInterface
 from computing.router import Router
@@ -775,7 +775,7 @@ class UserInterface:
         return connection
 
     @staticmethod
-    def send_direct_ping(computer_graphics1, computer_graphics2):
+    def send_direct_ping(computer_graphics1: ComputerGraphics, computer_graphics2: ComputerGraphics) -> None:
         """
         Send a ping from `computer1` to `computer2`.
         If one of them does not have an IP address, do nothing.
@@ -785,7 +785,7 @@ class UserInterface:
         """
         computer1, computer2 = computer_graphics1.computer, computer_graphics2.computer
         if computer1.has_ip() and computer2.has_ip():
-            computer1.start_ping_process(computer2.get_ip())
+            computer1.start_ping_process(computer2.get_ip().string_ip)
 
     def send_random_ping(self):
         """
@@ -796,7 +796,7 @@ class UserInterface:
             sending_computer = random.choice([computer for computer in self.computers if computer.has_ip()])
             receiving_computer = random.choice([computer for computer in self.computers
                                                 if computer.has_ip() and computer is not sending_computer])
-            sending_computer.start_ping_process(receiving_computer.get_ip())
+            sending_computer.start_ping_process(receiving_computer.get_ip().string_ip)
         except IndexError:
             pass
 
@@ -1018,16 +1018,6 @@ class UserInterface:
         else:
             self.connect_all_to_all()
 
-    def ping_switch_with_ip(self):
-        """
-        Send a ping from a random computer to a switch with an ip. (I used it for testing), if no one uses it it
-        can be deleted.
-        :return: None
-        """
-        switch = get_the_one(self.computers, lambda c: isinstance(c, Switch) and c.has_ip(), NetworkSimulationError)
-        pinging_computer = random.choice([computer for computer in self.computers if computer is not switch])
-        pinging_computer.start_ping_process(switch.get_ip())
-
     def ask_for_dhcp(self):
         """
         Make all computers without an IP address ask for an IP address using DHCP.
@@ -1046,6 +1036,9 @@ class UserInterface:
         # print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
         def gos():
             return [go for go in MainLoop.instance.graphics_objects if not isinstance(go, UserInterfaceGraphicsObject)]
+
+        zonefile = Zone.from_file_format(EXAMPLE)
+        str_zonefile = zonefile.to_file_format()
 
         print(MainWindow.main_window.get_mouse_location())
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
@@ -1282,19 +1275,23 @@ class UserInterface:
         Adds the computers that i create every time i do a test for TCP processes. saves time.
         :return:
         """
+        DEFAULT_DOMAIN = "fun."
         new_computers = [self.create_computer_with_ip() for _ in range(6)]
-        self.create_device(Hub)
+        self.create_device(Switch)
         self.smart_connect()
-        for i, location in enumerate(
-                circular_coordinates(MainWindow.main_window.get_mouse_location(), 150, len(new_computers))):
-            new_computers[i].graphics.location = location
 
-        self.tab_through_selected()
-        self.selected_object.computer.open_port(21, "TCP")
-        self.selected_object.computer.open_port(13, "TCP")
-        self.tab_through_selected()
-        self.tab_through_selected()
-        self.selected_object.computer.process_scheduler.start_usermode_process(ClientFTPProcess, IPAddress("192.168.1.2"))
+        server: Computer = new_computers[0]
+        server.open_port(21,   "TCP")
+        server.open_port(13,   "TCP")
+        server.open_port(53,   "UDP")
+        server.open_port(1000, "UDP")
+        server.add_remove_dns_zone(DEFAULT_DOMAIN)
+
+        for computer, location in zip(new_computers, circular_coordinates(MainWindow.main_window.get_mouse_location(), 150, len(new_computers))):
+            computer.graphics.location = location
+            computer.domain = DEFAULT_DOMAIN
+            computer.dns_server = server.get_ip()
+            server.add_dns_entry(f"{computer.name}.{DEFAULT_DOMAIN} {computer.get_ip().string_ip}")
 
     def register_window(self, window, *buttons):
         """

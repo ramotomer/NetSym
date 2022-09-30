@@ -77,7 +77,7 @@ class ArpCache:
 
         return item.string_ip in {ip.string_ip: value for ip, value in self.__cache.items()}
 
-    def __getitem__(self, item: IPAddress) -> bool:
+    def __getitem__(self, item: IPAddress) -> ARPCacheItem:
         if not isinstance(item, IPAddress):
             raise KeyError(f"Only search the arp cache for IPAddress! not {type(item)}!")
         return {ip.string_ip: value for ip, value in self.__cache.items()}[item.string_ip]

@@ -1,19 +1,24 @@
+from __future__ import annotations
+
 import cmath
 import datetime
+import re
 from contextlib import contextmanager
 from functools import reduce
 from math import sin, cos, pi, atan
 from operator import mul
-from typing import Dict, Any, Iterable, Callable
+from typing import Dict, Any, Iterable, Callable, TypeVar, Optional, List, Generator
 
 from consts import *
 from exceptions import WrongUsageError
 
+T = TypeVar("T")
 
-def get_the_one(iterable: Iterable,
-                condition: Callable,
+
+def get_the_one(iterable: Iterable[T],
+                condition: Callable[[T], bool],
                 raises: Callable = None,
-                default: Any = None) -> Any:
+                default: Optional[T] = None) -> T:
     """
     Receives an iterable and a condition and returns the first item in the
     iterable that the condition is true for.
@@ -33,6 +38,15 @@ def get_the_one(iterable: Iterable,
     return default
 
 
+def is_matching(pattern, string):
+    """
+    Takes in a regex pattern and a string.
+    Returns whether or not the string fits in the pattern
+    """
+    match = re.match(pattern, string)
+    return (match is not None) and (match.group(0) == string)
+
+
 def is_hex(string: str) -> bool:
     """
     returns if a ip_layer is a hexadecimal digit or not
@@ -42,7 +56,7 @@ def is_hex(string: str) -> bool:
     return set(string) <= hex_digits
 
 
-def with_args(function, *args, **kwargs):
+def with_args(function: Callable[[...], T], *args: Any, **kwargs: Any) -> Callable[[], T]:
     """
     Receives a function and its arguments.
     returns a function which when called without arguments performs `function(*args, **kwargs)`.
@@ -56,7 +70,7 @@ def with_args(function, *args, **kwargs):
     return returned
 
 
-def distance(p1, p2):
+def distance(p1: Tuple[float, float], p2: Tuple[float, float]):
     """
     Returns the distance between two points.
     :param p1:
@@ -68,17 +82,15 @@ def distance(p1, p2):
     return sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
 
-def split_by_size(string, size):
+def split_by_size(string: str, size: int) -> List[str]:
     """
     Takes the string and splits it up to `size` sized pieces (or less - for the last one).
-    :param string: str
-    :param size: int
     :return: list of strings each of size `size` at most
     """
     return [string[i:i + size] for i in range(0, len(string), size)]
 
 
-def called_in_order(*functions):
+def called_in_order(*functions: Callable[[], Any]) -> Callable[[], None]:
     """
     Receives functions and returns a function performs them one after the other in the order they were received in.
     calls them without arguments.
@@ -91,7 +103,7 @@ def called_in_order(*functions):
     return in_order
 
 
-def get_first(iterable):
+def get_first(iterable: Iterable[T]) -> T:
     """
     Returns one of the iterable's items. Usually the first one.
     :param iterable: an iterable
@@ -101,7 +113,7 @@ def get_first(iterable):
         return item
 
 
-def insort(list_, item, key=lambda t: t):
+def insort(list_: List[T], item: T, key: Callable = lambda t: t) -> None:
     """
     Insert an item into a sorted list by a given key while keeping it sorted.
     :param list_: the list (assumed to be sorted)
@@ -121,9 +133,10 @@ def insort(list_, item, key=lambda t: t):
     list_.insert(low_index, item)
 
 
-def circular_coordinates(center_location: tuple, radius, count, add_gl_coordinate=False):
+def circular_coordinates(center_location: Tuple[float, float], radius: float, count: int, add_gl_coordinate: bool = False) -> Generator:
     """
     a generator of coordinates in a circular fashion around a given point.
+    :param add_gl_coordinate:
     :param center_location: The location of the center
     :param radius: The radius of the circle
     :param count: The count of points
@@ -273,6 +286,25 @@ def my_range(start, end=None, step=1):
         current += step
 
 
+def bool_(o: Any) -> bool:
+    """
+    The typing module is having a hard time with the `filter` function
+    Especially with the fact that the `bool` function takes in an `str`
+
+    The `filter` function is typed like this:
+
+        filter(function: Callable[[T], bool], iterable: Iterable[T]) -> Iterable[T]
+
+        and `bool` takes in an `object`
+
+    This means that `filter` allegedly returns a `Iterable[object]`
+    That fucks up my typing - because usually it returns something with more functionality (like strings) which the type checker sadly does not like
+
+    This function is just like `bool` but it takes in `Any` and not `object`
+    """
+    return bool(o)
+
+
 def split_with_escaping(string, separator=' ', escaping_char='"', remove_empty_spaces=True):
     """
     Just like the builtin `split` - but can handle escaping characters like "-s and not split in between them
@@ -280,6 +312,7 @@ def split_with_escaping(string, separator=' ', escaping_char='"', remove_empty_s
         example:
                         >>> split_with_escaping('and i said "hello w o r l d" ! !')
                         >>> ['and', 'i', 'said', '"hello w o r l d"', '!', '!']
+    :param remove_empty_spaces:
     :param string: the `str` to split
     :param separator: the substring to split by
     :param escaping_char: the character which in between you should not split

@@ -21,7 +21,7 @@ class Button(UserInterfaceGraphicsObject):
     def __init__(self,
                  x: float,
                  y: float,
-                 action: Callable = lambda: None,
+                 action: Callable[[], None] = lambda: None,
                  text: str = BUTTONS.DEFAULT_TEXT,
                  start_hidden: bool = False,
                  width: float = BUTTONS.DEFAULT_WIDTH,

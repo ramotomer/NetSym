@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from os import linesep
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Dict, Callable
 
 from recordclass import recordclass
 
@@ -9,6 +9,7 @@ from address.ip_address import IPAddress
 from computing.internals.processes.usermode_processes.daytime_process import DAYTIMEClientProcess
 from computing.internals.processes.usermode_processes.ddos_process import DDOSProcess
 from computing.internals.processes.usermode_processes.dhcp_process import DHCPServer
+from computing.internals.processes.usermode_processes.dns_process.dns_server_process import DNSServerProcess
 from computing.internals.processes.usermode_processes.ftp_process import ClientFTPProcess
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
@@ -63,7 +64,7 @@ class ComputerGraphics(ImageGraphics):
             is_pressable=True,
             scale_factor=scale_factor,
         )
-        self.computer = computer
+        self.computer: Computer = computer
         self.class_name = self.computer.__class__.__name__
         self.original_image = image
 
@@ -77,7 +78,11 @@ class ComputerGraphics(ImageGraphics):
 
         self.buttons_id = None
 
-        self.sprite.update(scale_x=self.computer.initial_size[0], scale_y=self.computer.initial_size[1])
+        # debugp(f"Creating computer: {computer.name + ',':<15}scale: {self.scale_factor}")
+        # self._set_size(*self.computer.initial_size)
+        # self.rescale(self.scale_factor, self.scale_factor, constrain_proportions=True)
+        # TODO: make files keep track of the size of computers!!!
+
         self.update_text_location()
 
     @property
@@ -116,11 +121,56 @@ class ComputerGraphics(ImageGraphics):
         self.change_image(IMAGES.COMPUTERS.SERVER if self._is_server() else self.original_image)
         self.child_graphics_objects.process_list.set_list([port for port in self.computer.get_open_ports() if port in PORTS.SERVER_PORTS])
 
-    def start_viewing(self, user_interface: UserInterface) -> Tuple[pyglet.sprite.Sprite, str, int]:
+    def _get_per_process_buttons(self, user_interface: UserInterface) -> Dict[str, Callable[[], None]]:
+        """
+        Some buttons are only relevant if a certain process is running on the computer
+        This method returns the additional buttons that should be added based on what processes
+            are currently running
+        """
+        process_button_mapping = {
+            DNSServerProcess: {
+                "add DNS record (alt+d)": with_args(
+                    user_interface.ask_user_for,
+                    str,
+                    "Enter the DNS mapping - full hostname and IP address, separated by a space:",
+                    self.computer.add_dns_entry
+                ),
+                "add/remove DNS zone (z)": with_args(
+                    user_interface.ask_user_for,
+                    str,
+                    "Enter the name of your DNS zone:",
+                    self.computer.add_remove_dns_zone,
+                ),
+            },
+            DHCPServer: {
+                "set DNS server (alt+d)": with_args(
+                    user_interface.ask_user_for,
+                    IPAddress,
+                    MESSAGES.INSERT.DNS_SERVER_FOR_DHCP_SERVER,
+                    self.computer.set_dns_server_for_dhcp_server,
+                ),
+                "set domain (shift+alt+d)": with_args(
+                    user_interface.ask_user_for,
+                    str,
+                    MESSAGES.INSERT.DOMAIN_FOR_DHCP_SERVER,
+                    self.computer.set_domain_for_dhcp_server,
+                ),
+            },
+        }
+        all_buttons = {}
+        for process_type, button_dict in process_button_mapping.items():
+            if self.computer.process_scheduler.is_process_running_by_type(process_type):
+                all_buttons.update(button_dict)
+        return all_buttons
+
+    def start_viewing(self,
+                      user_interface: UserInterface,
+                      additional_buttons: Optional[Dict[str, Callable[[], None]]] = None) -> Tuple[pyglet.sprite.Sprite, str, int]:
         """
         Starts viewing the computer graphics object in the side-window view.
-        :param user_interface: the `UserInterface` object we can use the methods of it.
-        :return: a tuple <display sprite>, <display text>, <new button count>
+
+        parameter user_interface: the `UserInterface` object we can use the methods of it.
+        Returns a tuple <display sprite>, <display text>, <new button count>
         """
         self.child_graphics_objects.console.location = self.console_location
         self.child_graphics_objects.console.show()
@@ -166,13 +216,13 @@ class ComputerGraphics(ImageGraphics):
             ),
             "ask daytime (ctrl+alt+a)": with_args(
                 user_interface.ask_user_for,
-                IPAddress,
+                str,
                 MESSAGES.INSERT.IP_FOR_PROCESS,
                 with_args(self.computer.process_scheduler.start_usermode_process, DAYTIMEClientProcess)
             ),
             "download file (alt+a)": with_args(
                 user_interface.ask_user_for,
-                IPAddress,
+                str,
                 MESSAGES.INSERT.IP_FOR_PROCESS,
                 with_args(self.computer.process_scheduler.start_usermode_process, ClientFTPProcess)
             ),
@@ -193,6 +243,8 @@ class ComputerGraphics(ImageGraphics):
                 self.color_by_name,
             ),
         }
+        buttons.update(additional_buttons or {})
+        buttons.update(self._get_per_process_buttons(user_interface))
         self.buttons_id = user_interface.add_buttons(buttons)
         return self.copy_sprite(self.sprite), self.generate_view_text(), self.buttons_id
 
@@ -220,12 +272,13 @@ class ComputerGraphics(ImageGraphics):
         addresses = linesep.join(str(interface.ip) for interface in self.computer.interfaces if interface.has_ip())
 
         return f"""
-Computer:
+[## Computer ##]
+'{self.computer.name}'
 
-Name: {self.computer.name}
-{f'os: {self.computer.os}' if self.computer.os is not None else ""}
-{f'gateway: {gateway}' if gateway is not None else ""}
-{f'addresses: {linesep + addresses}' if addresses else ""}
+{f'Operation System: {self.computer.os}' if self.computer.os is not None else ""}
+{f'Gateway: {gateway}' if gateway is not None else ""}
+{f'DNS server: {self.computer.dns_server}' if self.computer.dns_server is not None else ""}
+{f'IP Addresses: {linesep + addresses}' if addresses else ""}
 """
 
     def add_interface(self, interface: Interface) -> None:
@@ -267,7 +320,7 @@ Name: {self.computer.name}
             "class": self.class_name,
             "location": self.location,
             "name": self.computer.name,
-            "size": [self.sprite.scale_x, self.sprite.scale_y],
+            "scale_factor": self.scale_factor,
             "os": self.computer.os,
             "interfaces": [interface.graphics.dict_save() for interface in self.computer.interfaces],
             "open_tcp_ports": self.computer.get_open_ports("TCP"),

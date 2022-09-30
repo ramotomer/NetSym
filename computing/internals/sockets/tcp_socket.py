@@ -7,7 +7,7 @@ from computing.internals.processes.abstracts.process import WaitingFor, T_Proces
 from computing.internals.processes.kernelmode_processes.tcp_socket_process import ListeningTCPSocketProcess, \
     ConnectingTCPSocketProcess
 from computing.internals.sockets.l4_socket import L4Socket
-from consts import COMPUTER
+from consts import COMPUTER, T_Port
 from exceptions import TCPSocketConnectionRefused
 
 if TYPE_CHECKING:
@@ -48,7 +48,7 @@ class TCPSocket(L4Socket):
         self.assert_is_connected()
         self.to_send.append(data)
 
-    def connect(self, address: Tuple[IPAddress, int]) -> None:
+    def connect(self, address: Tuple[IPAddress, T_Port]) -> None:
         """
         Connect to a listening socket with the given address
         :param address:
@@ -58,7 +58,7 @@ class TCPSocket(L4Socket):
         self.assert_is_not_closed()
         self.socket_handling_kernelmode_pid = self.computer.process_scheduler.start_kernelmode_process(ConnectingTCPSocketProcess, self, address)
 
-    def blocking_connect(self, address: Tuple[IPAddress, int]) -> T_ProcessCode:
+    def blocking_connect(self, address: Tuple[IPAddress, T_Port]) -> T_ProcessCode:
         """
         Same as `accept` only yields a `WaitingFor` that waits until the socket is connected
         """

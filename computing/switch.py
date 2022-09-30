@@ -93,7 +93,7 @@ class Switch(Computer):
         returned.interfaces = cls._interfaces_from_dict(dict_)
         returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])
         returned.filesystem = Filesystem.from_dict_load(dict_["filesystem"])
-        returned.initial_size = dict_["size"]
+        # returned.scale_factor = dict_["scale_factor"]
         return returned
 
 
@@ -149,5 +149,5 @@ class Antenna(Switch):
         returned = cls(dict_["name"], *cls._interfaces_from_dict(dict_))
         returned.routing_table = RoutingTable.from_dict_load(dict_["routing_table"])
         returned.filesystem = Filesystem.from_dict_load(dict_["filesystem"])
-        returned.initial_size = dict_["size"]
+        # returned.initial_size = dict_["scale_factor"]
         return returned

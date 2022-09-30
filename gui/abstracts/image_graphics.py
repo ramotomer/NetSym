@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from abc import ABCMeta
 from itertools import product
-from typing import Tuple, Set
+from typing import Set, Optional, Dict, TYPE_CHECKING, Callable
 
 from consts import *
 from exceptions import NoSuchGraphicsObjectError, PopupWindowWithThisError
@@ -11,6 +13,9 @@ from gui.shape_drawing import draw_rectangle
 from gui.user_interface.resizing_dot import ResizingDot
 from usefuls.funcs import get_the_one, scale_tuple, sum_tuples
 from usefuls.paths import add_path_basename_if_needed
+
+if TYPE_CHECKING:
+    from gui.user_interface.user_interface import UserInterface
 
 
 class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
@@ -78,7 +83,11 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         }
 
     @staticmethod
-    def get_image_sprite(image_name, x=0, y=0, scale_factor=IMAGES.SCALE_FACTORS.VIEWING_OBJECTS):
+    def get_image_sprite(
+            image_name: str,
+            x: float = 0.0,
+            y: float = 0.0,
+            scale_factor: float = IMAGES.SCALE_FACTORS.VIEWING_OBJECTS) -> pyglet.sprite.Sprite:
         """
         Receives an image_name and x and y coordinates and returns a `pyglet.sprite.Sprite`
         object that can be displayed on the screen.
@@ -94,7 +103,7 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         return returned
 
     @staticmethod
-    def copy_sprite(sprite, new_width=VIEW.IMAGE_SIZE, new_height=None):
+    def copy_sprite(sprite: pyglet.sprite.Sprite, new_width: float = VIEW.IMAGE_SIZE, new_height: Optional[float] = None) -> pyglet.sprite.Sprite:
         """
         Receive a sprite object and return a copy of it.
         :param sprite: a `pyglet.sprite.Sprite` object.
@@ -109,7 +118,7 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         returned.opacity = sprite.opacity
         return returned
 
-    def set_transparency(self, amount):
+    def set_transparency(self, amount: float) -> None:
         """
         Set how transparent the sprite is.
             Use the `IMAGES.TRANSPARENCY` class for measures
@@ -118,29 +127,29 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         self.sprite.opacity = amount
 
     @property
-    def is_transparent(self):
+    def is_transparent(self) -> bool:
         return self.sprite.opacity == IMAGES.TRANSPARENCY.MEDIUM
 
     @property
-    def should_be_transparent(self):
+    def should_be_transparent(self) -> bool:
         """
         This property should be overridden - at any given time, the object will become transparent If and Only If this returns `True`
         """
         return False
 
-    def make_transparent(self):
+    def make_transparent(self) -> None:
         self.set_transparency(IMAGES.TRANSPARENCY.MEDIUM)
 
-    def make_opaque(self):
+    def make_opaque(self) -> None:
         self.set_transparency(IMAGES.TRANSPARENCY.LOW)
 
-    def toggle_opacity(self):
+    def toggle_opacity(self) -> None:
         if self.is_transparent:
             self.make_opaque()
         else:
             self.make_transparent()
 
-    def is_mouse_in(self):
+    def is_mouse_in(self) -> bool:
         """
         Returns whether or not the mouse is inside the sprite of this object in the screen.
         :return: Whether the mouse is inside the sprite or not.
@@ -152,14 +161,14 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         return (self.x - (self.sprite.width / 2.0) < mouse_x < self.x + (self.sprite.width / 2.0)) and\
                 (self.y - (self.sprite.height / 2.0) < mouse_y < self.y + (self.sprite.height / 2.0))
 
-    def get_center(self):
+    def get_center(self) -> Tuple[float, float]:
         """
         Return the location of the center of the sprite as a tuple.
         """
         return self.x + (self.sprite.width / 2.0), \
                self.y + (self.sprite.height / 2.0)
 
-    def get_centered_coordinates(self):
+    def get_centered_coordinates(self) -> Tuple[float, float]:
         """
         Return a tuple of coordinates so that:
         If you draw the sprite in those coordinates, (self.x, self.y) will be the center of the sprite.
@@ -167,7 +176,7 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         return self.x - int(self.sprite.width / 2), \
                self.y - int(self.sprite.height / 2)
 
-    def mark_as_selected_non_resizable(self):
+    def mark_as_selected_non_resizable(self) -> None:
         """
         Marks the object as selected, but does not show the resizing dots :)
         :return:
@@ -186,7 +195,7 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
             outline_color=SELECTED_OBJECT.COLOR,
         )
 
-    def mark_as_selected(self):
+    def mark_as_selected(self) -> None:
         """
         Marks a rectangle around a `GraphicsObject` that is selected.
         Only call this function if the object is selected.
@@ -198,7 +207,7 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         for direction in directions:
             self.show_resizing_dot(direction, constrain_proportions=(0 not in direction))
 
-    def get_corner_by_direction(self, direction):
+    def get_corner_by_direction(self, direction: Tuple[int, int]) -> Tuple[float, float]:
         """
         Returns the location of a corner based on a direction, which is a tuple indicating the
         sign (positivity or negativity) of the corner
@@ -216,12 +225,13 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         dx, dy = direction
         return (bottom_left_x + width / 2) + ((width / 2) * dx), (bottom_left_y + height / 2) + ((height / 2) * dy)
 
-    def show_resizing_dot(self, direction, constrain_proportions=False):
+    def show_resizing_dot(self, direction: Tuple[int, int], constrain_proportions: bool = False) -> None:
         """
         Displays and enables the little dot that allows resizing of objects.
         """
         if get_the_one(self.resizing_dots, lambda d: d.direction == direction) is None:
-            dot = ResizingDot(*self.get_corner_by_direction(direction), self, direction, constrain_proportions)
+            corner_x, corner_y = self.get_corner_by_direction(direction)
+            dot = ResizingDot(corner_x, corner_y, self, direction, constrain_proportions)
             self.resizing_dots.append(dot)
             MainLoop.instance.graphics_objects.append(dot)
             MainLoop.instance.insert_to_loop(dot.self_destruct_if_not_showing)
@@ -230,22 +240,27 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         dot.draw()
         dot.move()
 
-    def start_viewing(self, user_interface):
+    def start_viewing(self,
+                      user_interface: UserInterface,
+                      additional_buttons: Optional[Dict[str, Callable[[], None]]] = None) -> Tuple[pyglet.sprite.Sprite, str, int]:
         """
         Returns a tuple a `pyglet.sprite.Sprite` object and a `Text` object that should be shown on the side window
         when this object is pressed. also returns the added button id in the returned tuple.
         :return:
         """
-        return self.copy_sprite(self.sprite), self.generate_view_text(), None
+        button_id = None
+        if additional_buttons:
+            button_id = user_interface.add_buttons(additional_buttons)
+        return self.copy_sprite(self.sprite), self.generate_view_text(), button_id
 
-    def generate_view_text(self):
+    def generate_view_text(self) -> str:
         """
         Generates the text that will be displayed on the screen when the object is viewed in the side-window
         :return: string
         """
         return ''
 
-    def load(self):
+    def load(self) -> None:
         """
         This function is called once before the object is inserted to the main loop.
         It loads the picture of the object.
@@ -267,7 +282,7 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
             x, y = self.get_centered_coordinates()
             self.sprite.update(x, y)
 
-    def draw(self):
+    def draw(self) -> None:
         """
         This is called once every tick of the clock (`update` function).
         This function is in charge of the graphical drawing of the object, draws the image to the screen.
@@ -280,7 +295,7 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
 
         self.sprite.draw()
 
-    def move(self):
+    def move(self) -> None:
         """
         This is called once every tick of the clock (`update` function).
         This function is in charge of the motion of the object in a theoretical sense.
@@ -294,13 +309,30 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
 
         self.sprite.update(x=x, y=y)
 
-    def resize(self, width_diff, height_diff, constrain_proportions=False):
+    def resize(self, width_diff: float, height_diff: float, constrain_proportions: bool = False) -> None:
         """
         Receives a diff in the width and height and resizes the object accordingly
         """
-        new_width = self.width + width_diff
-        new_height = self.height + height_diff
+        self._set_size(
+            self.width + width_diff,
+            self.height + height_diff,
+            constrain_proportions
+        )
 
+    def rescale(self, scale_x: float, scale_y: float, constrain_proportions: bool = False) -> None:
+        """
+
+        """
+        self._set_size(
+            self.width * scale_x,
+            self.height * scale_y,
+            constrain_proportions,
+        )
+
+    def _set_size(self, new_width: float, new_height: float, constrain_proportions: bool = False) -> None:
+        """
+
+        """
         new_width = max(SHAPES.CIRCLE.RESIZE_DOT.MINIMAL_RESIZE_SIZE, new_width)
         new_height = max(SHAPES.CIRCLE.RESIZE_DOT.MINIMAL_RESIZE_SIZE, new_height)
 
@@ -316,7 +348,7 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         for dot in self.resizing_dots:
             dot.update_object_size()
 
-    def add_hue(self, hue):
+    def add_hue(self, hue: T_Color) -> None:
         """
         Adds a certain hue to the picture. the hue should be in the form (r, g, b)
         :param hue:
@@ -339,7 +371,7 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         img.set_data("BGRA", img.width * 4, bytes(data))
         self.sprite.image = img
 
-    def color_by_name(self, color_name):
+    def color_by_name(self, color_name: str) -> None:
         """
         Colors the sprite by a color name ("red", "blue", "light green"
         :param color_name:
@@ -361,14 +393,14 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
 
         self.add_hue(scale_tuple(1, color, True))
 
-    def flush_colors(self):
+    def flush_colors(self) -> None:
         """
         Flushes the colors and hues from the sprite.
         :return:
         """
         self.sprite.image = pyglet.image.load(self.image_name)
 
-    def change_image(self, new_image_name: str):
+    def change_image(self, new_image_name: str) -> None:
         """
         Change the image path and reload it
         Only reloads the file if the path has changed (efficient!)
@@ -380,11 +412,11 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
             self.image_name = new_image_name
             self.load()
 
-    def __str__(self):
+    def __str__(self) -> str:
         """The string representation of the GraphicsObject"""
         return f"GraphicsObject({self.image_name}, {self.x, self.y})"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """The string representation of the GraphicsObject"""
         return f"GraphicsObject({self.image_name}, {self.x, self.y}, " \
             f"do_render={self.do_render}, " \

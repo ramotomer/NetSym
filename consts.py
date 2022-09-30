@@ -23,6 +23,7 @@ SENDING_GRAT_ARPS = False
 
 T_Time = float
 T_Color = Tuple[int, ...]
+T_Port = int
 
 
 class ADDRESSES:
@@ -133,8 +134,34 @@ class OPCODES:
         FLAGS_DISPLAY_PRIORITY = [SYN, FIN, RST, PSH, ACK]
 
     class DNS:
-        REQUEST = 'request'
-        REPLY = 'reply'
+        SOME_ERROR = 'some_error'  # This is not an actual DNS type - but we want a different image for error packets :)
+
+        QUERY = 'query'
+        ANSWER = 'answer'
+
+        class TYPES:
+            START_OF_AUTHORITY = 'SOA'
+
+            HOST_ADDRESS = 'A'
+            AUTHORITATIVE_NAME_SERVER = 'NS'
+            MAIL_DESTINATION = 'MD'
+            MAIL_FORWARDER = 'MF'
+            CANONICAL_NAME_FOR_AN_ALIAS = 'CNAME'
+
+            ALL_RECORDS = 'ANY'
+            # there are more....
+
+        class CLASSES:
+            INTERNET = 'IN'  # this is almost always the class - indicates being on the internet. Does not have much use
+            CHAOS = 'CH'
+
+        class RETURN_CODES:
+            OK =              0b000  # 0
+            FORMAT_ERROR =    0b001  # 1
+            SERVER_FAILURE =  0b010  # 2
+            NAME_ERROR =      0b011  # 3
+            NOT_IMPLEMENTED = 0b100  # 4
+            REFUSED =         0b101  # 5
 
     class BOOTP:
         REQUEST = "BOOTREQUEST"
@@ -151,6 +178,7 @@ class PROTOCOLS:
 
     class DHCP:
         DEFAULT_TTL = 0
+        NEW_INTERFACE_DETECTION_TIMEOUT = 0.5
 
     class TCP:
         MAX_SEQUENCE_NUMBER = 2**32 - 1
@@ -189,6 +217,13 @@ class PROTOCOLS:
     class ECHO_SERVER:
         DEFAULT_REQUEST_COUNT = 1
 
+    class DNS:
+        ZONE_FILE_ORIGIN_CHARACTER = '@'
+        DEFAULT_DOMAIN_NAMES = ['very.fun.']
+        DEFAULT_TIME_TO_LIVE = 5 * 60  # seconds
+        CLIENT_QUERY_TIMEOUT = 12      # seconds
+        DEFAULT_RETRY_COUNT = 3
+
 
 class PORTS:
     DAYTIME = 13
@@ -213,6 +248,7 @@ class PORTS:
         HTTP: "processes/http_process.png",
         HTTPS: "processes/https_process.png",
         ECHO_SERVER: "processes/echo_server_process.png",
+        DNS: "processes/dns_process.png",
     }
 
 
@@ -248,15 +284,17 @@ class MESSAGES:
     INVALID_IP_ADDRESS = "The IP address is not valid!"
 
     class INSERT:
-        PL = "insert your desired pl (0 <= pl <= 1)!!!"
-        SPEED = "insert your desired connection speed:"
-        IP = "Enter your desired IP for this interface:"
-        GATEWAY = "Enter your desired IP for the gateway:"
-        INTERFACE_INFO = "Insert the name of the interface:"
-        IP_FOR_PROCESS = "Insert an IP to start your process to:"
-        PORT_NUMBER = "Insert a port number to open/close:"
-        COMPUTER_NAME = "Insert a new name for the computer:"
-        COLOR = "choose a color:"
+        PL =                         "insert your desired pl (0 <= pl <= 1)!!!"
+        SPEED =                      "insert your desired connection speed:"
+        IP =                         "Enter your desired IP for this interface:"
+        GATEWAY =                    "Enter your desired IP for the gateway:"
+        INTERFACE_INFO =             "Insert the name of the interface:"
+        IP_FOR_PROCESS =             "Insert an IP to start your process to:"
+        PORT_NUMBER =                "Insert a port number to open/close:"
+        COMPUTER_NAME =              "Insert a new name for the computer:"
+        COLOR =                      "choose a color:"
+        DNS_SERVER_FOR_DHCP_SERVER = "What DNS server should your DHCP server supply?"
+        DOMAIN_FOR_DHCP_SERVER =     "What domain name should your DHCP server supply?"
 
 
 class DIRECTORIES:
@@ -380,7 +418,6 @@ class IMAGES:
         IP = "packets/ip_packet.png"
         UDP = "packets/udp_packet.png"
         STP = "packets/stp_packet.png"
-        DNS = "packets/dns_packet.png"
 
         class ARP:
             REQUEST = "packets/arp_request.png"
@@ -412,10 +449,14 @@ class IMAGES:
             FIN_RETRANSMISSION = "packets/tcp_fin_retransmission.png"
             PACKET = "packets/tcp_packet.png"
 
+        class DNS:
+            ERROR = "packets/dns_error.png"
+            QUERY = "packets/dns_query.png"
+            ANSWER = "packets/dns_answer.png"
+
         class FTP:
             REQUEST_PACKET = "packets/ftp_request.png"
             DATA_PACKET = "packets/ftp_data.png"
-
 
     class COMPUTERS:
         COMPUTER = "computers/endpoint.png"
@@ -470,6 +511,14 @@ def get_dominant_tcp_flag(tcp):
     return OPCODES.TCP.NO_FLAGS
 
 
+def get_dns_opcode(dns):
+    if dns.return_code != OPCODES.DNS.RETURN_CODES.OK:
+        return OPCODES.DNS.SOME_ERROR
+    if dns.answer_record_count > 0:
+        return OPCODES.DNS.ANSWER
+    return OPCODES.DNS.QUERY
+
+
 class PACKET:
     class DIRECTION:
         RIGHT = 'R'
@@ -480,10 +529,11 @@ class PACKET:
         OUTGOING = 'OUTGOING'
 
     TYPE_TO_OPCODE_FUNCTION = {
-        "ARP": lambda arp: arp.opcode,
+        "ARP":  lambda arp: arp.opcode,
         "ICMP": (lambda icmp: (icmp.type, icmp.code) if icmp.type == OPCODES.ICMP.TYPES.UNREACHABLE else icmp.type),
-        "DHCP": lambda dhcp: DHCPTypes.get(dhcp.parsed_options.message_type, dhcp.parsed_options.message_type),
-        "TCP": get_dominant_tcp_flag,
+        "DHCP": (lambda dhcp: DHCPTypes.get(dhcp.parsed_options.message_type, dhcp.parsed_options.message_type)),
+        "TCP":  get_dominant_tcp_flag,
+        "DNS":  get_dns_opcode,
     }
 
     TYPE_TO_IMAGE = {
@@ -526,8 +576,9 @@ class PACKET:
             OPCODES.FTP.DATA_PACKET: IMAGES.PACKETS.FTP.DATA_PACKET,
         },
         "DNS": {
-            OPCODES.DNS.REQUEST,
-            OPCODES.DNS.REPLY,
+            OPCODES.DNS.QUERY:      IMAGES.PACKETS.DNS.QUERY,
+            OPCODES.DNS.ANSWER:     IMAGES.PACKETS.DNS.ANSWER,
+            OPCODES.DNS.SOME_ERROR: IMAGES.PACKETS.DNS.ERROR,
         },
     }
 
@@ -796,3 +847,9 @@ class COMPUTER:
             REMOTE_ADDRESS_SPACE_COUNT = 22
             STATE_SPACE_COUNT = 15
             PROTO_SPACE_COUNT = 6
+
+    class FILES:
+        class CONFIGURATIONS:
+            DNS_CLIENT_PATH = "/etc/resolv.conf"
+            DNS_ZONE_FILES = "/var/named"
+            DNS_TMP_QUERY_RESULTS_DIR_PATH = "/tmp/named/"

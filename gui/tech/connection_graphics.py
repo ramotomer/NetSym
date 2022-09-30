@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from math import acos, sin
-from typing import TYPE_CHECKING, NamedTuple, Optional
+from typing import TYPE_CHECKING, NamedTuple, Optional, Dict, Callable
 
 from consts import *
 from exceptions import *
@@ -183,10 +183,11 @@ class ConnectionGraphics(GraphicsObject):
         sx, sy, ex, ey = self.get_coordinates()
         draw_line((sx, sy), (ex, ey), color)
 
-    def start_viewing(self, user_interface: UserInterface) -> Tuple[pyglet.sprite.Sprite, str, int]:
+    def start_viewing(self,
+                      user_interface: UserInterface,
+                      additional_buttons: Optional[Dict[str, Callable[[], None]]] = None) -> Tuple[pyglet.sprite.Sprite, str, int]:
         """
         Starts the viewing of this object in the side window.
-        :return: None
         """
         buttons = {
             "set PL amount (alt+p)": with_args(user_interface.ask_user_for, float, MESSAGES.INSERT.PL,
@@ -195,6 +196,7 @@ class ConnectionGraphics(GraphicsObject):
                                            self.connection.set_speed),
         }
 
+        buttons.update(additional_buttons or {})
         self.buttons_id = user_interface.add_buttons(buttons)
         copied_sprite = ImageGraphics.get_image_sprite(os.path.join(DIRECTORIES.IMAGES, IMAGES.VIEW.CONNECTION))
 

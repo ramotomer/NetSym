@@ -1,4 +1,6 @@
 import os
+from contextlib import contextmanager
+from typing import Optional, Dict, List, Union, Generator
 
 from computing.internals.filesystem.directory import Directory
 from computing.internals.filesystem.file import File, PipingFile
@@ -68,7 +70,7 @@ class Filesystem:
                 returned += FILESYSTEM.SEPARATOR + name
         return returned
 
-    def at_absolute_path(self, path):
+    def at_absolute_path(self, path) -> Union[File, Directory]:
         """
         Receives an absolute path and returns the file or directory at that location.
         :param path:
@@ -93,9 +95,9 @@ class Filesystem:
             return self.at_absolute_path(path)
         return cwd.at_relative_path(path)
 
-    def is_file(self, path, cwd: Directory = None):
+    def exists(self, path: str, cwd: Optional[Directory] = None) -> bool:
         """
-        Returns whether or not the path points to a file (and if it even exists at all).
+        Returns whether or not the path points to anything
         :param path: absolute path!
         :param cwd: if the path is not absolute, must supply the current directory.
         :return:
@@ -104,11 +106,19 @@ class Filesystem:
             raise PathError("path must be absolute if no cwd was specified!")
 
         try:
-            item = self.at_path(cwd, path)
+            self.at_path(cwd, path)
         except NoSuchItemError:
             return False
+        return True
 
-        return isinstance(item, File)
+    def is_file(self, path: str, cwd: Optional[Directory] = None) -> bool:
+        """
+        Returns whether or not the path points to a file (and if it even exists at all).
+        :param path: absolute path!
+        :param cwd: if the path is not absolute, must supply the current directory.
+        :return:
+        """
+        return self.exists(path, cwd) and isinstance(self.at_path(cwd, path), File)
 
     def separate_base(self, path):
         """
@@ -215,6 +225,94 @@ class Filesystem:
             dst_dir.directories[new_name] = item
         elif isinstance(item, File):
             dst_dir.files[new_name] = item
+
+    def parse_conf_file_format(self, absolute_path: str, raise_if_does_not_exist: bool = True) -> Dict[str, List[str]]:
+        """
+        Take in a path to a file in the computers filesystem
+        The file should be a `.conf` file in the linux conf format
+        The method returns parsed dict of the configuration
+        Example:
+            the file with contents:
+                ```
+                domain           sales.doc.com
+                nameserver       111.22.3.4
+                nameserver       123.45.6.1
+                ```
+            will return:
+            {
+                'domain': ['sales.doc.com'],
+                'nameserver': ['111.22.3.4', '123.45.6.1'],
+            }
+
+        If the file does not exists - can either raise or return {} (behaviour dictated by the parameter)
+        """
+        if not self.exists(absolute_path):
+            if raise_if_does_not_exist:
+                raise FileNotFoundError
+            return {}
+
+        with self.at_absolute_path(absolute_path) as f:
+            content = map(str, filter(bool, f.readlines()))
+            parsed = {}
+            for line in content:
+                key, value = line.strip().split()
+                parsed[key] = parsed.get(key, []) + [value]
+        return parsed
+
+    def write_conf_file(self, absolute_path: str, parsed_conf_file: Dict[str, List[str]]) -> None:
+        """
+        Does exactly the reverse of `parse_conf_file_format`
+        """
+        parent_directory = self.at_absolute_path(os.path.dirname(absolute_path))
+        parent_directory.make_empty_file(os.path.basename(absolute_path),
+                                         raise_on_exists=False)
+
+        with self.at_absolute_path(absolute_path) as f:
+            f.write('')
+            for key, values in parsed_conf_file.items():
+                for value in values:
+                    f.append(f"{key: <30} {value}\n")
+
+    @contextmanager
+    def parsed_editable_conf_file(self, absolute_path: str, raise_if_does_not_exist: bool = True) -> Generator:
+        """
+
+        """
+        conf_value = self.parse_conf_file_format(absolute_path, raise_if_does_not_exist)
+        try:
+            yield conf_value
+        finally:
+            self.write_conf_file(absolute_path, conf_value)
+
+    def create_directory_tree(self, path: str) -> Directory:
+        """
+        Takes in a path and will create directories all throughout it
+            path = "/etc/no/yes" will create in '/etc' a 'no' directory and inside it a 'yes' directory
+            If any of them exist - it is okay just continue
+        """
+        parent_folder_name, subfolder_name = os.path.split(path)
+        if self.exists(path):
+            return self.at_absolute_path(path)
+        parent_folder = self.create_directory_tree(parent_folder_name)  # Nice.
+        subfolder = Directory(subfolder_name, parent_folder)
+        parent_folder.add_item(subfolder)
+        return subfolder
+
+    def make_empty_file_with_directory_tree(self, path: str, raise_on_exists: bool = True) -> Optional[File]:
+        """
+        Creates an empty file at the specified path
+        Returns it
+
+        If any of the parent directories do not exist - creates them
+        """
+        return self.create_directory_tree(os.path.dirname(path)).make_empty_file(os.path.basename(path), raise_on_exists=raise_on_exists)
+
+    def delete_file(self, path: str) -> None:
+        """Delete a file in the specified path"""
+        directory_path, filename = os.path.split(path)
+        if not filename:
+            raise FileNotFoundError("Cannot delete the root directory!")
+        del self.at_absolute_path(directory_path).files[filename]
 
     def dict_save(self):
         """
