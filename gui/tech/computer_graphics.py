@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from os import linesep
 from typing import TYPE_CHECKING, Optional, Dict, Callable
-
-from recordclass import recordclass
 
 from address.ip_address import IPAddress
 from computing.internals.processes.usermode_processes.daytime_process.daytime_client_process import DAYTIMEClientProcess
@@ -15,6 +14,7 @@ from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
 from gui.tech.interface_graphics_list import InterfaceGraphicsList
+from gui.tech.loopback_connection_graphics import LoopbackConnectionGraphics
 from gui.tech.output_console import OutputConsole
 from gui.tech.process_graphics import ProcessGraphicsList
 from gui.user_interface.popup_windows.popup_console import PopupConsole
@@ -28,13 +28,22 @@ if TYPE_CHECKING:
     from gui.user_interface.user_interface import UserInterface
 
 
-ChildGraphicsObjects = recordclass("ChildGraphicsObjects", [
-    "text",
-    "console",
-    "process_list",
-    "interface_list",
-    "loopback",
-])
+@dataclass
+class ChildGraphicsObjects:
+    text: Text
+    console: OutputConsole
+    process_list: ProcessGraphicsList
+    interface_list: InterfaceGraphicsList
+    loopback: Optional[LoopbackConnectionGraphics] = None
+
+    def __iter__(self):
+        return iter((
+            self.text,
+            self.console,
+            self.process_list,
+            self.interface_list,
+            self.loopback,
+        ))
 
 
 class ComputerGraphics(ImageGraphics):
@@ -73,7 +82,6 @@ class ComputerGraphics(ImageGraphics):
             OutputConsole(*self.console_location),
             ProcessGraphicsList(self),
             InterfaceGraphicsList(self),
-            None,                        # This is the loopback graphics. It will be set once the LoopbackGraphicsObject is initiated
         )
 
         self.buttons_id = None

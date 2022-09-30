@@ -3,11 +3,10 @@ from __future__ import annotations
 import random
 from abc import ABCMeta, abstractmethod
 from collections import deque
+from dataclasses import dataclass
 from functools import reduce
 from operator import attrgetter, concat
 from typing import Optional, Callable, List, Union, TYPE_CHECKING
-
-from recordclass import recordclass
 
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import Process, WaitingForPacketWithTimeout, Timeout, \
@@ -24,16 +23,24 @@ from usefuls.funcs import split_by_size
 if TYPE_CHECKING:
     from computing.computer import Computer
 
-NotAckedPacket = recordclass("NotAckedPacket", [  # this is like a `namedtuple` but it is mutable!
-    "packet",
-    "sending_time",
-    "is_sent",
-])
 
-SackEdges = recordclass("SackEdges", [
-    "left",
-    "right",
-])
+@dataclass
+class NotAckedPacket:
+    packet:       Packet
+    sending_time: T_Time
+    is_sent:      bool
+
+
+@dataclass
+class SackEdges:
+    left:  int
+    right: int
+
+    def __iter__(self):
+        return iter((
+            self.left,
+            self.right,
+        ))
 
 
 class ProcessInternalError_TCPConnectionWasReset(ProcessInternalError):

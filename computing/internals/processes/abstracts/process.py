@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
+from dataclasses import dataclass
 from typing import Iterator, Union, NamedTuple, Callable, TYPE_CHECKING, Optional, Tuple, Type
-
-from recordclass import recordclass
 
 from consts import COMPUTER, T_Time
 from exceptions import *
@@ -238,11 +237,11 @@ class Timeout:
         self.init_time = MainLoop.instance.time()
 
 
-PacketMetadata = recordclass("PacketMetadata", [
-    "interface",
-    "time",
-    "direction",
-])
+@dataclass
+class PacketMetadata:
+    interface: Interface
+    time:      T_Time
+    direction: str
 
 
 class NoNeedForPacket(ReturnedPacket):
@@ -260,28 +259,28 @@ class ProcessInternalError(Exception):
 
 
 class ProcessInternalError_Suicide(ProcessInternalError):
-    """This indicates a self-enflicted death of the process"""
+    """This indicates a self-inflicted death of the process"""
 
 
 class ProcessInternalError_InvalidDomainHostname(ProcessInternalError_Suicide, InvalidDomainHostnameError):
     """
-    This indicates a self-enflicted death of the process due to an invalid domain hostname
+    This indicates a self-inflicted death of the process due to an invalid domain hostname
     """
 
 
 class ProcessInternalError_NoResponseForARP(ProcessInternalError):
     """
-    This indicates a self-enflicted death of the process due to an ARP that was sent but was not responded
+    This indicates a self-inflicted death of the process due to an ARP that was sent but was not responded
     """
 
 
 class ProcessInternalError_DNSNameErrorFromServer(ProcessInternalError):
     """
-    This indicates a self-enflicted death of the process due to a DNS query that was sent but was not responded
+    This indicates a self-inflicted death of the process due to a DNS query that was sent but was not responded
     """
 
 
 class ProcessInternalError_NoResponseForDNSQuery(ProcessInternalError):
     """
-        This indicates a self-enflicted death of the process due to a DNS query that was sent but was not responded
+        This indicates a self-inflicted death of the process due to a DNS query that was sent but was not responded
         """

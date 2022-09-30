@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import random
+from dataclasses import dataclass
 from functools import reduce
 from operator import concat
 from typing import TYPE_CHECKING, Optional, List, Union, Type, Generator, Any
 
 import scapy
-from recordclass import recordclass
 
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
@@ -49,15 +49,15 @@ if TYPE_CHECKING:
     from packets.packet import Packet
 
 
-SocketData = recordclass("SocketData", [
-    "kind",
-    "local_ip_address",
-    "local_port",
-    "remote_ip_address",
-    "remote_port",
-    "state",
-    "pid",
-])
+@dataclass
+class SocketData:
+    kind:              int
+    local_ip_address:  Optional[IPAddress]
+    local_port:        Optional[T_Port]
+    remote_ip_address: Optional[IPAddress]
+    remote_port:       Optional[T_Port]
+    state:             str
+    pid:               int
 
 
 class Computer:
