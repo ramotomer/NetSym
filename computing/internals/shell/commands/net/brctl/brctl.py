@@ -1,14 +1,21 @@
+from __future__ import annotations
+
 import argparse
+from typing import TYPE_CHECKING
 
 from computing.internals.shell.commands.command import Command, CommandOutput
 from computing.internals.shell.commands.net.brctl.brctl_showbr import BrctlShowbrCommand
+
+if TYPE_CHECKING:
+    from computing.computer import Computer
+    from computing.internals.shell.shell import Shell
 
 
 class Brctl(Command):
     """
     Controls the network communication of the device.
     """
-    def __init__(self, computer, shell):
+    def __init__(self, computer: Computer, shell: Shell) -> None:
         """
         initiates the command.
         :param computer:
@@ -22,7 +29,7 @@ class Brctl(Command):
         }
 
     @staticmethod
-    def _brctl_help():
+    def _brctl_help() -> str:
         """
         Returns a string help document
         :return:

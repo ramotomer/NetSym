@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from os import linesep
-from typing import Optional, Union, Any, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, Dict
 
 from address.mac_address import MACAddress
 from computing.internals.processes.abstracts.process import Process, WaitingForPacketWithTimeout, ReturnedPacket, \
@@ -14,6 +15,7 @@ from packets.packet import Packet
 
 if TYPE_CHECKING:
     from computing.internals.interface import Interface
+    from computing.switch import Switch
 
 
 class BID:
@@ -95,26 +97,16 @@ class BID:
         return self.value == other.value
 
 
-class STPPort:
+@dataclass
+class STPPortData:
     """
     This represents a port of the switch that receives STP packets. (That means there is another STP switch behind it)
     It contains all kinds of information that the process has to remember per-port of the switch.
     """
-
-    def __init__(self, interface, state, distance_to_root, last_time_got_packet):
-        """
-        Initiates the STP-port with the original interface, the state of the port, the distance that that port has to the
-        root switch and the last time that an STP packet was received in this port.
-
-        :param interface: an `Interface` object
-        :param state: the state of the port (`ROOT_PORT`, `DESIGNATED_PORT`, `BLOCKED_PORT` or `NO_STATE`)
-        :param distance_to_root: the distance that if you go out from this port you have to go to get to the root switch
-        :param last_time_got_packet: a result of the `time.time()` method of the last time an STP packet was received on this port.
-        """
-        self.interface = interface
-        self.state = state
-        self.distance_to_root = distance_to_root
-        self.last_time_got_packet = last_time_got_packet
+    interface:            Interface
+    state:                str
+    distance_to_root:     float
+    last_time_got_packet: T_Time
 
 
 class STPProcess(Process):
@@ -122,8 +114,9 @@ class STPProcess(Process):
     The process of sending and receiving STP packets.
     It is run by some switches to avoid switch loops and 'Chernobyl packets'
     """
+    computer: Switch
 
-    def __init__(self, pid, computer):
+    def __init__(self, pid: int, computer: Switch) -> None:
         """
         Initiates the process.
         :param computer: The `Computer` that runs this process.
@@ -131,7 +124,7 @@ class STPProcess(Process):
         super(STPProcess, self).__init__(pid, computer)
         self.my_bid = BID(self.computer.priority, self.computer.get_mac(), self.computer.name)
         self.root_bid = self.my_bid
-        self.stp_ports = {}  # format: {`Interface`: `STPPort`}
+        self.stp_ports: Dict[Interface, STPPortData] = {}
 
         self.last_root_changing_time = MainLoop.instance.time()
         self.last_sending_time = MainLoop.instance.time()
@@ -147,7 +140,7 @@ class STPProcess(Process):
         self._root_disappeared = False
 
     @property
-    def root_port(self):
+    def root_port(self) -> Interface:
         """
         Returns the current port of the switch that points to the shortest way to the root switch.
         If no STP packets were received raises `NoSuchInterfaceError`
@@ -158,7 +151,7 @@ class STPProcess(Process):
         return min(self.stp_ports, key=lambda port: self.stp_ports[port].distance_to_root)
 
     @property
-    def distance_to_root(self):
+    def distance_to_root(self) -> float:
         """
         Returns this switch's shortest way to the current root switch.
         If no STP packets were received yet, returns 0.
@@ -230,9 +223,9 @@ class STPProcess(Process):
         :param interface: an `Interface` object of the switch.
         :return: None
         """
-        self.stp_ports[interface] = STPPort(interface, PROTOCOLS.STP.NO_STATE, 0, MainLoop.instance.time())
+        self.stp_ports[interface] = STPPortData(interface, PROTOCOLS.STP.NO_STATE, 0, MainLoop.instance.time())
 
-    def _set_state(self, port, state):
+    def _set_state(self, port: Interface, state: str) -> None:
         """
         Sets the state of an stp interface. They can be ROOT_PORT, DESIGNATED_PORT or BLOCKED_PORT.
         :param port: the `Interface` object
@@ -249,13 +242,13 @@ class STPProcess(Process):
 
         self.stp_ports[port].state = state
 
-    def _is_root_port(self, port):
+    def _is_root_port(self, port: Interface) -> bool:
         """Receives an STP interface of the switch and decides if it is a root port"""
         if self._am_i_root():
             return False
         return port is self.root_port
 
-    def _should_be_designated(self, port):
+    def _should_be_designated(self, port: Interface) -> bool:
         """
         Finds out if an stp interface should be designated.
         Every STP interface has another STP switch behind it. Every interface now checks if that switch has a higher
@@ -269,7 +262,7 @@ class STPProcess(Process):
         other_interface_distance_to_root = self.stp_ports[port].distance_to_root - self.connection_length_to_path_cost(port.connection_length)
         return other_interface_distance_to_root > self.distance_to_root
 
-    def _set_interface_states(self):
+    def _set_interface_states(self) -> None:
         """Sets the states of the ports of the switch (ROOT, DESIGNATED or BLOCKED)"""
         for port in self.stp_ports:
             if self._is_root_port(port):
@@ -281,8 +274,12 @@ class STPProcess(Process):
             else:  # the port will be blocked, since it has no state!
                 self._set_state(port, PROTOCOLS.STP.BLOCKED_PORT)
 
-    def get_info(self):
+    def get_info(self) -> str:
         """For debugging, returns some information about the state of the STP process on the switch."""
+
+        def get_time_since_packet(port: Interface) -> str:
+            return str(MainLoop.instance.time_since(self.stp_ports[port].last_time_got_packet))[:5]
+
         return f"""
     STP info:
 ----------------------------------------------
@@ -292,15 +289,15 @@ class STPProcess(Process):
     root declaration time: {str(MainLoop.instance.time_since(self.root_declaration_time))[:5]} seconds ago
     port states:
 
-{linesep.join(f"{port.name}: {self.stp_ports[port].state} (last got packet {str(MainLoop.instance.time_since(self.stp_ports[port].last_time_got_packet))[:5]} seconds ago)" for port in self.stp_ports)}
+{linesep.join(f"{port.name}: {self.stp_ports[port].state} (last got packet {get_time_since_packet(port)} seconds ago)" for port in self.stp_ports)}
 -----------------------------------------------
     """
 
-    def _root_not_updated_for(self, seconds):
+    def _root_not_updated_for(self, seconds: T_Time) -> bool:
         """Returns whether or not the root was updated in the last `seconds` seconds."""
         return MainLoop.instance.time_since(self.last_root_changing_time) > seconds
 
-    def _port_hasnt_seen_stp_packets_lately(self, port):
+    def _port_hasnt_seen_stp_packets_lately(self, port: Interface) -> bool:
         """
         Returns whether or not the given interface received any STP packets lately.
         If it has not, it should be removed from the STP interfaces list.
@@ -308,7 +305,7 @@ class STPProcess(Process):
         """
         return MainLoop.instance.time_since(self.stp_ports[port].last_time_got_packet) > PROTOCOLS.STP.MAX_CONNECTION_DISAPPEARED_TIME
 
-    def _block_blocked_ports(self):
+    def _block_blocked_ports(self) -> None:
         """Blocks the `BLOCKED_PORT`-s and unblocks the other ones."""
         # if MainLoop.instance.time_since(self.last_port_blocking_time) < PROTOCOLS.STP.BLOCKED_INTERFACE_UPDATE_INTERVAL:
         #     return
@@ -320,7 +317,7 @@ class STPProcess(Process):
             if self.stp_ports[port].state != PROTOCOLS.STP.BLOCKED_PORT and port.is_blocked:
                 port.unblock()
 
-    def _tree_is_probably_stable(self):
+    def _tree_is_probably_stable(self) -> None:
         """
         This is called when the switch tree is probably stable.
         It decreases the sending rate, and moves to hello packets
@@ -330,7 +327,7 @@ class STPProcess(Process):
             self.tree_stable = True
             self.computer.print("STP Tree stable!")
 
-    def _set_tree_unstable_again(self):
+    def _set_tree_unstable_again(self) -> None:
         """
         This is called if the tree was thought to be stable but then the root was updated, Takes the STP process
         back to the unstable state
@@ -340,7 +337,7 @@ class STPProcess(Process):
         self.tree_stable = False
         self.sending_interval = PROTOCOLS.STP.NORMAL_SENDING_INTERVAL
 
-    def _recalculate_root(self):
+    def _recalculate_root(self) -> None:
         """Restarts the root calculation process with itself as the new root"""
         self._root_disappeared = False
         for port in self.stp_ports:
@@ -437,6 +434,6 @@ class STPProcess(Process):
                 self._flood_stp_packets()
                 # TODO: deleting the root does not work yet!!! It cannot forget the old root... :(
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """The string representation of the STP process"""
         return "stpd"

@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Dict, Callable
+
 from address.mac_address import MACAddress
 from consts import INTERFACES
 from exceptions import NoSuchInterfaceError
@@ -6,20 +10,27 @@ from gui.shape_drawing import draw_circle
 from gui.tech.interface_graphics import InterfaceGraphics
 from usefuls.funcs import with_args, get_the_one, distance
 
+if TYPE_CHECKING:
+    from computing.internals.interface import Interface
+    from gui.tech.computer_graphics import ComputerGraphics
+
 
 class WirelessInterfaceGraphics(InterfaceGraphics):
     """
     The graphics object of a wireless interface.
     """
-    def __init__(self, x, y, interface, computer_graphics):
+    def __init__(self,
+                 x: float, y: float,
+                 interface: Interface,
+                 computer_graphics: ComputerGraphics) -> None:
         super(WirelessInterfaceGraphics, self).__init__(x, y, interface, computer_graphics)
         self.width = INTERFACES.WIDTH / 2
 
     @property
-    def radius(self):
+    def radius(self) -> float:
         return self.width
 
-    def draw(self):
+    def draw(self) -> None:
         """
         Draw the interface.
         :return:
@@ -34,7 +45,7 @@ class WirelessInterfaceGraphics(InterfaceGraphics):
             fill_color=self.color,
         )
 
-    def move(self):
+    def move(self) -> None:
         """
         Moves the interface.
         Keeps it within `INTERFACE_DISTANCE_FROM_COMPUTER` pixels away from the computer.
@@ -53,14 +64,14 @@ class WirelessInterfaceGraphics(InterfaceGraphics):
             self.x, self.y = self.real_x, self.real_y
             # ^ keeps the interface in a fixed distance away from the computer despite being dragged.
 
-    def is_mouse_in(self):
+    def is_mouse_in(self) -> bool:
         """
         Returns whether or not the mouse is pressing the interface
         :return:
         """
         return distance(MainWindow.main_window.get_mouse_location(), (self.real_x, self.real_y)) < self.radius
 
-    def _create_button_dict(self, user_interface):
+    def _create_button_dict(self, user_interface) -> Dict[str, Callable[[], None]]:
         return {
             "config IP (i)": user_interface.ask_user_for_ip,
             "change MAC (^m)": with_args(
@@ -90,7 +101,7 @@ class WirelessInterfaceGraphics(InterfaceGraphics):
             )
         }
 
-    def dict_save(self):
+    def dict_save(self) -> Dict:
         """
         Save the interface as a dict that can be later reconstructed to a new interface
         :return:

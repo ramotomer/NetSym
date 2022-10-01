@@ -51,7 +51,7 @@ class Filesystem:
         return (path != FILESYSTEM.PIPING_FILE) and (path.startswith(FILESYSTEM.ROOT))
 
     @classmethod
-    def absolute_from_relative(cls, parent: Directory, path: str):
+    def absolute_from_relative(cls, parent: Directory, path: str) -> str:
         """
         receives relative path and parent dir and return absolute path.
         If already absolute, returns the path.
@@ -313,7 +313,7 @@ class Filesystem:
             raise FileNotFoundError("Cannot delete the root directory!")
         del self.at_absolute_path(directory_path).files[filename]
 
-    def dict_save(self):
+    def dict_save(self) -> Dict:
         """
         Save to dict for json file
         :return:
@@ -325,7 +325,7 @@ class Filesystem:
         }
 
     @classmethod
-    def from_dict_load(cls, dict_):
+    def from_dict_load(cls, dict_: Dict) -> Filesystem:
         """
         Loads filesystem from json file dict.
         :param dict_:

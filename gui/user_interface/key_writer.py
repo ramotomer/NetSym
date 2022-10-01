@@ -27,10 +27,10 @@ class KeyWriter:
                    }}
 
     def __init__(self,
-                 append_function: Callable,
-                 delete_function: Callable,
-                 submit_action: Callable = lambda: None,
-                 exit_action: Callable = lambda: None) -> None:
+                 append_function: Callable[[str], None],
+                 delete_function: Callable[[str], None],
+                 submit_action:   Callable[[], None] = lambda: None,
+                 exit_action:     Callable[[], None] = lambda: None) -> None:
         """
         Initiates the key_writer.
         :param append_function: append text to the writing. (must receive one string)
@@ -48,7 +48,7 @@ class KeyWriter:
             (key.BACKSPACE, KEYBOARD.MODIFIERS.NONE): self.delete,
         }
 
-    def add_key_mapping(self, symbol: int, action: Callable) -> None:
+    def add_key_mapping(self, symbol: int, action: Callable[[], None]) -> None:
         """
         Adds a new action to occur when a given key is pressed.
         :param symbol: `key.*` or a list of them

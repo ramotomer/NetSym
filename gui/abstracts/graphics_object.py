@@ -60,10 +60,6 @@ class GraphicsObject(metaclass=ABCMeta):
         self.x, self.y = new_location
 
     @property
-    def can_be_viewed(self) -> bool:
-        return hasattr(self, "start_viewing") and hasattr(self, "end_viewing")
-
-    @property
     def mark_as_selected_non_resizable(self) -> Callable:
         return self.mark_as_selected
 

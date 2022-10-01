@@ -1,16 +1,29 @@
-from computing.internals.shell.commands.command import Command, CommandOutput, ParsedCommand
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Tuple, NamedTuple
+
+from computing.internals.shell.commands.command import Command, CommandOutput
 from consts import CONSOLE
 from exceptions import InvalidAliasCommand
+
+if TYPE_CHECKING:
+    from computing.computer import Computer
+    from computing.internals.shell.shell import Shell
+
+
+class ParsedAliasCommand(NamedTuple):
+    command_class: Command
+    parsed_args: str
 
 
 class Alias(Command):
     """
     Create a string that will be automatically translated to a command or a number of commands.
     """
-    def __init__(self, computer, shell):
+    def __init__(self, computer: Computer, shell: Shell) -> None:
         super(Alias, self).__init__('alias', 'create an alias for a command or string', computer, shell)
 
-    def action(self, arguments):
+    def action(self, arguments: str) -> CommandOutput:
         """
         The action of the command
         :param arguments: a string of the arguments that were given to the function
@@ -28,7 +41,7 @@ class Alias(Command):
         self.shell.aliases[alias] = value
         return CommandOutput('', '')
 
-    def _list_aliases(self):
+    def _list_aliases(self) -> str:
         """
         Returns a string listing the aliases
         :return:
@@ -36,7 +49,7 @@ class Alias(Command):
         return 'ALIASES:\n' + '\n'.join([f"{alias}='{value}'" for alias, value in self.shell.aliases.items()])
 
     @staticmethod
-    def parse_alias_string(string):
+    def parse_alias_string(string: str) -> Tuple[str, str]:
         """
         returns the alias, value as a tuple
         :param string:
@@ -50,10 +63,8 @@ class Alias(Command):
 
         return alias, value
 
-    def parse(self, string):
+    def parse(self, string: str) -> ParsedAliasCommand:
         """
-        Overridden, since it does not know how to handle spaces in the
-        :param string:
-        :return:
+        Overridden, since it does not know how to handle spaces inside one argument
         """
-        return ParsedCommand(self, ' '.join(string.split()[1:]))
+        return ParsedAliasCommand(self, ' '.join(string.split()[1:]))

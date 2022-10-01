@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING, NamedTuple, Optional, Dict, Callable
 
 from consts import *
 from exceptions import *
-from gui.abstracts.graphics_object import GraphicsObject
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_line
 from gui.shape_drawing import draw_rectangle
+from gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
 from usefuls.funcs import distance
 from usefuls.funcs import with_args, get_the_one
 
@@ -36,15 +36,15 @@ class Interfaces(NamedTuple):
     end:   Optional[InterfaceGraphics]
 
 
-class ConnectionGraphics(GraphicsObject):
+class ConnectionGraphics(ViewableGraphicsObject):
     """
     This is a GraphicsObject subclass which displays a connection.
     It shows the graphics of the connection (a line) between the two endpoints it is connected to.
     """
     def __init__(self,
                  connection: Connection,
-                 computer_graphics_start: ComputerGraphics,
-                 computer_graphics_end: ComputerGraphics,
+                 computer_graphics_start: Optional[ComputerGraphics],
+                 computer_graphics_end: Optional[ComputerGraphics],
                  packet_loss: float = 0) -> None:
         """
         Initiates the Connection Graphics object which is basically a line between
@@ -61,7 +61,6 @@ class ConnectionGraphics(GraphicsObject):
         self.regular_color = CONNECTIONS.COLOR if not packet_loss else CONNECTIONS.PL_COLOR
         self.color = self.regular_color
         self.marked_as_blocked = False
-        self.buttons_id = None
         self.x, self.y = 0, 0  # isn't used, just to avoid errors!
 
         self.connection = connection  # the `Connection` object.
@@ -202,13 +201,6 @@ class ConnectionGraphics(GraphicsObject):
 
         return copied_sprite, self.generate_view_text(), self.buttons_id
 
-    def end_viewing(self, user_interface: UserInterface) -> None:
-        """
-        Removes the buttons that were added in the start of the viewing.
-        :return: None
-        """
-        user_interface.remove_buttons(self.buttons_id)
-
     def generate_view_text(self) -> str:
         """
         Generates the text that is under the buttons in the side-window when the connection is viewed.
@@ -222,7 +214,7 @@ class ConnectionGraphics(GraphicsObject):
     def __repr__(self) -> str:
         return "Connection Graphics"
 
-    def dict_save(self):
+    def dict_save(self) -> Dict:
         """
         Save the connection as a dictionary in order to later save it to a file
         :return:

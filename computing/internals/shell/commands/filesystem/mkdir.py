@@ -1,12 +1,21 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from computing.internals.shell.commands.command import Command, CommandOutput
 from exceptions import DirectoryAlreadyExistsError, NoSuchDirectoryError
+
+if TYPE_CHECKING:
+    import argparse
+    from computing.computer import Computer
+    from computing.internals.shell.shell import Shell
 
 
 class Mkdir(Command):
     """
     Create a directory
     """
-    def __init__(self, computer, shell):
+    def __init__(self, computer: Computer, shell: Shell) -> None:
         """
         initiates the command.
         :param computer: 
@@ -15,7 +24,7 @@ class Mkdir(Command):
 
         self.parser.add_argument('dirnames', metavar='dirnames', type=str, nargs='+', help='directories to create')
 
-    def action(self, parsed_args):
+    def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
         Makes a directory
         """

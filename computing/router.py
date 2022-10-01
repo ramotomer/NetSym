@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Optional, Iterable, Dict
+
 from computing.computer import Computer
 from computing.internals.filesystem.filesystem import Filesystem
 from computing.internals.interface import Interface
@@ -16,7 +20,10 @@ class Router(Computer):
     It has routing table which tells it where to route his packets to. It contains a subnet mask mapped to an interface
     (any packet that fits the subnet mask of the interface goes to that interface)
     """
-    def __init__(self, name=None, interfaces=None, is_dhcp_server=True):
+    def __init__(self,
+                 name: Optional[str] = None,
+                 interfaces: Optional[Iterable[Interface]] = None,
+                 is_dhcp_server: bool = True) -> None:
         """
         Initiates a router with no IP addresses.
         """
@@ -30,7 +37,7 @@ class Router(Computer):
 
         self.is_dhcp_server = is_dhcp_server
 
-    def show(self, x, y):
+    def show(self, x: float, y: float) -> None:
         """
         overrides Computer.show and shows the same computer_graphics object only
         with a router's photo.
@@ -41,7 +48,7 @@ class Router(Computer):
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.ROUTER)
         self.loopback.connection.connection.show(self.graphics)
 
-    def route_new_packets(self):
+    def route_new_packets(self) -> None:
         """
         checks what are the new packets that arrived to this router, if they are not for it, routes them on.
         :return: None
@@ -57,7 +64,7 @@ class Router(Computer):
                     packet["Ether"].dst_mac == interface.mac:
                 self.process_scheduler.start_kernelmode_process(RoutePacket, packet)
 
-    def logic(self):
+    def logic(self) -> None:
         """Adds to the original logic of the Computer the ability to route packets."""
         super(Router, self).logic()
 
@@ -67,12 +74,12 @@ class Router(Computer):
             self.print("Started serving DHCP...")
             self.process_scheduler.start_usermode_process(DHCPServerProcess, self)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """The string representation of the Router"""
         return f"Router(name={self.name}, Interfaces={self.interfaces})"
 
     @classmethod
-    def from_dict_load(cls, dict_):
+    def from_dict_load(cls, dict_: Dict) -> Router:
         """
         Load a computer from the dict that is saved into the files
         :param dict_:

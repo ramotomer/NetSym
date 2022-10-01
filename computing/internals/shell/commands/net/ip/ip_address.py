@@ -1,14 +1,24 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from address.mac_address import MACAddress
 from computing.internals.shell.commands.command import Command, CommandOutput
 from computing.loopback_connection import LoopbackConnection
 from exceptions import AddressError, NoSuchInterfaceError
+
+if TYPE_CHECKING:
+    import argparse
+    from computing.internals.interface import Interface
+    from computing.internals.shell.shell import Shell
+    from computing.computer import Computer
 
 
 class IpAddressCommand(Command):
     """
     The command that prints the arguments that it receives.
     """
-    def __init__(self, computer, shell):
+    def __init__(self, computer: Computer, shell: Shell) -> None:
         """
         initiates the command.
         :param computer:
@@ -25,7 +35,7 @@ class IpAddressCommand(Command):
         }
 
     @staticmethod
-    def _get_interface_data(interface, index=0):
+    def _get_interface_data(interface: Interface, index: int = 0) -> str:
         """
         Receives interface, returns string data
         :param interface:
@@ -48,10 +58,9 @@ class IpAddressCommand(Command):
     link/{type_2} {interface.mac} brd {MACAddress.broadcast()}{ip_info}
 """
 
-    def _list_address(self, args):
+    def _list_address(self, args: argparse.Namespace) -> CommandOutput:
         """
         return a string that lists the interfaces of the computer
-        :return:
         """
         if 'dev' not in args:
             stdout = [self._get_interface_data(interface, i) for i, interface in enumerate(self.computer.all_interfaces)]
@@ -59,12 +68,10 @@ class IpAddressCommand(Command):
         else:
             return CommandOutput(self._get_interface_data(args[args.index('dev') + 1]), '')
 
-    def _add_address(self, args):
+    def _add_address(self, args: argparse.Namespace) -> CommandOutput:
         """
         for example: ip address add 1.1.1.1/24 dev work1
         only if the interface does not have an ip already
-        :param args:
-        :return:
         """
         address = args[1]
 
@@ -85,12 +92,10 @@ class IpAddressCommand(Command):
 
         return CommandOutput("Added IP address successfully! :)", '')
 
-    def _replace_address(self, args):
+    def _replace_address(self, args: argparse.Namespace) -> CommandOutput:
         """
         for example: ip address replace 1.1.1.1/24 dev work1
         only if the interface has an ip already
-        :param args:
-        :return:
         """
         address = args[1]
 
@@ -111,7 +116,7 @@ class IpAddressCommand(Command):
 
         return CommandOutput("Replaced IP address successfully! :)", '')
 
-    def _del_address(self, args):
+    def _del_address(self, args: argparse.Namespace) -> CommandOutput:
         """
         for example: ip address add 1.1.1.1/24 dev work1
         only if the interface does not have an ip already
@@ -135,7 +140,7 @@ class IpAddressCommand(Command):
 
         return CommandOutput("Deleted IP address successfully! :)", '')
 
-    def action(self, parsed_args):
+    def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
         prints out the arguments.
         """

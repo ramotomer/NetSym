@@ -1,4 +1,6 @@
-from typing import List
+from __future__ import annotations
+
+from typing import List, TYPE_CHECKING, Set, Iterable
 
 from consts import *
 from exceptions import UnknownPortError
@@ -6,13 +8,16 @@ from gui.abstracts.graphics_object import GraphicsObject
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_loop import MainLoop
 
+if TYPE_CHECKING:
+    from gui.tech.computer_graphics import ComputerGraphics
+
 
 class ProcessGraphicsList(GraphicsObject):
     """
     A graphics object which is just a list of `ProcessGraphics`
     """
 
-    def __init__(self, server_graphics):
+    def __init__(self, server_graphics: ComputerGraphics) -> None:
         """
         initiates the list empty.
         """
@@ -22,16 +27,16 @@ class ProcessGraphicsList(GraphicsObject):
         self.process_count = 0
 
     @property
-    def set_of_all_ports(self):
+    def set_of_all_ports(self) -> Set[T_Port]:
         return {process_graphics.port for process_graphics in self.child_graphics_objects}
 
-    def add(self, port):
+    def add(self, port: T_Port) -> None:
         """Add a new process to the list"""
         self.child_graphics_objects.append(ProcessGraphics(port, self.server_graphics, self.process_count))
         # TODO: add a separate list for UDP ports (maybe the drawings of tcp have red glow and udp has blue glow IDK...)
         self.process_count += 1
 
-    def remove(self, port):
+    def remove(self, port: T_Port) -> None:
         """
         Removes a process from the list and unregisters it.
         :param port:
@@ -49,7 +54,7 @@ class ProcessGraphicsList(GraphicsObject):
         if not found:
             raise UnknownPortError(f"The port is not the process list!!! {port}")
 
-    def set_list(self, list_: List[int]):
+    def set_list(self, list_: List[int]) -> None:
         """
         Sets the list of ports to the supplied list
         """
@@ -60,7 +65,7 @@ class ProcessGraphicsList(GraphicsObject):
         for port in list_:
             self.add(port)
 
-    def clear(self):
+    def clear(self) -> None:
         """
         Clears the list
         :return:
@@ -69,7 +74,7 @@ class ProcessGraphicsList(GraphicsObject):
             self.remove(process_graphics.port)
         self.process_count = 0
 
-    def __contains__(self, item):
+    def __contains__(self, item: T_Port) -> bool:
         """
         Enables the notation '<port num> in <process graphics list>'
         :param item: a port number
@@ -80,19 +85,19 @@ class ProcessGraphicsList(GraphicsObject):
                 return True
         return False
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[T_Port]:
         """enables running over the list"""
         return iter([pg.port for pg in self.child_graphics_objects])
 
-    def draw(self):
+    def draw(self) -> None:
         """Is not drawn..."""
         pass
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Process Graphics List {[pg.port for pg in self.child_graphics_objects]}"
 
-    def dict_save(self):
-        return None
+    def dict_save(self) -> None:
+        pass
 
 
 class ProcessGraphics(ImageGraphics):
@@ -100,12 +105,12 @@ class ProcessGraphics(ImageGraphics):
     The graphics of a TCP process that is running on a server
     """
 
-    def __init__(self, port, server_graphics, process_index):
+    def __init__(self,
+                 port: T_Port,
+                 server_graphics: ComputerGraphics,
+                 process_index: int) -> None:
         """
         Initiates the process graphics from a port number
-        :param :
-        :param :
-        :param :
         """
         super(ProcessGraphics, self).__init__(PORTS.TO_IMAGES.get(port, None), *server_graphics.location, True,
                                               scale_factor=IMAGES.SCALE_FACTORS.PROCESSES)
@@ -113,11 +118,11 @@ class ProcessGraphics(ImageGraphics):
         self.process_index = process_index
         self.port = port
 
-    def is_mouse_in(self):
+    def is_mouse_in(self) -> bool:
         """Cannot be pressed"""
         return False
 
-    def move(self):
+    def move(self) -> None:
         """
         Moves the process according to the location of the server it runs on.
         :return: None
@@ -127,8 +132,8 @@ class ProcessGraphics(ImageGraphics):
         self.y = self.server_graphics.y + pad_y + (self.process_index * IMAGES.PROCESSES.GAP)
         super(ProcessGraphics, self).move()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Process Graphics {self.port}"
 
-    def dict_save(self):
-        return None
+    def dict_save(self) -> None:
+        pass

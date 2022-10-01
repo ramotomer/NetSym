@@ -1,4 +1,6 @@
+from collections import Iterable
 from operator import itemgetter
+from typing import TYPE_CHECKING
 
 from consts import *
 from exceptions import WrongUsageError
@@ -7,13 +9,19 @@ from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rect_by_corners
 
+if TYPE_CHECKING:
+    from gui.user_interface.user_interface import UserInterface
+
 
 class SelectingSquare(GraphicsObject):
     """
     The square that is drawn when one drags the mouse over the screen.
     It allows one to select multiple items at the same time.
     """
-    def __init__(self, x, y, graphics_objects, user_interface):
+    def __init__(self,
+                 x: float, y: float,
+                 graphics_objects: Iterable[ImageGraphics],
+                 user_interface: UserInterface) -> None:
         """
         initiates the square with the coordinates of the initial mouse press,
         after that, the other coordinates will be of the mouse.
@@ -23,17 +31,17 @@ class SelectingSquare(GraphicsObject):
         self.user_interface = user_interface
 
     @property
-    def width(self):
+    def width(self) -> float:
         return abs(self.x - MainWindow.main_window.get_mouse_location()[0])
 
     @property
-    def height(self):
+    def height(self) -> float:
         return abs(self.y - MainWindow.main_window.get_mouse_location()[1])
 
-    def dict_save(self):
-        return None
+    def dict_save(self) -> None:
+        pass
 
-    def draw(self):
+    def draw(self) -> None:
         """
         draws the rectangle.
         :return:
@@ -41,7 +49,7 @@ class SelectingSquare(GraphicsObject):
         mouse_location = MainWindow.main_window.get_mouse_location()
         draw_rect_by_corners(self.location, mouse_location, outline_color=SELECTION_SQUARE.COLOR)
 
-    def __contains__(self, item):
+    def __contains__(self, item: Union[Tuple[float, float], ImageGraphics]) -> bool:
         """
         Returns whether or not another graphics object is inside of the selecting object.
         :param item:
@@ -60,19 +68,18 @@ class SelectingSquare(GraphicsObject):
             return any(corner in self for corner in item.corners)
         raise WrongUsageError("Receives a tuple or a graphics object only!")
 
-    def move(self):
+    def move(self) -> None:
         self.select_objects()
 
-    def select_objects(self):
+    def select_objects(self) -> None:
         """
         Take in a list of objects. Select the objects that are inside the square.
-        :param object_list:
-        :return:
         """
         for graphics_object in self.graphics_objects:
             if graphics_object not in self.user_interface.marked_objects:
                 if graphics_object in self:
                     self.user_interface.marked_objects.append(graphics_object)
-            else:
-                if graphics_object not in self:
-                    self.user_interface.marked_objects.remove(graphics_object)
+                continue
+
+            if graphics_object not in self:
+                self.user_interface.marked_objects.remove(graphics_object)

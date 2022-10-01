@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Tuple, TYPE_CHECKING, Optional
+from typing import Tuple, TYPE_CHECKING, Optional, Any, List
 
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import WaitingFor, T_ProcessCode, WaitingForWithTimeout, Timeout
@@ -65,7 +65,7 @@ class Socket(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def receive(self, count):
+    def receive(self, count: Optional[int]) -> List[Any]:
         """
         receive the information from the other side of the socket
         :param count: how many bytes to receive
@@ -73,7 +73,7 @@ class Socket(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def bind(self, address: Tuple[IPAddress, T_Port]):
+    def bind(self, address: Tuple[IPAddress, T_Port]) -> None:
         """
         Binds the socket to a certain address and port on the computer
         :param address:

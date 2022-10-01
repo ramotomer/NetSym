@@ -1,17 +1,26 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from computing.internals.shell.commands.command import Command, CommandOutput
 from computing.internals.shell.commands.net.ip.ip_address import IpAddressCommand
 from computing.internals.shell.commands.net.ip.ip_link import IpLinkCommand
 from computing.internals.shell.commands.net.ip.ip_route import IpRouteCommand
+
+if TYPE_CHECKING:
+    import argparse
+    from computing.computer import Computer
+    from computing.internals.shell.shell import Shell
 
 
 class Ip(Command):
     """
     Controls the network communication of the device.
     """
-    def __init__(self, computer, shell):
+    def __init__(self, computer: Computer, shell: Shell) -> None:
         """
         initiates the command.
-        :param computer: 
+        :param computer:
         """
         super(Ip, self).__init__('ip', 'manage and display ip settings', computer, shell)
         self.parser.add_argument('object', metavar='object', type=str, nargs='?', help='type of ip command to run')
@@ -28,7 +37,7 @@ class Ip(Command):
         }
 
     @staticmethod
-    def _ip_help():
+    def _ip_help() -> str:
         """
         Returns a string help document
         :return:
@@ -37,7 +46,7 @@ class Ip(Command):
 where OBJECT := { link | address | route } 
 """
 
-    def action(self, parsed_args):
+    def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
         redirects the action to the action of the specified `ip` command (ip a, ip l, etc...)
         """

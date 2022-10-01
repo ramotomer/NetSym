@@ -1,12 +1,22 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from computing.internals.shell.commands.command import Command, CommandOutput
 from consts import COMPUTER
+
+if TYPE_CHECKING:
+    import argparse
+    from computing.internals.processes.abstracts.process import Process
+    from computing.internals.shell.shell import Shell
+    from computing.computer import Computer
 
 
 class Ps(Command):
     """
     Prints out all of the computer's processes.
     """
-    def __init__(self, computer, shell):
+    def __init__(self, computer: Computer, shell: Shell) -> None:
         """
         initiates the command.
         :param computer:
@@ -21,7 +31,7 @@ class Ps(Command):
                                  help='show the internal processes running inside the kernel... interesting :)')
 
     @staticmethod
-    def _process_info(process):
+    def _process_info(process: Process) -> str:
         """
         return an info line string about a process.
         :param process:
@@ -29,7 +39,7 @@ class Ps(Command):
         """
         return f"{process.pid: >3}\t{repr(process)}\n"
 
-    def _list_processes(self, process_mode=COMPUTER.PROCESSES.MODES.USERMODE):
+    def _list_processes(self, process_mode: str = COMPUTER.PROCESSES.MODES.USERMODE) -> CommandOutput:
         """
         lists out the processes.
         :return:
@@ -43,7 +53,7 @@ class Ps(Command):
             string += self._process_info(process)
         return CommandOutput(string, '')
 
-    def action(self, parsed_args):
+    def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
         Prints out all of the computer's processes.
         """

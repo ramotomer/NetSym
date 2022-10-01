@@ -1,14 +1,13 @@
 from itertools import chain
 from operator import itemgetter
-
-import pyglet
+from typing import Optional
 
 from consts import *
 from usefuls.funcs import circular_coordinates, sine_wave_coordinates, lighten_color, darken_color, \
     normal_color_to_weird_gl_color
 
 
-def draw_line(point_1, point_2, color=COLORS.WHITE):
+def draw_line(point_1: Tuple[float, float], point_2: Tuple[float, float], color: T_Color = COLORS.WHITE) -> None:
     """
     Draws a line between two points on the screen.
     :param point_1: a tuple of (x, y) of the first point.
@@ -22,7 +21,11 @@ def draw_line(point_1, point_2, color=COLORS.WHITE):
     pyglet.graphics.draw(2, pyglet.gl.GL_LINES, (vertex_view, point_1 + point_2), ('c3B', color * 2))
 
 
-def draw_rectangle(x, y, width, height, color=None, outline_color=None, outline_width=SHAPES.RECT.DEFAULT_OUTLINE_WIDTH):
+def draw_rectangle(
+        x: float, y: float,
+        width: float, height: float,
+        color: Optional[T_Color] = None, outline_color: Optional[T_Color] = None,
+        outline_width: float = SHAPES.RECT.DEFAULT_OUTLINE_WIDTH) -> None:
     """
     Draws a rectangle.
     :param x:
@@ -47,7 +50,7 @@ def draw_rectangle(x, y, width, height, color=None, outline_color=None, outline_
         _draw_rect_no_outline(x, y, width, height)
 
 
-def _draw_rect_no_fill(x, y, width, height, color=COLORS.WHITE):
+def _draw_rect_no_fill(x: float, y: float, width: float, height: float, color: T_Color = COLORS.WHITE) -> None:
     """
     Draws an unfilled rectangle from the bottom left corner (x,y) with a width of
     `width` and a height of `height`.
@@ -67,7 +70,7 @@ def _draw_rect_no_fill(x, y, width, height, color=COLORS.WHITE):
                          )
 
 
-def _draw_rect_no_outline(x, y, width, height, color=COLORS.GRAY):
+def _draw_rect_no_outline(x: float, y: float, width: float, height: float, color: T_Color = COLORS.GRAY) -> None:
     """
     Draws a filled rectangle from the bottom left corner (x, y) with a width of
     `width` and a height of `height`.
@@ -88,7 +91,9 @@ def _draw_rect_no_outline(x, y, width, height, color=COLORS.GRAY):
                          )
 
 
-def _draw_rect_with_outline(x, y, width, height, color=COLORS.GRAY, outline_color=COLORS.WHITE, outline_width=SHAPES.RECT.DEFAULT_OUTLINE_WIDTH):
+def _draw_rect_with_outline(x: float, y: float, width: float, height: float,
+                            color: T_Color = COLORS.GRAY, outline_color: T_Color = COLORS.WHITE,
+                            outline_width: float = SHAPES.RECT.DEFAULT_OUTLINE_WIDTH) -> None:
     """
     Draws a rectangle with an outline.
     :param x:
@@ -110,7 +115,9 @@ def _draw_rect_with_outline(x, y, width, height, color=COLORS.GRAY, outline_colo
     )
 
 
-def draw_rect_by_corners(point1, point2, color=None, outline_color=None, outline_width=None):
+def draw_rect_by_corners(point1: Tuple[float, float], point2: Tuple[float, float],
+                         color: Optional[T_Color] = None, outline_color: Optional[T_Color] = None,
+                         outline_width: Optional[float] = None) -> None:
     """
     Receives two points and draws a rect
     """
@@ -124,7 +131,7 @@ def draw_rect_by_corners(point1, point2, color=None, outline_color=None, outline
                    color, outline_color, outline_width)
 
 
-def draw_pause_rectangles():
+def draw_pause_rectangles() -> None:
     """
     Draws two rectangles in the side of the window like a pause sign.
     This is called when the program is paused.
@@ -135,7 +142,7 @@ def draw_pause_rectangles():
     _draw_rect_no_outline(x + 2 * SHAPES.PAUSE_RECT.WIDTH, y, SHAPES.PAUSE_RECT.WIDTH, SHAPES.PAUSE_RECT.HEIGHT, COLORS.RED)
 
 
-def draw_tiny_corner_windows_icon():
+def draw_tiny_corner_windows_icon() -> None:
     """
     Draws the four blue squares in the corner that indicate that the screen is highlighted and currently ignores presses of `winkey` etc...
     """
@@ -151,7 +158,8 @@ def draw_tiny_corner_windows_icon():
     draw_rectangle(INITIAL_X + SIZE + GAP_SIZE, WINDOWS.MAIN.HEIGHT - (INITIAL_Y_FROM_TOP + SIZE + GAP_SIZE), SIZE, SIZE, SQUARE_COLOR)
 
 
-def draw_circle(x, y, radius, outline_color=COLORS.WHITE, fill_color=None):
+def draw_circle(x: float, y: float, radius: float,
+                outline_color: T_Color = COLORS.WHITE, fill_color: Optional[T_Color] = None) -> None:
     """
     Draws a circle with a given center location and a radius and a color.
     :return:
@@ -171,17 +179,17 @@ def draw_circle(x, y, radius, outline_color=COLORS.WHITE, fill_color=None):
                          )
 
 
-def debug_circle(x, y, fill_color=COLORS.RED, size=3):
+def debug_circle(x: float, y: float, fill_color: T_Color = COLORS.RED, size: float = 3) -> None:
     """
     Red dot for debugging
     """
     draw_circle(x, y, size, fill_color=fill_color, outline_color=fill_color)
 
 
-def draw_sine_wave(start_coordinates, end_coordinates,
-                   amplitude=SHAPES.SINE_WAVE.DEFAULT_AMPLITUDE,
-                   frequency=SHAPES.SINE_WAVE.DEFAULT_FREQUENCY,
-                   color=CONNECTIONS.COLOR):
+def draw_sine_wave(start_coordinates: Tuple[float, float], end_coordinates: Tuple[float, float],
+                   amplitude: float = SHAPES.SINE_WAVE.DEFAULT_AMPLITUDE,
+                   frequency: float = SHAPES.SINE_WAVE.DEFAULT_FREQUENCY,
+                   color: T_Color = CONNECTIONS.COLOR) -> None:
     """
 
     :param start_coordinates:
@@ -202,7 +210,9 @@ def draw_sine_wave(start_coordinates, end_coordinates,
     )
 
 
-def draw_button(x, y, width, height, color=BUTTONS.COLOR, outline_width=BUTTONS.OUTLINE_WIDTH):
+def draw_button(x: float, y: float, width: float, height: float,
+                color=BUTTONS.COLOR,
+                outline_width: float = BUTTONS.OUTLINE_WIDTH) -> None:
     """
     Draws a button.
     :param x:

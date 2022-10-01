@@ -1,7 +1,12 @@
-import pyglet
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
 
 from consts import *
 from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
+
+if TYPE_CHECKING:
+    from gui.abstracts.graphics_object import GraphicsObject
 
 
 class Text(UserInterfaceGraphicsObject):
@@ -12,16 +17,17 @@ class Text(UserInterfaceGraphicsObject):
     time the screen is updated (like it was before) the program crashes and says it is out of memory.
     Apparently pyglet is having a lot of trouble drawing text.
     """
-    def __init__(self, text, x, y,
-                 parent_graphics=None,
-                 padding=(0, TEXT.DEFAULT_Y_PADDING),
-                 is_button=False,
-                 start_hidden=False,
-                 max_width=WINDOWS.MAIN.WIDTH,
-                 font_size=TEXT.FONT.DEFAULT_SIZE,
-                 align=TEXT.ALIGN.CENTER,
-                 color=TEXT.COLOR,
-                 font=TEXT.FONT.DEFAULT):
+    def __init__(self, text: str,
+                 x: float, y: float,
+                 parent_graphics: Optional[GraphicsObject] = None,
+                 padding: Tuple[float, float] = (0, TEXT.DEFAULT_Y_PADDING),
+                 is_button: bool = False,
+                 start_hidden: bool = False,
+                 max_width: float = WINDOWS.MAIN.WIDTH,
+                 font_size: float = TEXT.FONT.DEFAULT_SIZE,
+                 align: str = TEXT.ALIGN.CENTER,
+                 color: T_Color = TEXT.COLOR,
+                 font: str = TEXT.FONT.DEFAULT) -> None:
         """
         Initiates a new `Text` object.
         A `Text` object can have a parent `GraphicsObject` which it will set its coordinates according to it. (if it
@@ -57,10 +63,10 @@ class Text(UserInterfaceGraphicsObject):
         self.set_text(text)
 
     @property
-    def text(self):
+    def text(self) -> str:
         return self._text
 
-    def set_text(self, text, hard_refresh=False):
+    def set_text(self, text: str, hard_refresh: bool = False) -> None:
         """
         The correct way to update the text of a `Text` object.
         updates the text and corrects the lines and everything necessary.
@@ -85,13 +91,13 @@ class Text(UserInterfaceGraphicsObject):
         self.x, self.y = self.label.x, self.label.y
         self.move()
 
-    def refresh_text(self):
+    def refresh_text(self) -> None:
         """
         Enforce text parameters on actual visible text on the screen (update it)
         """
         self.set_text(self._text, hard_refresh=True)
 
-    def append_text(self, text):
+    def append_text(self, text: str) -> None:
         """
         appends a string to the end of the text of the `Text` object.
         :param text:
@@ -99,7 +105,7 @@ class Text(UserInterfaceGraphicsObject):
         """
         self.set_text(self.text + text)
 
-    def draw(self):
+    def draw(self) -> None:
         """
         Draws the text to the screen
         :return: None
@@ -108,21 +114,21 @@ class Text(UserInterfaceGraphicsObject):
         if not self.is_hidden:
             self.label.draw()
 
-    def show(self):
+    def show(self) -> None:
         """
         Shows the text if it is hidden
         :return: None
         """
         self.is_hidden = False
 
-    def hide(self):
+    def hide(self) -> None:
         """
         Hides the text if it is is_showing.
         :return: None
         """
         self.is_hidden = True
 
-    def move(self):
+    def move(self) -> None:
         """
         Moves the text according to the parent object's location.
         :return: None
@@ -133,13 +139,13 @@ class Text(UserInterfaceGraphicsObject):
         super(Text, self).move()
         self.label.x, self.label.y = self.x, self.y
 
-    def resize(self, new_padding, new_max_size):
+    def resize(self, new_padding: Tuple[float, float], new_max_size: float) -> None:
         self.padding = new_padding
         self.max_width = new_max_size
         self.refresh_text()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Text Graphics: '{self.text}'"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Text(text={self.text!r})"

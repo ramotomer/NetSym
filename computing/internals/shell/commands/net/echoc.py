@@ -1,6 +1,15 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from computing.internals.processes.usermode_processes.echo_server_process.echo_client_process import EchoClientProcess
 from computing.internals.shell.commands.command import Command, CommandOutput
 from consts import PORTS, PROTOCOLS
+
+if TYPE_CHECKING:
+    import argparse
+    from computing.computer import Computer
+    from computing.internals.shell.shell import Shell
 
 
 class Echoc(Command):
@@ -10,7 +19,7 @@ class Echoc(Command):
         echo client
     """
 
-    def __init__(self, computer, shell):
+    def __init__(self, computer: Computer, shell: Shell) -> None:
         """
         initiates the command.
         :param computer:
@@ -24,7 +33,7 @@ class Echoc(Command):
         self.parser.add_argument('-c', type=int, dest='count', default=PROTOCOLS.ECHO_SERVER.DEFAULT_REQUEST_COUNT,
                                  help=f'the amount of requests to send (default: {PROTOCOLS.ECHO_SERVER.DEFAULT_REQUEST_COUNT})')
 
-    def action(self, parsed_args):
+    def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
         start the `echocd` process
         """

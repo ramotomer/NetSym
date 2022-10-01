@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Optional, TYPE_CHECKING, Dict
+
 from address.mac_address import MACAddress
 from computing.computer import Computer, COMPUTER
 from computing.internals.filesystem.filesystem import Filesystem
@@ -9,6 +13,10 @@ from consts import OS, PROTOCOLS, IMAGES, CONNECTIONS, ADDRESSES
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.all import LLC, STP
 
+if TYPE_CHECKING:
+    from packets.packet import Packet
+    from computing.internals.interface import Interface
+
 
 class Switch(Computer):
     """
@@ -19,7 +27,9 @@ class Switch(Computer):
     The switch has a table that helps it learn which MAC address sits behind which leg and so it knows where to send
     the packet (frame) it receives, this table is called the `switching_table`.
     """
-    def __init__(self, name=None, priority=PROTOCOLS.STP.DEFAULT_SWITCH_PRIORITY):
+    def __init__(self,
+                 name: Optional[str] = None,
+                 priority: Optional[int] = PROTOCOLS.STP.DEFAULT_SWITCH_PRIORITY) -> None:
         """
         Initiates the Switch with a given name.
         A switch has a variable `self.is_hub` that allows any switch to become a hub.
@@ -34,7 +44,7 @@ class Switch(Computer):
         self.priority = priority
         self.process_scheduler.add_startup_process(COMPUTER.PROCESSES.MODES.KERNELMODE, SwitchingProcess)
 
-    def show(self, x, y):
+    def show(self, x: float, y: float) -> None:
         """
         overrides `Computer.show` and shows the same `ComputerGraphics` object only with a switch's photo.
         :param x:
@@ -44,7 +54,7 @@ class Switch(Computer):
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.SWITCH)
         self.loopback.connection.connection.show(self.graphics)
 
-    def is_for_me(self, packet):
+    def is_for_me(self, packet: Packet) -> bool:
         """
         overrides the original `is_for_me` method of `Computer` and adds STP multicast-s.
         :param packet: a `Packet` to test
@@ -54,7 +64,7 @@ class Switch(Computer):
             return (super(Switch, self).is_for_me(packet)) or (packet["Ether"].dst_mac == MACAddress.stp_multicast())
         return super(Switch, self).is_for_me(packet)
 
-    def start_stp(self):
+    def start_stp(self) -> None:
         """
         Starts the process of STP sending and receiving.
         :return: None
@@ -62,7 +72,7 @@ class Switch(Computer):
         if not self.process_scheduler.is_usermode_process_running_by_type(STPProcess) and self.interfaces:
             self.process_scheduler.start_usermode_process(STPProcess)
 
-    def send_stp(self, sender_bid: BID, root_bid: BID, distance_to_root: int, age: int, sending_interval: int, root_max_age: int) -> None:
+    def send_stp(self, sender_bid: BID, root_bid: BID, distance_to_root: float, age: int, sending_interval: int, root_max_age: int) -> None:
         """
         Sends an STP packet with the given information on all interfaces. (should only be used on a switch)
         """
@@ -83,7 +93,7 @@ class Switch(Computer):
                                          ))
 
     @classmethod
-    def from_dict_load(cls, dict_):
+    def from_dict_load(cls, dict_: Dict) -> Switch:
         """
         Load a computer from the dict that is saved into the files
         :param dict_:
@@ -103,12 +113,12 @@ class Hub(Switch):
     It operates in the exact same way except that it is very stupid and just
     floods every time and sends all packets to everyone.
     """
-    def __init__(self, name=None):
+    def __init__(self, name: Optional[str] = None) -> None:
         super(Hub, self).__init__(name)
         self.is_hub = True
         self.stp_enabled = True
 
-    def show(self, x, y):
+    def show(self, x: float, y: float) -> None:
         """
         Overrides `Switch.show` and shows the same `ComputerGraphics` object only with a hub's photo.
         :param x:
@@ -123,13 +133,13 @@ class Antenna(Switch):
     """
     This class represents an Antenna, which is just a Switch that can send things over radio waves.
     """
-    def __init__(self, name=None, *interfaces):
+    def __init__(self, name: Optional[str] = None, *interfaces: Interface) -> None:
         super(Antenna, self).__init__(name)
         self.stp_enabled = False
         self.is_supporting_wireless_connections = True
         self.interfaces = [WirelessInterface(frequency=CONNECTIONS.WIRELESS.DEFAULT_FREQUENCY)] if not interfaces else list(interfaces)
 
-    def show(self, x, y):
+    def show(self, x: float, y: float) -> None:
         """
         Overrides `Switch.show` and shows the same `ComputerGraphics` object only with a antenna's photo.
         :param x:
@@ -140,7 +150,7 @@ class Antenna(Switch):
         self.loopback.connection.connection.show(self.graphics)
 
     @classmethod
-    def from_dict_load(cls, dict_):
+    def from_dict_load(cls, dict_: Dict) -> Switch:
         """
         Load a computer from the dict that is saved into the files
         :param dict_:

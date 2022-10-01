@@ -1,12 +1,21 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from computing.internals.shell.commands.command import Command, CommandOutput
 from consts import INTERFACES
+
+if TYPE_CHECKING:
+    import argparse
+    from computing.computer import Computer
+    from computing.internals.shell.shell import Shell
 
 
 class Tcpdump(Command):
     """
     The command that starts and stops sniffing on an interface
     """
-    def __init__(self, computer, shell):
+    def __init__(self, computer: Computer, shell: Shell) -> None:
         """
         initiates the command.
         :param computer:
@@ -19,7 +28,7 @@ class Tcpdump(Command):
         self.parser.add_argument('-S', '--Stop', dest='stop', action='store_true', help='stop ALL sniffing processes')
         # TODO: add BPF syntax (how?????)
 
-    def action(self, parsed_args):
+    def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
         start sniffing or stop sniffing.
         """

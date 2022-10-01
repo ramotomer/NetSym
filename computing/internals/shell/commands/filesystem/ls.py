@@ -1,13 +1,23 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List
+
+from computing.internals.filesystem.directory import Directory
 from computing.internals.shell.commands.command import Command, CommandOutput
 from consts import FILESYSTEM
 from exceptions import NoSuchFileError
+
+if TYPE_CHECKING:
+    import argparse
+    from computing.computer import Computer
+    from computing.internals.shell.shell import Shell
 
 
 class Ls(Command):
     """
     lists the current working directory of the computer.
     """
-    def __init__(self, computer, shell):
+    def __init__(self, computer: Computer, shell: Shell) -> None:
         """
         Initiates the command with the running computer.
         :param computer:
@@ -18,7 +28,7 @@ class Ls(Command):
         self.parser.add_argument('-a', '--all', dest='show_hidden', action='store_true', help='show hidden dir items')
         self.parser.add_argument('-l', '--long', dest='extended', action='store_true', help='list additional details')
 
-    def _list_dir(self, path, show_hidden=False,extended_info=False):
+    def _list_dir(self, path: str, show_hidden: bool = False, extended_info: bool = False) -> str:
         """
         Lists the directory at the given path.
         :param path:
@@ -41,7 +51,7 @@ class Ls(Command):
         return returned
 
     @staticmethod
-    def _extended_list_dir(dir_, dir_items):
+    def _extended_list_dir(dir_: Directory, dir_items: List[str]) -> str:
         """
         receives a Directory object and a list of the items in the directory that
         were already listed, returns a string that should be returned.
@@ -59,7 +69,7 @@ class Ls(Command):
         returned = f"TYPE     NAME CTIME ETIME\n" + '\n'.join(dir_items)
         return returned
 
-    def action(self, parsed_args):
+    def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
         prints out the arguments.
         """

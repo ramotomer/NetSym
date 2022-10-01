@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Optional, Dict, Callable
 from address.mac_address import MACAddress
 from consts import *
 from exceptions import *
-from gui.abstracts.graphics_object import GraphicsObject
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rectangle
+from gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
 from usefuls.funcs import distance, with_args, get_the_one
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from gui.user_interface.user_interface import UserInterface
 
 
-class InterfaceGraphics(GraphicsObject):
+class InterfaceGraphics(ViewableGraphicsObject):
     """
     This is the graphics of a network interface of a computer.
     It is the little square next to computers.
@@ -43,8 +43,6 @@ class InterfaceGraphics(GraphicsObject):
 
         self.interface = interface
         interface.graphics = self
-
-        self.buttons_id = None
 
     @property
     def computer_location(self) -> Tuple[float, float]:
@@ -131,14 +129,6 @@ class InterfaceGraphics(GraphicsObject):
         copied_sprite = ImageGraphics.get_image_sprite(os.path.join(DIRECTORIES.IMAGES, IMAGES.VIEW.INTERFACE))
         return copied_sprite, self.interface.generate_view_text(), self.buttons_id
 
-    def end_viewing(self, user_interface: UserInterface) -> None:
-        """
-        Unregisters the buttons from the `UserInterface` object.
-        :param user_interface:
-        :return:
-        """
-        user_interface.remove_buttons(self.buttons_id)
-
     def mark_as_selected(self) -> None:
         """
         Marks a rectangle around a `GraphicsObject` that is selected.
@@ -157,7 +147,7 @@ class InterfaceGraphics(GraphicsObject):
     def __repr__(self) -> str:
         return f"Interface Graphics ({self.interface.name})"
 
-    def dict_save(self):
+    def dict_save(self) -> Dict:
         """
         Save the interface as a dict that can be later reconstructed to a new interface
         :return:

@@ -1,13 +1,23 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from computing.internals.shell.commands.command import Command, CommandOutput
 from computing.loopback_connection import LoopbackConnection
 from exceptions import DeviceAlreadyConnectedError, NoSuchInterfaceError
+
+if TYPE_CHECKING:
+    import argparse
+    from computing.internals.interface import Interface
+    from computing.internals.shell.shell import Shell
+    from computing.computer import Computer
 
 
 class IpLinkCommand(Command):
     """
     The command that prints the arguments that it receives.
     """
-    def __init__(self, computer, shell):
+    def __init__(self, computer: Computer, shell: Shell) -> None:
         """
         initiates the command.
         :param computer:
@@ -25,7 +35,7 @@ class IpLinkCommand(Command):
         }
 
     @staticmethod
-    def _link_description_from_interface(interface, index=0):
+    def _link_description_from_interface(interface: Interface, index: int = 0) -> str:
         """
         returns a string description of the link, receives an interface of the computer.
         :param interface: `Interface`
@@ -45,7 +55,7 @@ link:
     length: {interface.connection.connection.length}{is_blocked}{is_loopback}
 """
 
-    def _list_links(self, args):
+    def _list_links(self, args: argparse.Namespace) -> CommandOutput:
         """
         List out the links that the computer has
         :param args:
@@ -55,7 +65,7 @@ link:
                      for i, interface in enumerate(self.computer.all_interfaces)]
         return CommandOutput('\n'.join(link_list), '')
 
-    def _add_link(self, args):
+    def _add_link(self, args: argparse.Namespace) -> CommandOutput:
         """
         Adds an interface
         :param args:
@@ -72,7 +82,7 @@ link:
         self.computer.add_interface(name, mac)
         return CommandOutput(f"Added interface {name} successfully :)", '')
 
-    def _del_link(self, args):
+    def _del_link(self, args: argparse.Namespace) -> CommandOutput:
         """
         Delete an interface
         :param args:
@@ -91,7 +101,7 @@ link:
             return CommandOutput('', f"Cannot remove a connected interface :(")
         return CommandOutput("Interface removed successfully!", '')
 
-    def _set_link(self, args):
+    def _set_link(self, args: argparse.Namespace) -> CommandOutput:
         """
         Sets an attribute of an interface or connection.
         :param args:
@@ -126,12 +136,9 @@ link:
         return CommandOutput("OK!", '')
 
     @staticmethod
-    def _set_link_connection(interface, args):
+    def _set_link_connection(interface: Interface, args: argparse.Namespace) -> CommandOutput:
         """
         Takes care of `ip link set <NIC> connection ...` commands
-        :param interface:
-        :param args:
-        :return:
         """
         command = args[args.index('connection') + 1]
         value = args[args.index(command) + 1]
@@ -144,7 +151,7 @@ link:
             return CommandOutput('', "Connection commands are `pl` or `speed` only!")
         return CommandOutput("OK!", '')
 
-    def action(self, parsed_args):
+    def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
         decide what to do with the arguments and do it!
         """

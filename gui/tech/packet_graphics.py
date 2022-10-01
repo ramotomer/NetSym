@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Dict, Callable
 
-import scapy
-
 from consts import *
 from gui.abstracts.animation_graphics import AnimationGraphics
 from gui.abstracts.image_graphics import ImageGraphics
@@ -54,10 +52,8 @@ class PacketGraphics(ImageGraphics):
 
         self.drop_animation = None
 
-        self.buttons_id = None
-
     @property
-    def should_be_transparent(self):
+    def should_be_transparent(self) -> bool:
         """
         This property should be overridden - at any given time, the object will become transparent If and Only If this returns `True`
         """
@@ -114,21 +110,15 @@ class PacketGraphics(ImageGraphics):
         self.buttons_id = user_interface.add_buttons(buttons)
         return self.copy_sprite(self.sprite), '', self.buttons_id
 
-    def end_viewing(self, user_interface: UserInterface) -> None:
-        """
-        Ends the viewing of the object in the side window
-        """
-        user_interface.remove_buttons(self.buttons_id)
-
     def __repr__(self) -> str:
         return self.str
 
-    def dict_save(self):
+    def dict_save(self) -> None:
         """
         The packets cannot be saved into the file.
         :return:
         """
-        return None
+        pass
 
     def delete(self, user_interface: UserInterface) -> None:
         """

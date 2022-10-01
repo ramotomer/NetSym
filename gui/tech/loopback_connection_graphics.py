@@ -1,11 +1,16 @@
 from math import pi, sin, cos
+from typing import TYPE_CHECKING, Iterable
 
 from consts import *
 from gui.shape_drawing import draw_circle
 from gui.tech.connection_graphics import ConnectionGraphics
 
+if TYPE_CHECKING:
+    from computing.connection import Connection
+    from gui.tech.computer_graphics import ComputerGraphics
 
-def circle_parameter(radius):
+
+def circle_parameter(radius: float) -> float:
     """Receives the radius of a circle and returns its parameter"""
     return 2 * pi * radius
 
@@ -14,7 +19,7 @@ class LoopbackConnectionGraphics(ConnectionGraphics):
     """
     This is the circular connection of the loopback interface to itself.
     """
-    def __init__(self, connection, computer_graphics, radius):
+    def __init__(self, connection: Connection, computer_graphics: ComputerGraphics, radius: float) -> None:
         """Initiates the connection graphics with a given radius"""
         super(LoopbackConnectionGraphics, self).__init__(connection, None, None)
         self.radius = radius
@@ -25,17 +30,17 @@ class LoopbackConnectionGraphics(ConnectionGraphics):
         computer_graphics.child_graphics_objects.loopback = self
 
     @property
-    def length(self):
+    def length(self) -> float:
         return circle_parameter(self.radius)
 
-    def is_mouse_in(self):
+    def is_mouse_in(self) -> bool:
         return False
 
-    def get_coordinates(self, direction=PACKET.DIRECTION.RIGHT):
+    def get_coordinates(self, direction: str = PACKET.DIRECTION.RIGHT) -> Iterable[Tuple[float, float]]:
         """Returns the start and end coordinates of the connection (both are self.computer_graphics.location)"""
         return (*self.computer_graphics.location, *self.computer_graphics.location)
 
-    def packet_location(self, direction, progress):
+    def packet_location(self, direction: str, progress: float) -> Tuple[float, float]:
         """
         Calculates the location of a packet according to its direction and progress.
         The connection is circular so the packets go around it as one would expect.
@@ -49,13 +54,13 @@ class LoopbackConnectionGraphics(ConnectionGraphics):
 
         return x + (self.radius * cos(angle - (pi / 2))), y + (self.radius * sin(angle - (pi / 2)))
 
-    def show(self):
+    def show(self) -> None:
         self.is_showing = True
 
-    def hide(self):
+    def hide(self) -> None:
         self.is_showing = False
 
-    def draw(self):
+    def draw(self) -> None:
         """
         Draws the circular connection.
         :return: None
@@ -64,7 +69,7 @@ class LoopbackConnectionGraphics(ConnectionGraphics):
             x, y = self.computer_graphics.location
             draw_circle(x, y + self.radius, self.radius, self.color)
 
-    def get_computer_coordinates(self, direction=PACKET.DIRECTION.RIGHT):
+    def get_computer_coordinates(self, direction: str = PACKET.DIRECTION.RIGHT) -> Tuple[float, float, float, float]:
         """
         Return a tuple of the coordinates at the start and the end of the connection.
         Receives a `direction` that we look at the connection from (to know which is the end and which is the start)
@@ -74,5 +79,5 @@ class LoopbackConnectionGraphics(ConnectionGraphics):
         """
         return self.computer_graphics.x, self.computer_graphics.y, self.computer_graphics.x, self.computer_graphics.y
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "loopback connection graphics"

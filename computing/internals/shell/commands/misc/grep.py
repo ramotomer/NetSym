@@ -1,14 +1,23 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List
+
 from computing.internals.filesystem.directory import Directory
 from computing.internals.filesystem.file import File
 from computing.internals.shell.commands.command import Command, CommandOutput
 from exceptions import NoSuchItemError
+
+if TYPE_CHECKING:
+    import argparse
+    from computing.computer import Computer
+    from computing.internals.shell.shell import Shell
 
 
 class Grep(Command):
     """
     Search a file for an expression
     """
-    def __init__(self, computer, shell):
+    def __init__(self, computer: Computer, shell: Shell) -> None:
         """
         initiates the grep command
         :param computer:
@@ -22,7 +31,7 @@ class Grep(Command):
                                  help='only lines that do not contain the expression')
 
     @staticmethod
-    def _fitting_lines(expression, file: File, is_reversed=False):
+    def _fitting_lines(expression: str, file: File, is_reversed: bool = False) -> List[str]:
         """
         Returns a list of lines
         :param expression:
@@ -30,7 +39,7 @@ class Grep(Command):
         :param is_reversed: lines that do NOT contain the expression.
         :return:
         """
-        def condition(line):
+        def condition(line: str) -> bool:
             if is_reversed:
                 return expression not in line
             return expression in line
@@ -38,7 +47,7 @@ class Grep(Command):
         with file:
             return [line for line in file.read().split('\n') if condition(line)]
 
-    def action(self, parsed_args):
+    def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
         The command action
         :param parsed_args:

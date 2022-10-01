@@ -62,7 +62,7 @@ class PopupConsole(PopupWindow):
         return shell
 
     @property
-    def shell(self):
+    def shell(self) -> ShellGraphics:
         return self.child_graphics_objects.shell
 
     def delete(self, user_interface: UserInterface = None) -> None:
@@ -71,7 +71,7 @@ class PopupConsole(PopupWindow):
         if not self.computer.active_shells:
             self.computer.output_method = COMPUTER.OUTPUT_METHOD.CONSOLE
 
-    def resize(self, width, height):
+    def resize(self, width: float, height: float) -> None:
         super(PopupConsole, self).resize(width, height)
         self.shell.width, self.shell.height = width, height
         self.shell.child_graphics_objects.text.resize(self.shell.get_text_padding(), width)

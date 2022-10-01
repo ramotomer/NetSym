@@ -26,7 +26,7 @@ class Button(UserInterfaceGraphicsObject):
                  start_hidden: bool = False,
                  width: float = BUTTONS.DEFAULT_WIDTH,
                  height: float = BUTTONS.DEFAULT_HEIGHT,
-                 key: Optional[int] = None,
+                 key: Optional[Tuple[int, int]] = None,
                  color: T_Color = BUTTONS.COLOR,
                  text_color: T_Color = BUTTONS.TEXT_COLOR,
                  is_outlined: bool = True,

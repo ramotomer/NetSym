@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import NamedTuple, TYPE_CHECKING
+from typing import NamedTuple, TYPE_CHECKING, List
 
 from consts import *
 from exceptions import ConnectionsError
@@ -11,6 +11,7 @@ from gui.tech.connection_graphics import ConnectionGraphics
 
 if TYPE_CHECKING:
     from packets.packet import Packet
+    from gui.tech.computer_graphics import ComputerGraphics
 
 
 class SentPacket(NamedTuple):
@@ -37,7 +38,10 @@ class Connection:
     The `Connection` object keeps references to its two `ConnectionSide` objects. These are nice interfaces for
         the `Interface` object to talk to its connection.
     """
-    def __init__(self, length=CONNECTIONS.DEFAULT_LENGTH, speed=CONNECTIONS.DEFAULT_SPEED, packet_loss=0, is_wireless=False):
+    def __init__(self,
+                 length: float = CONNECTIONS.DEFAULT_LENGTH,
+                 speed: float = CONNECTIONS.DEFAULT_SPEED,
+                 packet_loss: float = 0) -> None:
         """
         Initiates a Connection object.
 
@@ -60,23 +64,22 @@ class Connection:
         self.is_blocked = False
 
         self.packet_loss = packet_loss
-        self.is_wireless = is_wireless
 
         MainLoop.instance.insert_to_loop_pausable(self.move_packets)
 
     @property
-    def length(self):
+    def length(self) -> float:
         """The length of the connection in pixels"""
         if self.graphics is None:
             raise SomethingWentTerriblyWrongError("Graphics was not yet initiated!!!")
         return self.graphics.length
 
     @property
-    def deliver_time(self):
+    def deliver_time(self) -> float:
         """The time in seconds a packet takes to go through the connection"""
         return self.length / self.speed
 
-    def show(self, start_computer, end_computer):
+    def show(self, start_computer: ComputerGraphics, end_computer: ComputerGraphics) -> None:
         """
         Adds the `GraphicObject` of this class and gives it the parameters it requires.
 
@@ -84,29 +87,26 @@ class Connection:
         :param end_computer: The `GraphicsObject` of the computer which is the end of the connection
         :return: None
         """
-        if self.is_wireless:
-            self.graphics = WirelessConnectionGraphics(self, start_computer, end_computer, self.packet_loss)
-        else:
-            self.graphics = ConnectionGraphics(self, start_computer, end_computer, self.packet_loss)
+        self.graphics = ConnectionGraphics(self, start_computer, end_computer, self.packet_loss)
 
-    def get_sides(self):
+    def get_sides(self) -> Tuple[ConnectionSide, ConnectionSide]:
         """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""
         return self.left_side, self.right_side
 
-    def set_speed(self, new_speed):
+    def set_speed(self, new_speed: float) -> None:
         """Sets the speed of the connection"""
         if new_speed <= 0:
             raise ConnectionsError("A connection cannot have negative speed!")
         self.speed = new_speed
 
-    def set_pl(self, new_pl):
+    def set_pl(self, new_pl: float) -> None:
         """Sets the PL amount of this connection"""
         if not (0 <= new_pl <= 1):
             raise ConnectionsError(f"A connection cannot have this PL amount!!! {new_pl}")
         self.packet_loss = new_pl
         self.graphics.update_color_by_pl(new_pl)
 
-    def mark_as_blocked(self):
+    def mark_as_blocked(self) -> None:
         """
         Marks the connection as blocked!
         Makes sure that one of the connection sides is really blocked.
@@ -116,7 +116,7 @@ class Connection:
             self.graphics.color = CONNECTIONS.BLOCKED_COLOR
             self.is_blocked = True
 
-    def mark_as_unblocked(self):
+    def mark_as_unblocked(self) -> None:
         """
         Marks the connection as an unblocked connection.
         Makes sure first that both sides are actually unblocked. (That causes bugs!!)
@@ -126,25 +126,22 @@ class Connection:
             self.graphics.color = self.graphics.regular_color
             self.is_blocked = False
 
-    def add_packet(self, packet, direction):
+    def add_packet(self, packet: Packet, direction: str) -> None:
         """
         Add a packet that was sent on one of the `ConnectionSide`-s to the `self.sent_packets` list.
         This method starts the motion of the packet through the connection.
-        :param packet: a `Packet` object
-        :param direction: the direction the packet is going to (PACKET.DIRECTION.RIGHT or PACKET.DIRECTION.LEFT)
-        :return: None
+
+        :direction: the direction the packet is going to (PACKET.DIRECTION.RIGHT or PACKET.DIRECTION.LEFT)
         """
         is_dropped = (random.random() < self.packet_loss)
         self.sent_packets.append(SentPacket(packet, MainLoop.instance.time(), direction, is_dropped))
         packet.show(self.graphics, direction)  # initiate the `GraphicsObject` of the packet.
 
-    def reach_destination(self, sent_packet):
+    def reach_destination(self, sent_packet: SentPacket) -> None:
         """
         Adds the packet to its appropriate destination side's `received_packets` list.
         This is called when the packet finished its route through this connection and is ready to be received at the
         connected `Interface`.
-        :param sent_packet: a `SentPacket`
-        :return: None
         """
         packet, _, direction, _ = sent_packet
         MainLoop.instance.unregister_graphics_object(packet.graphics)
@@ -157,7 +154,7 @@ class Connection:
 
         self.sent_packets.remove(sent_packet)
 
-    def _send_packets_from_side(self, side):
+    def _send_packets_from_side(self, side: ConnectionSide) -> None:
         """
         Takes all of the packets that are waiting to be sent on one ConnectionSide and sends them down the main connection.
         :param side: a `ConnectionSide` object.
@@ -172,7 +169,7 @@ class Connection:
                 self.add_packet(packet, direction)
             side.packets_to_send.clear()
 
-    def _update_packet(self, sent_packet):
+    def _update_packet(self, sent_packet: SentPacket) -> None:
         """
         Receives a SentPacket object and updates its progress on the connection.
         If the packet has reached the end of the connection, make it be received at the appropriate ConnectionSide
@@ -186,7 +183,7 @@ class Connection:
         else:
             sent_packet.packet.graphics.progress = packet_travel_percent
 
-    def move_packets(self):
+    def move_packets(self) -> None:
         """
         This method is inserted into the main loop of the simulation when this `Connection` object is initiated.
         The packets in the connection should always be moving. (unless paused)
@@ -202,7 +199,7 @@ class Connection:
 
         self._drop_packets()  # drops the packets that were chosen by the random PL (packet loss)
 
-    def _drop_packets(self):
+    def _drop_packets(self) -> None:
         """
         Goes through the packets that are being sent, When they reach the middle of the connection, check if they need
         to be dropped (by PL) if so, remove them from the list, and do the animation.
@@ -214,7 +211,7 @@ class Connection:
                 self.sent_packets.remove(sent_packet)
                 sent_packet.packet.graphics.drop()
 
-    def stop_packets(self):
+    def stop_packets(self) -> None:
         """
         This is used to stop all of the action in the connection.
         Kills all of the packets in the connection and unregisters their `GraphicsObject`-s
@@ -224,7 +221,7 @@ class Connection:
             MainLoop.instance.unregister_graphics_object(packet.graphics)
         self.sent_packets.clear()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """The ip_layer representation of the connection"""
         return f"Connection({self.length}, {self.speed})"
 
@@ -239,13 +236,13 @@ class ConnectionSide:
     It also has a list of packets that reached this side but were not yet picked up by the appropriate connected
         `Interface` object.
     """
-    def __init__(self, main_connection):
-        self.packets_to_send = []
-        self.packets_to_receive = []
-        self.connection = main_connection
+    def __init__(self, main_connection: Connection) -> None:
+        self.packets_to_send: List[Packet] = []
+        self.packets_to_receive: List[Packet] = []
+        self.connection: Connection = main_connection
         self.is_blocked = False
 
-    def send(self, packet):
+    def send(self, packet: Packet) -> None:
         """
         This is an API for the Interface class to send its packets to the Connection object.
         :param packet: The packet to send. An `Ethernet` object.
@@ -253,7 +250,7 @@ class ConnectionSide:
         """
         self.packets_to_send.append(packet)
 
-    def receive(self):
+    def receive(self) -> List[Packet]:
         """
         This is an API for the Interface class to receive its packets from the
         Connection object. If no packets have arrived, returns None.
@@ -263,11 +260,11 @@ class ConnectionSide:
         self.packets_to_receive.clear()
         return returned
 
-    def is_sending(self):
+    def is_sending(self) -> bool:
         """Returns whether or not this side has packets that needs to be sent"""
         return bool(self.packets_to_send)
 
-    def mark_as_blocked(self):
+    def mark_as_blocked(self) -> None:
         """
         Marks the connection as being a blocked connection (paints it a different color)
         :return: None
@@ -275,7 +272,7 @@ class ConnectionSide:
         self.is_blocked = True
         self.connection.mark_as_blocked()
 
-    def mark_as_unblocked(self):
+    def mark_as_unblocked(self) -> None:
         """
         Marks the connection as a regular (unblocked) connection.
         :return: None

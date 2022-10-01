@@ -1,15 +1,24 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from address.ip_address import IPAddress
 from computing.internals.shell.commands.command import Command, CommandOutput
 from consts import ADDRESSES
 from exceptions import RoutingTableError, WrongIPRouteUsageError
 from usefuls.funcs import get_the_one
 
+if TYPE_CHECKING:
+    import argparse
+    from computing.computer import Computer
+    from computing.internals.shell.shell import Shell
+
 
 class IpRouteCommand(Command):
     """
     The command that prints the arguments that it receives.
     """
-    def __init__(self, computer, shell):
+    def __init__(self, computer: Computer, shell: Shell) -> None:
         """
         initiates the command.
         :param computer:
@@ -25,7 +34,7 @@ class IpRouteCommand(Command):
             'del': self._del_route,
         }
 
-    def _add_route(self, args):
+    def _add_route(self, args: argparse.Namespace) -> CommandOutput:
         """
         Receives arguments, adds a route and returns a CommandOutput
         :param args:
@@ -45,7 +54,7 @@ class IpRouteCommand(Command):
         self.computer.routing_table.route_add(net, gateway, IPAddress.copy(interface_ip))
         return CommandOutput('OK!', '')
 
-    def _del_route(self, args):
+    def _del_route(self, args: argparse.Namespace) -> CommandOutput:
         """
         Receives arguments, deletes a route and returns CommandOutput
         :param args:
@@ -63,7 +72,7 @@ class IpRouteCommand(Command):
         else:
             return CommandOutput("OK!", '')
 
-    def _list_routes(self, args):
+    def _list_routes(self, args: argparse.Namespace) -> CommandOutput:
         """
         list the active routes
         :param args:
@@ -71,7 +80,7 @@ class IpRouteCommand(Command):
         """
         return CommandOutput(repr(self.computer.routing_table), '')
 
-    def action(self, parsed_args):
+    def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
         prints out the arguments.
         """

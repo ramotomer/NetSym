@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from exceptions import FileNotOpenError
 from usefuls.funcs import datetime_from_string
@@ -87,7 +87,7 @@ class File:
         """
         self.close()
 
-    def dict_save(self):
+    def dict_save(self) -> Dict:
         """
         Saves the File object as a dictionary so it could be saved in a file
         :return:
@@ -101,7 +101,7 @@ class File:
         }
 
     @classmethod
-    def from_dict_load(cls, dict_):
+    def from_dict_load(cls, dict_: Dict) -> File:
         """
         Loads a File object from an actual dictionary from a json file
         :return:

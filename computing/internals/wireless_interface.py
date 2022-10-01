@@ -1,7 +1,17 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional, Callable, Dict
+
+from address.ip_address import IPAddress
+from address.mac_address import MACAddress
 from computing.internals.interface import Interface
 from consts import *
 from exceptions import *
 from gui.main_window import MainWindow
+
+if TYPE_CHECKING:
+    from packets.packet import Packet
+    from computing.internals.frequency import Frequency
 
 
 class WirelessInterface(Interface):
@@ -13,8 +23,12 @@ class WirelessInterface(Interface):
     An interface can be either connected or disconnected to a `ConnectionSide` object, which enables it to move its packets
     down the connection further.
     """
-    def __init__(self, mac=None, ip=None, name=None, frequency=None,
-                 display_color=INTERFACES.COLOR):
+    def __init__(self,
+                 mac: Optional[MACAddress] = None,
+                 ip: Optional[IPAddress] = None,
+                 name: Optional[str] = None,
+                 frequency: Optional[Frequency] = None,
+                 display_color: T_Color = INTERFACES.COLOR) -> None:
         """
         Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
         :param mac: a string MAC address ('aa:bb:cc:11:22:76' for example)
@@ -25,14 +39,14 @@ class WirelessInterface(Interface):
         self.frequency = frequency
 
     @property
-    def frequency_object(self):
+    def frequency_object(self) -> Frequency:
         if self.connection is None or self.frequency is None:
             raise InterfaceNotConnectedError("No frequency object to get!")
 
         return self.connection.connection
 
     @property
-    def connection_length(self):
+    def connection_length(self) -> Optional[float]:
         """
         The length of the connection this `Interface` is connected to. (The time a packet takes to go through it in seconds)
         :return: a number of seconds.
@@ -41,10 +55,10 @@ class WirelessInterface(Interface):
             return None
         return self.connection.connection.deliver_time
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         return self.frequency is not None and self.connection is not None
 
-    def connect(self, frequency):
+    def connect(self, frequency: Frequency) -> Frequency:
         """
         Connects this interface to a frequency, return the `Frequency` object.
         :param frequency: The other `Interface` object to connect to.
@@ -59,7 +73,7 @@ class WirelessInterface(Interface):
         self.graphics.color = freq.color
         return freq
     
-    def disconnect(self):
+    def disconnect(self) -> None:
         """
         Disconnect an interface from its `Frequency`.
         :return: None
@@ -71,7 +85,7 @@ class WirelessInterface(Interface):
         self.frequency = None
         self.graphics.color = INTERFACES.COLOR
 
-    def block(self, accept=None):
+    def block(self, accept: Optional[Callable[[Packet], bool]] = None) -> None:
         """
         Blocks the connection and does not receive packets from it anymore.
         It only accepts packets that contain the `accept` layer (for example "STP")
@@ -80,7 +94,7 @@ class WirelessInterface(Interface):
         """
         raise NotImplementedError()
 
-    def unblock(self):
+    def unblock(self) -> None:
         """
         Releases the blocking of the connection and allows it to receive packets again.
         if not blocked, does nothing...
@@ -88,7 +102,7 @@ class WirelessInterface(Interface):
         """
         raise NotImplementedError()
 
-    def toggle_block(self, accept=None):
+    def toggle_block(self, accept: Optional[Callable[[Packet], bool]] = None) -> None:
         """
         Toggles between block() and unblock()
         :param accept:
@@ -96,7 +110,7 @@ class WirelessInterface(Interface):
         """
         raise NotImplementedError()
 
-    def generate_view_text(self):
+    def generate_view_text(self) -> str:
         """
         Generates the text for the side view of the interface
         :return: `str`
@@ -104,7 +118,7 @@ class WirelessInterface(Interface):
         return super(WirelessInterface, self).generate_view_text() + f"\nfrequency: {self.frequency}"
 
     @classmethod
-    def from_dict_load(cls, dict_):
+    def from_dict_load(cls, dict_: Dict) -> WirelessInterface:
         """
         Loads a new interface from a dict
         :param dict_:
@@ -119,5 +133,5 @@ class WirelessInterface(Interface):
 
         return loaded
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"WirelessInterface(name={self.name}, mac='{self.mac.string_mac}', ip={self.ip})"

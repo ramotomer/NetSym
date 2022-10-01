@@ -148,7 +148,7 @@ class Directory:
 
         return item
 
-    def dict_save(self):
+    def dict_save(self) -> Dict:
         """
         Save to dict for file saving!
         :return:
@@ -166,7 +166,7 @@ class Directory:
         }
 
     @classmethod
-    def from_dict_load(cls, dict_):
+    def from_dict_load(cls, dict_: Dict) -> Directory:
         """
         Load from json file
         :param dict_:

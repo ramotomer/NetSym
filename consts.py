@@ -1,15 +1,18 @@
+from __future__ import annotations
+
 # this cannot import from anything!!! (almost)
 import os
 from math import sqrt
-from typing import Tuple
+from typing import Tuple, Union, Any
 
 import pyglet
+import scapy
 from scapy.layers.dhcp import DHCPTypes
 
 from exceptions import TCPDoneReceiving
 
 
-def debugp(*strings):
+def debugp(*strings: str) -> None:
     """
     A print i use for debugging so i know where to delete it afterwards.
     :param string:
@@ -22,7 +25,7 @@ SENDING_GRAT_ARPS = False
 
 
 T_Time = float
-T_Color = Tuple[int, ...]
+T_Color = Tuple[float, ...]
 T_Port = int
 
 
@@ -67,28 +70,28 @@ class TCPFlag(object):
         self.value = value
 
     @classmethod
-    def absolute_value(cls, other):
+    def absolute_value(cls, other: Union[int, TCPFlag]) -> int:
         if isinstance(other, cls):
             return other.value
         return int(other)
         # raise TypeError(f"Type '{type(other)}' has no absolute value! only `TCPFlag` and `int` have!!")
 
-    def __or__(self, other) -> int:
+    def __or__(self, other: Union[int, TCPFlag]) -> int:
         return self.value | self.absolute_value(other)
 
     def __repr__(self) -> str:
         return self.name
 
-    def __add__(self, other) -> str:
+    def __add__(self, other: Any) -> str:
         return self.name + str(other)
 
     def __int__(self) -> int:
         return int(self.value)
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Union[int, TCPFlag]) -> bool:
         return self.value == self.absolute_value(other)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.name, self.value))
 
     def __bool__(self) -> bool:
@@ -504,14 +507,14 @@ class ANIMATIONS:
     X_COUNT, Y_COUNT = 5, 3
 
 
-def get_dominant_tcp_flag(tcp):
+def get_dominant_tcp_flag(tcp: scapy.packet.Packet) -> TCPFlag:
     for flag in OPCODES.TCP.FLAGS_DISPLAY_PRIORITY:
         if int(tcp.flags) & int(flag):
             return flag
     return OPCODES.TCP.NO_FLAGS
 
 
-def get_dns_opcode(dns):
+def get_dns_opcode(dns: scapy.packet.Packet) -> str:
     if dns.return_code != OPCODES.DNS.RETURN_CODES.OK:
         return OPCODES.DNS.SOME_ERROR
     if dns.answer_record_count > 0:

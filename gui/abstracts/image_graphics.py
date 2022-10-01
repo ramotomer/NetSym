@@ -6,11 +6,11 @@ from typing import Set, Optional, Dict, TYPE_CHECKING, Callable
 
 from consts import *
 from exceptions import NoSuchGraphicsObjectError, PopupWindowWithThisError
-from gui.abstracts.graphics_object import GraphicsObject
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_rectangle
 from gui.user_interface.resizing_dot import ResizingDot
+from gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
 from usefuls.funcs import get_the_one, scale_tuple, sum_tuples
 from usefuls.paths import add_path_basename_if_needed
 
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from gui.user_interface.user_interface import UserInterface
 
 
-class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
+class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
     """
     This class is a superclass of any `GraphicsObject` subclass which uses an image in its `draw` method.
     Put simply, it is a graphics object with a picture.
@@ -203,7 +203,7 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
         """
         self.mark_as_selected_non_resizable()
 
-        directions = set(product((-1, 0, 1), repeat=2)) - {(0, 0)}
+        directions = map(tuple, set(product((-1, 0, 1), repeat=2)) - {(0, 0)})
         for direction in directions:
             self.show_resizing_dot(direction, constrain_proportions=(0 not in direction))
 
@@ -391,7 +391,7 @@ class ImageGraphics(GraphicsObject, metaclass=ABCMeta):
             except KeyError:
                 raise PopupWindowWithThisError(f"invalid color name: '{color_name}'")
 
-        self.add_hue(scale_tuple(1, color, True))
+        self.add_hue(scale_tuple(1, color, round_to_integers=True))
 
     def flush_colors(self) -> None:
         """

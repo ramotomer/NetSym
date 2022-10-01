@@ -2,14 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Dict, Callable
 
-import scapy
-
 from consts import *
-from gui.abstracts.graphics_object import GraphicsObject
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_window import MainWindow
 from gui.shape_drawing import draw_circle, draw_rectangle
 from gui.tech.packet_graphics import PacketGraphics
+from gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
 from usefuls.funcs import distance
 
 if TYPE_CHECKING:
@@ -17,7 +15,7 @@ if TYPE_CHECKING:
     from computing.internals.frequency import Frequency
 
 
-class WirelessPacketGraphics(GraphicsObject):
+class WirelessPacketGraphics(ViewableGraphicsObject):
     """
     This class is a `GraphicsObject` subclass which is the graphical representation
     of packets that are sent between computers.
@@ -39,8 +37,6 @@ class WirelessPacketGraphics(GraphicsObject):
         self.distance = 0
         self.str = str(deepest_layer)
         self.deepest_layer = deepest_layer
-
-        self.buttons_id = None
 
         self.image_from_packet = PacketGraphics.image_from_packet
 
@@ -92,9 +88,9 @@ class WirelessPacketGraphics(GraphicsObject):
     def __repr__(self) -> str:
         return self.str
 
-    def dict_save(self):
+    def dict_save(self) -> None:
         """
         The packets cannot be saved into the file.
         :return:
         """
-        return None
+        pass

@@ -1,14 +1,22 @@
+from __future__ import annotations
+
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from computing.internals.shell.commands.command import Command, CommandOutput
 from exceptions import NoSuchItemError
+
+if TYPE_CHECKING:
+    import argparse
+    from computing.computer import Computer
+    from computing.internals.shell.shell import Shell
 
 
 class Touch(Command):
     """
     Change a file's timestamp and if it does not exist, create it.
     """
-    def __init__(self, computer, shell):
+    def __init__(self, computer: Computer, shell: Shell) -> None:
         """
         initiates the command.
         :param computer: 
@@ -19,7 +27,7 @@ class Touch(Command):
 
         self.parser.add_argument('files', metavar='files', type=str, nargs='+', help='files to touch')
 
-    def action(self, parsed_args):
+    def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
         touches the file
         """

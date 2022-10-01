@@ -1,11 +1,20 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from computing.internals.shell.commands.command import Command, CommandOutput
+
+if TYPE_CHECKING:
+    import argparse
+    from computing.computer import Computer
+    from computing.internals.shell.shell import Shell
 
 
 class Arp(Command):
     """
     Command that prints out the arp cache
     """
-    def __init__(self, computer, shell):
+    def __init__(self, computer: Computer, shell: Shell) -> None:
         """
         initiates the command.
         :param computer:
@@ -15,7 +24,7 @@ class Arp(Command):
         self.parser.add_argument('-a', '--all', dest='is_all', action='store_true', help='print out the arp cache')
         self.parser.add_argument('-d', '--delete', dest='is_delete', action='store_true', help='wipe dynamic items')
 
-    def action(self, parsed_args):
+    def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
         prints out the arguments.
         """

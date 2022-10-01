@@ -1,3 +1,6 @@
+from collections import Callable
+from typing import Optional
+
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.user_interface.button import Button
@@ -7,10 +10,17 @@ class ImageButton(Button):
     """
     This is a button with an image inside
     """
-    def __init__(self, x, y, action=lambda: None, image_name=None, text="",
-                 start_hidden=False,
-                 width=IMAGES.SIZE, height=IMAGES.SIZE,
-                 key=None, color=BUTTONS.COLOR, text_color=BUTTONS.TEXT_COLOR, is_outlined=False):
+    def __init__(self,
+                 x: float, y: float,
+                 action: Callable[[], None] = lambda: None,
+                 image_name: Optional[str] = None,
+                 text: str = "",
+                 start_hidden: bool = False,
+                 width: float = IMAGES.SIZE, height: float = IMAGES.SIZE,
+                 key: Optional[str] = None,
+                 color: T_Color = BUTTONS.COLOR,
+                 text_color: T_Color = BUTTONS.TEXT_COLOR,
+                 is_outlined: bool = False) -> None:
         """
         Initiates the button with an image name and the rest of the button's arguments
         :param x, y: location of the bottom left corner
@@ -38,7 +48,7 @@ class ImageButton(Button):
         pad_x, pad_y = self.child_graphics_objects.text.padding
         self.child_graphics_objects.text.padding = pad_x, self.height
 
-    def draw(self):
+    def draw(self) -> None:
         """
         Draws the button and the image
         :return: None
@@ -46,7 +56,7 @@ class ImageButton(Button):
         super(ImageButton, self).draw()
         self.image_sprite.draw()
 
-    def move(self):
+    def move(self) -> None:
         """
         Moves the button along side the image
         :return: None

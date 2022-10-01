@@ -1,11 +1,20 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from computing.internals.shell.commands.command import Command, CommandOutput
+
+if TYPE_CHECKING:
+    import argparse
+    from computing.computer import Computer
+    from computing.internals.shell.shell import Shell
 
 
 class Rm(Command):
     """
     The command that prints the arguments that it receives.
     """
-    def __init__(self, computer, shell):
+    def __init__(self, computer: Computer, shell: Shell) -> None:
         """
         initiates the command.
         :param computer:
@@ -15,7 +24,7 @@ class Rm(Command):
         self.parser.add_argument('-r', '--recurse', dest='is_recurse', action='store_true', help='remove recursively')
         self.parser.add_argument('-f', '--force', dest='is_forced', action='store_true', help='do not prompt')
 
-    def action(self, parsed_args):
+    def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
         prints out the arguments.
         """

@@ -1,6 +1,16 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional, List, Callable
+
+from computing.internals.interface import Interface
 from computing.internals.sockets.socket import Socket
 from consts import COMPUTER, INTERFACES
 from exceptions import RawSocketError
+
+if TYPE_CHECKING:
+    from packets.packet import Packet
+    from computing.internals.processes.abstracts.process import ReturnedPacket
+    from computing.computer import Computer
 
 
 class RawSocket(Socket):
@@ -9,7 +19,7 @@ class RawSocket(Socket):
     and sessions
     """
 
-    def __init__(self, computer, kind):
+    def __init__(self, computer: Computer, kind: int) -> None:
         """
         Generates a socket
 
@@ -25,7 +35,7 @@ class RawSocket(Socket):
         self.interface = INTERFACES.NO_INTERFACE
         self.is_promisc = False
 
-    def send(self, packet):
+    def send(self, packet: Packet) -> None:
         """
         Directly sends the supplied packet down the socket and out into the world
         :param packet: a Packet object to send
@@ -37,7 +47,7 @@ class RawSocket(Socket):
             raise RawSocketError("Cannot send on a raw socket that is bound to all interfaces!")
         self.computer.send(packet, self.interface, sending_socket=self)
 
-    def receive(self, count=None):
+    def receive(self, count: Optional[int] = None) -> List[ReturnedPacket]:
         """
         Receive the information as specified in the BPF that was configured when the socket was bound
         :param count: is ignored
@@ -49,7 +59,10 @@ class RawSocket(Socket):
         self.received.clear()
         return returned
 
-    def bind(self, filter, interface=INTERFACES.ANY_INTERFACE, promisc=False):
+    def bind(self,
+             filter: Callable[[Packet], bool],
+             interface: Optional[Interface] = INTERFACES.ANY_INTERFACE,
+             promisc: bool = False) -> None:
         """
         Binds the socket to an interface and filter.
         This is necessary for sniffing and sending using it.
@@ -66,7 +79,7 @@ class RawSocket(Socket):
         self.is_promisc = promisc
         self.computer.sockets[self].state = COMPUTER.SOCKETS.STATES.BOUND
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"RAW    " \
             f"{self.interface.name or 'unbound': <23}" \
             f"{'raw': <23}" \

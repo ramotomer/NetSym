@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 from os import linesep
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, TYPE_CHECKING, Union, Dict, Any
 
 from address.ip_address import IPAddress
 from consts import ADDRESSES
 from exceptions import *
+
+if TYPE_CHECKING:
+    from computing.internals.interface import Interface
+    from computing.computer import Computer
 
 
 class RoutingTableItem(NamedTuple):
@@ -26,24 +30,24 @@ class RoutingTable:
 
     The class is based on an `OrderedDict` because the order matters in a routing table!
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initiates the RoutingTable with some default entries.
         """
         dictionary = {
-            IPAddress("0.0.0.0/0"): RoutingTableItem(None, None),
+            IPAddress("0.0.0.0/0"):          RoutingTableItem(None, None),
             IPAddress("255.255.255.255/32"): RoutingTableItem(None, None),
-            IPAddress("127.0.0.0/8"): RoutingTableItem(ADDRESSES.IP.ON_LINK, IPAddress.loopback()),
+            IPAddress("127.0.0.0/8"):        RoutingTableItem(ADDRESSES.IP.ON_LINK, IPAddress.loopback()),
         }
 
-        self.dictionary = dictionary
+        self.dictionary: Dict[IPAddress, RoutingTableItem] = dictionary
 
     @property
-    def default_gateway(self):
+    def default_gateway(self) -> RoutingTableItem:
         """The default gateway in the routing table"""
         return self[IPAddress("0.0.0.0/0")]
 
-    def set_default_gateway(self, gateway, interface_ip):
+    def set_default_gateway(self, gateway: IPAddress, interface_ip: IPAddress) -> None:
         """
         Sets the default gateway in the routing table, using a gateway and an IP of an interface to go out
         from the computer to it.
@@ -53,7 +57,7 @@ class RoutingTable:
         self.dictionary[IPAddress("255.255.255.255/32")] = RoutingTableItem(gateway, interface_ip)
 
     @classmethod
-    def create_default(cls, computer, expect_normal_gateway=True):
+    def create_default(cls, computer: Computer, expect_normal_gateway: bool = True) -> RoutingTable:
         """
         This is a constructor class method.
         Creates a default routing table for a given `Computer`.
@@ -81,7 +85,7 @@ class RoutingTable:
 
         return returned
 
-    def route_add(self, destination_ip, gateway_ip, interface_ip):
+    def route_add(self, destination_ip: IPAddress, gateway_ip: IPAddress, interface_ip: IPAddress) -> None:
         """
         Adds a route from all of the required ip_layer to do that
         :param destination_ip: an `IPAddress` of the destination.
@@ -98,7 +102,7 @@ class RoutingTable:
             gateway_ip = IPAddress(gateway_ip)
         self.dictionary[IPAddress(destination_ip)] = RoutingTableItem(gateway_ip, IPAddress(interface_ip))
 
-    def route_delete(self, destination_ip):
+    def route_delete(self, destination_ip: IPAddress) -> None:
         """
         Deletes a route from the routing table
         :param destination_ip: The destination IP address and netmask
@@ -109,7 +113,7 @@ class RoutingTable:
             raise RoutingTableError(f"Cannot remove route. it is not in the routing table {destination_ip}!!!")
         del self.dictionary[destination_ip]
 
-    def add_interface(self, interface_ip):
+    def add_interface(self, interface_ip: IPAddress) -> None:
         """
         Adds a new interface to the routing table in the default way.
         :param interface_ip: an `IPAddress` object of the IP address of the interface that one wishes to add to
@@ -124,7 +128,7 @@ class RoutingTable:
         self.route_add(interface_ip.subnet(), send_to, interface_ip)
         self.route_add(IPAddress(interface_ip.string_ip + "/32"), IPAddress.loopback(), IPAddress.loopback())
 
-    def delete_interface(self, interface):
+    def delete_interface(self, interface: Interface) -> None:
         """
         Removes an interface from the routing table.
         (This is also used when changing an interface's ip address)
@@ -136,7 +140,7 @@ class RoutingTable:
         self.route_delete(interface.ip.subnet())
         self.route_delete(IPAddress(interface.ip.string_ip + "/32"))
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: Union[str, IPAddress]) -> RoutingTableItem:
         """
         allows the dictionary notation of dict[key].
         :param item: The key. Has to be an `IPAddress` object.
@@ -154,7 +158,7 @@ class RoutingTable:
             return RoutingTableItem(item, result.interface_ip)
         return result
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: Union[str, IPAddress], value: RoutingTableItem) -> None:
         """
         allows the dictionary notation of dict[key] = value
         :param key: has to be an `IPAddress` object.
@@ -166,11 +170,11 @@ class RoutingTable:
 
         self.dictionary[IPAddress(key)] = value
 
-    def __str__(self):
+    def __str__(self) -> str:
         """string representation of the routing table"""
         return f"RoutingTable({self.dictionary}, default={self.default_gateway})"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """allows a 'route print' """
         return f"""
 ====================================================================
@@ -183,12 +187,12 @@ Default Gateway:        {self.default_gateway.ip_address}
 ===================================================================
 """
 
-    def dict_save(self):
+    def dict_save(self) -> Dict:
         """
         Save the routing table as a dict that can later be reassembled to a routing table
         :return:
         """
-        def ip_str_or_none(item):
+        def ip_str_or_none(item: Any) -> Optional[str]:
             if item is None:
                 return None
             return str(item)
@@ -202,13 +206,13 @@ Default Gateway:        {self.default_gateway.ip_address}
         }
 
     @classmethod
-    def from_dict_load(cls, dict_):
+    def from_dict_load(cls, dict_: Dict) -> RoutingTable:
         """
         Load the routing table from a dictionary that was saved to a file
         :param dict_: the dict
         :return:
         """
-        def ip_or_none(item):
+        def ip_or_none(item: Optional[Union[str, IPAddress]]) -> Optional[Union[str, IPAddress]]:
             if item is None:
                 return item
             if item == f"'{ADDRESSES.IP.ON_LINK}'" or item == ADDRESSES.IP.ON_LINK:

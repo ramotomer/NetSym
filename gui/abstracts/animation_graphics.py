@@ -1,5 +1,4 @@
 import time
-from typing import Tuple
 
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics
@@ -93,5 +92,5 @@ class AnimationGraphics(ImageGraphics):
         if self.is_done:
             MainLoop.instance.unregister_graphics_object(self)
 
-    def dict_save(self):
+    def dict_save(self) -> None:
         pass

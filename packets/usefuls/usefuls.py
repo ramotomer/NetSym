@@ -1,13 +1,18 @@
-from typing import Any
+from __future__ import annotations
+
+from typing import Any, TYPE_CHECKING, List
 
 import scapy
 from scapy.packet import Raw
 
-from consts import PACKET
 from exceptions import *
 
+if TYPE_CHECKING:
+    from packets.packet import Packet
+    from address.ip_address import IPAddress
 
-def get_packet_attribute(packet, attribute_name, containing_protocols):
+
+def get_packet_attribute(packet: Packet, attribute_name: str, containing_protocols: List[str]) -> Any:
     """
     Return the attribute of the packet that is named `attribute_name`
     Packet must contain one of `containing_protocols` - If it does not - raise
@@ -20,7 +25,7 @@ def get_packet_attribute(packet, attribute_name, containing_protocols):
         f"packet must include one of {containing_protocols} layers in order to have a `{attribute_name}`! packet: {packet}")
 
 
-def get_src_port(packet):
+def get_src_port(packet: Packet) -> int:
     """
     Return the src port of the packet
     Can be either UDP or TCP
@@ -29,7 +34,7 @@ def get_src_port(packet):
     return get_packet_attribute(packet, 'src_port', ["UDP", "TCP"])
 
 
-def get_dst_port(packet):
+def get_dst_port(packet: Packet) -> int:
     """
     Return the dst port of the packet
     Can be either UDP or TCP
@@ -38,25 +43,25 @@ def get_dst_port(packet):
     return get_packet_attribute(packet, 'dst_port', ["UDP", "TCP"])
 
 
-def get_src_ip(packet):
+def get_src_ip(packet: Packet) -> IPAddress:
     return get_packet_attribute(packet, 'src_ip', ["IP", "ARP"])
 
 
-def get_dst_ip(packet):
+def get_dst_ip(packet: Packet) -> IPAddress:
     return get_packet_attribute(packet, 'dst_ip', ["IP", "ARP"])
 
 
 class ScapyRenamedPacketField:
-    def __init__(self, new_name, field_object):
+    def __init__(self, new_name: str, field_object: scapy.fields.Field) -> None:
         self.field_object = field_object
         self.new_name = new_name
 
-    def __getattr__(self, item):
+    def __getattr__(self, item: str) -> Any:
         if item == "name":
             return self.new_name
         return getattr(self.field_object, item)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"new_name: '{self.new_name}' of Renamed({self.field_object!r})"
 
 # TODO: make this vvvvvv Work! (for a `multiline_repr` method with more indicative attribute names :)
@@ -97,17 +102,6 @@ def get_original_layer_name_by_instance(layer: scapy.packet.Packet) -> str:
     Returns the name of the protocol - regardless of the `AttributeRenamer` encapsulation
     """
     return getattr(layer, 'original_name', type(layer).__name__)
-
-
-def get_layer_opcode(layer: scapy.packet.Packet):
-    """
-    Take in a layer of a packet and return the most dominant value of the packet
-        that can be considered as an "opcode" (arp.opcode, icmp.type, one of tcp.flags, etc...)
-    """
-    try:
-        return PACKET.TYPE_TO_OPCODE_FUNCTION[get_original_layer_name_by_instance(layer)](layer)
-    except KeyError:
-        return None
 
 
 def is_raw_layer(layer: Any) -> bool:

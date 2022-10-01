@@ -1,10 +1,18 @@
 from __future__ import annotations
 
 import time
-from typing import Type, Iterable, Optional
+from typing import Type, Iterable, Optional, TYPE_CHECKING, Callable, Any, List, TypeVar
 
+from consts import T_Time
 from exceptions import NoSuchGraphicsObjectError, AttributeError_
 from usefuls.funcs import get_the_one
+
+if TYPE_CHECKING:
+    from gui.abstracts.graphics_object import GraphicsObject
+    from gui.main_window import MainWindow
+
+
+T = TypeVar("T")
 
 
 class MainLoop:
@@ -18,7 +26,7 @@ class MainLoop:
     """
     instance: Optional[MainLoop] = None
 
-    def __init__(self, main_window):
+    def __init__(self, main_window: MainWindow) -> None:
         """
         Initiates the MainLoop object with a main window.
         :param main_window: a `MainWindow` object.
@@ -45,7 +53,7 @@ class MainLoop:
 
         # self.logo_animation = self.main_window.user_interface.init_logo_animation()
 
-    def register_graphics_object(self, graphics_object, is_in_background=False):
+    def register_graphics_object(self, graphics_object: GraphicsObject, is_in_background: bool = False) -> None:
         """
         This method receives a `GraphicsObject` instance, loads it, and enters
         it into the update main loop with its `move` and `draw` methods.
@@ -65,7 +73,7 @@ class MainLoop:
 
         self.insert_to_loop(graphics_object.move)
 
-    def unregister_graphics_object(self, graphics_object):
+    def unregister_graphics_object(self, graphics_object: GraphicsObject) -> None:
         """
         This method receives a `GraphicsObject` instance and unregisters it.
         It removes its `draw` and `move` methods from the main loop.
@@ -90,7 +98,7 @@ class MainLoop:
             for child in graphics_object.child_graphics_objects:
                 self.unregister_graphics_object(child)
 
-    def insert_to_loop(self, function, *args, **kwargs):
+    def insert_to_loop(self, function: Callable, *args: Any, **kwargs: Any) -> None:
         """
         This method receives a function and inserts it into the main loop of the program. After this is called,
         every clock tick will call the given function with the given arguments.
@@ -102,7 +110,7 @@ class MainLoop:
         """
         self.call_functions.append((function, args, kwargs, False))  # the False is for "can it be paused"
 
-    def reversed_insert_to_loop(self, function, *args, **kwargs):
+    def reversed_insert_to_loop(self, function: Callable, *args: Any, **kwargs: Any) -> None:
         """
         This is just like `insert_to_loop` but the function is inserted to the
         head of the list so it is called first. this is done for example so `Connection`
@@ -114,13 +122,13 @@ class MainLoop:
         """
         self.call_functions.insert(0, (function, args, kwargs, False))  # the False is "can it be paused"
 
-    def insert_to_loop_pausable(self, function, *args, **kwargs):
+    def insert_to_loop_pausable(self, function: Callable, *args: Any, **kwargs: Any) -> None:
         """
         Exactly like `insert_to_loop` but the function is paused when the program is paused (when space bar is pressed)
         """
         self.call_functions.append((function, args, kwargs, True))
 
-    def remove_from_loop(self, function):
+    def remove_from_loop(self, function: Callable) -> None:
         """
         Does the opposite of `insert_to_loop`. removes a given function off the loop.
         If the function is called a few times in the loop, all of the calls are removed.
@@ -134,7 +142,7 @@ class MainLoop:
             except ValueError:
                 pass
 
-    def move_to_front(self, graphics_object):
+    def move_to_front(self, graphics_object: GraphicsObject) -> None:
         """
         Receives a graphics object that is registered and moves it to the front to be on top of all other registered
         graphics objects
@@ -157,14 +165,14 @@ class MainLoop:
         except ValueError:
             raise NoSuchGraphicsObjectError("The graphics object is not registered!!!")
 
-    def toggle_pause(self):
+    def toggle_pause(self) -> None:
         """
         Toggles the pause
         :return:
         """
         self.is_paused = not self.is_paused
 
-    def select_selected_and_marked_objects(self):
+    def select_selected_and_marked_objects(self) -> None:
         """
         Draws a rectangle around the selected object.
         The selected object is the object that was last pressed and is surrounded by a white square.
@@ -176,7 +184,7 @@ class MainLoop:
         for marked_object in self.main_window.user_interface.marked_objects:
             marked_object.mark_as_selected_non_resizable()
 
-    def get_object_the_mouse_is_on(self, exclude_types: Iterable[Type] = ()):
+    def get_object_the_mouse_is_on(self, exclude_types: Iterable[Type] = ()) -> GraphicsObject:
         """
         Returns the `GraphicsObject` that should be selected if the mouse is pressed
         (so the object that the mouse is on right now) or `None` if the mouse is not resting upon any object.
@@ -184,7 +192,7 @@ class MainLoop:
         """
         return get_the_one(reversed(self.graphics_objects), lambda go: go.is_mouse_in() and not isinstance(go, tuple(exclude_types)))
 
-    def graphics_objects_of_types(self, *types):
+    def graphics_objects_of_types(self, *types: Type[T]) -> List[T]:
         """
         Returns a list of graphics objects of the given types
         :param types:
@@ -194,7 +202,7 @@ class MainLoop:
             return self.graphics_objects
         return list(filter(lambda go: any(isinstance(go, type_) for type_ in types), self.graphics_objects))
 
-    def update_time(self):
+    def update_time(self) -> None:
         """
         Updates the time that the `self.time()` method returns, adjusted to pauses.
         :return: None
@@ -207,7 +215,7 @@ class MainLoop:
 
         self.last_time_update = time.time()
 
-    def time(self):
+    def time(self) -> T_Time:
         """
         This method is just like the `time.time()` method, with one different, when the program is paused, the time does
         not run. this is very important for some processes (STP, TCP, Switches, etc...)
@@ -215,11 +223,11 @@ class MainLoop:
         """
         return self._time
 
-    def time_since(self, other_time):
+    def time_since(self, other_time) -> T_Time:
         """Returns the amount of time that passed since another time (adjusted to pauses of course)"""
         return self.time() - other_time
 
-    def main_loop(self):
+    def main_loop(self) -> None:
         """
         The main loop:
 

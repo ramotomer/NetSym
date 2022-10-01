@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Optional
 
-from computing.internals.processes.abstracts.process import Process, ReturnedPacket
+from computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode
 from consts import INTERFACES
 from exceptions import SocketIsClosedError
 
@@ -21,7 +21,8 @@ class SniffingProcess(Process):
                  pid: int,
                  computer: Computer,
                  filter: Callable[[Packet], bool],
-                 interface: Optional[Interface] = INTERFACES.ANY_INTERFACE, promisc=False):
+                 interface: Optional[Interface] = INTERFACES.ANY_INTERFACE,
+                 promisc: bool = False) -> None:
         super(SniffingProcess, self).__init__(pid, computer)
 
         self.socket = self.computer.get_raw_socket(self.pid)
@@ -32,10 +33,10 @@ class SniffingProcess(Process):
         self.set_killing_signals_handler(self.close_socket)
 
     @property
-    def interface_name(self):
+    def interface_name(self) -> str:
         return getattr(self.socket.interface, 'name', '') or 'All interfaces'
 
-    def close_socket(self, signum):
+    def close_socket(self, signum: int) -> None:
         self.computer.print(f"Stopped sniffing on {self.interface_name}")
         self.socket.close()
 
@@ -47,7 +48,7 @@ class SniffingProcess(Process):
         packet, packet_metadata = returned_packet.packet_and_metadata
         return f"{packet_metadata.direction} {packet.summary()}"
 
-    def code(self):
+    def code(self) -> T_ProcessCode:
         self.computer.print(f"started sniffing on {self.interface_name}")
         while True:
             yield from self.socket.block_until_received()
@@ -60,7 +61,7 @@ class SniffingProcess(Process):
                 self.die()
                 return
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"tcpdump " \
             f"{f'-A' if self.socket.interface == INTERFACES.ANY_INTERFACE else f'-i {self.socket.interface.name}'} " \
             f"{'-p' if self.socket.is_promisc else ''}"

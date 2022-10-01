@@ -1,12 +1,21 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from computing.internals.shell.commands.command import Command, CommandOutput
 from consts import COMPUTER
+
+if TYPE_CHECKING:
+    import argparse
+    from computing.computer import Computer
+    from computing.internals.shell.shell import Shell
 
 
 class Netstat(Command):
     """
     Prints the state of network ports and connection that are currently active.
     """
-    def __init__(self, computer, shell):
+    def __init__(self, computer: Computer, shell: Shell) -> None:
         """
         initiates the command.
         :param computer:
@@ -18,7 +27,7 @@ class Netstat(Command):
         self.parser.add_argument('-a', '--all', action='store_true', dest='all_sockets',
                                  help='display all socket (even disconnected)')
 
-    def _to_print(self, parsed_args):
+    def _to_print(self, parsed_args: argparse.Namespace) -> str:
         """
         The string to print
         :param parsed_args:
@@ -31,7 +40,7 @@ class Netstat(Command):
             f"PID\n"
         return headers + '\n'.join(getattr(socket, 'get_str_representation', socket.__repr__)() for socket in self.computer.sockets)
 
-    def action(self, parsed_args):
+    def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
         prints out the arguments.
         """

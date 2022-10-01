@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from os import linesep
-from typing import TYPE_CHECKING, Optional, Dict, Callable
+from typing import TYPE_CHECKING, Optional, Dict, Callable, Iterable
 
 from address.ip_address import IPAddress
 from computing.internals.processes.usermode_processes.daytime_process.daytime_client_process import DAYTIMEClientProcess
@@ -36,7 +36,7 @@ class ChildGraphicsObjects:
     interface_list: InterfaceGraphicsList
     loopback: Optional[LoopbackConnectionGraphics] = None
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable:
         return iter((
             self.text,
             self.console,
@@ -83,8 +83,6 @@ class ComputerGraphics(ImageGraphics):
             ProcessGraphicsList(self),
             InterfaceGraphicsList(self),
         )
-
-        self.buttons_id = None
 
         # debugp(f"Creating computer: {computer.name + ',':<15}scale: {self.scale_factor}")
         # self._set_size(*self.computer.initial_size)
@@ -202,7 +200,7 @@ class ComputerGraphics(ImageGraphics):
                 user_interface.ask_user_for,
                 str,
                 MESSAGES.INSERT.INTERFACE_INFO,
-                with_args(user_interface.add_delete_interface, self, type_=INTERFACES.TYPE.WIFI),
+                with_args(user_interface.add_delete_interface, self, INTERFACES.TYPE.WIFI),
             ),
             "open/close TCP port (shift+o)": with_args(
                 user_interface.ask_user_for,
@@ -258,7 +256,7 @@ class ComputerGraphics(ImageGraphics):
 
     def end_viewing(self, user_interface: UserInterface) -> None:
         """Ends the viewing of the object in the side window"""
-        user_interface.remove_buttons(self.buttons_id)
+        super(ComputerGraphics, self).end_viewing(user_interface)
         self.child_graphics_objects.console.hide()
 
     def _open_shell(self, user_interface: UserInterface) -> None:
@@ -319,7 +317,7 @@ class ComputerGraphics(ImageGraphics):
     def __repr__(self) -> str:
         return f"ComputerGraphics of computer '{self.computer}'"
 
-    def dict_save(self):
+    def dict_save(self) -> Dict:
         """
         Save the computer object with all of its attributes to tex
         :return: str

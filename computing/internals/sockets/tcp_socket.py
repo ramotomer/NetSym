@@ -1,9 +1,8 @@
-from __future__ import annotations
 
 from typing import Tuple, TYPE_CHECKING, Union
 
 from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import WaitingFor, T_ProcessCode
+from computing.internals.processes.abstracts.process import WaitingFor, T_ProcessCode, Process
 from computing.internals.processes.kernelmode_processes.tcp_socket_process import ListeningTCPSocketProcess, \
     ConnectingTCPSocketProcess
 from computing.internals.sockets.l4_socket import L4Socket
@@ -34,7 +33,7 @@ class TCPSocket(L4Socket):
         self.socket_handling_kernelmode_pid = None
 
     @property
-    def socket_handling_kernelmode_process(self):
+    def socket_handling_kernelmode_process(self) -> Process:
         return self.computer.process_scheduler.get_process(self.socket_handling_kernelmode_pid, COMPUTER.PROCESSES.MODES.KERNELMODE, raises=False)
 
     def send(self, data: Union[str, bytes]) -> None:

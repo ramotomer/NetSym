@@ -21,8 +21,14 @@ class OutputConsole(UserInterfaceGraphicsObject):
     It views errors, ping replies and requests, dhcp requests and more.
     """
 
-    def __init__(self, x, y, initial_text='OutputConsole:\n',
-                 width=CONSOLE.WIDTH, height=CONSOLE.HEIGHT, font_size=CONSOLE.FONT_SIZE, font=TEXT.FONT.DEFAULT):
+    def __init__(self,
+                 x: float,
+                 y: float,
+                 initial_text: str = 'OutputConsole:\n',
+                 width: float = CONSOLE.WIDTH,
+                 height: float = CONSOLE.HEIGHT,
+                 font_size: int = CONSOLE.FONT_SIZE,
+                 font: str = TEXT.FONT.DEFAULT) -> None:
         """
         Initiates the object with its location and initial text.
         """
@@ -51,7 +57,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
         """
         return (self.width / 2) + 2, self.height
 
-    def draw(self):
+    def draw(self) -> None:
         """
         Draws the graphics object - The OutputConsole.
         :return: None
@@ -59,7 +65,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
         if not self.is_hidden:
             draw_rectangle(self.x, self.y, self.width, self.height, color=CONSOLE.COLOR)
 
-    def show(self):
+    def show(self) -> None:
         """
         Shows the console if it is hidden
         :return: None
@@ -69,7 +75,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
         MainLoop.instance.move_to_front(self)
         MainLoop.instance.move_to_front(self.child_graphics_objects.text)
 
-    def hide(self):
+    def hide(self) -> None:
         """
         Hides the console if it is is_showing.
         :return: None
@@ -77,7 +83,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
         self.is_hidden = True
         self.child_graphics_objects.text.hide()
 
-    def toggle_showing(self):
+    def toggle_showing(self) -> None:
         """
         If hidden, show, if showing, hide
         :return:
@@ -87,7 +93,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
         else:
             self.hide()
 
-    def approximate_line_count(self, text):
+    def approximate_line_count(self, text: str) -> int:
         """
         The number of lines that some text would be split into in the console.
         This is somewhat of an approximation.
@@ -102,17 +108,17 @@ class OutputConsole(UserInterfaceGraphicsObject):
         # TODO: this method is totally shit...
 
     @property
-    def line_height(self):
+    def line_height(self) -> float:
         return (7 * self.child_graphics_objects.text.label.font_size) / 4
 
-    def is_full(self):
+    def is_full(self) -> bool:
         """
         Returns whether or not the console is full (and should go down a line)
         """
         text_height = sum([self.approximate_line_count(line) for line in self._text.split('\n')]) * self.line_height
         return text_height >= self.height
 
-    def write(self, text):
+    def write(self, text: str) -> None:
         """
         Writes some text to the console.
         :param text: a string to write.
@@ -128,5 +134,5 @@ class OutputConsole(UserInterfaceGraphicsObject):
         self._text += text + '\n'
         self.child_graphics_objects.text.set_text(self._text)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "OutputConsole"

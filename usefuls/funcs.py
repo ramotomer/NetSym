@@ -7,12 +7,16 @@ from contextlib import contextmanager
 from functools import reduce
 from math import sin, cos, pi, atan
 from operator import mul
-from typing import Dict, Any, Iterable, Callable, TypeVar, Optional, List, Generator
+from typing import Dict, Iterable, Callable, TypeVar, Optional, List, Generator
 
 from consts import *
 from exceptions import WrongUsageError
 
 T = TypeVar("T")
+
+K = TypeVar("K")
+K2 = TypeVar("K2")
+V = TypeVar("V")
 
 
 def get_the_one(iterable: Iterable[T],
@@ -38,7 +42,7 @@ def get_the_one(iterable: Iterable[T],
     return default
 
 
-def is_matching(pattern, string):
+def is_matching(pattern: str, string: str) -> bool:
     """
     Takes in a regex pattern and a string.
     Returns whether or not the string fits in the pattern
@@ -65,12 +69,12 @@ def with_args(function: Callable[[...], T], *args: Any, **kwargs: Any) -> Callab
     :param kwargs: the key word arguments that the function will be called with.
     :return: a function that takes no arguments.
     """
-    def returned(*more_args, **more_kwargs):
+    def returned(*more_args: Any, **more_kwargs: Any) -> T:
         return function(*args, *more_args, **kwargs, **more_kwargs)
     return returned
 
 
-def distance(p1: Tuple[float, float], p2: Tuple[float, float]):
+def distance(p1: Tuple[float, float], p2: Tuple[float, float]) -> float:
     """
     Returns the distance between two points.
     :param p1:
@@ -97,7 +101,7 @@ def called_in_order(*functions: Callable[[], Any]) -> Callable[[], None]:
     :param functions: callable objects.
     :return: a function
     """
-    def in_order():
+    def in_order() -> None:
         for function in functions:
             function()
     return in_order
@@ -113,7 +117,7 @@ def get_first(iterable: Iterable[T]) -> T:
         return item
 
 
-def insort(list_: List[T], item: T, key: Callable = lambda t: t) -> None:
+def insort(list_: List[T], item: T, key: Callable[[T], Any] = lambda t: t) -> None:
     """
     Insert an item into a sorted list by a given key while keeping it sorted.
     :param list_: the list (assumed to be sorted)
@@ -152,7 +156,11 @@ def circular_coordinates(center_location: Tuple[float, float], radius: float, co
         yield (coords + (0,)) if add_gl_coordinate else coords
 
 
-def sine_wave_coordinates(start_coordinates, end_coordinates, amplitude=10, frequency=1):
+def sine_wave_coordinates(
+        start_coordinates: Tuple[float, float],
+        end_coordinates: Tuple[float, float],
+        amplitude: float = 10,
+        frequency: float = 1) -> Generator[Tuple[float, float]]:
     """
     A generator that yields tuples that are coordinates for a sine wave.
     :return:
@@ -169,7 +177,7 @@ def sine_wave_coordinates(start_coordinates, end_coordinates, amplitude=10, freq
         x += SHAPES.SINE_WAVE.MINIMAL_POINT_DISTANCE
 
 
-def rotated_coordinates(coordinates, center, angle):
+def rotated_coordinates(coordinates: Tuple[float, float], center: Tuple[float, float], angle: float) -> Tuple[float, float]:
     """
     Takes in a tuple of coordinates and rotates them `angle` radians around the point `center`
     Returns the rotated coordinates
@@ -185,7 +193,7 @@ def rotated_coordinates(coordinates, center, angle):
     return rotated.real + cx, rotated.imag + cy
 
 
-def sum_tuples(*tuples):
+def sum_tuples(*tuples: Tuple) -> Tuple:
     """
     sums each item of the tuples. returns the new tuple.
     :param tuples: many arguments of tuples.
@@ -197,53 +205,46 @@ def sum_tuples(*tuples):
         raise WrongUsageError(f"problem with the arguments {list(tuples)}")
 
 
-def scale_tuple(scalar, tup, keep_ints=False):
+def scale_tuple(scalar: float, tuple_: Tuple, round_to_integers: bool = False) -> Tuple:
     """
     Multiplies every item of the tuple with a number.
-    :param scalar: number
-    :param tup: tuple
-    :param keep_ints: round the numbers up to be integers
-    :return:
     """
-    returned = tuple(map(lambda t: reduce(mul, t), zip(([scalar] * len(tup)), tup)))
-    if keep_ints:
-        returned = tuple(map(lambda x: int(x), returned))
+    returned = tuple(map(lambda t: reduce(mul, t), zip(([scalar] * len(tuple_)), tuple_)))
+    if round_to_integers:
+        returned = tuple(map(int, returned))
     return returned
 
 
-def normal_color_to_weird_gl_color(color, add_alpha=True):
+def normal_color_to_weird_gl_color(color: T_Color, add_alpha: bool = True) -> Union[T_Color, Tuple[float, ...]]:
     """
     Some open GL functions require some different weird format of colors
-    :param color:
-    :return:
     """
     r, g, b = color
     returned = r / 255, g / 255, b / 255
-    return returned + ((1.0,) if add_alpha else tuple())
+    return returned + ((1.0,) if add_alpha else ())
 
 
-def lighten_color(color, diff=COLORS.COLOR_DIFF):
+def lighten_color(color: T_Color, diff: float = COLORS.COLOR_DIFF) -> T_Color:
     r, g, b = color
     return max(min(r + diff, 255), 0), max(min(g + diff, 255), 0), max(min(b + diff, 255), 0)
 
 
-def darken_color(color, diff=COLORS.COLOR_DIFF):
+def darken_color(color: T_Color, diff: float = COLORS.COLOR_DIFF) -> T_Color:
     return lighten_color(color, -diff)
 
 
-def bindigits(n, bits):
+def bindigits(number: int, bit_count: int) -> str:
     """
     Receives a number (even a negative one!!!), returns a string
     os the binary form of that number. the string will be `bits` bits long.
-    :param n: the number
-    :param bits: the amount of bits to give the binary form
+    :param number: the number
+    :param bit_count: the amount of bits to give the binary form
     :return: `str`
     """
-    s = bin(n & int("1"*bits, 2))[2:]
-    return ("{0:0>%s}" % bits).format(s)
+    return f"{(bin(number & int('1' * bit_count, 2))[2:]) :0>{bit_count}}"
 
 
-def datetime_from_string(string):
+def datetime_from_string(string: str) -> datetime.datetime:
     """
     receives the output of a `repr(datetime.datetime)` for some datetime.datetime object,
     returns the datetime object itself.
@@ -252,12 +253,9 @@ def datetime_from_string(string):
     return datetime.datetime(*map(int, args))
 
 
-def all_indexes(string, substring):
+def all_indexes(string: str, substring: str) -> Generator[int]:
     """
     generator that yields indexes of all of the occurrences of the substring in the string
-    :param string:
-    :param substring:
-    :return:
     """
     last_index = -1
     while True:
@@ -268,7 +266,7 @@ def all_indexes(string, substring):
             return
 
 
-def my_range(start, end=None, step=1):
+def my_range(start: float, end: Optional[float] = None, step: float = 1) -> Generator[float]:
     """
     Just like `range`, but supports non-whole `step`s
     :param start:
@@ -305,7 +303,7 @@ def bool_(o: Any) -> bool:
     return bool(o)
 
 
-def split_with_escaping(string, separator=' ', escaping_char='"', remove_empty_spaces=True):
+def split_with_escaping(string: str, separator: str = ' ', escaping_char: str = '"', remove_empty_spaces: bool = True) -> List[str]:
     """
     Just like the builtin `split` - but can handle escaping characters like "-s and not split in between them
 
@@ -342,7 +340,7 @@ def split_with_escaping(string, separator=' ', escaping_char='"', remove_empty_s
 
 
 @contextmanager
-def temporary_attribute_values(object_, attribute_value_mapping):
+def temporary_attribute_values(object_: Any, attribute_value_mapping: Dict[str, Any]) -> Generator[Any]:
     """
     A `contextmanager` that takes in an instance of an object.
     The function allows us to temporarily change the values of
@@ -363,7 +361,7 @@ def temporary_attribute_values(object_, attribute_value_mapping):
             setattr(object_, attr, new_value)
 
 
-def reverse_dict(dict_):
+def reverse_dict(dict_: Dict[K, V]) -> Dict[V, K]:
     """
     Take in a dict and reverse the keys and the values.
     If some values are duplicate - raise
@@ -378,7 +376,7 @@ def reverse_dict(dict_):
     return {value: key_list[0] for value, key_list in reversed_dict_.items()}
 
 
-def change_dict_key_names(dict_: Dict[Any, Any], key_name_mapping: Dict[Any, Any]) -> Dict[Any, Any]:
+def change_dict_key_names(dict_: Dict[K, V], key_name_mapping: Dict[K, K2]) -> Dict[Union[K, K2], V]:
     """
     Receive a dict and a mapping between old and new names
     change the keys of the dict to their new names (if they appear in the mapping)

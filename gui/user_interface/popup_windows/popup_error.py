@@ -41,5 +41,5 @@ class PopupError(PopupWindowContainingText):
             title="error!",
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Popup Error window"

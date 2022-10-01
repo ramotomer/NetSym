@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import Optional, Union, List, Any
-
-import scapy
+from typing import Optional, List, Dict
 
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
@@ -72,7 +70,7 @@ class Interface:
         return self.connection.connection.deliver_time
 
     @property
-    def no_carrier(self):
+    def no_carrier(self) -> bool:
         return not self.is_connected()
 
     @classmethod
@@ -301,7 +299,7 @@ Interface:
         return f"Interface(name={self.name}, mac={self.mac}, ip={self.ip})"
 
     @classmethod
-    def from_dict_load(cls, dict_):
+    def from_dict_load(cls, dict_: Dict) -> Interface:
         """
         Loads a new interface from a dict
         :param dict_:

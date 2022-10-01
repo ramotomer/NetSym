@@ -4,9 +4,7 @@ import random
 from dataclasses import dataclass
 from functools import reduce
 from operator import concat
-from typing import TYPE_CHECKING, Optional, List, Union, Type, Generator, Any
-
-import scapy
+from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict
 
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
@@ -244,7 +242,7 @@ class Computer:
         cls.EXISTING_COMPUTER_NAMES.add(name)
         return name
 
-    def show(self, x, y):
+    def show(self, x: float, y: float) -> None:
         """
         This is called once to initiate the graphics of the computer.
         Gives it a `GraphicsObject`. (`ComputerGraphics`)
@@ -759,7 +757,7 @@ class Computer:
 
     # ------------------------- v  Packet sending and wrapping  v ---------------------------------------------
 
-    def send(self, packet: Packet, interface: Optional[Interface] = None, sending_socket: Optional[RawSocket] = None):
+    def send(self, packet: Packet, interface: Optional[Interface] = None, sending_socket: Optional[RawSocket] = None) -> None:
         """
         Takes a full and ready packet and just sends it.
         :param packet: a valid `Packet` object.
@@ -1001,7 +999,7 @@ class Computer:
         Returns whether or not a port is already bound to a socket.
         """
 
-        def is_registered_on_port(socket_data):
+        def is_registered_on_port(socket_data: SocketData) -> bool:
             return socket_data.local_port == port and \
                    socket_data.kind == kind and \
                    socket_data.state == COMPUTER.SOCKETS.STATES.LISTENING
@@ -1221,7 +1219,7 @@ class Computer:
     # ----------------------------------------- v  File Saving  v ----------------------------------------
 
     @classmethod
-    def _interfaces_from_dict(cls, dict_):
+    def _interfaces_from_dict(cls, dict_: Dict) -> List[Interface]:
         """
         Receives a dict from a json file and return a list of interfaces
         :param dict_:
@@ -1231,7 +1229,7 @@ class Computer:
         return [interface_classes[iface_dict["type_"]].from_dict_load(iface_dict) for iface_dict in dict_["interfaces"]]
 
     @classmethod
-    def from_dict_load(cls, dict_):
+    def from_dict_load(cls, dict_: Dict) -> Computer:
         """
         Load a computer from the dict that is saved into the files
         :param dict_:
