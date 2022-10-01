@@ -200,7 +200,7 @@ class ComputerGraphics(ImageGraphics):
                 user_interface.ask_user_for,
                 str,
                 MESSAGES.INSERT.INTERFACE_INFO,
-                with_args(user_interface.add_delete_interface, self, INTERFACES.TYPE.WIFI),
+                with_args(user_interface.add_delete_interface, self, interface_type=INTERFACES.TYPE.WIFI),
             ),
             "open/close TCP port (shift+o)": with_args(
                 user_interface.ask_user_for,
