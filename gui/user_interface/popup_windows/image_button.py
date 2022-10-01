@@ -1,5 +1,6 @@
-from collections import Callable
-from typing import Optional
+from __future__ import annotations
+
+from typing import Optional, Callable
 
 from consts import *
 from gui.abstracts.image_graphics import ImageGraphics

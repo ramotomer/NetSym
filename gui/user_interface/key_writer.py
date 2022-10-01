@@ -1,5 +1,6 @@
-from collections import Callable
-from typing import List, Union
+from __future__ import annotations
+
+from typing import List, Union, Callable
 
 from pyglet.window import key
 

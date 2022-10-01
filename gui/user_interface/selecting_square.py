@@ -1,6 +1,7 @@
-from collections import Iterable
+from __future__ import annotations
+
 from operator import itemgetter
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable
 
 from consts import *
 from exceptions import WrongUsageError

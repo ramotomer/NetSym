@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from math import pi, sin, cos
 from typing import TYPE_CHECKING, Iterable
 
