@@ -301,10 +301,10 @@ class MESSAGES:
 
 
 class DIRECTORIES:
-    IMAGES = "../res/sprites"
-    ANIMATIONS = "../res/animations"
-    FILES = "../res/files"
-    SAVES = "../res/files/saves"
+    IMAGES =     "./res/sprites"
+    ANIMATIONS = "./res/animations"
+    FILES =      "./res/files"
+    SAVES =      "./res/files/saves"
 
 
 INTERFACE_NAMES = [line.strip() for line in open(os.path.join(DIRECTORIES.FILES, "interface_names.txt")).readlines()]
