@@ -224,6 +224,10 @@ class IPAddress:
         """Test whether two ip addresses are equal or not (does no include subnet mask)"""
         if other is None:
             return False
+
+        if not isinstance(other, (str, IPAddress)):
+            raise TypeError(f"Cannot compare IPAddress object to {type(other)} - {other}")
+
         other = IPAddress(other)
         return self.string_ip == other.string_ip
         # ^ maybe i broke something when i did not also check the subnet mask, take into consideration....

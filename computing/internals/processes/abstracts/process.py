@@ -284,3 +284,7 @@ class ProcessInternalError_NoResponseForDNSQuery(ProcessInternalError):
     """
         This indicates a self-inflicted death of the process due to a DNS query that was sent but was not responded
         """
+
+
+class ProcessInternalError_NoIPAddressError(ProcessInternalError, NoIPAddressError):
+    pass

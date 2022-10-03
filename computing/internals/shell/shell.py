@@ -38,8 +38,7 @@ from computing.internals.shell.commands.net.netstat import Netstat
 from computing.internals.shell.commands.net.nslookup import Nslookup
 from computing.internals.shell.commands.net.ping import Ping
 from computing.internals.shell.commands.net.tcpdump import Tcpdump
-from computing.internals.shell.commands.processes.kill import Kill
-from computing.internals.shell.commands.processes.ps import Ps
+from computing.internals.shell.commands.net.tracert import Tracert
 from consts import CONSOLE, FILESYSTEM
 from usefuls.funcs import called_in_order, all_indexes
 
@@ -61,9 +60,13 @@ class Shell:
         self.computer = computer
         self.shell_graphics = shell_graphics
 
-        self.commands = [Echo, Ls, Cd, Pwd, Touch, Cat, Mkdir, Rm, Uname, Grep,
-                         Ip, Arp, Ps, Ping, Arping, Tcpdump, Kill, Hostname, Netstat, Cp, Uptime,
-                         Mv, Alias, Unalias, Help, Head, Tail, Man, Echoc, Echos, Watch, Brctl, Nslookup, Dns]
+        self.commands = [
+            Cat, Cd, Cp, Head, Ls, Mkdir, Mv, Pwd, Rm, Tail, Touch,
+            Hostname, Uname, Uptime,
+            Alias, Help, Man, Unalias, Watch,
+            Echo, Grep,
+            Brctl, Ip, Arp, Arping, Dns, Echoc, Echos, Netstat, Nslookup, Ping, Tcpdump, Tracert,
+        ]
         self.commands = [command(computer, self) for command in self.commands]
 
         self.parser_commands = {
