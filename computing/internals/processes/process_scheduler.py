@@ -159,9 +159,6 @@ class ProcessScheduler:
         if process.process is None:
             process.process = iter(process.code())
 
-        if process.kill_me:
-            return None
-
         with self.process_is_currently_running(process, mode):
             try:
                 return next(process.process)
@@ -196,7 +193,6 @@ class ProcessScheduler:
         new_packets = self.computer.new_packets_since(self.__details_by_mode[mode].process_last_check_time)
         self.__details_by_mode[mode].process_last_check_time = MainLoop.instance.time()
 
-        self._kill_dead_processes(mode)
         ready_processes = self._start_new_processes(mode)
         self._decide_ready_processes_no_packet(ready_processes, mode)
 
@@ -207,18 +203,6 @@ class ProcessScheduler:
 
         self._check_process_timeouts(ready_processes, mode)
         return ready_processes
-
-    def _kill_dead_processes(self, mode: str) -> None:
-        """
-        Kills all of the process that have the `kill_me` attribute set.
-        This allows them to terminate themselves from anywhere inside them
-        :return: None
-        """
-        waiting_processes = self.__details_by_mode[mode].waiting_processes
-        for waiting_process in waiting_processes[:]:
-            process, _ = waiting_process
-            if process.kill_me:
-                self.terminate_process(waiting_process.process, mode)
 
     def _decide_ready_processes_no_packet(self, ready_processes: List[Process], mode: str) -> None:
         """

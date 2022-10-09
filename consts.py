@@ -172,6 +172,9 @@ class OPCODES:
 
 
 class PROTOCOLS:
+    class IP:
+        MAX_TTL = 255
+
     class ARP:
         RESEND_TIME = 6  # seconds
         RESEND_COUNT = 3  # seconds

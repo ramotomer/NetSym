@@ -2,12 +2,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode, ProcessInternalError_NoResponseForARP
+from computing.internals.processes.abstracts.process import Process, T_ProcessCode, ProcessInternalError_NoResponseForARP, ProcessInternalError
 from consts import OPCODES
 
 if TYPE_CHECKING:
     from computing.computer import Computer
     from packets.packet import Packet
+
+
+class ProcessInternalError_RoutedPacketTTLExceeded(ProcessInternalError):
+    pass
 
 
 class RoutePacket(Process):
@@ -42,18 +46,18 @@ class RoutePacket(Process):
 
         return True
 
-    def _decrease_ttl(self) -> bool:
+    def _validate_ttl(self) -> bool:
         """
         Decrease the TTL of the packet, if it is 0, sends an ICMP Time Exceeded
         :return: a bool telling whether the time (TTL) of the packet was exceeded (reached 0).
         """
-        sender_ip = self.packet["IP"].src_ip
-        if self.packet["IP"].ttl == 0:
-            self.computer.send_time_exceeded(self.computer.arp_cache[sender_ip].mac, sender_ip)
-            return True
+        if self.packet["IP"].ttl > 1:
+            return
 
-        self.packet["IP"].ttl -= 1
-        return False
+        sender_ip = self.packet["IP"].src_ip
+        _, dst_mac = yield from self.computer.resolve_ip_address(sender_ip, self)
+        self.computer.send_time_exceeded(dst_mac, sender_ip)
+        raise ProcessInternalError_RoutedPacketTTLExceeded
 
     def _destination_unreachable(self) -> bool:
         """
@@ -94,16 +98,15 @@ class RoutePacket(Process):
         if self._destination_unreachable():
             return
 
-        dst_ip = self.packet["IP"].dst_ip
-        time_exceeded = self._decrease_ttl()
-        if time_exceeded:
-            return
+        yield from self._validate_ttl()
 
+        self.packet["IP"].ttl -= 1
+        dst_ip = self.packet["IP"].dst_ip
         try:
             ip_for_the_mac, dst_mac = yield from self.computer.resolve_ip_address(dst_ip, self)
         except ProcessInternalError_NoResponseForARP:
             self._send_icmp_unreachable()
-            return
+            raise
 
         self.computer.send_with_ethernet(dst_mac, dst_ip, self.packet["IP"])
 

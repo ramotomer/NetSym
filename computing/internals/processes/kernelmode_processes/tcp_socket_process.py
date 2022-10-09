@@ -63,8 +63,6 @@ class TCPSocketProcess(TCPProcess, metaclass=ABCMeta):
     def code(self) -> T_ProcessCode:
         """"""
         yield from self.hello_handshake()  # blocks until receiving a syn to the port
-        if self.kill_me:
-            return
         self._set_socket_connected()
 
         while not (self.close_socket_when_done_transmitting and self.is_done_transmitting()):
