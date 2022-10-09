@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Optional
+from typing import TYPE_CHECKING, Optional
 
 from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket, T_ProcessCode, \
     ProcessInternalError_NoIPAddressError
@@ -37,19 +37,17 @@ class TraceRouteProcess(Process):
 
         self.computer.send_ping_to(dst_mac, self.dst_ip, ttl=ttl)
 
-    def ttl_exceeded_reply(self) -> Callable[[Packet], bool]:
+    def ttl_exceeded_reply(self, packet: Packet) -> bool:
         """
         Returns a function that tests if the packet given to it is a ping reply for the `ip_address`
         """
-        def tester(packet: Packet) -> bool:
-            if "ICMP" in packet:
-                if packet["ICMP"].type in [OPCODES.ICMP.TYPES.TIME_EXCEEDED,
-                                           OPCODES.ICMP.TYPES.REPLY,
-                                           OPCODES.ICMP.TYPES.UNREACHABLE]:
-                    if self.computer.has_this_ip(packet["IP"].dst_ip):
-                        return True
-            return False
-        return tester
+        if "ICMP" in packet:
+            if packet["ICMP"].type in [OPCODES.ICMP.TYPES.TIME_EXCEEDED,
+                                       OPCODES.ICMP.TYPES.REPLY,
+                                       OPCODES.ICMP.TYPES.UNREACHABLE]:
+                if self.computer.has_this_ip(packet["IP"].dst_ip):
+                    return True
+        return False
 
     def _print_midpoint(self, returned_packet: ReturnedPacket, is_final_stop: bool = False) -> None:
         """
@@ -73,13 +71,13 @@ class TraceRouteProcess(Process):
             _, dst_mac = yield from self.computer.resolve_ip_address(self.dst_ip, self)
             self._send_the_ping(dst_mac, ttl)
             returned_packet = ReturnedPacket()
-            yield WaitingForPacket(self.ttl_exceeded_reply(), returned_packet)
+            yield WaitingForPacket(self.ttl_exceeded_reply, returned_packet)
             if self.dst_ip == returned_packet.packet["IP"].src_ip:
                 self._print_midpoint(returned_packet, is_final_stop=True)
                 return
             self._print_midpoint(returned_packet)
-        self.computer.print(f"Tracert could not find all midpoints! Destination is too far away or unreachable :(")
+        self.computer.print(f"Traceroute could not find all midpoints! Destination is too far away or unreachable :(")
 
     def __repr__(self) -> str:
         """The string representation of the SendPing process"""
-        return f"tracert"
+        return f"traceroute"

@@ -38,7 +38,7 @@ from computing.internals.shell.commands.net.netstat import Netstat
 from computing.internals.shell.commands.net.nslookup import Nslookup
 from computing.internals.shell.commands.net.ping import Ping
 from computing.internals.shell.commands.net.tcpdump import Tcpdump
-from computing.internals.shell.commands.net.tracert import Tracert
+from computing.internals.shell.commands.net.traceroute import Traceroute
 from computing.internals.shell.commands.processes.kill import Kill
 from computing.internals.shell.commands.processes.ps import Ps
 from consts import CONSOLE, FILESYSTEM
@@ -67,7 +67,7 @@ class Shell:
             Hostname, Uname, Uptime,
             Alias, Help, Man, Unalias, Watch,
             Echo, Grep,
-            Brctl, Ip, Arp, Arping, Dns, Echoc, Echos, Netstat, Nslookup, Ping, Tcpdump, Tracert,
+            Brctl, Ip, Arp, Arping, Dns, Echoc, Echos, Netstat, Nslookup, Ping, Tcpdump, Traceroute,
             Kill, Ps,
         ]
         self.commands = [command(computer, self) for command in self.commands]

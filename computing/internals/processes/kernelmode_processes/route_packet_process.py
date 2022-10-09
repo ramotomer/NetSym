@@ -2,16 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode, ProcessInternalError_NoResponseForARP, ProcessInternalError
+from computing.internals.processes.abstracts.process import Process, T_ProcessCode, ProcessInternalError_NoResponseForARP, \
+    ProcessInternalError_RoutedPacketTTLExceeded
 from consts import OPCODES
 
 if TYPE_CHECKING:
     from computing.computer import Computer
     from packets.packet import Packet
-
-
-class ProcessInternalError_RoutedPacketTTLExceeded(ProcessInternalError):
-    pass
 
 
 class RoutePacket(Process):
@@ -80,10 +77,12 @@ class RoutePacket(Process):
         sender_ip = self.packet["IP"].src_ip
         dst_ip = self.packet["IP"].dst_ip
 
-        self.computer.send_ping_to(self.computer.arp_cache[sender_ip].mac,
-                                   self.packet["IP"].src_ip,
-                                   OPCODES.ICMP.TYPES.UNREACHABLE,
-                                   f"Unreachable: {dst_ip}")
+        self.computer.send_ping_to(
+            self.computer.arp_cache[sender_ip].mac,
+            self.packet["IP"].src_ip,
+            OPCODES.ICMP.TYPES.UNREACHABLE,
+            f"Unreachable: {dst_ip}"
+        )
 
     def code(self) -> T_ProcessCode:
         """

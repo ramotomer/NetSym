@@ -280,9 +280,17 @@ class ProcessInternalError_DNSNameErrorFromServer(ProcessInternalError):
 
 class ProcessInternalError_NoResponseForDNSQuery(ProcessInternalError):
     """
-        This indicates a self-inflicted death of the process due to a DNS query that was sent but was not responded
-        """
+    This indicates a self-inflicted death of the process due to a DNS query that was sent but was not responded
+    """
 
 
 class ProcessInternalError_NoIPAddressError(ProcessInternalError, NoIPAddressError):
-    pass
+    """
+    This indicates a self-inflicted death of the process due to a lack of an IP address
+    """
+
+
+class ProcessInternalError_RoutedPacketTTLExceeded(ProcessInternalError):
+    """
+    This indicates a self-inflicted death of the process because the packet that was routed did not have enough TTL to actually be routed
+    """

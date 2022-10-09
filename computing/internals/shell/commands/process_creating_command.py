@@ -37,11 +37,15 @@ class ProcessCreatingCommand(Command, metaclass=ABCMeta):
         return {}
 
     def _get_command_output(self) -> CommandOutput:
+        """
+        Allows the inheritor of this class to customize what his command will print.
+        Defaults to nothing - assuming all printing will come from the process.
+        """
         return CommandOutput('', '')
 
     def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """
-        Runs the process
+        Runs the process, and returns the correct `CommandOutput`
         """
         self.computer.process_scheduler.start_usermode_process(
             self.process_type,
