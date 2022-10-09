@@ -154,7 +154,6 @@ class Process(metaclass=ABCMeta):
         self.computer: Computer = computer
         self.cwd = self.computer.filesystem.root
         self.process = None
-        self.kill_me = False
 
         self.signal_handlers = defaultdict(
             lambda: self.default_signal_handler
@@ -177,9 +176,8 @@ class Process(metaclass=ABCMeta):
         if death_message:
             self.computer.print(death_message)
 
-        self.kill_me = True
-        if self.computer.process_scheduler.is_running_a_process():
-            raise (raises if raises is not None else ProcessInternalError_Suicide)
+        # if self.computer.process_scheduler.is_running_a_process():
+        raise (raises if raises is not None else ProcessInternalError_Suicide)
 
     def set_killing_signals_handler(self, handler: Callable) -> None:
         """
@@ -282,5 +280,17 @@ class ProcessInternalError_DNSNameErrorFromServer(ProcessInternalError):
 
 class ProcessInternalError_NoResponseForDNSQuery(ProcessInternalError):
     """
-        This indicates a self-inflicted death of the process due to a DNS query that was sent but was not responded
-        """
+    This indicates a self-inflicted death of the process due to a DNS query that was sent but was not responded
+    """
+
+
+class ProcessInternalError_NoIPAddressError(ProcessInternalError, NoIPAddressError):
+    """
+    This indicates a self-inflicted death of the process due to a lack of an IP address
+    """
+
+
+class ProcessInternalError_RoutedPacketTTLExceeded(ProcessInternalError):
+    """
+    This indicates a self-inflicted death of the process because the packet that was routed did not have enough TTL to actually be routed
+    """

@@ -791,7 +791,7 @@ class Computer:
             interface=interface,
         )
 
-    def send_to(self, dst_mac: MACAddress, dst_ip: IPAddress, packet: Packet) -> None:
+    def send_to(self, dst_mac: MACAddress, dst_ip: IPAddress, packet: Packet, **kwargs: Any) -> None:
         """
         Receives destination addresses and a packet, wraps the packet with IP
         and Ethernet as required and sends it out.
@@ -799,18 +799,24 @@ class Computer:
         :param dst_ip: destination `IPAddress` of the packet
         :param packet: packet to wrap. Could be anything, should be something the destination computer expects.
         """
-        self.send(self.ip_wrap(dst_mac, dst_ip, packet))
+        self.send(self.ip_wrap(dst_mac, dst_ip, packet, **kwargs))
 
-    def ip_wrap(self, dst_mac: MACAddress, dst_ip: IPAddress, protocol: scapy.packet.Packet) -> Packet:
+    def ip_wrap(self, dst_mac: MACAddress, dst_ip: IPAddress, protocol: scapy.packet.Packet, ttl: Optional[int] = None, **kwargs: Any) -> Packet:
         """
         Takes in some protocol and wraps it up in Ethernet and IP with the appropriate MAC and IP addresses and TTL all
         ready to be sent.
+        :param ttl:
         :param dst_mac:
         :param dst_ip:
         :param protocol:  The thing to wrap in IP
         """
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
-        return interface.ethernet_wrap(dst_mac, IP(src=str(interface.ip), dst=str(dst_ip), ttl=TTL.BY_OS[self.os]) / protocol)
+        return interface.ethernet_wrap(dst_mac, IP(
+            src_ip=str(interface.ip),
+            dst_ip=str(dst_ip),
+            ttl=ttl or TTL.BY_OS[self.os],
+            **kwargs,
+        ) / protocol)
 
     def udp_wrap(self, dst_mac: MACAddress, dst_ip: IPAddress, src_port: T_Port, dst_port: T_Port, protocol: scapy.packet.Packet) -> Packet:
         """
@@ -891,11 +897,12 @@ class Computer:
                      mac_address: MACAddress,
                      ip_address: IPAddress,
                      opcode: int = OPCODES.ICMP.TYPES.REQUEST,
-                     data: Union[str, bytes] = '') -> None:
+                     data: Union[str, bytes] = '',
+                     **kwargs: Any) -> None:
         """
         Send an ICMP packet to the a given ip address.
         """
-        self.send_to(mac_address, ip_address, ICMP(type=opcode) / data)
+        self.send_to(mac_address, ip_address, (ICMP(type=opcode) / data), **kwargs)
 
     def send_time_exceeded(self, dst_mac: MACAddress, dst_ip: IPAddress, data: Union[str, bytes] = '') -> None:
         """
