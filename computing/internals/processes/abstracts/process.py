@@ -107,8 +107,7 @@ class WaitingFor(IterableDataclass):
         return self.timeout is not None
 
 
-T_WaitingFor = WaitingFor
-T_ProcessCode = Generator[T_WaitingFor, ReturnedPacket, None]
+T_ProcessCode = Generator[WaitingFor, ReturnedPacket, None]
 
 
 class Process(metaclass=ABCMeta):

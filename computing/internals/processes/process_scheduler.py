@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from operator import attrgetter
 from typing import NamedTuple, Optional, TYPE_CHECKING, List, Type, Tuple, Generator, Any, TypeVar
 
-from computing.internals.processes.abstracts.process import ProcessInternalError, Process, T_WaitingFor, ReturnedPacket
+from computing.internals.processes.abstracts.process import ProcessInternalError, Process, WaitingFor, ReturnedPacket
 from consts import COMPUTER, T_Time
 from exceptions import NoSuchProcessError
 from gui.main_loop import MainLoop
@@ -23,7 +23,7 @@ class WaitingProcess(NamedTuple):
     A process that is currently waiting for a certain packet.
     """
     process:     Process
-    waiting_for: Optional[T_WaitingFor]
+    waiting_for: Optional[WaitingFor]
 
 
 class ReadyProcess(NamedTuple):
@@ -162,7 +162,7 @@ class ProcessScheduler:
         finally:
             self.__details_by_mode[mode].currently_running_process = None
 
-    def _run_process(self, process: Process, mode: str, returned_packet: Any) -> Optional[T_WaitingFor]:
+    def _run_process(self, process: Process, mode: str, returned_packet: Any) -> Optional[WaitingFor]:
         """
         This function receives a process and runs it until yielding a `WaitingForPacket` namedtuple.
         Returns the yielded `WaitingForPacket`.

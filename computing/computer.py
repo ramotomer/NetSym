@@ -12,7 +12,7 @@ from computing.internals.arp_cache import ArpCache
 from computing.internals.dns_cache import DNSCache
 from computing.internals.filesystem.filesystem import Filesystem
 from computing.internals.interface import Interface
-from computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket, WaitingFor, T_WaitingFor
+from computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket, WaitingFor
 from computing.internals.processes.kernelmode_processes.arp_process import ARPProcess, SendPacketWithARPProcess
 from computing.internals.processes.process_scheduler import ProcessScheduler
 from computing.internals.processes.usermode_processes.daytime_process.daytime_server_process import DAYTIMEServerProcess
@@ -712,7 +712,7 @@ class Computer:
     def resolve_domain_name(self,
                             requesting_process: Process,
                             name: T_Hostname,
-                            dns_server: Optional[IPAddress] = None) -> Generator[T_WaitingFor, Any, IPAddress]:
+                            dns_server: Optional[IPAddress] = None) -> Generator[WaitingFor, Any, IPAddress]:
         """
         A generator to `yield from` inside processes
         The generator eventually will return the IPAddress that matches the supplied domain hostname
@@ -929,7 +929,7 @@ class Computer:
 
     def resolve_ip_address(self,
                            ip_address: IPAddress,
-                           requesting_process: Process) -> Generator[T_WaitingFor, Any, Tuple[IPAddress, MACAddress]]:
+                           requesting_process: Process) -> Generator[WaitingFor, Any, Tuple[IPAddress, MACAddress]]:
         """
         Receives an `IPAddress` and sends ARPs to it until it finds it or it did not answer for a long time.
         This function actually starts a process that does that.
