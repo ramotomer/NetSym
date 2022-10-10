@@ -49,7 +49,7 @@ class SchedulerDetails:
 
     @property
     def ready_processes_instances(self):
-        return [rp.process for rp in self.ready_processes]
+        return [ready_process.process for ready_process in self.ready_processes]
 
 
 class ProcessScheduler:
@@ -336,7 +336,7 @@ class ProcessScheduler:
 
             if process in ready_processes:
                 found_the_process = True
-                ready_processes.remove(process)
+                ready_processes.remove(get_the_one(ready_processes, lambda rp: rp.process == process, NoSuchProcessError))
             elif process is self.__details_by_mode[mode].currently_running_process:
                 found_the_process = True
                 process.die()  # only occurs when a process calls `terminate_process` on itself
@@ -364,7 +364,7 @@ class ProcessScheduler:
         for mode in COMPUTER.PROCESSES.MODES.ALL_MODES:
             waiting_processes = self.__details_by_mode[mode].waiting_processes
 
-            for process in [wp.process for wp in waiting_processes] + self.__details_by_mode[mode].ready_processes_instances:
+            for process in list(map(attrgetter("process"), waiting_processes)) + self.__details_by_mode[mode].ready_processes_instances:
                 self.terminate_process(process, mode)
 
             if self.__details_by_mode[mode].currently_running_process is not None:
