@@ -172,6 +172,9 @@ class OPCODES:
 
 
 class PROTOCOLS:
+    class ETHERNET:
+        MTU = 1500
+
     class IP:
         MAX_TTL = 255
 

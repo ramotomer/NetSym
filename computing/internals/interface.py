@@ -31,7 +31,8 @@ class Interface:
                  name: Optional[str] = None,
                  connection: Optional[Connection] = None,
                  display_color: Tuple[int] = INTERFACES.COLOR,
-                 type_: str = INTERFACES.TYPE.ETHERNET) -> None:
+                 type_: str = INTERFACES.TYPE.ETHERNET,
+                 mtu: int = PROTOCOLS.ETHERNET.MTU) -> None:
         """
         Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
         :param mac: a string MAC address ('aa:bb:cc:11:22:76' for example)
@@ -55,6 +56,7 @@ class Interface:
 
         self.is_powered_on = True
         self.type = type_
+        self.mtu = mtu
 
         self.graphics = None
         self.display_color = display_color
@@ -151,6 +153,15 @@ class Interface:
             raise PopupWindowWithThisError("name must contain letters!!!")
 
         self.name = name
+
+    def set_mtu(self, mtu: int) -> None:
+        """
+        Sets the new MTU of the interface (must be 0 < mtu <= 1500)
+        """
+        if not (0 < mtu <= PROTOCOLS.ETHERNET.MTU):
+            raise PopupWindowWithThisError(f"Invalid MTU {mtu}! valid range is between 0 and {PROTOCOLS.ETHERNET.MTU}!")
+
+        self.mtu = mtu
 
     def connect(self, other: Interface) -> Connection:
         """
@@ -284,6 +295,7 @@ Interface:
 
 {str(self.mac) if not self.mac.is_no_mac() else ""} 
 {repr(self.ip) if self.has_ip() else ''}
+MTU: {self.mtu}
 {"Connected" if self.is_connected() else "Disconnected"}
 {f"Promisc{linesep}" if self.is_promisc else ""}{"Blocked" if 
         self.is_blocked else ""}
@@ -309,7 +321,8 @@ Interface:
             mac=dict_["mac"],
             ip=dict_["ip"],
             name=dict_["name"],
-            type_=dict_["type_"]
+            type_=dict_["type_"],
+            mtu=dict_.get("mtu", PROTOCOLS.ETHERNET.MTU),
         )
 
         return loaded
