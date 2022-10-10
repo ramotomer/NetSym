@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import random
+from collections import deque
 from dataclasses import dataclass
 from functools import reduce
 from operator import concat
-from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict
+from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator
 
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
@@ -12,6 +13,7 @@ from computing.internals.arp_cache import ArpCache
 from computing.internals.dns_cache import DNSCache
 from computing.internals.filesystem.filesystem import Filesystem
 from computing.internals.interface import Interface
+from computing.internals.packet_sending_queue import PacketSendingQueue
 from computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket, WaitingFor
 from computing.internals.processes.kernelmode_processes.arp_process import ARPProcess, SendPacketWithARPProcess
 from computing.internals.processes.process_scheduler import ProcessScheduler
@@ -115,7 +117,7 @@ class Computer:
 
         self.received: List[ReturnedPacket] = []
 
-        self.arp_cache = ArpCache()  # a dictionary of {<ip address> : ARPCacheItem(<mac address>, <initiation time of this item>)
+        self.arp_cache = ArpCache()
         self.routing_table = RoutingTable.create_default(self)
         self.dns_cache = DNSCache()
 
@@ -142,6 +144,7 @@ class Computer:
         self.active_shells = []
 
         self.initial_size = IMAGES.SCALE_FACTORS.SPRITES, IMAGES.SCALE_FACTORS.SPRITES
+        self._packet_sending_queues: List[PacketSendingQueue] = []
 
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ method does not run when program is paused
@@ -387,6 +390,7 @@ class Computer:
         This method runs continuously and removes unused resources on the computer (sockets, processes, etc...)
         """
         self._cleanup_unused_sockets()
+        self._cleanup_unused_packet_sending_queues()
         self.arp_cache.forget_old_items()
         self.dns_cache.forget_old_items()
 
@@ -942,6 +946,39 @@ class Computer:
         yield from ARPProcess(requesting_process.pid, self, ip_for_the_mac.string_ip).code()
         return ip_for_the_mac, self.arp_cache[ip_for_the_mac].mac
 
+    def send_packet_stream(self, requesting_usermode_pid: int, packets: Iterator[Packet], interval_between_packets: T_Time) -> None:
+        """
+        Send a large amount of packets that should be sent in quick succession one after the other
+        This will make sure they are sent with the appropriate time gaps - in order to allow the user to see them
+        """
+        existing_sending_queue = self.get_packet_sending_queue(requesting_usermode_pid)
+        if existing_sending_queue is not None:
+            existing_sending_queue.packets.extend(packets)
+            return
+        self._packet_sending_queues.append(PacketSendingQueue(self, requesting_usermode_pid, deque(packets), interval_between_packets))
+
+    def _handle_packet_streams(self) -> None:
+        """
+        Allows all of the PacketSendingQueue-s to perform their actions (send their packets with time gaps)
+        Deletes the queues that are done sending.
+        """
+        for packet_sending_queue in self._packet_sending_queues[:]:
+            packet_sending_queue.send_packets_with_time_gaps()
+
+    def _cleanup_unused_packet_sending_queues(self) -> None:
+        """
+        Remove PacketSendingQueues that have no running process attached to them
+        """
+        for packet_sending_queue in self._packet_sending_queues[:]:
+            if not self.process_scheduler.is_usermode_process_running(packet_sending_queue.pid):
+                self._packet_sending_queues.remove(packet_sending_queue)
+
+    def get_packet_sending_queue(self, pid: int) -> PacketSendingQueue:
+        """
+        Get the PacketSendingQueue object of the process with the given ID
+        """
+        return get_the_one(self._packet_sending_queues, lambda psq: psq.pid == pid)
+
     # ------------------------------- v  Sockets  v ----------------------------------------------------------------------
 
     def get_socket(self,
@@ -1212,6 +1249,7 @@ class Computer:
                 self._handle_special_packet(packet_with_metadata)
                 self._sniff_packet_on_relevant_raw_sockets(packet_with_metadata)
 
+        self._handle_packet_streams()
         self.process_scheduler.handle_processes()
         self.garbage_cleanup()
 
