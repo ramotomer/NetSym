@@ -5,8 +5,8 @@ from typing import Callable, TYPE_CHECKING, Optional
 import scapy
 
 from address.mac_address import MACAddress
-from computing.internals.processes.abstracts.process import Process, ReturnedPacket, WaitingForPacketWithTimeout, Timeout, T_ProcessCode, \
-    ProcessInternalError_NoResponseForARP
+from computing.internals.processes.abstracts.process import Process, Timeout, T_ProcessCode, \
+    ProcessInternalError_NoResponseForARP, WaitingFor
 from consts import OPCODES, PROTOCOLS
 from packets.usefuls.dns import T_Hostname
 from usefuls.funcs import my_range
@@ -52,19 +52,21 @@ class ARPProcess(Process):
             return
 
         dst_ip = yield from self.computer.resolve_domain_name(self, self.destination)
-
         if dst_ip in self.computer.arp_cache and not self.send_even_if_known:
             return
-        returned_packets = ReturnedPacket()
+
         for _ in my_range(self.resend_count):
             self.computer.send_arp_to(dst_ip)
-            yield WaitingForPacketWithTimeout(arp_reply_from(dst_ip), returned_packets, Timeout(PROTOCOLS.ARP.RESEND_TIME))
+            returned_packets = yield WaitingFor(arp_reply_from(dst_ip), timeout=Timeout(PROTOCOLS.ARP.RESEND_TIME))
             if not returned_packets.has_packets():
                 self.computer.print("Destination is unreachable :(")
-            elif not self.resend_even_on_success:
-                return
+                continue
+            if self.resend_even_on_success:
+                continue
+            return
 
-        self.die("ERROR! No response for ARP :(", raises=ProcessInternalError_NoResponseForARP)
+        if not self.resend_even_on_success:
+            self.die("ERROR! No response for ARP :(", raises=ProcessInternalError_NoResponseForARP)
 
     def __repr__(self) -> str:
         return self.override_process_name or f"[karp] {self.destination}"

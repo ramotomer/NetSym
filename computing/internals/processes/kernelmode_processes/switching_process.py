@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import NamedTuple, TYPE_CHECKING, List
 
 from computing.internals.interface import Interface
-from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket, T_ProcessCode
+from computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, WaitingFor
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
@@ -22,6 +22,8 @@ class SwitchingProcess(Process):
     """
     This is the process that is in charge of switching packets on a computer.
     """
+    computer: Switch
+
     def __init__(self, pid: int, switch: Switch) -> None:
         """
         Initiates the process with a computer that runs it.
@@ -99,9 +101,7 @@ class SwitchingProcess(Process):
         :return: yield WaitingFor-s
         """
         while True:
-            new_packets = ReturnedPacket()
-            yield WaitingForPacket(self.is_switchable_packet, new_packets)
-            #TODO: move to using the python3 `generator.send` method!!! it is just what you need!
+            new_packets = yield WaitingFor(self.is_switchable_packet)
 
             self.send_new_packets_to_destinations(new_packets)
             self.update_switch_table_from_packets(new_packets)

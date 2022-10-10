@@ -4,7 +4,7 @@ import time
 from typing import Type, Iterable, Optional, TYPE_CHECKING, Callable, Any, List, TypeVar
 
 from consts import T_Time
-from exceptions import NoSuchGraphicsObjectError, AttributeError_
+from exceptions import NoSuchGraphicsObjectError
 from usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
@@ -237,17 +237,18 @@ class MainLoop:
         :return: None
         """
         function = None
+        self.main_window.clear()
+
+        self.update_time()
+        self.select_selected_and_marked_objects()
+        self.main_window.user_interface.show()
+
         try:
-            self.main_window.clear()
-
-            self.update_time()
-            self.select_selected_and_marked_objects()
-            self.main_window.user_interface.show()
-
             for function, args, kwargs, can_be_paused in self.call_functions:
                 if self.is_paused and can_be_paused:
                     continue
                 function(*args, **kwargs)
         except AttributeError as e:
             # for some reason pyglet makes AttributeErrors silent - we reraise them or else it is very hard to debug
-            raise AttributeError_(f"'{e.args[0]}' - in function: {function}" if function else '')
+            print(f"AttributeError!!!! during mainloop '{e.args[0]}' - in function: {function}" if function else '')
+            raise
