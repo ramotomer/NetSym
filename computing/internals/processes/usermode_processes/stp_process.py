@@ -5,8 +5,7 @@ from os import linesep
 from typing import Optional, TYPE_CHECKING, Dict
 
 from address.mac_address import MACAddress
-from computing.internals.processes.abstracts.process import Process, WaitingForPacketWithTimeout, ReturnedPacket, \
-    Timeout, T_ProcessCode
+from computing.internals.processes.abstracts.process import Process, WaitingForPacketWithTimeout, Timeout, T_ProcessCode
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
@@ -413,8 +412,7 @@ class STPProcess(Process):
             if MainLoop.instance.time_since(self.last_sending_time) > self.sending_interval:
                 self._flood_stp_packets()
 
-            stp_packets = ReturnedPacket()
-            yield WaitingForPacketWithTimeout(lambda p: ("STP" in p), stp_packets, Timeout(0))
+            stp_packets = yield WaitingForPacketWithTimeout(lambda p: ("STP" in p), Timeout(0))
             self._remove_disconnected_ports()
 
             for packet, packet_metadata in stp_packets.packets.items():

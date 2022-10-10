@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from dataclasses import dataclass
+from operator import attrgetter
 from typing import NamedTuple, Optional, TYPE_CHECKING, List, Type, Tuple, Generator, Any, TypeVar
 
 from computing.internals.processes.abstracts.process import ProcessInternalError, Process, T_WaitingFor, WaitingForPacket, \
@@ -26,6 +27,15 @@ class WaitingProcess(NamedTuple):
     waiting_for: Optional[T_WaitingFor]
 
 
+class ReadyProcess(NamedTuple):
+    """
+    A process that is ready to run in the next 'tick' of the simulation.
+    That process comes with a value that will be given to the process when it is run. In the simplest case it will be a packet that it received
+    """
+    process:         Process
+    returned_packet: Optional[ReturnedPacket] = None
+
+
 @dataclass
 class SchedulerDetails:
     """
@@ -33,10 +43,14 @@ class SchedulerDetails:
     """
     startup_processes:         List[Tuple[Type[Process], Tuple[...]]]
     currently_running_process: Optional[Process]
-    ready_processes:           List[Process]
+    ready_processes:           List[ReadyProcess]
     waiting_processes:         List[WaitingProcess]
     process_last_check_time:   T_Time
     latest_pid:                int
+
+    @property
+    def ready_processes_instances(self):
+        return [rp.process for rp in self.ready_processes]
 
 
 class ProcessScheduler:
@@ -133,7 +147,7 @@ class ProcessScheduler:
         """
         return [waiting_process.process for waiting_process in self.__details_by_mode[mode].waiting_processes] + \
                ([self.get_currently_running_process(mode)] if self.is_running_a_process_in_this_mode(mode) else []) + \
-               self.__details_by_mode[mode].ready_processes
+               self.__details_by_mode[mode].ready_processes_instances
 
     @contextmanager
     def process_is_currently_running(self, process: Process, mode: str) -> Generator:
@@ -149,7 +163,7 @@ class ProcessScheduler:
         finally:
             self.__details_by_mode[mode].currently_running_process = None
 
-    def _run_process(self, process: Process, mode: str) -> Optional[T_WaitingFor]:
+    def _run_process(self, process: Process, mode: str, returned_packet: Any) -> Optional[T_WaitingFor]:
         """
         This function receives a process and runs it until yielding a `WaitingForPacket` namedtuple.
         Returns the yielded `WaitingForPacket`.
@@ -161,13 +175,13 @@ class ProcessScheduler:
 
         with self.process_is_currently_running(process, mode):
             try:
-                return next(process.process)
+                return process.process.send(returned_packet)
             except StopIteration:
                 return None
             except ProcessInternalError:
                 return None
 
-    def _start_new_processes(self, mode: str) -> List[Process]:
+    def _start_new_processes(self, mode: str) -> List[ReadyProcess]:
         """
         Goes over the waiting processes list and returns a list of new processes that are ready to run.
         Also removes them from the waiting processes list.
@@ -180,11 +194,11 @@ class ProcessScheduler:
         for waiting_process in waiting_processes[:]:
             process, waiting_for = waiting_process
             if waiting_for is None:  # that means the process was not yet run.
-                new_processes.append(process)
+                new_processes.append(ReadyProcess(process, None))
                 waiting_processes.remove(waiting_process)
         return new_processes
 
-    def _get_ready_processes(self, mode: str) -> List[Process]:
+    def _get_ready_processes(self, mode: str) -> List[ReadyProcess]:
         """
         Returns a list of the waiting processes that finished waiting and are ready to run.
         :return: a list of `Process` objects that are ready to run. (they will run in the next call to
@@ -204,7 +218,7 @@ class ProcessScheduler:
         self._check_process_timeouts(ready_processes, mode)
         return ready_processes
 
-    def _decide_ready_processes_no_packet(self, ready_processes: List[Process], mode: str) -> None:
+    def _decide_ready_processes_no_packet(self, ready_processes: List[ReadyProcess], mode: str) -> None:
         """
         Receives a list of the already ready processes,
         Goes over the waiting processes and sees if one of them is waiting for a certain condition without a packet (if
@@ -220,12 +234,12 @@ class ProcessScheduler:
 
             if waiting_process.waiting_for.condition():
                 waiting_processes.remove(waiting_process)
-                ready_processes.append(waiting_process.process)
+                ready_processes.append(ReadyProcess(waiting_process.process, ReturnedPacket()))
 
     def _decide_if_process_ready_by_packet(self,
                                            waiting_process: WaitingProcess,
                                            received_packet: ReturnedPacket,
-                                           ready_processes: List[Process],
+                                           ready_processes: List[ReadyProcess],
                                            mode: str) -> bool:
         """
         This method receives a waiting process, a possible packet that matches its `WaitingForPacket` condition
@@ -250,16 +264,16 @@ class ProcessScheduler:
             return False
 
         if waiting_for.condition(packet):
+            waiting_for.value = waiting_for.value if waiting_for.value is not None else ReturnedPacket()
             waiting_for.value.packets[packet] = packet_metadata  # this is the behaviour the `Process` object expects
 
-            if process not in ready_processes:  # if this is the first packet that the process received in this loop
-                ready_processes.append(process)
-                waiting_processes.remove(
-                    waiting_process)  # the process is about to run so we remove it from the waiting process list
+            if process not in map(attrgetter("process"), ready_processes):  # if this is the first packet that the process received in this loop
+                ready_processes.append(ReadyProcess(process, waiting_for.value))
+                waiting_processes.remove(waiting_process)  # the process is about to run so we remove it from the waiting process list
             return True
         return False
 
-    def _check_process_timeouts(self, ready_processes: List[Process], mode: str) -> None:
+    def _check_process_timeouts(self, ready_processes: List[ReadyProcess], mode: str) -> None:
         """
         Tests if the waiting processes have a timeout and if so, continues them, without any packets. (inserts to the
         `ready_processes` list)
@@ -270,7 +284,7 @@ class ProcessScheduler:
         for waiting_process in waiting_processes:
             if hasattr(waiting_process.waiting_for, "timeout"):
                 if waiting_process.waiting_for.timeout:
-                    ready_processes.append(waiting_process.process)
+                    ready_processes.append(ReadyProcess(waiting_process.process, ReturnedPacket()))
                     waiting_processes.remove(waiting_process)
 
     def get_process(self, pid: int, mode: str, raises: bool = True) -> Process:
@@ -507,8 +521,8 @@ class ProcessScheduler:
             waiting_processes = self.__details_by_mode[mode].waiting_processes
 
             ready_processes[:] = self._get_ready_processes(mode)
-            for process in ready_processes:
-                waiting_for = self._run_process(process, mode)
+            for process, returned_packet in ready_processes:
+                waiting_for = self._run_process(process, mode, returned_packet)
                 if waiting_for is not None:  # only None if the process is done!
                     waiting_processes.append(WaitingProcess(process, waiting_for))
             ready_processes.clear()

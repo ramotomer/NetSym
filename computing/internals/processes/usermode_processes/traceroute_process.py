@@ -70,8 +70,7 @@ class TraceRouteProcess(Process):
         for ttl in range(1, PROTOCOLS.IP.MAX_TTL):
             _, dst_mac = yield from self.computer.resolve_ip_address(self.dst_ip, self)
             self._send_the_ping(dst_mac, ttl)
-            returned_packet = ReturnedPacket()
-            yield WaitingForPacket(self.ttl_exceeded_reply, returned_packet)
+            returned_packet = yield WaitingForPacket(self.ttl_exceeded_reply)
             if self.dst_ip == returned_packet.packet["IP"].src_ip:
                 self._print_midpoint(returned_packet, is_final_stop=True)
                 return

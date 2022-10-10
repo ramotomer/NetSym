@@ -90,8 +90,7 @@ class SendPing(Process):
                 return
 
             if self.ping_opcode == OPCODES.ICMP.TYPES.REQUEST:
-                returned_packet = ReturnedPacket()
-                yield WaitingForPacket(self.ping_reply_from(self.dst_ip), returned_packet)
+                returned_packet = yield WaitingForPacket(self.ping_reply_from(self.dst_ip))
                 self._print_output(returned_packet)
 
     def __repr__(self) -> str:

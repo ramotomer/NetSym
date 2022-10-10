@@ -6,12 +6,12 @@ from collections import deque
 from dataclasses import dataclass
 from functools import reduce
 from operator import attrgetter, concat
-from typing import Optional, Callable, List, Union, TYPE_CHECKING, Iterable
+from typing import Optional, List, TYPE_CHECKING, Iterable
 
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import Process, WaitingForPacketWithTimeout, Timeout, \
     ReturnedPacket, \
-    NoNeedForPacket, T_ProcessCode, ProcessInternalError
+    T_ProcessCode, ProcessInternalError
 from consts import *
 from exceptions import TCPDataLargerThanMaxSegmentSize
 from gui.main_loop import MainLoop
@@ -286,34 +286,6 @@ class TCPProcess(Process, metaclass=ABCMeta):
         while not self.sending_window.nothing_to_send():  # while the syn ack was not ACKed
             yield from self.handle_tcp_and_receive([], insert_flag_packets_to_received_data=True)
 
-    def _send_and_wait_with_retries(self,
-                                    sent: Packet,
-                                    waiting_for: Callable,
-                                    timeout: Union[int, float],
-                                    got_packet: Optional[ReturnedPacket] = None,
-                                    max_tries: int = PROTOCOLS.ARP.RESEND_COUNT) -> T_ProcessCode:
-        """
-        Receives a packet and a condition for a reply to that packet and receives a timeout for waiting.
-        Sends the packet and waits for the reply for it. If did not get a reply in `timeout` seconds, try again,
-        do this for `max_tries` times. If still did not get the packet, reset the connection.
-        This is a generator that yields `WaitingFor` tuples.
-        :param sent: The `Packet` to send
-        :param waiting_for: a condition packet to wait for which is the answer for the packet you send
-        :param got_packet: will contain the packet that is returned.
-        :param timeout: the amount of seconds to wait for a reply
-        :param max_tries: the amount of tries before giving up
-        """
-        returned_packet = NoNeedForPacket() if got_packet is None else got_packet
-        self.computer.send(sent)
-        for _ in range(max_tries):
-            yield WaitingForPacketWithTimeout(waiting_for, returned_packet, Timeout(timeout))
-            if returned_packet.packets:
-                return
-            self.computer.send(sent)
-
-        self.reset_connection()
-        return
-
     def goodbye_handshake(self, initiate: bool = True) -> T_ProcessCode:
         """
         Ends the TCP connection with good terms and with both sides' agreement.
@@ -422,7 +394,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         received_packets = ReturnedPacket()
 
         while not received_packets.packets:
-            yield WaitingForPacketWithTimeout(self._my_tcp_packets, received_packets, Timeout(0.01))
+            received_packets = yield WaitingForPacketWithTimeout(self._my_tcp_packets, Timeout(0.01))
 
             for packet in received_packets.packets:
                 yield from self._handle_packet(packet, received_data, insert_flag_packets_to_received_data)

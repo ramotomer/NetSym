@@ -3,12 +3,13 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Iterator, Union, NamedTuple, Callable, TYPE_CHECKING, Optional, Tuple, Type
+from typing import Iterator, Union, Callable, TYPE_CHECKING, Optional, Tuple, Type
 
 from consts import COMPUTER, T_Time
 from exceptions import *
 from gui.main_loop import MainLoop
 from packets.packet import Packet
+from usefuls.iterable_dataclass import IterableDataclass
 
 if TYPE_CHECKING:
     from computing.internals.interface import Interface
@@ -76,7 +77,8 @@ class ReturnedPacket:
         return iter(list(self.packets.items()))
 
 
-class WaitingForPacket(NamedTuple):
+@dataclass
+class WaitingForPacket(IterableDataclass):
     """"
     The condition function must receive one argument (a packet object) and return a bool.
     the value in initialization will be a new `ReturnedPacket` object.
@@ -86,20 +88,22 @@ class WaitingForPacket(NamedTuple):
     The condition should be specific so you don't accidentally catch the wrong packet!
     """
     condition: Callable[[Packet], bool]
-    value: ReturnedPacket
+    value: Optional[ReturnedPacket] = None
 
 
-class WaitingForPacketWithTimeout(NamedTuple):
+@dataclass
+class WaitingForPacketWithTimeout(IterableDataclass):
     """
     Just like `WaitingForPacket` - Indicates the process is waiting for a packet
     BUT will return control to the process if the timeout is timed out
     """
     condition: Callable[[Packet], bool]
-    value: ReturnedPacket
     timeout: Timeout
+    value: Optional[ReturnedPacket] = None
 
 
-class WaitingFor(NamedTuple):
+@dataclass
+class WaitingFor(IterableDataclass):
     """
     Indicates the process is waiting for a certain condition
     `condition` is a function that should be called without parameters and return a `bool`
@@ -111,7 +115,8 @@ class WaitingFor(NamedTuple):
         return WaitingFor(lambda: True)
 
 
-class WaitingForWithTimeout(NamedTuple):
+@dataclass
+class WaitingForWithTimeout(IterableDataclass):
     """
     Just like `WaitingFor`
     BUT will return control to the process if the timeout is timed out
