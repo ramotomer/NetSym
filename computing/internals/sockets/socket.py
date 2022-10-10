@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Tuple, TYPE_CHECKING, Optional, Any, List
 
 from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import WaitingFor, T_ProcessCode, WaitingForWithTimeout, Timeout
+from computing.internals.processes.abstracts.process import WaitingFor, T_ProcessCode, Timeout
 from consts import COMPUTER, T_Port, T_Time
 from exceptions import SocketNotBoundError, SocketIsClosedError
 
@@ -86,10 +86,7 @@ class Socket(metaclass=ABCMeta):
         takes in a list, appends it with the received data when the generator is over.
         :return:
         """
-        if timeout is None:
-            yield WaitingFor(lambda: self.has_data_to_receive)
-        else:
-            yield WaitingForWithTimeout((lambda: self.has_data_to_receive), Timeout(timeout))
+        yield WaitingFor((lambda: self.has_data_to_receive), timeout=Timeout(timeout) if timeout is not None else None)
 
     def block_until_received_or_closed(self) -> T_ProcessCode:
         """

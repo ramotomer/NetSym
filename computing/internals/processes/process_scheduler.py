@@ -5,8 +5,7 @@ from dataclasses import dataclass
 from operator import attrgetter
 from typing import NamedTuple, Optional, TYPE_CHECKING, List, Type, Tuple, Generator, Any, TypeVar
 
-from computing.internals.processes.abstracts.process import ProcessInternalError, Process, T_WaitingFor, WaitingForPacket, \
-    WaitingForPacketWithTimeout, WaitingFor, WaitingForWithTimeout, ReturnedPacket
+from computing.internals.processes.abstracts.process import ProcessInternalError, Process, T_WaitingFor, ReturnedPacket
 from consts import COMPUTER, T_Time
 from exceptions import NoSuchProcessError
 from gui.main_loop import MainLoop
@@ -229,7 +228,7 @@ class ProcessScheduler:
         """
         waiting_processes = self.__details_by_mode[mode].waiting_processes
         for waiting_process in waiting_processes[:]:
-            if not isinstance(waiting_process.waiting_for, (WaitingFor, WaitingForWithTimeout)):
+            if waiting_process.waiting_for.is_for_a_packet():
                 continue
 
             if waiting_process.waiting_for.condition():
@@ -260,7 +259,7 @@ class ProcessScheduler:
         process, waiting_for = waiting_process
         packet, packet_metadata = received_packet.packet_and_metadata
 
-        if not isinstance(waiting_for, (WaitingForPacket, WaitingForPacketWithTimeout)):
+        if not waiting_for.is_for_a_packet():
             return False
 
         if waiting_for.condition(packet):
@@ -282,7 +281,7 @@ class ProcessScheduler:
         """
         waiting_processes = self.__details_by_mode[mode].waiting_processes
         for waiting_process in waiting_processes:
-            if hasattr(waiting_process.waiting_for, "timeout"):
+            if waiting_process.waiting_for.has_timeout():
                 if waiting_process.waiting_for.timeout:
                     ready_processes.append(ReadyProcess(waiting_process.process, ReturnedPacket()))
                     waiting_processes.remove(waiting_process)
@@ -365,7 +364,7 @@ class ProcessScheduler:
         for mode in COMPUTER.PROCESSES.MODES.ALL_MODES:
             waiting_processes = self.__details_by_mode[mode].waiting_processes
 
-            for process in [wp.process for wp in waiting_processes] + self.__details_by_mode[mode].ready_processes:
+            for process in [wp.process for wp in waiting_processes] + self.__details_by_mode[mode].ready_processes_instances:
                 self.terminate_process(process, mode)
 
             if self.__details_by_mode[mode].currently_running_process is not None:

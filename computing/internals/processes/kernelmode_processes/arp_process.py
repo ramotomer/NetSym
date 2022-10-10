@@ -5,8 +5,8 @@ from typing import Callable, TYPE_CHECKING, Optional
 import scapy
 
 from address.mac_address import MACAddress
-from computing.internals.processes.abstracts.process import Process, WaitingForPacketWithTimeout, Timeout, T_ProcessCode, \
-    ProcessInternalError_NoResponseForARP
+from computing.internals.processes.abstracts.process import Process, Timeout, T_ProcessCode, \
+    ProcessInternalError_NoResponseForARP, WaitingFor
 from consts import OPCODES, PROTOCOLS
 from packets.usefuls.dns import T_Hostname
 from usefuls.funcs import my_range
@@ -57,7 +57,7 @@ class ARPProcess(Process):
 
         for _ in my_range(self.resend_count):
             self.computer.send_arp_to(dst_ip)
-            returned_packets = yield WaitingForPacketWithTimeout(arp_reply_from(dst_ip), Timeout(PROTOCOLS.ARP.RESEND_TIME))
+            returned_packets = yield WaitingFor(arp_reply_from(dst_ip), timeout=Timeout(PROTOCOLS.ARP.RESEND_TIME))
             if not returned_packets.has_packets():
                 self.computer.print("Destination is unreachable :(")
                 continue

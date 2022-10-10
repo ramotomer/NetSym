@@ -9,9 +9,7 @@ from operator import attrgetter, concat
 from typing import Optional, List, TYPE_CHECKING, Iterable
 
 from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import Process, WaitingForPacketWithTimeout, Timeout, \
-    ReturnedPacket, \
-    T_ProcessCode, ProcessInternalError
+from computing.internals.processes.abstracts.process import Process, Timeout, ReturnedPacket, T_ProcessCode, ProcessInternalError, WaitingFor
 from consts import *
 from exceptions import TCPDataLargerThanMaxSegmentSize
 from gui.main_loop import MainLoop
@@ -394,7 +392,7 @@ class TCPProcess(Process, metaclass=ABCMeta):
         received_packets = ReturnedPacket()
 
         while not received_packets.packets:
-            received_packets = yield WaitingForPacketWithTimeout(self._my_tcp_packets, Timeout(0.01))
+            received_packets = yield WaitingFor(self._my_tcp_packets, timeout=Timeout(0.01))
 
             for packet in received_packets.packets:
                 yield from self._handle_packet(packet, received_data, insert_flag_packets_to_received_data)

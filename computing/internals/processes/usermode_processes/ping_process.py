@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Optional
 
-from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket, T_ProcessCode
+from computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, WaitingFor
 from consts import OPCODES, PROTOCOLS
 from exceptions import NoIPAddressError
 from packets.usefuls.dns import T_Hostname
@@ -90,7 +90,7 @@ class SendPing(Process):
                 return
 
             if self.ping_opcode == OPCODES.ICMP.TYPES.REQUEST:
-                returned_packet = yield WaitingForPacket(self.ping_reply_from(self.dst_ip))
+                returned_packet = yield WaitingFor(self.ping_reply_from(self.dst_ip))
                 self._print_output(returned_packet)
 
     def __repr__(self) -> str:

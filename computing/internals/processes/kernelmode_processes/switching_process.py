@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import NamedTuple, TYPE_CHECKING, List
 
 from computing.internals.interface import Interface
-from computing.internals.processes.abstracts.process import Process, WaitingForPacket, ReturnedPacket, T_ProcessCode
+from computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, WaitingFor
 from consts import *
 from exceptions import *
 from gui.main_loop import MainLoop
@@ -101,7 +101,7 @@ class SwitchingProcess(Process):
         :return: yield WaitingFor-s
         """
         while True:
-            new_packets = yield WaitingForPacket(self.is_switchable_packet)
+            new_packets = yield WaitingFor(self.is_switchable_packet)
 
             self.send_new_packets_to_destinations(new_packets)
             self.update_switch_table_from_packets(new_packets)
