@@ -994,13 +994,14 @@ class Computer:
     def send_ping_to(self,
                      mac_address: MACAddress,
                      ip_address: IPAddress,
-                     opcode: int = OPCODES.ICMP.TYPES.REQUEST,
+                     type_: int = OPCODES.ICMP.TYPES.REQUEST,
                      data: Union[str, bytes] = '',
+                     code: Optional[int] = None,
                      **kwargs: Any) -> None:
         """
         Send an ICMP packet to the a given ip address.
         """
-        self.send_to(mac_address, ip_address, (ICMP(type=opcode) / data), **kwargs)
+        self.send_to(mac_address, ip_address, (ICMP(type=type_, code=code) / data), **kwargs)
 
     def send_time_exceeded(self, dst_mac: MACAddress, dst_ip: IPAddress, data: Union[str, bytes] = '') -> None:
         """

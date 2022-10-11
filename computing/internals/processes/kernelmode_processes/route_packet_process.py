@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from computing.internals.processes.abstracts.process import Process, \
     T_ProcessCode
 from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_RoutedPacketTTLExceeded, \
     ProcessInternalError_NoResponseForARP
 from consts import OPCODES
+from exceptions import PacketTooLongButDoesNotAllowFragmentation
 
 if TYPE_CHECKING:
     from computing.computer import Computer
@@ -74,7 +75,7 @@ class RoutePacket(Process):
             return True
         return False
 
-    def _send_icmp_unreachable(self) -> None:
+    def _send_icmp_unreachable(self, code: Optional[int] = None) -> None:
         """Sends to the sender of the routed packet, an ICMP unreachable"""
         sender_ip = self.packet["IP"].src_ip
         dst_ip = self.packet["IP"].dst_ip
@@ -83,7 +84,8 @@ class RoutePacket(Process):
             self.computer.arp_cache[sender_ip].mac,
             self.packet["IP"].src_ip,
             OPCODES.ICMP.TYPES.UNREACHABLE,
-            f"Unreachable: {dst_ip}"
+            f"Unreachable: {dst_ip}",
+            code=code,
         )
 
     def code(self) -> T_ProcessCode:
@@ -109,7 +111,11 @@ class RoutePacket(Process):
             self._send_icmp_unreachable()
             raise
 
-        self.computer.send_with_ethernet(dst_mac, dst_ip, self.packet["IP"])
+        try:
+            self.computer.send_with_ethernet(dst_mac, dst_ip, self.packet["IP"])
+        except PacketTooLongButDoesNotAllowFragmentation:
+            self._send_icmp_unreachable(OPCODES.ICMP.CODES.FRAGMENTATION_NEEDED)
+            return  # drop the packet
 
     def __repr__(self) -> str:
         """The string representation of the process"""

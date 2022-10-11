@@ -92,6 +92,10 @@ class SendPing(Process):
 
         packet = returned_packet.packet
         if packet["ICMP"].type in [OPCODES.ICMP.TYPES.UNREACHABLE, OPCODES.ICMP.TYPES.TIME_EXCEEDED]:
+            if packet["ICMP"].code == OPCODES.ICMP.CODES.FRAGMENTATION_NEEDED:
+                self.computer.print(f"A router in your way failed to transit your packet since it was too big and DONT_FRAGMENT is set!")
+                return
+
             self.computer.print("destination unreachable :(")
             return
 
@@ -103,7 +107,7 @@ class SendPing(Process):
             self.computer.print("ping reply!")
             return
 
-        raise ThisCodeShouldNotBeReached
+        raise ThisCodeShouldNotBeReached(f"Unknown ICMP reply: {packet.multiline_repr()}")
 
     def code(self) -> T_ProcessCode:
         """

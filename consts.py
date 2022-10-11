@@ -119,6 +119,7 @@ class OPCODES:
             # unreachable
             NETWORK_UNREACHABLE = 0
             PORT_UNREACHABLE = 3
+            FRAGMENTATION_NEEDED = 4
 
             # time exceeded
             TRANSIT_TTL_EXCEEDED = 0
@@ -464,6 +465,7 @@ class IMAGES:
             TIME_EXCEEDED = "packets/icmp_time_exceeded.png"
             UNREACHABLE = "packets/icmp_unreachable.png"
             PORT_UNREACHABLE = "packets/icmp_port_unreachable.png"
+            FRAGMENTATION_NEEDED = "packets/icmp_fragmentation_needed.png"
 
         class DHCP:
             DISCOVER = "packets/dhcp_discover.png"
@@ -572,6 +574,7 @@ class PACKET:
             OPCODES.ICMP.TYPES.TIME_EXCEEDED: IMAGES.PACKETS.ICMP.TIME_EXCEEDED,
             (OPCODES.ICMP.TYPES.UNREACHABLE, OPCODES.ICMP.CODES.NETWORK_UNREACHABLE): IMAGES.PACKETS.ICMP.UNREACHABLE,
             (OPCODES.ICMP.TYPES.UNREACHABLE, OPCODES.ICMP.CODES.PORT_UNREACHABLE): IMAGES.PACKETS.ICMP.PORT_UNREACHABLE,
+            (OPCODES.ICMP.TYPES.UNREACHABLE, OPCODES.ICMP.CODES.FRAGMENTATION_NEEDED): IMAGES.PACKETS.ICMP.FRAGMENTATION_NEEDED,
         },
         "TCP": {
             OPCODES.TCP.SYN: IMAGES.PACKETS.TCP.SYN,
