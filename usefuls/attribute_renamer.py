@@ -29,6 +29,10 @@ def define_attribute_aliases(class_: Type[T], attribute_name_mapping: Dict[str, 
             except AttributeError as e:
                 raise AttributeError_(f"{self!r} has no attribute '{e.args[0]}'")
 
+        # def __setattr__(self, key: str, value: Any) -> None:
+            # super(AttributeRenamer, self).__setattr__(attribute_name_mapping.get(key, key), value)
+            # raise NotImplementedError
+
     return AttributeRenamer
 
 
@@ -44,6 +48,9 @@ def with_parsed_attributes(class_: Type[T], attribute_name_to_parser: Dict[str, 
             except AttributeError as e:
                 raise AttributeError_(*e.args)
 
+        # def __setattr__(self, key: str, value: Any) -> None:
+        #     raise NotImplementedError
+
     return AttributeParser
 
 
@@ -56,6 +63,10 @@ def with_attribute_type_casting(class_: Type[T], attribute_name_to_type: Dict[st
                 return attribute_name_to_type.get(item, lambda x: x)(super(AttributeTypeCaster, self).__getattr__(item))
             except AttributeError as e:
                 raise AttributeError_(f"{self!r} has no attribute '{e.args[0]}'")
+
+        # def __setattr__(self, key: str, value: Any) -> None:
+            # super(AttributeTypeCaster, self).__setattr__(key, attribute_name_to_type.get(key, lambda x: x)(value))
+            # raise NotImplementedError
 
     return AttributeTypeCaster
 
@@ -74,6 +85,13 @@ def with_attribute_type_casting_by_suffix(class_: Type[T], attribute_suffix_to_t
                 if isinstance(original_value, str) and item.endswith(suffix):
                     return new_type(original_value)
             return original_value
+
+        # def __setattr__(self, key: str, value: Any) -> None:
+            # for suffix, new_type in attribute_suffix_to_type.items():
+            #     if key.endswith(suffix):
+            #         super(AttributeTypeCasterBySuffix, self).__setattr__(key, new_type(value))
+            #         return
+            # raise NotImplementedError
 
     return AttributeTypeCasterBySuffix
 

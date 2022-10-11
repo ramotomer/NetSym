@@ -465,7 +465,7 @@ class SendingWindow:
 
     @property
     def sent(self):
-        return self.computer.get_packet_sending_queue(self.pid).packets
+        return self.computer.get_packet_sending_queue(self.pid, COMPUTER.PROCESSES.MODES.KERNELMODE).packets
 
     def clear(self) -> None:
         """
@@ -503,7 +503,7 @@ class SendingWindow:
             if not non_acked_packet.is_sent:
                 sent_packets.append(non_acked_packet.packet.copy())
                 non_acked_packet.is_sent = True
-        self.computer.send_packet_stream(self.pid, sent_packets, PROTOCOLS.TCP.SENDING_INTERVAL)
+        self.computer.send_packet_stream(self.pid, COMPUTER.PROCESSES.MODES.KERNELMODE, sent_packets, PROTOCOLS.TCP.SENDING_INTERVAL)
 
     def add_waiting(self, packet: Packet) -> None:
         """
@@ -518,7 +518,7 @@ class SendingWindow:
         :param packet:
         :return:
         """
-        self.computer.send_packet_stream(self.pid, [packet.copy()], PROTOCOLS.TCP.SENDING_INTERVAL)
+        self.computer.send_packet_stream(self.pid, COMPUTER.PROCESSES.MODES.KERNELMODE, [packet.copy()], PROTOCOLS.TCP.SENDING_INTERVAL)
 
     def nothing_to_send(self) -> bool:
         """

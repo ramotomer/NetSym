@@ -6,6 +6,7 @@ from computing.internals.processes.abstracts.process import Process, ReturnedPac
 from consts import OPCODES, PROTOCOLS
 from exceptions import NoIPAddressError
 from packets.usefuls.dns import T_Hostname
+from packets.usefuls.icmp import get_icmp_data
 from usefuls.funcs import my_range
 
 if TYPE_CHECKING:
@@ -24,12 +25,14 @@ class SendPing(Process):
                  computer: Computer,
                  destination: T_Hostname,
                  opcode: int = OPCODES.ICMP.TYPES.REQUEST,
-                 count: int = 1) -> None:
+                 count: int = 1,
+                 length: int = PROTOCOLS.ICMP.DEFAULT_MESSAGE_LENGTH) -> None:
         super(SendPing, self).__init__(pid, computer)
         self.destination = destination
         self.ping_opcode = opcode
         self.is_sending_to_gateway = False
         self.count = count
+        self.length = length
 
         self.dst_ip: Optional[IPAddress] = None
 
@@ -42,7 +45,7 @@ class SendPing(Process):
             self.computer.print("Could not send ICMP packets without an IP address!")
             raise NoIPAddressError("The sending computer has no IP address!!!")
 
-        self.computer.send_ping_to(dst_mac, self.dst_ip, self.ping_opcode)
+        self.computer.send_ping_to(dst_mac, self.dst_ip, self.ping_opcode, get_icmp_data(self.length))
 
     def ping_reply_from(self, ip_address: IPAddress) -> Callable[[Packet], bool]:
         """

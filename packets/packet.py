@@ -6,9 +6,8 @@ import scapy
 
 from exceptions import *
 from gui.tech.packet_graphics import PacketGraphics
-from packets.all import protocols
-from packets.usefuls.usefuls import is_raw_layer
-from usefuls.funcs import get_the_one
+from packets.all import Ether
+from packets.usefuls.usefuls import is_raw_layer, scapy_layer_class_to_our_class
 
 if TYPE_CHECKING:
     from gui.tech.connection_graphics import ConnectionGraphics
@@ -70,6 +69,13 @@ class Packet:
         # raise NoSuchLayerError(f"The packet does not contain the layer '{name}'! \n{self.multiline_repr()}")  # multiline repr failed... :(
         raise NoSuchLayerError(f"The packet does not contain the layer '{name}'!")
 
+    def get_layer_by_name_no_payload(self, name: str) -> scapy.packet.Packet:
+        """
+        Return only the header of the specific layer requested - without the payload that is inside it
+        """
+        layer = self.get_layer_by_name(name)
+        return scapy_layer_class_to_our_class(layer.__class__)(layer.build()[:-len(layer.payload)])
+
     def transform_to_indicative_attribute_names(self) -> None:
         """
         Change the data of the packet to be of the new classes that override the scapy classes
@@ -78,11 +84,16 @@ class Packet:
         """
         final_data = None
         for layer_class in self.data.layers():
-            new_layer = get_the_one(protocols,
-                                    lambda p: issubclass(p, layer_class),
-                                    default=layer_class)(**self.data.getlayer(layer_class).fields)
+            new_layer = scapy_layer_class_to_our_class(layer_class)(**self.data.getlayer(layer_class).fields)
             final_data = (final_data / new_layer) if final_data is not None else new_layer
         self.data = final_data
+
+    def reparse_layers(self) -> None:
+        """
+        Run again the parsing of the different layers of the packet
+        """
+        self.data = Ether(self.data.build())
+        self.transform_to_indicative_attribute_names()
 
     def summary(self, discarded_protocols: Tuple[str] = ("Ether", "IP", "Raw")) -> str:
         """

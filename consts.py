@@ -173,10 +173,16 @@ class OPCODES:
 
 class PROTOCOLS:
     class ETHERNET:
+        HEADER_LENGTH = 14
         MTU = 1500
 
     class IP:
         MAX_TTL = 255
+        FRAGMENT_SENDING_INTERVAL = 0.1
+
+        class FLAGS:
+            DONT_FRAGMENT  = 0b10
+            MORE_FRAGMENTS = 0b01
 
     class ARP:
         RESEND_TIME = 6  # seconds
@@ -184,6 +190,7 @@ class PROTOCOLS:
 
     class ICMP:
         INFINITY = float("inf")  # the builtin infinity
+        DEFAULT_MESSAGE_LENGTH = 26
 
     class DHCP:
         DEFAULT_TTL = 0

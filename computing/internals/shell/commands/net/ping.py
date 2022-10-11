@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, List, Dict
 
-from computing.internals.shell.commands.command import Command, CommandOutput
+from computing.internals.processes.usermode_processes.ping_process import SendPing
+from computing.internals.shell.commands.process_creating_command import ProcessCreatingCommand
 from consts import PROTOCOLS
 
 if TYPE_CHECKING:
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
     from computing.internals.shell.shell import Shell
 
 
-class Ping(Command):
+class Ping(ProcessCreatingCommand):
     """
     Send a ping to another computer.
     """
@@ -20,16 +21,17 @@ class Ping(Command):
         initiates the command.
         :param computer:
         """
-        super(Ping, self).__init__('ping', 'ping a computer', computer, shell)
+        super(Ping, self).__init__('ping', 'ping a computer', computer, shell, SendPing)
 
         self.parser.add_argument('destination', type=str, help='the destination hostname or IP address')
-        self.parser.add_argument('-n', type=int, dest='count', default=3, help='ping count')
-        self.parser.add_argument('-t', dest='count', action='store_const', const=PROTOCOLS.ICMP.INFINITY,
-                                 help='ping infinitely')
+        self.parser.add_argument('-n', type=int, dest='count',  default=3, help='ping count')
+        self.parser.add_argument('-l', type=int, dest='length', default=PROTOCOLS.ICMP.DEFAULT_MESSAGE_LENGTH, help='ping message length in bytes')
+        self.parser.add_argument('-t', dest='count', action='store_const', const=PROTOCOLS.ICMP.INFINITY, help='ping infinitely')
 
-    def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
-        """
-        prints out the arguments.
-        """
-        self.computer.start_ping_process(parsed_args.destination, count=parsed_args.count)
-        return CommandOutput('', '')
+    def _get_process_arguments(self, parsed_args: argparse.Namespace) -> List[Any]:
+        """"""
+        return [parsed_args.destination]
+
+    def _get_process_keyword_arguments(self, parsed_args: argparse.Namespace) -> Dict[str, Any]:
+        """"""
+        return {'count': parsed_args.count, 'length': parsed_args.length}

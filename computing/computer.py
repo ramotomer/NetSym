@@ -38,6 +38,7 @@ from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.all import ICMP, IP, TCP, UDP, ARP
 from packets.usefuls.dns import T_Hostname, validate_domain_hostname, canonize_domain_hostname
+from packets.usefuls.ip import needs_fragmentation, fragment_packet
 from packets.usefuls.usefuls import get_src_port, get_dst_port
 from usefuls.funcs import get_the_one
 
@@ -625,7 +626,7 @@ class Computer:
                     packet_metadata.interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):
                 # ^ only if the packet is for me also on the third layer!
                 dst_ip = packet["IP"].src_ip.string_ip
-                self.start_ping_process(dst_ip, OPCODES.ICMP.TYPES.REPLY)
+                self.start_ping_process(dst_ip, OPCODES.ICMP.TYPES.REPLY)  # TODO: replies do not have the same data as requests!
 
     def _handle_tcp(self, returned_packet: ReturnedPacket) -> None:
         """
@@ -679,14 +680,18 @@ class Computer:
                 self.packet_types_and_handlers[packet_type](returned_packet)
                 continue
 
-    def start_ping_process(self, destination: T_Hostname, opcode: int = OPCODES.ICMP.TYPES.REQUEST, count: int = 1) -> None:
+    def start_ping_process(self,
+                           destination: T_Hostname,
+                           opcode: int = OPCODES.ICMP.TYPES.REQUEST,
+                           count: int = 1,
+                           *args: Any, **kwargs: Any) -> None:
         """
         Starts sending a ping to another computer.
         :param destination:
         :param opcode: the opcode of the ping to send
         :param count: how many pings to send
         """
-        self.process_scheduler.start_usermode_process(SendPing, destination, opcode, count)
+        self.process_scheduler.start_usermode_process(SendPing, destination, opcode, count, *args, **kwargs)
 
     # --------------------------------------- v  DHCP and DNS  v -----------------------------------------------------------
 
@@ -775,13 +780,27 @@ class Computer:
         if not packet.is_valid():
             return
 
+        if needs_fragmentation(packet, interface.mtu):
+            self.send_packet_stream(
+                COMPUTER.PROCESSES.INIT_PID,
+                COMPUTER.PROCESSES.MODES.KERNELMODE,
+                fragment_packet(packet, interface.mtu),
+                PROTOCOLS.IP.FRAGMENT_SENDING_INTERVAL,
+                interface,
+                sending_socket,
+            )
+            return
+
         interface.send(packet)
         self._sniff_packet_on_relevant_raw_sockets(
-            ReturnedPacket(packet, PacketMetadata(
-                interface,
-                MainLoop.instance.time(),
-                PACKET.DIRECTION.OUTGOING
-            )),
+            ReturnedPacket(
+                packet,
+                PacketMetadata(
+                    interface,
+                    MainLoop.instance.time(),
+                    PACKET.DIRECTION.OUTGOING
+                )
+            ),
             sending_socket=sending_socket,
         )
 
@@ -946,16 +965,32 @@ class Computer:
         yield from ARPProcess(requesting_process.pid, self, ip_for_the_mac.string_ip).code()
         return ip_for_the_mac, self.arp_cache[ip_for_the_mac].mac
 
-    def send_packet_stream(self, requesting_usermode_pid: int, packets: Iterator[Packet], interval_between_packets: T_Time) -> None:
+    def send_packet_stream(self,
+                           requesting_usermode_pid: int,
+                           mode: str,
+                           packets: Iterator[Packet],
+                           interval_between_packets: T_Time,
+                           interface: Optional[Interface] = None,
+                           sending_socket: Optional[RawSocket] = None) -> None:
         """
         Send a large amount of packets that should be sent in quick succession one after the other
         This will make sure they are sent with the appropriate time gaps - in order to allow the user to see them
         """
-        existing_sending_queue = self.get_packet_sending_queue(requesting_usermode_pid)
+        existing_sending_queue = self.get_packet_sending_queue(requesting_usermode_pid, mode)
         if existing_sending_queue is not None:
             existing_sending_queue.packets.extend(packets)
             return
-        self._packet_sending_queues.append(PacketSendingQueue(self, requesting_usermode_pid, deque(packets), interval_between_packets))
+        self._packet_sending_queues.append(
+            PacketSendingQueue(
+                self,
+                requesting_usermode_pid,
+                mode,
+                deque(packets),
+                interval_between_packets,
+                interface,
+                sending_socket,
+            )
+        )
 
     def _handle_packet_streams(self) -> None:
         """
@@ -970,14 +1005,15 @@ class Computer:
         Remove PacketSendingQueues that have no running process attached to them
         """
         for packet_sending_queue in self._packet_sending_queues[:]:
-            if not self.process_scheduler.is_usermode_process_running(packet_sending_queue.pid):
+            if not self.process_scheduler.is_usermode_process_running(packet_sending_queue.pid) and \
+               packet_sending_queue.pid != COMPUTER.PROCESSES.INIT_PID:
                 self._packet_sending_queues.remove(packet_sending_queue)
 
-    def get_packet_sending_queue(self, pid: int) -> PacketSendingQueue:
+    def get_packet_sending_queue(self, pid: int, mode: str) -> PacketSendingQueue:
         """
         Get the PacketSendingQueue object of the process with the given ID
         """
-        return get_the_one(self._packet_sending_queues, lambda psq: psq.pid == pid)
+        return get_the_one(self._packet_sending_queues, lambda psq: (psq.pid == pid and psq.process_mode == mode))
 
     # ------------------------------- v  Sockets  v ----------------------------------------------------------------------
 
