@@ -29,7 +29,8 @@ class SendPing(Process):
                  opcode: int = OPCODES.ICMP.TYPES.REQUEST,
                  count: int = 1,
                  length: Optional[int] = None,
-                 data: Optional[bytes] = None) -> None:
+                 data: Optional[bytes] = None,
+                 dont_fragment: bool = False) -> None:
         super(SendPing, self).__init__(pid, computer)
         self.destination = destination
         self.ping_opcode = opcode
@@ -37,6 +38,7 @@ class SendPing(Process):
         self.count = count
         self.length = length
         self.data = data
+        self.dont_fragment = dont_fragment
 
         self.dst_ip: Optional[IPAddress] = None
 
@@ -57,6 +59,7 @@ class SendPing(Process):
             self.dst_ip,
             self.ping_opcode,
             self.data,
+            **({'flags': PROTOCOLS.IP.FLAGS.DONT_FRAGMENT} if self.dont_fragment else {}),
         )
 
     def ping_reply_from(self, ip_address: IPAddress) -> Callable[[Packet], bool]:

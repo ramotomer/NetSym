@@ -27,6 +27,7 @@ class Ping(ProcessCreatingCommand):
         self.parser.add_argument('-n', type=int, dest='count',  default=3, help='ping count')
         self.parser.add_argument('-l', type=int, dest='length', default=PROTOCOLS.ICMP.DEFAULT_MESSAGE_LENGTH, help='ping message length in bytes')
         self.parser.add_argument('-t', dest='count', action='store_const', const=PROTOCOLS.ICMP.INFINITY, help='ping infinitely')
+        self.parser.add_argument('-f', dest='dont_fragment', action='store_true', help='Dont Fragment')
 
     def _get_process_arguments(self, parsed_args: argparse.Namespace) -> List[Any]:
         """"""
@@ -34,4 +35,4 @@ class Ping(ProcessCreatingCommand):
 
     def _get_process_keyword_arguments(self, parsed_args: argparse.Namespace) -> Dict[str, Any]:
         """"""
-        return {'count': parsed_args.count, 'length': parsed_args.length}
+        return {'count': parsed_args.count, 'length': parsed_args.length, 'dont_fragment': parsed_args.dont_fragment}
