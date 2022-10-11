@@ -122,6 +122,12 @@ class PacketAlreadyFragmentedError(FragmentationError):
     """
 
 
+class PacketTooLongButDoesNotAllowFragmentation(FragmentationError):
+    """
+    The packet is too long to send - but the DONT_FRAGMENT flag is set!
+    """
+
+
 class InvalidFragmentsError(FragmentationError):
     """
     Got an invalid list of fragments

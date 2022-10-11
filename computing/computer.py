@@ -40,7 +40,7 @@ from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.all import ICMP, IP, TCP, UDP, ARP
 from packets.usefuls.dns import T_Hostname, validate_domain_hostname, canonize_domain_hostname
-from packets.usefuls.ip import needs_fragmentation, fragment_packet, needs_reassembly, reassemble_fragmented_packet
+from packets.usefuls.ip import needs_fragmentation, fragment_packet, needs_reassembly, reassemble_fragmented_packet, allows_fragmentation
 from packets.usefuls.tcp import get_src_port, get_dst_port
 from packets.usefuls.usefuls import get_dst_ip
 from usefuls.funcs import get_the_one
@@ -851,6 +851,9 @@ class Computer:
             return
 
         if needs_fragmentation(packet, interface.mtu):
+            if not allows_fragmentation(packet):
+                raise PacketTooLongButDoesNotAllowFragmentation("Packet is too long and should be fragmented, but DONT_FRAGMENT flag is set!!!")
+
             self.send_packet_stream(
                 COMPUTER.PROCESSES.INIT_PID,
                 COMPUTER.PROCESSES.MODES.KERNELMODE,

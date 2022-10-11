@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING, Callable, Optional
 
 from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, WaitingFor, Timeout
-from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_InvalidParameters
+from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_InvalidParameters, \
+    ProcessInternalError_PacketTooLongButDoesNotAllowFragmentation
 from consts import OPCODES, PROTOCOLS
 from exceptions import *
 from exceptions import NoIPAddressError, WrongUsageError
@@ -54,13 +55,16 @@ class SendPing(Process):
         self.length = self.length or PROTOCOLS.ICMP.DEFAULT_MESSAGE_LENGTH
         self.data =   self.data or get_icmp_data(self.length)
 
-        self.computer.send_ping_to(
-            dst_mac,
-            self.dst_ip,
-            self.ping_opcode,
-            self.data,
-            **({'flags': PROTOCOLS.IP.FLAGS.DONT_FRAGMENT} if self.dont_fragment else {}),
-        )
+        try:
+            self.computer.send_ping_to(
+                dst_mac,
+                self.dst_ip,
+                self.ping_opcode,
+                self.data,
+                **({'flags': PROTOCOLS.IP.FLAGS.DONT_FRAGMENT} if self.dont_fragment else {}),
+            )
+        except PacketTooLongButDoesNotAllowFragmentation as error:
+            raise ProcessInternalError_PacketTooLongButDoesNotAllowFragmentation(*error.args)
 
     def ping_reply_from(self, ip_address: IPAddress) -> Callable[[Packet], bool]:
         """

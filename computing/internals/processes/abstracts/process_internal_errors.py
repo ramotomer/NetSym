@@ -65,3 +65,9 @@ class ProcessInternalError_PacketTooLongToFragment(ProcessInternalError, PacketT
     """
     This indicates a self-inflicted death of the process due to a packet being too large for it to fragment it
     """
+
+
+class ProcessInternalError_PacketTooLongButDoesNotAllowFragmentation(ProcessInternalError, PacketTooLongButDoesNotAllowFragmentation):
+    """
+    This indicates a self-inflicted death of the process due to a packet being too large and must be fragmented - but the DONT_FRAGMENT flag is set!
+    """

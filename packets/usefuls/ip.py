@@ -105,3 +105,10 @@ def needs_reassembly(packet: Packet) -> bool:
     Returns whether or not the supplied packet is part of a larger fragmented packet
     """
     return ("IP" in packet) and ((packet["IP"].fragment_offset != 0) or (packet["IP"].flags & PROTOCOLS.IP.FLAGS.MORE_FRAGMENTS))
+
+
+def allows_fragmentation(packet: Packet) -> bool:
+    """
+    Whether or not the packet can be fragmented if needed
+    """
+    return not (packet["IP"].flags & PROTOCOLS.IP.FLAGS.DONT_FRAGMENT)
