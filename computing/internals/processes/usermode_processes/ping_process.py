@@ -68,22 +68,25 @@ class SendPing(Process):
         except PacketTooLongButDoesNotAllowFragmentation as error:
             raise ProcessInternalError_PacketTooLongButDoesNotAllowFragmentation(*error.args)
 
-        self.sequence_number = self.sequence_number if self.sequence_number is not None else self.computer.icmp_sequence_number
-
     def ping_reply_from(self, ip_address: IPAddress) -> Callable[[Packet], bool]:
         """
         Returns a function that tests if the packet given to it is a ping reply for the `ip_address`
         """
         def tester(packet: Packet) -> bool:
             if "ICMP" in packet:
-                if (packet["ICMP"].type == OPCODES.ICMP.TYPES.REPLY) and (packet["ICMP"].sequence_number == self.sequence_number):
+                if (packet["ICMP"].type == OPCODES.ICMP.TYPES.REPLY) and \
+                   (packet["ICMP"].sequence_number == (self.sequence_number or self.computer.icmp_sequence_number)):
                     if packet["IP"].src_ip == ip_address and self.computer.has_this_ip(packet["IP"].dst_ip):
                         return True
+
                     if self.computer.has_this_ip(self.dst_ip) and (packet["IP"].src_ip == self.computer.loopback.ip):
                         return True
+
                 if packet["ICMP"].type in [OPCODES.ICMP.TYPES.UNREACHABLE, OPCODES.ICMP.TYPES.TIME_EXCEEDED]:
                     return True
+
             return False
+
         return tester
 
     def _print_output(self, returned_packet: ReturnedPacket) -> None:
