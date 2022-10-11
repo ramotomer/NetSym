@@ -133,4 +133,4 @@ class Packet:
 
     def multiline_repr(self) -> str:
         """Multiline representation of the packet"""
-        return f"\nPacket: \n{self.data.show2(dump=True)}"
+        return f"\nPacket: (length: {len(self.data)}) \n{self.data.show2(dump=True)}"

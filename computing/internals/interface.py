@@ -223,19 +223,25 @@ class Interface:
         else:
             self.block(accept)
 
-    def send(self, packet: Packet) -> None:
+    def send(self, packet: Packet) -> bool:
         """
         Receives a packet to send and just sends it!
         for Tomer: if the interface is not connected maybe an error should be raised but
             for now it just does nothing and it works very well.
         :param packet: The full packet `Packet` object.
-        :return: None
+        :return: Whether or not the packet was sent successfully
         """
         if not self.is_powered_on:
-            return
+            return False
+
+        if len(packet.data) > (self.mtu + PROTOCOLS.ETHERNET.HEADER_LENGTH):
+            print(f"{self!r} dropped a packet due to MTU being too large! packet is {len(packet.data) - PROTOCOLS.ETHERNET.HEADER_LENGTH} bytes long!"
+                  f" MTU is only {self.mtu}")
+            return False
 
         if self.is_connected() and (not self.is_blocked or (self.is_blocked and self.accepting in packet)):
             self.connection.send(packet)
+            return True
 
     def receive(self) -> Optional[List[Packet]]:
         """

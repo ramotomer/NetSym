@@ -48,6 +48,10 @@ class ReturnedPacket:
             raise NoSuchPacketError("All of the packets were requested from this object already!!")
 
     @property
+    def metadata(self):
+        return self.packets[self.packet]
+
+    @property
     def packet_and_interface(self) -> Tuple[Packet, Interface]:
         """
         just like `self.packet` but returns a tuple of (packet, interface)

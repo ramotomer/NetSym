@@ -38,7 +38,7 @@ from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.all import ICMP, IP, TCP, UDP, ARP
 from packets.usefuls.dns import T_Hostname, validate_domain_hostname, canonize_domain_hostname
-from packets.usefuls.ip import needs_fragmentation, fragment_packet
+from packets.usefuls.ip import needs_fragmentation, fragment_packet, needs_reassembly, reassemble_fragmented_packet
 from packets.usefuls.usefuls import get_src_port, get_dst_port
 from usefuls.funcs import get_the_one
 
@@ -145,7 +145,8 @@ class Computer:
         self.active_shells = []
 
         self.initial_size = IMAGES.SCALE_FACTORS.SPRITES, IMAGES.SCALE_FACTORS.SPRITES
-        self._packet_sending_queues: List[PacketSendingQueue] = []
+        self._packet_sending_queues:   List[PacketSendingQueue] = []
+        self._active_packet_fragments: List[ReturnedPacket]     = []
 
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ method does not run when program is paused
@@ -392,6 +393,7 @@ class Computer:
         """
         self._cleanup_unused_sockets()
         self._cleanup_unused_packet_sending_queues()
+        self._forget_old_ip_fragments()
         self.arp_cache.forget_old_items()
         self.dns_cache.forget_old_items()
 
@@ -693,6 +695,41 @@ class Computer:
         """
         self.process_scheduler.start_usermode_process(SendPing, destination, opcode, count, *args, **kwargs)
 
+    def _handle_ip_fragments(self, returned_packet: ReturnedPacket) -> Optional[ReturnedPacket]:
+        """
+        Takes in a `ReturnedPacket` that maybe needs to be reassembled from IP fragments, and reassemble all fragments of it.
+            If the packet is not really a fragment - do nothing
+            If it has more fragments coming, store it and do nothing
+            If it is the last one - reassemble all fragments and return the new `ReturnedPacket` object that contains the united packet
+        """
+        last_fragment, last_fragment_metadata = returned_packet.packet_and_metadata
+        if not needs_reassembly(last_fragment):
+            return returned_packet
+
+        if last_fragment["IP"].flags & PROTOCOLS.IP.FLAGS.MORE_FRAGMENTS:
+            self._active_packet_fragments.append(returned_packet)
+            return None
+
+        fragments = []
+        for fragment in self._active_packet_fragments[:]:
+            if fragment.packet["IP"].id == last_fragment["IP"].id:
+                # for every relevant fragment, remove if from `_active_packet_fragments` and add to `fragments`
+                fragments.append(fragment.packet)
+                self._active_packet_fragments.remove(fragment)
+        fragments.append(last_fragment)
+        return ReturnedPacket(reassemble_fragmented_packet(fragments), last_fragment_metadata)
+
+    def _forget_old_ip_fragments(self) -> None:
+        """
+        Check all active ip fragments in the computer - delete the ones that are too old
+        """
+        for fragment in self._active_packet_fragments[:]:
+            if MainLoop.instance.time_since(fragment.metadata.time) > PROTOCOLS.IP.FRAGMENT_DROP_TIMEOUT:
+                self._active_packet_fragments.remove(fragment)
+                self.send_to(fragment.packet["Ether"].src_mac, fragment.packet["IP"].src_ip, ICMP(
+                    type=OPCODES.ICMP.TYPES.TIME_EXCEEDED,
+                    code=OPCODES.ICMP.CODES.FRAGMENT_TTL_EXCEEDED))
+
     # --------------------------------------- v  DHCP and DNS  v -----------------------------------------------------------
 
     def ask_dhcp(self) -> None:
@@ -768,9 +805,14 @@ class Computer:
 
     def send(self, packet: Packet, interface: Optional[Interface] = None, sending_socket: Optional[RawSocket] = None) -> None:
         """
-        Takes a full and ready packet and just sends it.
+        Every sent packet from the computer should pass through this function!!!!!!!
+
+        Takes a full and ready packet and sends it
+            Sniffs the packet on the relevant RawSocket-s
+            Fragments the packet if necessary
+
         :param packet: a valid `Packet` object.
-        :param interface: the `Interface` to send the packet on.
+        :param interface: the `Interface` to send the packet on. If None - calculate by routing table
         :param sending_socket: the `RawSocket` object that sent the packet (if was sent using a raw socket
             it should not be sniffed on that same one as outgoing)
         """
@@ -791,7 +833,9 @@ class Computer:
             )
             return
 
-        interface.send(packet)
+        if not interface.send(packet):
+            return  # interface decided to drop packet :(
+
         self._sniff_packet_on_relevant_raw_sockets(
             ReturnedPacket(
                 packet,
@@ -937,7 +981,7 @@ class Computer:
         self.send(
             interface.ethernet_wrap(dst_mac,
                                     IP(src=str(interface.ip), dst=str(dst_ip), ttl=TTL.MAX) /
-                                    ICMP(type=OPCODES.ICMP.TYPES.TIME_EXCEEDED) /
+                                    ICMP(type=OPCODES.ICMP.TYPES.TIME_EXCEEDED, code=OPCODES.ICMP.CODES.TRANSIT_TTL_EXCEEDED) /
                                     data),
             interface
         )
@@ -1281,9 +1325,12 @@ class Computer:
                 continue
             for packet in interface.receive():
                 packet_with_metadata = ReturnedPacket(packet, PacketMetadata(interface, MainLoop.instance.time(), PACKET.DIRECTION.INCOMING))
-                self.received.append(packet_with_metadata)
-                self._handle_special_packet(packet_with_metadata)
                 self._sniff_packet_on_relevant_raw_sockets(packet_with_metadata)
+
+                packet_with_metadata = self._handle_ip_fragments(packet_with_metadata)
+                if packet_with_metadata is not None:
+                    self.received.append(packet_with_metadata)
+                    self._handle_special_packet(packet_with_metadata)
 
         self._handle_packet_streams()
         self.process_scheduler.handle_processes()

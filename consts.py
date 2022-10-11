@@ -107,14 +107,19 @@ class OPCODES:
 
     class ICMP:
         class TYPES:
-            REQUEST = 8
             REPLY = 0
-            TIME_EXCEEDED = 11
             UNREACHABLE = 3
+            REQUEST = 8
+            TIME_EXCEEDED = 11
 
         class CODES:
+            # unreachable
             NETWORK_UNREACHABLE = 0
             PORT_UNREACHABLE = 3
+
+            # time exceeded
+            TRANSIT_TTL_EXCEEDED = 0
+            FRAGMENT_TTL_EXCEEDED = 1
 
     class DHCP:
         DISCOVER = "discover"
@@ -174,13 +179,15 @@ class OPCODES:
 class PROTOCOLS:
     class ETHERNET:
         HEADER_LENGTH = 14
-        MTU = 1500
+        MTU = 1500  # max transfer unit
 
     class IP:
-        MAX_TTL = 255
-        FRAGMENT_SENDING_INTERVAL = 0.1
+        MAX_TTL = 255  # time to live
+        FRAGMENT_SENDING_INTERVAL = 0.1  # seconds
+        FRAGMENT_DROP_TIMEOUT = 6  # seconds
 
         class FLAGS:
+            NO_FLAGS       = 0b00
             DONT_FRAGMENT  = 0b10
             MORE_FRAGMENTS = 0b01
 
@@ -190,11 +197,11 @@ class PROTOCOLS:
 
     class ICMP:
         INFINITY = float("inf")  # the builtin infinity
-        DEFAULT_MESSAGE_LENGTH = 26
+        DEFAULT_MESSAGE_LENGTH = 26  # bytes
 
     class DHCP:
         DEFAULT_TTL = 0
-        NEW_INTERFACE_DETECTION_TIMEOUT = 0.5
+        NEW_INTERFACE_DETECTION_TIMEOUT = 0.5  # seconds
 
     class TCP:
         MAX_SEQUENCE_NUMBER = 2**32 - 1
@@ -208,7 +215,7 @@ class PROTOCOLS:
         class OPTIONS:
             MSS = "MSS"  # maximum segment size
             WINDOW_SCALE = "Window Scale"
-            SACK = "SACK"
+            SACK = "SACK"  # selective acknowledgement
             TIMESTAMPS = "Timestamps"
 
     class STP:
@@ -221,7 +228,7 @@ class PROTOCOLS:
         BLOCKED_INTERFACE_UPDATE_INTERVAL = 10  / STP_RELATIVE_SPEED
         TREE_STABLIZING_MAX_TIME =          20  / STP_RELATIVE_SPEED
         ROOT_MAX_DISAPPEARING_TIME =        10  / STP_RELATIVE_SPEED
-        MAX_CONNECTION_DISAPPEARED_TIME =   20  / STP_RELATIVE_SPEED   # in seconds
+        MAX_CONNECTION_DISAPPEARED_TIME =   20  / STP_RELATIVE_SPEED   # seconds
 
         DEFAULT_ROOT_MAX_AGE = 20
 

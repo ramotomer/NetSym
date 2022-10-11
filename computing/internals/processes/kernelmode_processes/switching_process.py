@@ -69,7 +69,7 @@ class SwitchingProcess(Process):
             destination_legs = self.where_to_send(packet, source_leg=packet_metadata.interface)
             for leg in destination_legs:
                 packet.graphics = None
-                leg.send(packet.copy())
+                self.computer.send(packet.copy(), interface=leg)
 
     def where_to_send(self, packet: Packet, source_leg: Interface) -> List[Interface]:
         """
