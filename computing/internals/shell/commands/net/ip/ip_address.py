@@ -41,6 +41,7 @@ class IpAddressCommand(Command):
         :param interface:
         :return:
         """
+        # TODO: add interface MTU-s
         type_ = 'LOOPBACK' \
             if interface.is_connected() and isinstance(interface.connection.connection, LoopbackConnection) \
             else 'BROADCAST'

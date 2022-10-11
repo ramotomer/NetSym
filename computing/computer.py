@@ -298,6 +298,7 @@ class Computer:
             message = f"{self.name} was shutdown! Relevant shells were closed"
             # PopupError(message, user_interface)  # Impossible - you need the UserInterface object
             print(message)
+            # TODO: change all prints to use the logging module! be high-tech please
 
     def get_mac(self) -> MACAddress:
         """Returns one of the computer's `MACAddresses`"""
