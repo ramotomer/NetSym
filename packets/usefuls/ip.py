@@ -11,16 +11,28 @@ if TYPE_CHECKING:
     from packets.packet import Packet
 
 
+def get_fragment_size(mtu: int) -> int:
+    """
+    Take in the ideal size the packet should be chopped up to
+    Round it so it is divisible by 8 and return it
+    """
+    return mtu - (mtu % PROTOCOLS.IP.FRAGMENT_OFFSET_UNIT)
+
+
 def validate_fragments(fragments: List[Packet]) -> None:
     """
     Take in a list of IP fragments - make sure they are valid. That means:
         0. There are fragments
-        1. All fragments are of the same packet (with the same ip identification)
-        2. All fragments except the last have the MORE_FRAGMENTS flag set
-        3. Fragments are sorted in the correct order, and all of them exist
+        1. All fragments' lengths are divisible by 8 (except the last one)
+        2. All fragments are of the same packet (with the same ip identification)
+        3. All fragments except the last have the MORE_FRAGMENTS flag set
+        4. Fragments are sorted in the correct order, and all of them exist
     """
     if not fragments:
         raise InvalidFragmentsError(f"Cannot reassemble fragments if none are given... Stupid! fragment list: {fragments}")
+
+    if not all(len(fragment["IP"].payload) % PROTOCOLS.IP.FRAGMENT_OFFSET_UNIT == 0 for fragment in fragments[:-1]):
+        raise InvalidFragmentsError(f"Not all fragment lengths are divisible by 8!! fragment list: {fragments}")
 
     if not all(fragment["IP"].id == fragments[0]["IP"].id for fragment in fragments):
         raise InvalidFragmentsError(f"Not all fragments belong to the same packet! fragment list: {fragments}")
@@ -35,7 +47,7 @@ def validate_fragments(fragments: List[Packet]) -> None:
     for fragment in fragments:
         if fragment["IP"].fragment_offset != length_until_now:
             raise InvalidFragmentsError(f"Fragment offset does not match sequence on fragment: {fragment.multiline_repr()}")
-        length_until_now += len(fragment["IP"].payload)
+        length_until_now += (len(fragment["IP"].payload) // PROTOCOLS.IP.FRAGMENT_OFFSET_UNIT)
 
 
 def reassemble_fragmented_packet(fragments: List[Packet]) -> Packet:
@@ -69,7 +81,7 @@ def fragment_packet(packet: Packet, mtu: int) -> List[Packet]:
         raise PacketAlreadyFragmentedError(f"mtu: {mtu}, packet: {packet.multiline_repr()}")
 
     ip_header_length = len(packet.get_layer_by_name_no_payload("IP"))
-    ip_datas = split_by_size(packet.data.getlayer(IP).payload.build(), (mtu - ip_header_length))
+    ip_datas = split_by_size(packet.data.getlayer(IP).payload.build(), get_fragment_size(mtu - ip_header_length))
 
     if sum(map(len, ip_datas)) > PROTOCOLS.IP.LONGEST_FRAGMENTATIONABLE_PACKET:
         raise PacketTooLongToFragment(f"Max size is {PROTOCOLS.IP.LONGEST_FRAGMENTATIONABLE_PACKET} and {sum(map(len, ip_datas))} is too big :(")
@@ -84,7 +96,7 @@ def fragment_packet(packet: Packet, mtu: int) -> List[Packet]:
             packet_slice["IP"].flags = PROTOCOLS.IP.FLAGS.MORE_FRAGMENTS
         packet_slice["IP"].frag = length_until_now
         # ^ TODO: this must stay 'frag' and not 'fragment_offset' for now - setting an aliased attribute does not yet work :(
-        length_until_now += len(ip_data)
+        length_until_now += (len(ip_data) // PROTOCOLS.IP.FRAGMENT_OFFSET_UNIT)
 
         packet_slice.reparse_layers()
         # ^ This is to make sure the ip_data is parsed only if necessary (It should not be parsed if the fragment offset is not 0

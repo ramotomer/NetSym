@@ -188,9 +188,12 @@ class PROTOCOLS:
 
     class IP:
         MAX_TTL = 255  # time to live
+
         FRAGMENT_SENDING_INTERVAL = 0.1  # seconds
         FRAGMENT_DROP_TIMEOUT = 15  # seconds
-        LONGEST_FRAGMENTATIONABLE_PACKET = (2 ** 13) - 1  # bytes
+
+        FRAGMENT_OFFSET_UNIT = 8  # bytes - when you say fragment_offset=x, you actually mean x*8 bytes!
+        LONGEST_FRAGMENTATIONABLE_PACKET = ((2 ** 13) - 1) * FRAGMENT_OFFSET_UNIT  # bytes
 
         class FLAGS:
             NO_FLAGS       = 0b00
@@ -205,7 +208,7 @@ class PROTOCOLS:
         HEADER_LEN = 8  # bytes
         INFINITY = float("inf")  # the builtin infinity
         DEFAULT_MESSAGE_LENGTH = 26  # bytes
-        MAX_MESSAGE_LENGTH = ((2 ** 13) - 1) - HEADER_LEN  # bytes
+        MAX_MESSAGE_LENGTH = (((2 ** 13) - 1) - HEADER_LEN) * 8  # bytes
         RESEND_TIMEOUT = 15  # seconds
 
     class DHCP:
