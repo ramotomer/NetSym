@@ -31,7 +31,8 @@ class SendPing(Process):
                  count: int = 1,
                  length: Optional[int] = None,
                  data: Optional[bytes] = None,
-                 dont_fragment: bool = False) -> None:
+                 dont_fragment: bool = False,
+                 sequence_number: Optional[int] = None) -> None:
         super(SendPing, self).__init__(pid, computer)
         self.destination = destination
         self.ping_opcode = opcode
@@ -40,6 +41,7 @@ class SendPing(Process):
         self.length = length
         self.data = data
         self.dont_fragment = dont_fragment
+        self.sequence_number = sequence_number
 
         self.dst_ip: Optional[IPAddress] = None
 
@@ -54,17 +56,19 @@ class SendPing(Process):
 
         self.length = self.length or PROTOCOLS.ICMP.DEFAULT_MESSAGE_LENGTH
         self.data =   self.data or get_icmp_data(self.length)
-
         try:
             self.computer.send_ping_to(
                 dst_mac,
                 self.dst_ip,
                 self.ping_opcode,
                 self.data,
+                sequence_number=self.sequence_number,
                 **({'flags': PROTOCOLS.IP.FLAGS.DONT_FRAGMENT} if self.dont_fragment else {}),
             )
         except PacketTooLongButDoesNotAllowFragmentation as error:
             raise ProcessInternalError_PacketTooLongButDoesNotAllowFragmentation(*error.args)
+
+        self.sequence_number = self.sequence_number if self.sequence_number is not None else self.computer.icmp_sequence_number
 
     def ping_reply_from(self, ip_address: IPAddress) -> Callable[[Packet], bool]:
         """
@@ -72,10 +76,10 @@ class SendPing(Process):
         """
         def tester(packet: Packet) -> bool:
             if "ICMP" in packet:
-                if packet["ICMP"].type == OPCODES.ICMP.TYPES.REPLY:
+                if (packet["ICMP"].type == OPCODES.ICMP.TYPES.REPLY) and (packet["ICMP"].sequence_number == self.sequence_number):
                     if packet["IP"].src_ip == ip_address and self.computer.has_this_ip(packet["IP"].dst_ip):
                         return True
-                    if self.computer.has_this_ip(self.dst_ip) and packet["IP"].src_ip == self.computer.loopback.ip:
+                    if self.computer.has_this_ip(self.dst_ip) and (packet["IP"].src_ip == self.computer.loopback.ip):
                         return True
                 if packet["ICMP"].type in [OPCODES.ICMP.TYPES.UNREACHABLE, OPCODES.ICMP.TYPES.TIME_EXCEEDED]:
                     return True
@@ -131,7 +135,6 @@ class SendPing(Process):
                 return
 
             if self.ping_opcode == OPCODES.ICMP.TYPES.REQUEST:
-                # TODO: sign only on your sepcific replies :)
                 returned_packet = yield WaitingFor(self.ping_reply_from(self.dst_ip), timeout=Timeout(PROTOCOLS.ICMP.RESEND_TIMEOUT))
                 self._print_output(returned_packet)
 

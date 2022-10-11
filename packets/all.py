@@ -37,6 +37,7 @@ IP = with_automatic_address_type_casting(
     define_attribute_aliases(
         IP,
         {
+            "identification":  "id",
             "src_ip":          "src",
             "dst_ip":          "dst",
             "length":          "len",
@@ -76,8 +77,9 @@ STP = with_automatic_address_type_casting(
 ICMP = define_attribute_aliases(
     ICMP,
     {
-        "sequence": "seq",
-        "checksum": "chksum",
+        "identification":  "id",
+        "sequence_number": "seq",
+        "checksum":        "chksum",
     }
 )
 UDP = define_attribute_aliases(

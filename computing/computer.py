@@ -150,6 +150,7 @@ class Computer:
         self.initial_size = IMAGES.SCALE_FACTORS.SPRITES, IMAGES.SCALE_FACTORS.SPRITES
         self._packet_sending_queues:   List[PacketSendingQueue] = []
         self._active_packet_fragments: List[ReturnedPacket]     = []
+        self.icmp_sequence_number = 0
 
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ method does not run when program is paused
@@ -389,6 +390,7 @@ class Computer:
         self._packet_sending_queues.clear()
         self.received.clear()
         self.received_raw.clear()
+        self.icmp_sequence_number = 0
 
     def on_startup(self) -> None:
         """
@@ -641,7 +643,13 @@ class Computer:
                 packet_metadata.interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):
             # ^ only if the packet is for me also on the third layer!
             dst_ip = packet["IP"].src_ip.string_ip
-            self.start_ping_process(dst_ip, OPCODES.ICMP.TYPES.REPLY, mode=COMPUTER.PROCESSES.MODES.KERNELMODE, data=packet["ICMP"].payload.build())
+            self.start_ping_process(
+                dst_ip,
+                OPCODES.ICMP.TYPES.REPLY,
+                mode=COMPUTER.PROCESSES.MODES.KERNELMODE,
+                data=packet["ICMP"].payload.build(),
+                sequence_number=packet["IP"].sequence_number,
+            )
 
     def _handle_tcp(self, returned_packet: ReturnedPacket) -> None:
         """
@@ -1015,11 +1023,20 @@ class Computer:
                      type_: int = OPCODES.ICMP.TYPES.REQUEST,
                      data: Union[str, bytes] = '',
                      code: Optional[int] = None,
+                     sequence_number: Optional[int] = None,
                      **kwargs: Any) -> None:
         """
         Send an ICMP packet to the a given ip address.
         """
-        self.send_to(mac_address, ip_address, (ICMP(type=type_, code=code) / data), **kwargs)
+        if sequence_number is None:
+            self.icmp_sequence_number += 1
+
+        self.send_to(
+            mac_address,
+            ip_address,
+            (ICMP(type=type_, code=code, sequence_number=(sequence_number if sequence_number is not None else self.icmp_sequence_number)) / data),
+            **kwargs,
+        )
 
     def send_time_exceeded(self, dst_mac: MACAddress, dst_ip: IPAddress, data: Union[str, bytes] = '') -> None:
         """
