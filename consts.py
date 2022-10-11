@@ -6,8 +6,6 @@ from math import sqrt
 from typing import Tuple, Union, Any
 
 import pyglet
-import scapy
-from scapy.layers.dhcp import DHCPTypes
 
 from exceptions import TCPDoneReceiving
 
@@ -100,6 +98,11 @@ class TCPFlag(object):
 
 
 class OPCODES:
+    class IP:
+        class FRAGMENT:
+            IS_FRAGMENT = True
+            NOT_FRAGMENT = False
+
     class ARP:
         REQUEST = 1
         REPLY = 2
@@ -438,9 +441,12 @@ class IMAGES:
 
     class PACKETS:
         ETHERNET = "packets/ethernet_packet.png"
-        IP = "packets/ip_packet.png"
         UDP = "packets/udp_packet.png"
         STP = "packets/stp_packet.png"
+
+        class IP:
+            NOT_FRAGMENTED = "packets/ip_packet.png"
+            FRAGMENTED = "packets/ip_fragment_packet.png"
 
         class ARP:
             REQUEST = "packets/arp_request.png"
@@ -527,21 +533,6 @@ class ANIMATIONS:
     X_COUNT, Y_COUNT = 5, 3
 
 
-def get_dominant_tcp_flag(tcp: scapy.packet.Packet) -> TCPFlag:
-    for flag in OPCODES.TCP.FLAGS_DISPLAY_PRIORITY:
-        if int(tcp.flags) & int(flag):
-            return flag
-    return OPCODES.TCP.NO_FLAGS
-
-
-def get_dns_opcode(dns: scapy.packet.Packet) -> str:
-    if dns.return_code != OPCODES.DNS.RETURN_CODES.OK:
-        return OPCODES.DNS.SOME_ERROR
-    if dns.answer_record_count > 0:
-        return OPCODES.DNS.ANSWER
-    return OPCODES.DNS.QUERY
-
-
 class PACKET:
     class DIRECTION:
         RIGHT = 'R'
@@ -551,17 +542,12 @@ class PACKET:
         INCOMING = 'INCOMING'
         OUTGOING = 'OUTGOING'
 
-    TYPE_TO_OPCODE_FUNCTION = {
-        "ARP":  lambda arp: arp.opcode,
-        "ICMP": (lambda icmp: (icmp.type, icmp.code) if icmp.type == OPCODES.ICMP.TYPES.UNREACHABLE else icmp.type),
-        "DHCP": (lambda dhcp: DHCPTypes.get(dhcp.parsed_options.message_type, dhcp.parsed_options.message_type)),
-        "TCP":  get_dominant_tcp_flag,
-        "DNS":  get_dns_opcode,
-    }
-
     TYPE_TO_IMAGE = {
         "Ether": IMAGES.PACKETS.ETHERNET,
-        "IP": IMAGES.PACKETS.IP,
+        "IP": {
+            OPCODES.IP.FRAGMENT.NOT_FRAGMENT: IMAGES.PACKETS.IP.NOT_FRAGMENTED,
+            OPCODES.IP.FRAGMENT.IS_FRAGMENT:  IMAGES.PACKETS.IP.FRAGMENTED,
+        },
         "UDP": IMAGES.PACKETS.UDP,
         "STP": IMAGES.PACKETS.STP,
         "ARP": {

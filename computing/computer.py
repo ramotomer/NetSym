@@ -39,7 +39,7 @@ from gui.tech.computer_graphics import ComputerGraphics
 from packets.all import ICMP, IP, TCP, UDP, ARP
 from packets.usefuls.dns import T_Hostname, validate_domain_hostname, canonize_domain_hostname
 from packets.usefuls.ip import needs_fragmentation, fragment_packet, needs_reassembly, reassemble_fragmented_packet
-from packets.usefuls.usefuls import get_src_port, get_dst_port
+from packets.usefuls.tcp import get_src_port, get_dst_port
 from usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:

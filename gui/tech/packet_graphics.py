@@ -6,6 +6,7 @@ from consts import *
 from gui.abstracts.animation_graphics import AnimationGraphics
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_loop import MainLoop
+from packets.usefuls.type_to_opcode_function import TYPE_TO_OPCODE_FUNCTION
 from packets.usefuls.usefuls import get_original_layer_name_by_instance
 from usefuls.funcs import with_args
 
@@ -90,8 +91,8 @@ class PacketGraphics(ImageGraphics):
         """
         name = get_original_layer_name_by_instance(layer)
 
-        if name in PACKET.TYPE_TO_OPCODE_FUNCTION:
-            return PACKET.TYPE_TO_IMAGE[name][PACKET.TYPE_TO_OPCODE_FUNCTION[name](layer)]
+        if name in TYPE_TO_OPCODE_FUNCTION:
+            return PACKET.TYPE_TO_IMAGE[name][TYPE_TO_OPCODE_FUNCTION[name](layer)]
         return PACKET.TYPE_TO_IMAGE[name]
 
     def start_viewing(self,

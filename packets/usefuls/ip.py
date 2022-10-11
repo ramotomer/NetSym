@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from consts import PROTOCOLS
 from exceptions import WrongUsageError
 from packets.all import IP
-from packets.packet import Packet
 from usefuls.funcs import split_by_size
+
+if TYPE_CHECKING:
+    from packets.packet import Packet
 
 
 def reassemble_fragmented_packet(fragments: List[Packet]) -> Packet:
@@ -17,12 +19,13 @@ def reassemble_fragmented_packet(fragments: List[Packet]) -> Packet:
     if not fragments:
         raise WrongUsageError(f"Cannot reassemble fragments if none are given... Stupid! fragment list: {fragments}")
 
-    fragments =       sorted(fragments, key=lambda p: p["IP"].fragment_offset)
-    ether_layer =     fragments[0].get_layer_by_name_no_payload("Ether")
-    ip_layer =        fragments[0].get_layer_by_name_no_payload("IP")
-    summed_ip_datas = b''.join([fragment["IP"].payload.build() for fragment in fragments])
+    fragments =          sorted(fragments, key=lambda p: p["IP"].fragment_offset)
+    ether_layer =        fragments[0].get_layer_by_name_no_payload("Ether")
+    ip_layer =           fragments[0].get_layer_by_name_no_payload("IP")
+    summed_ip_datas =    b''.join([fragment["IP"].payload.build() for fragment in fragments])
 
-    packet = Packet(ether_layer / ip_layer / summed_ip_datas)
+    packet =             fragments[0].copy()
+    packet.data =        ether_layer / ip_layer / summed_ip_datas
     packet["IP"].flags = PROTOCOLS.IP.FLAGS.NO_FLAGS
     packet["IP"].frag  = 0
     # ^ TODO: this must stay 'frag' and not 'fragment_offset' for now - setting an aliased attribute does not yet work :(
@@ -42,7 +45,8 @@ def fragment_packet(packet: Packet, mtu: int) -> List[Packet]:
     length_until_now = 0
     packet_slices = []
     for i, ip_data in enumerate(ip_datas):
-        packet_slice = Packet(packet.get_layer_by_name_no_payload("Ether") / packet.get_layer_by_name_no_payload("IP") / ip_data)
+        packet_slice = packet.copy()
+        packet_slice.data = packet.get_layer_by_name_no_payload("Ether") / packet.get_layer_by_name_no_payload("IP") / ip_data
 
         if i < (len(ip_datas) - 1):
             packet_slice["IP"].flags = PROTOCOLS.IP.FLAGS.MORE_FRAGMENTS

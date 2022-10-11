@@ -3,14 +3,23 @@ from __future__ import annotations
 import os
 from typing import List, Optional
 
+import scapy
 from scapy.layers.dns import DNSRR, DNSQR
 
-from consts import COMPUTER, PROTOCOLS
+from consts import COMPUTER, PROTOCOLS, OPCODES
 from exceptions import InvalidDomainHostnameError
 from usefuls.attribute_renamer import define_attribute_aliases
 from usefuls.funcs import is_matching
 
 T_Hostname = str
+
+
+def get_dns_opcode(dns: scapy.packet.Packet) -> str:
+    if dns.return_code != OPCODES.DNS.RETURN_CODES.OK:
+        return OPCODES.DNS.SOME_ERROR
+    if dns.answer_record_count > 0:
+        return OPCODES.DNS.ANSWER
+    return OPCODES.DNS.QUERY
 
 
 def validate_domain_hostname(hostname: T_Hostname) -> None:

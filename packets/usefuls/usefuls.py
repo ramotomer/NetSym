@@ -16,7 +16,8 @@ if TYPE_CHECKING:
 
 def scapy_layer_class_to_our_class(scapy_layer_class: Type[scapy.packet.Packet]) -> Type[scapy.packet.Packet]:
     """
-
+    Takes in a scapy packet class                                    (for example `scapy.layers.inet.IP`)
+    Returns the class we created with the indicative attribute names (for example `packets.all.IP`)
     """
     return get_the_one(protocols, lambda p: issubclass(p, scapy_layer_class), default=scapy_layer_class)
 
@@ -32,24 +33,6 @@ def get_packet_attribute(packet: Packet, attribute_name: str, containing_protoco
             return getattr(packet[protocol], attribute_name)
     raise UnknownPacketTypeError(
         f"packet must include one of {containing_protocols} layers in order to have a `{attribute_name}`! packet: {packet}")
-
-
-def get_src_port(packet: Packet) -> int:
-    """
-    Return the src port of the packet
-    Can be either UDP or TCP
-    If it is neither - raise
-    """
-    return get_packet_attribute(packet, 'src_port', ["UDP", "TCP"])
-
-
-def get_dst_port(packet: Packet) -> int:
-    """
-    Return the dst port of the packet
-    Can be either UDP or TCP
-    If it is neither - raise
-    """
-    return get_packet_attribute(packet, 'dst_port', ["UDP", "TCP"])
 
 
 def get_src_ip(packet: Packet) -> IPAddress:
@@ -73,7 +56,7 @@ class ScapyRenamedPacketField:
     def __repr__(self) -> str:
         return f"new_name: '{self.new_name}' of Renamed({self.field_object!r})"
 
-# TODO: make this vvvvvv Work! (for a `multiline_repr` method with more indicative attribute names :)
+# TODO: make this v v v v v v Work! (for a `multiline_repr` method with more indicative attribute names :)
 # def define_scapy_packet_attribute_aliases(class_, attribute_name_mapping):
 #     """
 #     Scapy has ugly attribute names                 (ciaddr, dport)
