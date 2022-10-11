@@ -762,7 +762,11 @@ class Computer:
         Check all active ip fragments in the computer - delete the ones that are too old
         """
         for fragment in self._active_packet_fragments[:]:
-            if MainLoop.instance.time_since(fragment.metadata.time) > PROTOCOLS.IP.FRAGMENT_DROP_TIMEOUT:
+            latest_sibling_fragment = max(
+                [rp for rp in self._active_packet_fragments if rp.packet["IP"].id == fragment.packet["IP"].id],
+                key=lambda rp: rp.metadata.time,
+            )
+            if MainLoop.instance.time_since(latest_sibling_fragment.metadata.time) > PROTOCOLS.IP.FRAGMENT_DROP_TIMEOUT:
                 self._active_packet_fragments.remove(fragment)
                 self._send_fragment_ttl_exceeded(fragment.packet["Ether"].src_mac, fragment.packet["IP"].src_ip)
 
