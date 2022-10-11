@@ -106,6 +106,12 @@ class InterfaceGraphics(ViewableGraphicsObject):
                 "Insert new name:",
                 self.interface.set_name,
             ),
+            "set MTU (alt+m)": with_args(
+                user_interface.ask_user_for,
+                int,
+                "Insert new MTU:",
+                self.interface.set_mtu,
+            ),
             "sniffing start/stop (f)": with_args(
                 get_the_one(user_interface.computers,
                             lambda c: self.interface in c.interfaces,
@@ -161,6 +167,7 @@ class InterfaceGraphics(ViewableGraphicsObject):
             "color": self.color,
             "is_blocked": self.interface.is_blocked,
             "type_": self.interface.type,
+            "mtu": self.interface.mtu,
         }
 
     def delete(self, user_interface: UserInterface) -> None:

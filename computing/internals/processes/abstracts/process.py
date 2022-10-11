@@ -6,6 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Iterator, Union, Callable, TYPE_CHECKING, Optional, Tuple, Type, Generator
 
+from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_Suicide
 from consts import COMPUTER, T_Time
 from exceptions import *
 from gui.main_loop import MainLoop
@@ -48,6 +49,10 @@ class ReturnedPacket:
             raise NoSuchPacketError("All of the packets were requested from this object already!!")
 
     @property
+    def metadata(self):
+        return self.packets[self.packet]
+
+    @property
     def packet_and_interface(self) -> Tuple[Packet, Interface]:
         """
         just like `self.packet` but returns a tuple of (packet, interface)
@@ -84,9 +89,10 @@ class WaitingFor(IterableDataclass):
     Indicates the process is waiting for a certain condition
     `condition` is a function that should be called without parameters and return a `bool`
     """
-    condition: Union[Callable[[], bool], Callable[[Packet], bool]]
-    timeout:   Optional[Timeout] = None
-    value:     Optional[ReturnedPacket] = None
+    condition:      Union[Callable[[], bool], Callable[[Packet], bool]]
+    timeout:        Optional[Timeout] = None
+    value:          Optional[ReturnedPacket] = None
+    get_raw_packet: bool = False
 
     @classmethod
     def nothing(cls) -> WaitingFor:
@@ -235,48 +241,4 @@ class NoNeedForPacket(ReturnedPacket):
 
     A process that is waiting for some packet must yield a `ReturnedPacket` in his `WaitingForPacket`, this is the way to
     ignore that packet without raising errors.
-    """
-
-
-class ProcessInternalError(Exception):
-    """If this exception is raised inside a code of a process, the process will be terminated but the rest of NetSym will continue"""
-
-
-class ProcessInternalError_Suicide(ProcessInternalError):
-    """This indicates a self-inflicted death of the process"""
-
-
-class ProcessInternalError_InvalidDomainHostname(ProcessInternalError_Suicide, InvalidDomainHostnameError):
-    """
-    This indicates a self-inflicted death of the process due to an invalid domain hostname
-    """
-
-
-class ProcessInternalError_NoResponseForARP(ProcessInternalError):
-    """
-    This indicates a self-inflicted death of the process due to an ARP that was sent but was not responded
-    """
-
-
-class ProcessInternalError_DNSNameErrorFromServer(ProcessInternalError):
-    """
-    This indicates a self-inflicted death of the process due to a DNS query that was sent but was not responded
-    """
-
-
-class ProcessInternalError_NoResponseForDNSQuery(ProcessInternalError):
-    """
-    This indicates a self-inflicted death of the process due to a DNS query that was sent but was not responded
-    """
-
-
-class ProcessInternalError_NoIPAddressError(ProcessInternalError, NoIPAddressError):
-    """
-    This indicates a self-inflicted death of the process due to a lack of an IP address
-    """
-
-
-class ProcessInternalError_RoutedPacketTTLExceeded(ProcessInternalError):
-    """
-    This indicates a self-inflicted death of the process because the packet that was routed did not have enough TTL to actually be routed
     """

@@ -30,8 +30,9 @@ class Interface:
                  ip: Optional[Union[str, IPAddress]] = None,
                  name: Optional[str] = None,
                  connection: Optional[Connection] = None,
-                 display_color: Tuple[int] = INTERFACES.COLOR,
-                 type_: str = INTERFACES.TYPE.ETHERNET) -> None:
+                 display_color: T_Color = INTERFACES.COLOR,
+                 type_: str = INTERFACES.TYPE.ETHERNET,
+                 mtu: int = PROTOCOLS.ETHERNET.MTU) -> None:
         """
         Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
         :param mac: a string MAC address ('aa:bb:cc:11:22:76' for example)
@@ -55,6 +56,7 @@ class Interface:
 
         self.is_powered_on = True
         self.type = type_
+        self.mtu = mtu
 
         self.graphics = None
         self.display_color = display_color
@@ -152,6 +154,15 @@ class Interface:
 
         self.name = name
 
+    def set_mtu(self, mtu: int) -> None:
+        """
+        Sets the new MTU of the interface (must be 68 < mtu <= 1500)
+        """
+        if not (PROTOCOLS.ETHERNET.MINIMUM_MTU < mtu <= PROTOCOLS.ETHERNET.MTU):
+            raise PopupWindowWithThisError(f"Invalid MTU {mtu}! valid range - between {PROTOCOLS.ETHERNET.MINIMUM_MTU} and {PROTOCOLS.ETHERNET.MTU}!")
+
+        self.mtu = mtu
+
     def connect(self, other: Interface) -> Connection:
         """
         Connects this interface to another interface, return the `Connection` object.
@@ -212,19 +223,25 @@ class Interface:
         else:
             self.block(accept)
 
-    def send(self, packet: Packet) -> None:
+    def send(self, packet: Packet) -> bool:
         """
         Receives a packet to send and just sends it!
         for Tomer: if the interface is not connected maybe an error should be raised but
             for now it just does nothing and it works very well.
         :param packet: The full packet `Packet` object.
-        :return: None
+        :return: Whether or not the packet was sent successfully
         """
         if not self.is_powered_on:
-            return
+            return False
+
+        if len(packet.data) > (self.mtu + PROTOCOLS.ETHERNET.HEADER_LENGTH):
+            print(f"{self!r} dropped a packet due to MTU being too large! packet is {len(packet.data) - PROTOCOLS.ETHERNET.HEADER_LENGTH} bytes long!"
+                  f" MTU is only {self.mtu}")
+            return False
 
         if self.is_connected() and (not self.is_blocked or (self.is_blocked and self.accepting in packet)):
             self.connection.send(packet)
+            return True
 
     def receive(self) -> Optional[List[Packet]]:
         """
@@ -284,6 +301,7 @@ Interface:
 
 {str(self.mac) if not self.mac.is_no_mac() else ""} 
 {repr(self.ip) if self.has_ip() else ''}
+MTU: {self.mtu}
 {"Connected" if self.is_connected() else "Disconnected"}
 {f"Promisc{linesep}" if self.is_promisc else ""}{"Blocked" if 
         self.is_blocked else ""}
@@ -309,7 +327,8 @@ Interface:
             mac=dict_["mac"],
             ip=dict_["ip"],
             name=dict_["name"],
-            type_=dict_["type_"]
+            type_=dict_["type_"],
+            mtu=dict_.get("mtu", PROTOCOLS.ETHERNET.MTU),
         )
 
         return loaded

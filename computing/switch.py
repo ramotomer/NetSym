@@ -136,7 +136,6 @@ class Antenna(Switch):
     def __init__(self, name: Optional[str] = None, *interfaces: Interface) -> None:
         super(Antenna, self).__init__(name)
         self.stp_enabled = False
-        self.is_supporting_wireless_connections = True
         self.interfaces = [WirelessInterface(frequency=CONNECTIONS.WIRELESS.DEFAULT_FREQUENCY)] if not interfaces else list(interfaces)
 
     def show(self, x: float, y: float) -> None:

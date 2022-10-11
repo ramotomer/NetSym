@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode, ProcessInternalError_NoResponseForARP, \
-    ProcessInternalError_RoutedPacketTTLExceeded
-from consts import OPCODES
+from computing.internals.processes.abstracts.process import Process, \
+    T_ProcessCode
+from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_RoutedPacketTTLExceeded, \
+    ProcessInternalError_NoResponseForARP, ProcessInternalError_PacketTooLongButDoesNotAllowFragmentation
+from consts import OPCODES, COMPUTER
+from packets.usefuls.ip import needs_fragmentation, allows_fragmentation
 
 if TYPE_CHECKING:
     from computing.computer import Computer
@@ -72,7 +75,7 @@ class RoutePacket(Process):
             return True
         return False
 
-    def _send_icmp_unreachable(self) -> None:
+    def _send_icmp_unreachable(self, code: Optional[int] = None) -> None:
         """Sends to the sender of the routed packet, an ICMP unreachable"""
         sender_ip = self.packet["IP"].src_ip
         dst_ip = self.packet["IP"].dst_ip
@@ -81,7 +84,8 @@ class RoutePacket(Process):
             self.computer.arp_cache[sender_ip].mac,
             self.packet["IP"].src_ip,
             OPCODES.ICMP.TYPES.UNREACHABLE,
-            f"Unreachable: {dst_ip}"
+            f"Unreachable: {dst_ip}",
+            code=code,
         )
 
     def code(self) -> T_ProcessCode:
@@ -107,7 +111,19 @@ class RoutePacket(Process):
             self._send_icmp_unreachable()
             raise
 
-        self.computer.send_with_ethernet(dst_mac, dst_ip, self.packet["IP"])
+        interface = self.computer.get_interface_with_ip(self.computer.routing_table[dst_ip].interface_ip)
+        packet = interface.ethernet_wrap(dst_mac, self.packet["IP"])
+
+        if needs_fragmentation(packet, interface.mtu) and not allows_fragmentation(packet):
+            self._send_icmp_unreachable(OPCODES.ICMP.CODES.FRAGMENTATION_NEEDED)
+            raise ProcessInternalError_PacketTooLongButDoesNotAllowFragmentation  # drop the packet
+
+        self.computer.send_packet_stream(
+            COMPUTER.PROCESSES.INIT_PID,
+            COMPUTER.PROCESSES.MODES.KERNELMODE,
+            [packet],
+            COMPUTER.ROUTING.SENDING_INTERVAL,
+        )
 
     def __repr__(self) -> str:
         """The string representation of the process"""

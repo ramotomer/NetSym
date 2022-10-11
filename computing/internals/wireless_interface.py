@@ -24,10 +24,10 @@ class WirelessInterface(Interface):
     down the connection further.
     """
     def __init__(self,
-                 mac: Optional[MACAddress] = None,
-                 ip: Optional[IPAddress] = None,
-                 name: Optional[str] = None,
-                 frequency: Optional[Frequency] = None,
+                 mac:           Optional[MACAddress] = None,
+                 ip:            Optional[IPAddress] = None,
+                 name:          Optional[str] = None,
+                 frequency:     Optional[float] = None,
                  display_color: T_Color = INTERFACES.COLOR) -> None:
         """
         Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
@@ -58,10 +58,10 @@ class WirelessInterface(Interface):
     def is_connected(self) -> bool:
         return self.frequency is not None and self.connection is not None
 
-    def connect(self, frequency: Frequency) -> Frequency:
+    def connect(self, frequency: float) -> Frequency:
         """
         Connects this interface to a frequency, return the `Frequency` object.
-        :param frequency: The other `Interface` object to connect to.
+        :param frequency:
         :return: The `Connection` object.
         """
         if self.is_connected():

@@ -6,8 +6,6 @@ from math import sqrt
 from typing import Tuple, Union, Any
 
 import pyglet
-import scapy
-from scapy.layers.dhcp import DHCPTypes
 
 from exceptions import TCPDoneReceiving
 
@@ -100,6 +98,11 @@ class TCPFlag(object):
 
 
 class OPCODES:
+    class IP:
+        class FRAGMENT:
+            IS_FRAGMENT = True
+            NOT_FRAGMENT = False
+
     class ARP:
         REQUEST = 1
         REPLY = 2
@@ -107,14 +110,20 @@ class OPCODES:
 
     class ICMP:
         class TYPES:
-            REQUEST = 8
             REPLY = 0
-            TIME_EXCEEDED = 11
             UNREACHABLE = 3
+            REQUEST = 8
+            TIME_EXCEEDED = 11
 
         class CODES:
+            # unreachable
             NETWORK_UNREACHABLE = 0
             PORT_UNREACHABLE = 3
+            FRAGMENTATION_NEEDED = 4
+
+            # time exceeded
+            TRANSIT_TTL_EXCEEDED = 0
+            FRAGMENT_TTL_EXCEEDED = 1
 
     class DHCP:
         DISCOVER = "discover"
@@ -172,19 +181,39 @@ class OPCODES:
 
 
 class PROTOCOLS:
+    class ETHERNET:
+        HEADER_LENGTH = 14
+        MTU = 1500  # max transfer unit
+        MINIMUM_MTU = 68
+
     class IP:
-        MAX_TTL = 255
+        MAX_TTL = 255  # time to live
+
+        FRAGMENT_SENDING_INTERVAL = 0.1  # seconds
+        FRAGMENT_DROP_TIMEOUT = 6  # seconds
+
+        FRAGMENT_OFFSET_UNIT = 8  # bytes - when you say fragment_offset=x, you actually mean x*8 bytes!
+        LONGEST_FRAGMENTATIONABLE_PACKET = ((2 ** 13) - 1) * FRAGMENT_OFFSET_UNIT  # bytes
+
+        class FLAGS:
+            NO_FLAGS       = 0b00
+            DONT_FRAGMENT  = 0b10
+            MORE_FRAGMENTS = 0b01
 
     class ARP:
         RESEND_TIME = 6  # seconds
-        RESEND_COUNT = 3  # seconds
+        RESEND_COUNT = 3  # times
 
     class ICMP:
+        HEADER_LEN = 8  # bytes
         INFINITY = float("inf")  # the builtin infinity
+        DEFAULT_MESSAGE_LENGTH = 26  # bytes
+        MAX_MESSAGE_LENGTH = (((2 ** 13) - 1) - HEADER_LEN) * 8  # bytes
+        RESEND_TIMEOUT = 25  # seconds
 
     class DHCP:
         DEFAULT_TTL = 0
-        NEW_INTERFACE_DETECTION_TIMEOUT = 0.5
+        NEW_INTERFACE_DETECTION_TIMEOUT = 0.5  # seconds
 
     class TCP:
         MAX_SEQUENCE_NUMBER = 2**32 - 1
@@ -198,7 +227,7 @@ class PROTOCOLS:
         class OPTIONS:
             MSS = "MSS"  # maximum segment size
             WINDOW_SCALE = "Window Scale"
-            SACK = "SACK"
+            SACK = "SACK"  # selective acknowledgement
             TIMESTAMPS = "Timestamps"
 
     class STP:
@@ -211,7 +240,7 @@ class PROTOCOLS:
         BLOCKED_INTERFACE_UPDATE_INTERVAL = 10  / STP_RELATIVE_SPEED
         TREE_STABLIZING_MAX_TIME =          20  / STP_RELATIVE_SPEED
         ROOT_MAX_DISAPPEARING_TIME =        10  / STP_RELATIVE_SPEED
-        MAX_CONNECTION_DISAPPEARED_TIME =   20  / STP_RELATIVE_SPEED   # in seconds
+        MAX_CONNECTION_DISAPPEARED_TIME =   20  / STP_RELATIVE_SPEED   # seconds
 
         DEFAULT_ROOT_MAX_AGE = 20
 
@@ -421,9 +450,12 @@ class IMAGES:
 
     class PACKETS:
         ETHERNET = "packets/ethernet_packet.png"
-        IP = "packets/ip_packet.png"
         UDP = "packets/udp_packet.png"
         STP = "packets/stp_packet.png"
+
+        class IP:
+            NOT_FRAGMENTED = "packets/ip_packet.png"
+            FRAGMENTED = "packets/ip_fragment_packet.png"
 
         class ARP:
             REQUEST = "packets/arp_request.png"
@@ -436,6 +468,7 @@ class IMAGES:
             TIME_EXCEEDED = "packets/icmp_time_exceeded.png"
             UNREACHABLE = "packets/icmp_unreachable.png"
             PORT_UNREACHABLE = "packets/icmp_port_unreachable.png"
+            FRAGMENTATION_NEEDED = "packets/icmp_fragmentation_needed.png"
 
         class DHCP:
             DISCOVER = "packets/dhcp_discover.png"
@@ -510,21 +543,6 @@ class ANIMATIONS:
     X_COUNT, Y_COUNT = 5, 3
 
 
-def get_dominant_tcp_flag(tcp: scapy.packet.Packet) -> TCPFlag:
-    for flag in OPCODES.TCP.FLAGS_DISPLAY_PRIORITY:
-        if int(tcp.flags) & int(flag):
-            return flag
-    return OPCODES.TCP.NO_FLAGS
-
-
-def get_dns_opcode(dns: scapy.packet.Packet) -> str:
-    if dns.return_code != OPCODES.DNS.RETURN_CODES.OK:
-        return OPCODES.DNS.SOME_ERROR
-    if dns.answer_record_count > 0:
-        return OPCODES.DNS.ANSWER
-    return OPCODES.DNS.QUERY
-
-
 class PACKET:
     class DIRECTION:
         RIGHT = 'R'
@@ -534,17 +552,12 @@ class PACKET:
         INCOMING = 'INCOMING'
         OUTGOING = 'OUTGOING'
 
-    TYPE_TO_OPCODE_FUNCTION = {
-        "ARP":  lambda arp: arp.opcode,
-        "ICMP": (lambda icmp: (icmp.type, icmp.code) if icmp.type == OPCODES.ICMP.TYPES.UNREACHABLE else icmp.type),
-        "DHCP": (lambda dhcp: DHCPTypes.get(dhcp.parsed_options.message_type, dhcp.parsed_options.message_type)),
-        "TCP":  get_dominant_tcp_flag,
-        "DNS":  get_dns_opcode,
-    }
-
     TYPE_TO_IMAGE = {
         "Ether": IMAGES.PACKETS.ETHERNET,
-        "IP": IMAGES.PACKETS.IP,
+        "IP": {
+            OPCODES.IP.FRAGMENT.NOT_FRAGMENT: IMAGES.PACKETS.IP.NOT_FRAGMENTED,
+            OPCODES.IP.FRAGMENT.IS_FRAGMENT:  IMAGES.PACKETS.IP.FRAGMENTED,
+        },
         "UDP": IMAGES.PACKETS.UDP,
         "STP": IMAGES.PACKETS.STP,
         "ARP": {
@@ -564,6 +577,7 @@ class PACKET:
             OPCODES.ICMP.TYPES.TIME_EXCEEDED: IMAGES.PACKETS.ICMP.TIME_EXCEEDED,
             (OPCODES.ICMP.TYPES.UNREACHABLE, OPCODES.ICMP.CODES.NETWORK_UNREACHABLE): IMAGES.PACKETS.ICMP.UNREACHABLE,
             (OPCODES.ICMP.TYPES.UNREACHABLE, OPCODES.ICMP.CODES.PORT_UNREACHABLE): IMAGES.PACKETS.ICMP.PORT_UNREACHABLE,
+            (OPCODES.ICMP.TYPES.UNREACHABLE, OPCODES.ICMP.CODES.FRAGMENTATION_NEEDED): IMAGES.PACKETS.ICMP.FRAGMENTATION_NEEDED,
         },
         "TCP": {
             OPCODES.TCP.SYN: IMAGES.PACKETS.TCP.SYN,
@@ -755,6 +769,9 @@ class FILESYSTEM:
 
 
 class COMPUTER:
+    class ROUTING:
+        SENDING_INTERVAL = 0.1
+
     class OUTPUT_METHOD:
         CONSOLE = 'console'
         SHELL = 'shell'

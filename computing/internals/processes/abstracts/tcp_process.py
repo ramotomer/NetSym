@@ -9,7 +9,8 @@ from operator import attrgetter, concat
 from typing import Optional, List, TYPE_CHECKING, Iterable
 
 from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import Process, Timeout, ReturnedPacket, T_ProcessCode, ProcessInternalError, WaitingFor
+from computing.internals.processes.abstracts.process import Process, Timeout, ReturnedPacket, T_ProcessCode, WaitingFor
+from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError
 from consts import *
 from exceptions import TCPDataLargerThanMaxSegmentSize
 from gui.main_loop import MainLoop
@@ -114,10 +115,8 @@ class TCPProcess(Process, metaclass=ABCMeta):
         # self.next_sequence_number = 1 + self.sequence_number
 
         self.receiving_window = ReceivingWindow()
-        self.sending_window = SendingWindow()
+        self.sending_window = SendingWindow(self.pid, self.computer)
         self.mss = mss
-
-        self.last_packet_sent_time = MainLoop.instance.time()
 
         for signum in COMPUTER.PROCESSES.SIGNALS.KILLING_SIGNALS:
             self.signal_handlers[signum] = self.kill_signal_handler
@@ -358,20 +357,8 @@ class TCPProcess(Process, metaclass=ABCMeta):
 
     def _session_timeout(self) -> bool:
         """Returns whether or not the connection should be timed-out"""
-        return MainLoop.instance.time_since(self.last_packet_sent_time) >= PROTOCOLS.TCP.MAX_UNUSED_CONNECTION_TIME
-
-    def _physically_send_packets_with_time_gaps(self) -> None:
-        """
-        Sends the next packet in the `self.sending_window.sent` list.
-        The packets are not all sent in one go because then the graphics will one over the other.
-        This function sends a packet if was not just sent.
-        """
-        if MainLoop.instance.time_since(self.last_packet_sent_time) > PROTOCOLS.TCP.SENDING_INTERVAL:
-            if self.sending_window.sent:
-                packet = self.sending_window.sent.popleft()
-                debugp(f"{self.computer.name:<20}: TCP({get_dominant_tcp_flag(packet['TCP'])}, {packet['TCP'].sequence_number}, {packet['TCP'].ack_number})")
-                self.computer.send(packet)
-                self.last_packet_sent_time = MainLoop.instance.time()
+        return False  # TODO: not
+        # return MainLoop.instance.time_since(self.last_packet_sent_time) >= PROTOCOLS.TCP.MAX_UNUSED_CONNECTION_TIME
 
     def handle_tcp_and_receive(self,
                                received_data: List,
@@ -402,8 +389,6 @@ class TCPProcess(Process, metaclass=ABCMeta):
             self.sending_window.fill_window()  # if the amount of sent packets is not the window size, fill it up
             self.sending_window.send_window()  # send the packets that were not yet sent
             self.sending_window.retransmit_unacked()  # send the packets that were sent a long time ago and not ACKed.
-
-            self._physically_send_packets_with_time_gaps()  # send all of the packets above in appropriate time gaps
 
             if not is_blocking:
                 return
@@ -468,15 +453,20 @@ class SendingWindow:
     `sent` packets that need to be physically sent one by one (in the `TCP_SENDING_INTERVAL` time gaps).
     """
 
-    def __init__(self, window_size: int = PROTOCOLS.TCP.MAX_WINDOW_SIZE) -> None:
+    def __init__(self, pid: int, computer: Computer, window_size: int = PROTOCOLS.TCP.MAX_WINDOW_SIZE) -> None:
         """
         Initiates the three queues of the window.
         """
+        self.pid = pid
+        self.computer = computer
         self.window_size = window_size
 
         self.waiting_for_sending = deque()
         self.window = deque()
-        self.sent = deque()
+
+    @property
+    def sent(self):
+        return self.computer.get_packet_sending_queue(self.pid, COMPUTER.PROCESSES.MODES.KERNELMODE).packets
 
     def clear(self) -> None:
         """
@@ -485,7 +475,6 @@ class SendingWindow:
         """
         self.waiting_for_sending.clear()
         self.window.clear()
-        self.sent.clear()
 
     def fill_window(self) -> None:
         """
@@ -510,10 +499,12 @@ class SendingWindow:
         Sends all of the packets in the window (adds them to the `sent` queue)
         Only does that to NotAckedPackets where the `is_sent` attribute is False.
         """
+        sent_packets = []
         for non_acked_packet in self.window:
             if not non_acked_packet.is_sent:
-                self.sent.append(non_acked_packet.packet.copy())
+                sent_packets.append(non_acked_packet.packet.copy())
                 non_acked_packet.is_sent = True
+        self.computer.send_packet_stream(self.pid, COMPUTER.PROCESSES.MODES.KERNELMODE, sent_packets, PROTOCOLS.TCP.SENDING_INTERVAL)
 
     def add_waiting(self, packet: Packet) -> None:
         """
@@ -528,7 +519,7 @@ class SendingWindow:
         :param packet:
         :return:
         """
-        self.sent.append(packet.copy())
+        self.computer.send_packet_stream(self.pid, COMPUTER.PROCESSES.MODES.KERNELMODE, [packet.copy()], PROTOCOLS.TCP.SENDING_INTERVAL)
 
     def nothing_to_send(self) -> bool:
         """

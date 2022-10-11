@@ -3,9 +3,11 @@ from __future__ import annotations
 import os
 from typing import List, Optional
 
+import scapy
 from scapy.layers.dns import DNSRR, DNSQR
 
-from consts import COMPUTER, PROTOCOLS
+from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_InvalidDomainHostname
+from consts import COMPUTER, PROTOCOLS, OPCODES
 from exceptions import InvalidDomainHostnameError
 from usefuls.attribute_renamer import define_attribute_aliases
 from usefuls.funcs import is_matching
@@ -13,7 +15,15 @@ from usefuls.funcs import is_matching
 T_Hostname = str
 
 
-def validate_domain_hostname(hostname: T_Hostname) -> None:
+def get_dns_opcode(dns: scapy.packet.Packet) -> str:
+    if dns.return_code != OPCODES.DNS.RETURN_CODES.OK:
+        return OPCODES.DNS.SOME_ERROR
+    if dns.answer_record_count > 0:
+        return OPCODES.DNS.ANSWER
+    return OPCODES.DNS.QUERY
+
+
+def validate_domain_hostname(hostname: T_Hostname, only_kill_process: bool = False) -> None:
     """
     Make sure the supplied hostname is valid
         valid:
@@ -22,20 +32,22 @@ def validate_domain_hostname(hostname: T_Hostname) -> None:
         invalid:
             '', '.hello.com.', 'google..com', '.', 'eshel.d7149..', '192.168.1.2'
     """
+    error = ProcessInternalError_InvalidDomainHostname if only_kill_process else InvalidDomainHostnameError
+
     message = f"Invalid domain hostname!! '{hostname}'"
     split_hostname = hostname.split('.')
 
     if not hostname:
-        raise InvalidDomainHostnameError(f"{message} is an empty string")
+        raise error(f"{message} is an empty string")
 
     if (('' in split_hostname) and (split_hostname[-1] != '')) or split_hostname.count('') > 1:
-        raise InvalidDomainHostnameError(f"{message} contains multiple consecutive dots ('..')")
+        raise error(f"{message} contains multiple consecutive dots ('..')")
 
     if not all(is_matching(r"\w+", part) for part in split_hostname if part):
-        raise InvalidDomainHostnameError(f"{message} - Invalid character in hostname! Only numbers, letters and underscores allowed!")
+        raise error(f"{message} - Invalid character in hostname! Only numbers, letters and underscores allowed!")
 
     if any((part and part[0].isnumeric()) for part in split_hostname):
-        raise InvalidDomainHostnameError(f"{message} - Domain names must not start with a number!!")
+        raise error(f"{message} - Domain names must not start with a number!!")
 
 
 def is_domain_hostname_valid(hostname: T_Hostname) -> bool:

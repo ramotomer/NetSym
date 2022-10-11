@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import random
+from collections import deque
 from dataclasses import dataclass
 from functools import reduce
 from operator import concat
-from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict
+from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator
+
+import scapy
 
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
@@ -12,6 +15,7 @@ from computing.internals.arp_cache import ArpCache
 from computing.internals.dns_cache import DNSCache
 from computing.internals.filesystem.filesystem import Filesystem
 from computing.internals.interface import Interface
+from computing.internals.packet_sending_queue import PacketSendingQueue
 from computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket, WaitingFor
 from computing.internals.processes.kernelmode_processes.arp_process import ARPProcess, SendPacketWithARPProcess
 from computing.internals.processes.process_scheduler import ProcessScheduler
@@ -36,12 +40,13 @@ from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.all import ICMP, IP, TCP, UDP, ARP
 from packets.usefuls.dns import T_Hostname, validate_domain_hostname, canonize_domain_hostname
-from packets.usefuls.usefuls import get_src_port, get_dst_port
+from packets.usefuls.ip import needs_fragmentation, fragment_packet, needs_reassembly, reassemble_fragmented_packet, allows_fragmentation
+from packets.usefuls.tcp import get_src_port, get_dst_port
+from packets.usefuls.usefuls import get_dst_ip
 from usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
     from computing.internals.processes.abstracts.process import Process
-    from computing.internals.processes.abstracts.process import T_ProcessCode
     from computing.internals.sockets.socket import Socket
     from computing.connection import Connection
     from packets.packet import Packet
@@ -113,9 +118,12 @@ class Computer:
         self.loopback = Interface.loopback()
         self.boot_time = MainLoop.instance.time()
 
-        self.received: List[ReturnedPacket] = []
+        self.received:     List[ReturnedPacket] = []
+        self.received_raw: List[ReturnedPacket] = []
+        # ^ The main difference between the two is how IP fragments are handled:
+        #       In `received_raw` every fragment is a separate packet, in `received` they get after they are reassembled into one
 
-        self.arp_cache = ArpCache()  # a dictionary of {<ip address> : ARPCacheItem(<mac address>, <initiation time of this item>)
+        self.arp_cache = ArpCache()
         self.routing_table = RoutingTable.create_default(self)
         self.dns_cache = DNSCache()
 
@@ -129,19 +137,20 @@ class Computer:
 
         self.packet_types_and_handlers = {
             "ARP": self._handle_arp,
-            "ICMP": self._handle_ping,
+            "ICMP": self._handle_icmp,
             "TCP": self._handle_tcp,
             "UDP": self._handle_udp,
         }
 
         self.sockets = {}
 
-        self.is_supporting_wireless_connections = False
-
         self.output_method = COMPUTER.OUTPUT_METHOD.CONSOLE
         self.active_shells = []
 
         self.initial_size = IMAGES.SCALE_FACTORS.SPRITES, IMAGES.SCALE_FACTORS.SPRITES
+        self._packet_sending_queues:   List[PacketSendingQueue] = []
+        self._active_packet_fragments: List[ReturnedPacket]     = []
+        self.icmp_sequence_number = 0
 
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ method does not run when program is paused
@@ -289,6 +298,7 @@ class Computer:
             message = f"{self.name} was shutdown! Relevant shells were closed"
             # PopupError(message, user_interface)  # Impossible - you need the UserInterface object
             print(message)
+            # TODO: change all prints to use the logging module! be high-tech please
 
     def get_mac(self) -> MACAddress:
         """Returns one of the computer's `MACAddresses`"""
@@ -339,12 +349,13 @@ class Computer:
         else:
             self.start_sniffing(interface_name, is_promisc)
 
-    def new_packets_since(self, time_: T_Time) -> List[ReturnedPacket]:
+    def new_packets_since(self, time_: T_Time, is_raw: bool = False) -> List[ReturnedPacket]:
         """
         Returns a list of all the new `ReturnedPacket`s that were received in the last `seconds` seconds.
+        :param is_raw: Whether or not the operation system is allowed to perform some actions on the packets before handing them over to processes
         :param time_: a number of seconds.
         """
-        return list(filter(lambda rp: rp.packets[rp.packet].time > time_, self.received))
+        return list(filter(lambda rp: rp.metadata.time > time_, (self.received_raw if is_raw else self.received)))
 
     # --------------------------------------- v  Computer power  v ------------------------------------------------
 
@@ -371,8 +382,16 @@ class Computer:
         self.boot_time = None
         self.process_scheduler.on_shutdown()
         self.filesystem.wipe_temporary_directories()
+        self.arp_cache.wipe()
+        self.dns_cache.wipe()
         self._remove_all_sockets()
         self._close_all_shells()
+
+        self._active_packet_fragments.clear()
+        self._packet_sending_queues.clear()
+        self.received.clear()
+        self.received_raw.clear()
+        self.icmp_sequence_number = 0
 
     def on_startup(self) -> None:
         """
@@ -387,6 +406,8 @@ class Computer:
         This method runs continuously and removes unused resources on the computer (sockets, processes, etc...)
         """
         self._cleanup_unused_sockets()
+        self._cleanup_unused_packet_sending_queues()
+        self._forget_old_ip_fragments()
         self.arp_cache.forget_old_items()
         self.dns_cache.forget_old_items()
 
@@ -608,7 +629,7 @@ class Computer:
         if arp.opcode == OPCODES.ARP.REQUEST and packet_metadata.interface.has_this_ip(IPAddress(arp.dst_ip)):
             self.send_arp_reply(packet)  # Answer if request
 
-    def _handle_ping(self, returned_packet: ReturnedPacket) -> None:
+    def _handle_icmp(self, returned_packet: ReturnedPacket) -> None:
         """
         Receives a `Packet` object which contains an ICMP layer with ICMP request
         handles everything related to the ping and sends a ping reply.
@@ -616,12 +637,20 @@ class Computer:
         :return: None
         """
         packet, packet_metadata = returned_packet.packet_and_metadata
-        if (packet["ICMP"].type == OPCODES.ICMP.TYPES.REQUEST) and (self.is_for_me(packet)):
-            if packet_metadata.interface.has_this_ip(packet["IP"].dst_ip) or (
-                    packet_metadata.interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):
-                # ^ only if the packet is for me also on the third layer!
-                dst_ip = packet["IP"].src_ip.string_ip
-                self.start_ping_process(dst_ip, OPCODES.ICMP.TYPES.REPLY)
+        if (packet["ICMP"].type != OPCODES.ICMP.TYPES.REQUEST) or (not self.is_for_me(packet)):
+            return
+
+        if packet_metadata.interface.has_this_ip(packet["IP"].dst_ip) or (
+                packet_metadata.interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):
+            # ^ only if the packet is for me also on the third layer!
+            dst_ip = packet["IP"].src_ip.string_ip
+            self.start_ping_process(
+                dst_ip,
+                OPCODES.ICMP.TYPES.REPLY,
+                mode=COMPUTER.PROCESSES.MODES.KERNELMODE,
+                data=packet["ICMP"].payload.build(),
+                sequence_number=packet["IP"].sequence_number,
+            )
 
     def _handle_tcp(self, returned_packet: ReturnedPacket) -> None:
         """
@@ -675,14 +704,72 @@ class Computer:
                 self.packet_types_and_handlers[packet_type](returned_packet)
                 continue
 
-    def start_ping_process(self, destination: T_Hostname, opcode: int = OPCODES.ICMP.TYPES.REQUEST, count: int = 1) -> None:
+    def start_ping_process(self,
+                           destination: T_Hostname,
+                           opcode: int = OPCODES.ICMP.TYPES.REQUEST,
+                           count: int = 1,
+                           *args: Any,
+                           mode: str = COMPUTER.PROCESSES.MODES.USERMODE,
+                           **kwargs: Any) -> None:
         """
         Starts sending a ping to another computer.
+        :param mode: The mode in which to run the ping process (usermode / kernelmode)
         :param destination:
         :param opcode: the opcode of the ping to send
         :param count: how many pings to send
         """
-        self.process_scheduler.start_usermode_process(SendPing, destination, opcode, count)
+        self.process_scheduler.start_process(mode, SendPing, destination, opcode, count, *args, **kwargs)
+
+    def _send_fragment_ttl_exceeded(self, dst_mac: MACAddress, dst_ip: IPAddress) -> None:
+        """
+        Send an ICMP TTL exceeded for a fragmented packet that could be reassembled
+        """
+        self.send_to(dst_mac, dst_ip, ICMP(
+            type=OPCODES.ICMP.TYPES.TIME_EXCEEDED,
+            code=OPCODES.ICMP.CODES.FRAGMENT_TTL_EXCEEDED))
+
+    def _handle_ip_fragments(self, returned_packet: ReturnedPacket) -> Optional[ReturnedPacket]:
+        """
+        Takes in a `ReturnedPacket` that maybe needs to be reassembled from IP fragments, and reassemble all fragments of it.
+            If the packet is not really a fragment - do nothing
+            If it has more fragments coming, store it and do nothing
+            If it is the last one - reassemble all fragments and return the new `ReturnedPacket` object that contains the united packet
+            If one of the fragments failed to arrive - drop the packet and send a FRAGMENT_TTL_EXCEEDED message
+        """
+        last_fragment, last_fragment_metadata = returned_packet.packet_and_metadata
+        if not needs_reassembly(last_fragment) or not self.has_this_ip(get_dst_ip(returned_packet.packet)):
+            return returned_packet
+
+        if last_fragment["IP"].flags & PROTOCOLS.IP.FLAGS.MORE_FRAGMENTS:
+            self._active_packet_fragments.append(returned_packet)
+            return None
+
+        fragments = []
+        for fragment in self._active_packet_fragments[:]:
+            if fragment.packet["IP"].id == last_fragment["IP"].id:
+                # for every relevant fragment, remove if from `_active_packet_fragments` and add to `fragments`
+                fragments.append(fragment.packet)
+                self._active_packet_fragments.remove(fragment)
+        fragments.append(last_fragment)
+
+        try:
+            return ReturnedPacket(reassemble_fragmented_packet(fragments), last_fragment_metadata)
+        except InvalidFragmentsError:
+            self._send_fragment_ttl_exceeded(fragments[0]["Ether"].src_mac, fragments[0]["IP"].src_ip)
+            return None
+
+    def _forget_old_ip_fragments(self) -> None:
+        """
+        Check all active ip fragments in the computer - delete the ones that are too old
+        """
+        for fragment in self._active_packet_fragments[:]:
+            latest_sibling_fragment = max(
+                [rp for rp in self._active_packet_fragments if rp.packet["IP"].id == fragment.packet["IP"].id],
+                key=lambda rp: rp.metadata.time,
+            )
+            if MainLoop.instance.time_since(latest_sibling_fragment.metadata.time) > PROTOCOLS.IP.FRAGMENT_DROP_TIMEOUT:
+                self._active_packet_fragments.remove(fragment)
+                self._send_fragment_ttl_exceeded(fragment.packet["Ether"].src_mac, fragment.packet["IP"].src_ip)
 
     # --------------------------------------- v  DHCP and DNS  v -----------------------------------------------------------
 
@@ -759,9 +846,14 @@ class Computer:
 
     def send(self, packet: Packet, interface: Optional[Interface] = None, sending_socket: Optional[RawSocket] = None) -> None:
         """
-        Takes a full and ready packet and just sends it.
+        Every sent packet from the computer should pass through this function!!!!!!!
+
+        Takes a full and ready packet and sends it
+            Sniffs the packet on the relevant RawSocket-s
+            Fragments the packet if necessary
+
         :param packet: a valid `Packet` object.
-        :param interface: the `Interface` to send the packet on.
+        :param interface: the `Interface` to send the packet on. If None - calculate by routing table
         :param sending_socket: the `RawSocket` object that sent the packet (if was sent using a raw socket
             it should not be sniffed on that same one as outgoing)
         """
@@ -771,17 +863,36 @@ class Computer:
         if not packet.is_valid():
             return
 
-        interface.send(packet)
-        self._sniff_packet_on_relevant_raw_sockets(
-            ReturnedPacket(packet, PacketMetadata(
+        if needs_fragmentation(packet, interface.mtu):
+            if not allows_fragmentation(packet):
+                raise PacketTooLongButDoesNotAllowFragmentation("Packet is too long and should be fragmented, but DONT_FRAGMENT flag is set!!!")
+
+            self.send_packet_stream(
+                COMPUTER.PROCESSES.INIT_PID,
+                COMPUTER.PROCESSES.MODES.KERNELMODE,
+                fragment_packet(packet, interface.mtu),
+                PROTOCOLS.IP.FRAGMENT_SENDING_INTERVAL,
                 interface,
-                MainLoop.instance.time(),
-                PACKET.DIRECTION.OUTGOING
-            )),
+                sending_socket,
+            )
+            return
+
+        if not interface.send(packet):
+            return  # interface decided to drop packet :(
+
+        self._sniff_packet_on_relevant_raw_sockets(
+            ReturnedPacket(
+                packet,
+                PacketMetadata(
+                    interface,
+                    MainLoop.instance.time(),
+                    PACKET.DIRECTION.OUTGOING
+                )
+            ),
             sending_socket=sending_socket,
         )
 
-    def send_with_ethernet(self, dst_mac: MACAddress, dst_ip: IPAddress, data: Union[str, bytes]) -> None:
+    def send_with_ethernet(self, dst_mac: MACAddress, dst_ip: IPAddress, data: Union[str, bytes, scapy.packet.Packet]) -> None:
         """
         Just like `send_to` only does not add the IP layer.
         """
@@ -789,6 +900,24 @@ class Computer:
         self.send(
             interface.ethernet_wrap(dst_mac, data),
             interface=interface,
+        )
+
+    def send_packet_stream_with_ethernet(self,
+                                         requesting_usermode_pid: int,
+                                         mode: str,
+                                         interval_between_packets: T_Time,
+                                         dst_mac: MACAddress,
+                                         dst_ip: IPAddress,
+                                         datas: List[Union[str, bytes, scapy.packet.Packet]]) -> None:
+        """
+        Just like `send_packet_stream` only applies `ethernet_wrap` on each of the packets
+        """
+        interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
+        self.send_packet_stream(
+            requesting_usermode_pid, mode,
+            (interface.ethernet_wrap(dst_mac, data) for data in datas),
+            interval_between_packets,
+            interface,
         )
 
     def send_to(self, dst_mac: MACAddress, dst_ip: IPAddress, packet: Packet, **kwargs: Any) -> None:
@@ -896,13 +1025,23 @@ class Computer:
     def send_ping_to(self,
                      mac_address: MACAddress,
                      ip_address: IPAddress,
-                     opcode: int = OPCODES.ICMP.TYPES.REQUEST,
+                     type_: int = OPCODES.ICMP.TYPES.REQUEST,
                      data: Union[str, bytes] = '',
+                     code: Optional[int] = None,
+                     sequence_number: Optional[int] = None,
                      **kwargs: Any) -> None:
         """
         Send an ICMP packet to the a given ip address.
         """
-        self.send_to(mac_address, ip_address, (ICMP(type=opcode) / data), **kwargs)
+        if sequence_number is None:
+            self.icmp_sequence_number += 1
+
+        self.send_to(
+            mac_address,
+            ip_address,
+            (ICMP(type=type_, code=code, sequence_number=(sequence_number if sequence_number is not None else self.icmp_sequence_number)) / data),
+            **kwargs,
+        )
 
     def send_time_exceeded(self, dst_mac: MACAddress, dst_ip: IPAddress, data: Union[str, bytes] = '') -> None:
         """
@@ -914,7 +1053,7 @@ class Computer:
         self.send(
             interface.ethernet_wrap(dst_mac,
                                     IP(src=str(interface.ip), dst=str(dst_ip), ttl=TTL.MAX) /
-                                    ICMP(type=OPCODES.ICMP.TYPES.TIME_EXCEEDED) /
+                                    ICMP(type=OPCODES.ICMP.TYPES.TIME_EXCEEDED, code=OPCODES.ICMP.CODES.TRANSIT_TTL_EXCEEDED) /
                                     data),
             interface
         )
@@ -941,6 +1080,56 @@ class Computer:
         ip_for_the_mac = self.routing_table[ip_address].ip_address
         yield from ARPProcess(requesting_process.pid, self, ip_for_the_mac.string_ip).code()
         return ip_for_the_mac, self.arp_cache[ip_for_the_mac].mac
+
+    def send_packet_stream(self,
+                           requesting_usermode_pid: int,
+                           mode: str,
+                           packets: Iterator[Packet],
+                           interval_between_packets: T_Time,
+                           interface: Optional[Interface] = None,
+                           sending_socket: Optional[RawSocket] = None) -> None:
+        """
+        Send a large amount of packets that should be sent in quick succession one after the other
+        This will make sure they are sent with the appropriate time gaps - in order to allow the user to see them
+        """
+        existing_sending_queue = self.get_packet_sending_queue(requesting_usermode_pid, mode)
+        if existing_sending_queue is not None:
+            existing_sending_queue.packets.extend(packets)
+            return
+        self._packet_sending_queues.append(
+            PacketSendingQueue(
+                self,
+                requesting_usermode_pid,
+                mode,
+                deque(packets),
+                interval_between_packets,
+                interface,
+                sending_socket,
+            )
+        )
+
+    def _handle_packet_streams(self) -> None:
+        """
+        Allows all of the PacketSendingQueue-s to perform their actions (send their packets with time gaps)
+        Deletes the queues that are done sending.
+        """
+        for packet_sending_queue in self._packet_sending_queues[:]:
+            packet_sending_queue.send_packets_with_time_gaps()
+
+    def _cleanup_unused_packet_sending_queues(self) -> None:
+        """
+        Remove PacketSendingQueues that have no running process attached to them
+        """
+        for packet_sending_queue in self._packet_sending_queues[:]:
+            if not self.process_scheduler.is_usermode_process_running(packet_sending_queue.pid) and \
+               packet_sending_queue.pid != COMPUTER.PROCESSES.INIT_PID:
+                self._packet_sending_queues.remove(packet_sending_queue)
+
+    def get_packet_sending_queue(self, pid: int, mode: str) -> PacketSendingQueue:
+        """
+        Get the PacketSendingQueue object of the process with the given ID
+        """
+        return get_the_one(self._packet_sending_queues, lambda psq: (psq.pid == pid and psq.process_mode == mode))
 
     # ------------------------------- v  Sockets  v ----------------------------------------------------------------------
 
@@ -1166,7 +1355,7 @@ class Computer:
                 self.remove_socket(socket)
 
     @staticmethod
-    def select(socket_list: List[Socket], timeout: Optional[Union[int, float]] = None) -> T_ProcessCode:
+    def select(socket_list: List[Socket], timeout: Optional[Union[int, float]] = None) -> Generator[WaitingFor, None, Optional[Socket]]:
         """
         Similar to the `select` syscall of linux
         Loops over all sockets until one of them has something to receive
@@ -1208,10 +1397,15 @@ class Computer:
                 continue
             for packet in interface.receive():
                 packet_with_metadata = ReturnedPacket(packet, PacketMetadata(interface, MainLoop.instance.time(), PACKET.DIRECTION.INCOMING))
-                self.received.append(packet_with_metadata)
-                self._handle_special_packet(packet_with_metadata)
+                self.received_raw.append(packet_with_metadata)
                 self._sniff_packet_on_relevant_raw_sockets(packet_with_metadata)
 
+                packet_with_metadata = self._handle_ip_fragments(packet_with_metadata)
+                if packet_with_metadata is not None:
+                    self.received.append(packet_with_metadata)
+                    self._handle_special_packet(packet_with_metadata)
+
+        self._handle_packet_streams()
         self.process_scheduler.handle_processes()
         self.garbage_cleanup()
 

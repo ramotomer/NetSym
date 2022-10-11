@@ -69,7 +69,7 @@ class SwitchingProcess(Process):
             destination_legs = self.where_to_send(packet, source_leg=packet_metadata.interface)
             for leg in destination_legs:
                 packet.graphics = None
-                leg.send(packet.copy())
+                self.computer.send(packet.copy(), interface=leg)
 
     def where_to_send(self, packet: Packet, source_leg: Interface) -> List[Interface]:
         """
@@ -101,7 +101,7 @@ class SwitchingProcess(Process):
         :return: yield WaitingFor-s
         """
         while True:
-            new_packets = yield WaitingFor(self.is_switchable_packet)
+            new_packets = yield WaitingFor(self.is_switchable_packet, get_raw_packet=True)
 
             self.send_new_packets_to_destinations(new_packets)
             self.update_switch_table_from_packets(new_packets)

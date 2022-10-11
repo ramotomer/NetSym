@@ -98,6 +98,42 @@ class NoSuchPacketError(PacketError):
     """
 
 
+class IPError(PacketError):
+    """
+    An error related to the IP protocol
+    """
+
+
+class FragmentationError(IPError):
+    """
+    An error related to an IP fragmentation of a packet
+    """
+
+
+class PacketTooLongToFragment(FragmentationError):
+    """
+    I am not writing doc for this screw you
+    """
+
+
+class PacketAlreadyFragmentedError(FragmentationError):
+    """
+    Need to fragment a packet - but it is already fragmented!
+    """
+
+
+class PacketTooLongButDoesNotAllowFragmentation(FragmentationError):
+    """
+    The packet is too long to send - but the DONT_FRAGMENT flag is set!
+    """
+
+
+class InvalidFragmentsError(FragmentationError):
+    """
+    Got an invalid list of fragments
+    """
+
+
 class STPError(PacketError):
     """
     Indicates an STP related error.
