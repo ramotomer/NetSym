@@ -30,7 +30,7 @@ class Interface:
                  ip: Optional[Union[str, IPAddress]] = None,
                  name: Optional[str] = None,
                  connection: Optional[Connection] = None,
-                 display_color: Tuple[int] = INTERFACES.COLOR,
+                 display_color: T_Color = INTERFACES.COLOR,
                  type_: str = INTERFACES.TYPE.ETHERNET,
                  mtu: int = PROTOCOLS.ETHERNET.MTU) -> None:
         """
@@ -156,10 +156,10 @@ class Interface:
 
     def set_mtu(self, mtu: int) -> None:
         """
-        Sets the new MTU of the interface (must be 0 < mtu <= 1500)
+        Sets the new MTU of the interface (must be 68 < mtu <= 1500)
         """
-        if not (0 < mtu <= PROTOCOLS.ETHERNET.MTU):
-            raise PopupWindowWithThisError(f"Invalid MTU {mtu}! valid range is between 0 and {PROTOCOLS.ETHERNET.MTU}!")
+        if not (PROTOCOLS.ETHERNET.MINIMUM_MTU < mtu <= PROTOCOLS.ETHERNET.MTU):
+            raise PopupWindowWithThisError(f"Invalid MTU {mtu}! valid range - between {PROTOCOLS.ETHERNET.MINIMUM_MTU} and {PROTOCOLS.ETHERNET.MTU}!")
 
         self.mtu = mtu
 

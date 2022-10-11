@@ -101,7 +101,7 @@ class SwitchingProcess(Process):
         :return: yield WaitingFor-s
         """
         while True:
-            new_packets = yield WaitingFor(self.is_switchable_packet)
+            new_packets = yield WaitingFor(self.is_switchable_packet, get_raw_packet=True)
 
             self.send_new_packets_to_destinations(new_packets)
             self.update_switch_table_from_packets(new_packets)

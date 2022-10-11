@@ -7,7 +7,8 @@ import scapy
 from scapy.layers.dns import dnstypes
 
 from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode, ProcessInternalError_DNSNameErrorFromServer, \
+from computing.internals.processes.abstracts.process import Process, T_ProcessCode
+from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_DNSNameErrorFromServer, \
     ProcessInternalError_NoResponseForDNSQuery
 from consts import OPCODES, PROTOCOLS, T_Time, T_Port, PORTS
 from packets.all import DNS

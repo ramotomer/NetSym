@@ -65,8 +65,8 @@ class ShellGraphics(OutputConsole):
         self.key_writer.add_key_combination(key.C, KEYBOARD.MODIFIERS.CTRL, self.clear_line)
         self.key_writer.add_key_combination(key.L, KEYBOARD.MODIFIERS.CTRL, self.clear_screen)
         self.key_writer.add_key_combination([key.Q, key.D], KEYBOARD.MODIFIERS.CTRL, self.exit)
-        self.key_writer.add_key_combination(key.A, KEYBOARD.MODIFIERS.CTRL, with_args(self.move_caret, chr(key.HOME)))
-        self.key_writer.add_key_combination(key.E, KEYBOARD.MODIFIERS.CTRL, with_args(self.move_caret, chr(key.END)))
+        self.key_writer.add_key_combination(key.A, KEYBOARD.MODIFIERS.CTRL, with_args(self.move_caret, -float('inf')))
+        self.key_writer.add_key_combination(key.E, KEYBOARD.MODIFIERS.CTRL, with_args(self.move_caret, float('inf')))
         self.key_writer.add_key_combination(key.K, KEYBOARD.MODIFIERS.CTRL, self.delete_from_caret_until_the_end)
         self.key_writer.add_key_combination(key.U, KEYBOARD.MODIFIERS.CTRL, self.delete_from_the_start_up_to_caret)
 

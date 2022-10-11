@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode, ProcessInternalError_NoResponseForARP, \
-    ProcessInternalError_RoutedPacketTTLExceeded
+from computing.internals.processes.abstracts.process import Process, \
+    T_ProcessCode
+from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_RoutedPacketTTLExceeded, \
+    ProcessInternalError_NoResponseForARP
 from consts import OPCODES
 
 if TYPE_CHECKING:

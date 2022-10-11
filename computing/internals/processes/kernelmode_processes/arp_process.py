@@ -5,8 +5,9 @@ from typing import Callable, TYPE_CHECKING, Optional
 import scapy
 
 from address.mac_address import MACAddress
-from computing.internals.processes.abstracts.process import Process, Timeout, T_ProcessCode, \
-    ProcessInternalError_NoResponseForARP, WaitingFor
+from computing.internals.processes.abstracts.process import Process, Timeout, \
+    T_ProcessCode, WaitingFor
+from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_NoResponseForARP
 from consts import OPCODES, PROTOCOLS
 from packets.usefuls.dns import T_Hostname
 from usefuls.funcs import my_range

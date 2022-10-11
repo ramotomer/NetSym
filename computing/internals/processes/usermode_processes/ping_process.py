@@ -2,16 +2,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Optional
 
+from address.ip_address import IPAddress
 from computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, WaitingFor
+from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_InvalidParameters
 from consts import OPCODES, PROTOCOLS
 from exceptions import NoIPAddressError
-from packets.usefuls.dns import T_Hostname
+from packets.usefuls.dns import T_Hostname, validate_domain_hostname
 from packets.usefuls.icmp import get_icmp_data
 from usefuls.funcs import my_range
 
 if TYPE_CHECKING:
     from address.mac_address import MACAddress
-    from address.ip_address import IPAddress
     from packets.packet import Packet
     from computing.computer import Computer
 
@@ -79,6 +80,8 @@ class SendPing(Process):
         If the address is unknown, first it sends an ARP and waits for a reply.
         :return: a generator of `WaitingForPacket` namedtuple-s.
         """
+        self._validate_parameters()
+        
         self.dst_ip = yield from self.computer.resolve_domain_name(self, self.destination)
 
         if self.ping_opcode == OPCODES.ICMP.TYPES.REQUEST:
@@ -94,8 +97,19 @@ class SendPing(Process):
 
             if self.ping_opcode == OPCODES.ICMP.TYPES.REQUEST:
                 returned_packet = yield WaitingFor(self.ping_reply_from(self.dst_ip))
+                # TODO: timeouts, and do not sign on unreachables as replies and sign only on your sepcific replies :)
                 self._print_output(returned_packet)
 
     def __repr__(self) -> str:
         """The string representation of the SendPing process"""
         return f"ping {self.destination} {f'-n {self.count}' if self.count != PROTOCOLS.ICMP.INFINITY else '-t'}"
+
+    def _validate_parameters(self) -> None:
+        """
+        Makes sure all parameters that the process was given are correct and valid
+        """
+        if self.length > PROTOCOLS.ICMP.MAX_MESSAGE_LENGTH:
+            raise ProcessInternalError_InvalidParameters(f"ERROR: ICMP too long: {self.length} > {PROTOCOLS.ICMP.MAX_MESSAGE_LENGTH}!!!!")
+
+        if not IPAddress.is_valid(self.destination):
+            validate_domain_hostname(self.destination, only_kill_process=True)

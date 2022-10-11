@@ -56,7 +56,7 @@ class Packet:
         Returns whether or not the packet is valid.
         """
         # TODO: implement packet.is_valid - use checksums
-        return True and (self is self)
+        return True
 
     def get_layer_by_name(self, name: str) -> scapy.packet.Packet:
         """

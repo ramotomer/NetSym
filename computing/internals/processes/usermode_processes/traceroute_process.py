@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, ProcessInternalError_NoIPAddressError, WaitingFor
+from computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, WaitingFor
+from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_NoIPAddressError
 from consts import OPCODES, PROTOCOLS
 from packets.usefuls.dns import T_Hostname
 

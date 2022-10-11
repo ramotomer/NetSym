@@ -9,7 +9,8 @@ from operator import attrgetter, concat
 from typing import Optional, List, TYPE_CHECKING, Iterable
 
 from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import Process, Timeout, ReturnedPacket, T_ProcessCode, ProcessInternalError, WaitingFor
+from computing.internals.processes.abstracts.process import Process, Timeout, ReturnedPacket, T_ProcessCode, WaitingFor
+from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError
 from consts import *
 from exceptions import TCPDataLargerThanMaxSegmentSize
 from gui.main_loop import MainLoop

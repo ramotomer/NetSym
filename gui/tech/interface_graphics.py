@@ -106,7 +106,7 @@ class InterfaceGraphics(ViewableGraphicsObject):
                 "Insert new name:",
                 self.interface.set_name,
             ),
-            "set MTU": with_args(
+            "set MTU (alt+m)": with_args(
                 user_interface.ask_user_for,
                 int,
                 "Insert new MTU:",

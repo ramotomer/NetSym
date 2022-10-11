@@ -183,11 +183,13 @@ class PROTOCOLS:
     class ETHERNET:
         HEADER_LENGTH = 14
         MTU = 1500  # max transfer unit
+        MINIMUM_MTU = 68
 
     class IP:
         MAX_TTL = 255  # time to live
         FRAGMENT_SENDING_INTERVAL = 0.1  # seconds
-        FRAGMENT_DROP_TIMEOUT = 6  # seconds
+        FRAGMENT_DROP_TIMEOUT = 15  # seconds
+        LONGEST_FRAGMENTATIONABLE_PACKET = (2 ** 13) - 1  # bytes
 
         class FLAGS:
             NO_FLAGS       = 0b00
@@ -199,8 +201,10 @@ class PROTOCOLS:
         RESEND_COUNT = 3  # seconds
 
     class ICMP:
+        HEADER_LEN = 8  # bytes
         INFINITY = float("inf")  # the builtin infinity
         DEFAULT_MESSAGE_LENGTH = 26  # bytes
+        MAX_MESSAGE_LENGTH = ((2 ** 13) - 1) - HEADER_LEN  # bytes
 
     class DHCP:
         DEFAULT_TTL = 0

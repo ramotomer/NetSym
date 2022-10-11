@@ -7,6 +7,8 @@ from functools import reduce
 from operator import concat
 from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator
 
+import scapy
+
 from address.ip_address import IPAddress
 from address.mac_address import MACAddress
 from computing.internals.arp_cache import ArpCache
@@ -44,7 +46,6 @@ from usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
     from computing.internals.processes.abstracts.process import Process
-    from computing.internals.processes.abstracts.process import T_ProcessCode
     from computing.internals.sockets.socket import Socket
     from computing.connection import Connection
     from packets.packet import Packet
@@ -116,7 +117,10 @@ class Computer:
         self.loopback = Interface.loopback()
         self.boot_time = MainLoop.instance.time()
 
-        self.received: List[ReturnedPacket] = []
+        self.received:     List[ReturnedPacket] = []
+        self.received_raw: List[ReturnedPacket] = []
+        # ^ The main difference between the two is how IP fragments are handled:
+        #       In `received_raw` every fragment is a separate packet, in `received` they get after they are reassembled into one
 
         self.arp_cache = ArpCache()
         self.routing_table = RoutingTable.create_default(self)
@@ -138,8 +142,6 @@ class Computer:
         }
 
         self.sockets = {}
-
-        self.is_supporting_wireless_connections = False
 
         self.output_method = COMPUTER.OUTPUT_METHOD.CONSOLE
         self.active_shells = []
@@ -344,12 +346,13 @@ class Computer:
         else:
             self.start_sniffing(interface_name, is_promisc)
 
-    def new_packets_since(self, time_: T_Time) -> List[ReturnedPacket]:
+    def new_packets_since(self, time_: T_Time, is_raw: bool = False) -> List[ReturnedPacket]:
         """
         Returns a list of all the new `ReturnedPacket`s that were received in the last `seconds` seconds.
+        :param is_raw: Whether or not the operation system is allowed to perform some actions on the packets before handing them over to processes
         :param time_: a number of seconds.
         """
-        return list(filter(lambda rp: rp.packets[rp.packet].time > time_, self.received))
+        return list(filter(lambda rp: rp.metadata.time > time_, (self.received_raw if is_raw else self.received)))
 
     # --------------------------------------- v  Computer power  v ------------------------------------------------
 
@@ -376,8 +379,15 @@ class Computer:
         self.boot_time = None
         self.process_scheduler.on_shutdown()
         self.filesystem.wipe_temporary_directories()
+        self.arp_cache.wipe()
+        self.dns_cache.wipe()
         self._remove_all_sockets()
         self._close_all_shells()
+
+        self._active_packet_fragments.clear()
+        self._packet_sending_queues.clear()
+        self.received.clear()
+        self.received_raw.clear()
 
     def on_startup(self) -> None:
         """
@@ -695,12 +705,21 @@ class Computer:
         """
         self.process_scheduler.start_usermode_process(SendPing, destination, opcode, count, *args, **kwargs)
 
+    def _send_fragment_ttl_exceeded(self, dst_mac: MACAddress, dst_ip: IPAddress) -> None:
+        """
+        Send an ICMP TTL exceeded for a fragmented packet that could be reassembled
+        """
+        self.send_to(dst_mac, dst_ip, ICMP(
+            type=OPCODES.ICMP.TYPES.TIME_EXCEEDED,
+            code=OPCODES.ICMP.CODES.FRAGMENT_TTL_EXCEEDED))
+
     def _handle_ip_fragments(self, returned_packet: ReturnedPacket) -> Optional[ReturnedPacket]:
         """
         Takes in a `ReturnedPacket` that maybe needs to be reassembled from IP fragments, and reassemble all fragments of it.
             If the packet is not really a fragment - do nothing
             If it has more fragments coming, store it and do nothing
             If it is the last one - reassemble all fragments and return the new `ReturnedPacket` object that contains the united packet
+            If one of the fragments failed to arrive - drop the packet and send a FRAGMENT_TTL_EXCEEDED message
         """
         last_fragment, last_fragment_metadata = returned_packet.packet_and_metadata
         if not needs_reassembly(last_fragment):
@@ -717,7 +736,12 @@ class Computer:
                 fragments.append(fragment.packet)
                 self._active_packet_fragments.remove(fragment)
         fragments.append(last_fragment)
-        return ReturnedPacket(reassemble_fragmented_packet(fragments), last_fragment_metadata)
+
+        try:
+            return ReturnedPacket(reassemble_fragmented_packet(fragments), last_fragment_metadata)
+        except InvalidFragmentsError:
+            self._send_fragment_ttl_exceeded(fragments[0]["Ether"].src_mac, fragments[0]["IP"].src_ip)
+            return None
 
     def _forget_old_ip_fragments(self) -> None:
         """
@@ -726,9 +750,7 @@ class Computer:
         for fragment in self._active_packet_fragments[:]:
             if MainLoop.instance.time_since(fragment.metadata.time) > PROTOCOLS.IP.FRAGMENT_DROP_TIMEOUT:
                 self._active_packet_fragments.remove(fragment)
-                self.send_to(fragment.packet["Ether"].src_mac, fragment.packet["IP"].src_ip, ICMP(
-                    type=OPCODES.ICMP.TYPES.TIME_EXCEEDED,
-                    code=OPCODES.ICMP.CODES.FRAGMENT_TTL_EXCEEDED))
+                self._send_fragment_ttl_exceeded(fragment.packet["Ether"].src_mac, fragment.packet["IP"].src_ip)
 
     # --------------------------------------- v  DHCP and DNS  v -----------------------------------------------------------
 
@@ -1283,7 +1305,7 @@ class Computer:
                 self.remove_socket(socket)
 
     @staticmethod
-    def select(socket_list: List[Socket], timeout: Optional[Union[int, float]] = None) -> T_ProcessCode:
+    def select(socket_list: List[Socket], timeout: Optional[Union[int, float]] = None) -> Generator[WaitingFor, None, Optional[Socket]]:
         """
         Similar to the `select` syscall of linux
         Loops over all sockets until one of them has something to receive
@@ -1325,6 +1347,7 @@ class Computer:
                 continue
             for packet in interface.receive():
                 packet_with_metadata = ReturnedPacket(packet, PacketMetadata(interface, MainLoop.instance.time(), PACKET.DIRECTION.INCOMING))
+                self.received_raw.append(packet_with_metadata)
                 self._sniff_packet_on_relevant_raw_sockets(packet_with_metadata)
 
                 packet_with_metadata = self._handle_ip_fragments(packet_with_metadata)

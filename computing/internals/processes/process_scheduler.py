@@ -5,7 +5,8 @@ from dataclasses import dataclass
 from operator import attrgetter
 from typing import NamedTuple, Optional, TYPE_CHECKING, List, Type, Tuple, Generator, Any, TypeVar
 
-from computing.internals.processes.abstracts.process import ProcessInternalError, Process, WaitingFor, ReturnedPacket
+from computing.internals.processes.abstracts.process import Process, WaitingFor, ReturnedPacket
+from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError
 from consts import COMPUTER, T_Time
 from exceptions import NoSuchProcessError
 from gui.main_loop import MainLoop
@@ -177,7 +178,9 @@ class ProcessScheduler:
                 return process.process.send(returned_packet)
             except StopIteration:
                 return None
-            except ProcessInternalError:
+            except ProcessInternalError as error:
+                if error.args:
+                    self.computer.print(f"{mode} process({process.pid}): {error.args[0]!r}")
                 return None
 
     def _start_new_processes(self, mode: str) -> List[ReadyProcess]:
@@ -203,15 +206,16 @@ class ProcessScheduler:
         :return: a list of `Process` objects that are ready to run. (they will run in the next call to
         `self._handle_processes`
         """
-        new_packets = self.computer.new_packets_since(self.__details_by_mode[mode].process_last_check_time)
+        new_packets     = self.computer.new_packets_since(self.__details_by_mode[mode].process_last_check_time, is_raw=False)
+        new_packets_raw = self.computer.new_packets_since(self.__details_by_mode[mode].process_last_check_time, is_raw=True)
         self.__details_by_mode[mode].process_last_check_time = MainLoop.instance.time()
 
         ready_processes = self._start_new_processes(mode)
         self._decide_ready_processes_no_packet(ready_processes, mode)
 
         waiting_processes = self.__details_by_mode[mode].waiting_processes[:]
-        for received_packet in new_packets[:]:
-            for waiting_process in waiting_processes:
+        for waiting_process in waiting_processes:
+            for received_packet in (new_packets_raw if waiting_process.waiting_for.get_raw_packet else new_packets)[:]:
                 self._decide_if_process_ready_by_packet(waiting_process, received_packet, ready_processes, mode)
 
         self._check_process_timeouts(ready_processes, mode)
