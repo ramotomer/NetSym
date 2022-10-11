@@ -879,7 +879,7 @@ class Computer:
             sending_socket=sending_socket,
         )
 
-    def send_with_ethernet(self, dst_mac: MACAddress, dst_ip: IPAddress, data: Union[str, bytes]) -> None:
+    def send_with_ethernet(self, dst_mac: MACAddress, dst_ip: IPAddress, data: Union[str, bytes, scapy.packet.Packet]) -> None:
         """
         Just like `send_to` only does not add the IP layer.
         """
@@ -887,6 +887,24 @@ class Computer:
         self.send(
             interface.ethernet_wrap(dst_mac, data),
             interface=interface,
+        )
+
+    def send_packet_stream_with_ethernet(self,
+                                         requesting_usermode_pid: int,
+                                         mode: str,
+                                         interval_between_packets: T_Time,
+                                         dst_mac: MACAddress,
+                                         dst_ip: IPAddress,
+                                         datas: List[Union[str, bytes, scapy.packet.Packet]]) -> None:
+        """
+        Just like `send_packet_stream` only applies `ethernet_wrap` on each of the packets
+        """
+        interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
+        self.send_packet_stream(
+            requesting_usermode_pid, mode,
+            (interface.ethernet_wrap(dst_mac, data) for data in datas),
+            interval_between_packets,
+            interface,
         )
 
     def send_to(self, dst_mac: MACAddress, dst_ip: IPAddress, packet: Packet, **kwargs: Any) -> None:

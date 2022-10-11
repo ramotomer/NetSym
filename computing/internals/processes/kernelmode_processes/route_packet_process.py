@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING, Optional
 from computing.internals.processes.abstracts.process import Process, \
     T_ProcessCode
 from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_RoutedPacketTTLExceeded, \
-    ProcessInternalError_NoResponseForARP
-from consts import OPCODES
-from exceptions import PacketTooLongButDoesNotAllowFragmentation
+    ProcessInternalError_NoResponseForARP, ProcessInternalError_PacketTooLongButDoesNotAllowFragmentation
+from consts import OPCODES, COMPUTER
+from packets.usefuls.ip import needs_fragmentation, allows_fragmentation
 
 if TYPE_CHECKING:
     from computing.computer import Computer
@@ -111,11 +111,19 @@ class RoutePacket(Process):
             self._send_icmp_unreachable()
             raise
 
-        try:
-            self.computer.send_with_ethernet(dst_mac, dst_ip, self.packet["IP"])
-        except PacketTooLongButDoesNotAllowFragmentation:
+        interface = self.computer.get_interface_with_ip(self.computer.routing_table[dst_ip].interface_ip)
+        packet = interface.ethernet_wrap(dst_mac, self.packet["IP"])
+
+        if needs_fragmentation(packet, interface.mtu) and not allows_fragmentation(packet):
             self._send_icmp_unreachable(OPCODES.ICMP.CODES.FRAGMENTATION_NEEDED)
-            return  # drop the packet
+            raise ProcessInternalError_PacketTooLongButDoesNotAllowFragmentation  # drop the packet
+
+        self.computer.send_packet_stream(
+            COMPUTER.PROCESSES.INIT_PID,
+            COMPUTER.PROCESSES.MODES.KERNELMODE,
+            [packet],
+            COMPUTER.ROUTING.SENDING_INTERVAL,
+        )
 
     def __repr__(self) -> str:
         """The string representation of the process"""

@@ -769,6 +769,9 @@ class FILESYSTEM:
 
 
 class COMPUTER:
+    class ROUTING:
+        SENDING_INTERVAL = 0.1
+
     class OUTPUT_METHOD:
         CONSOLE = 'console'
         SHELL = 'shell'
