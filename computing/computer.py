@@ -42,6 +42,7 @@ from packets.all import ICMP, IP, TCP, UDP, ARP
 from packets.usefuls.dns import T_Hostname, validate_domain_hostname, canonize_domain_hostname
 from packets.usefuls.ip import needs_fragmentation, fragment_packet, needs_reassembly, reassemble_fragmented_packet
 from packets.usefuls.tcp import get_src_port, get_dst_port
+from packets.usefuls.usefuls import get_dst_ip
 from usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
@@ -136,7 +137,7 @@ class Computer:
 
         self.packet_types_and_handlers = {
             "ARP": self._handle_arp,
-            "ICMP": self._handle_ping,
+            "ICMP": self._handle_icmp,
             "TCP": self._handle_tcp,
             "UDP": self._handle_udp,
         }
@@ -625,7 +626,7 @@ class Computer:
         if arp.opcode == OPCODES.ARP.REQUEST and packet_metadata.interface.has_this_ip(IPAddress(arp.dst_ip)):
             self.send_arp_reply(packet)  # Answer if request
 
-    def _handle_ping(self, returned_packet: ReturnedPacket) -> None:
+    def _handle_icmp(self, returned_packet: ReturnedPacket) -> None:
         """
         Receives a `Packet` object which contains an ICMP layer with ICMP request
         handles everything related to the ping and sends a ping reply.
@@ -633,12 +634,14 @@ class Computer:
         :return: None
         """
         packet, packet_metadata = returned_packet.packet_and_metadata
-        if (packet["ICMP"].type == OPCODES.ICMP.TYPES.REQUEST) and (self.is_for_me(packet)):
-            if packet_metadata.interface.has_this_ip(packet["IP"].dst_ip) or (
-                    packet_metadata.interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):
-                # ^ only if the packet is for me also on the third layer!
-                dst_ip = packet["IP"].src_ip.string_ip
-                self.start_ping_process(dst_ip, OPCODES.ICMP.TYPES.REPLY)  # TODO: replies do not have the same data as requests!
+        if (packet["ICMP"].type != OPCODES.ICMP.TYPES.REQUEST) or (not self.is_for_me(packet)):
+            return
+
+        if packet_metadata.interface.has_this_ip(packet["IP"].dst_ip) or (
+                packet_metadata.interface is self.loopback and self.has_this_ip(packet["IP"].dst_ip)):
+            # ^ only if the packet is for me also on the third layer!
+            dst_ip = packet["IP"].src_ip.string_ip
+            self.start_ping_process(dst_ip, OPCODES.ICMP.TYPES.REPLY, mode=COMPUTER.PROCESSES.MODES.KERNELMODE, data=packet["ICMP"].payload.build())
 
     def _handle_tcp(self, returned_packet: ReturnedPacket) -> None:
         """
@@ -696,14 +699,17 @@ class Computer:
                            destination: T_Hostname,
                            opcode: int = OPCODES.ICMP.TYPES.REQUEST,
                            count: int = 1,
-                           *args: Any, **kwargs: Any) -> None:
+                           *args: Any,
+                           mode: str = COMPUTER.PROCESSES.MODES.USERMODE,
+                           **kwargs: Any) -> None:
         """
         Starts sending a ping to another computer.
+        :param mode: The mode in which to run the ping process (usermode / kernelmode)
         :param destination:
         :param opcode: the opcode of the ping to send
         :param count: how many pings to send
         """
-        self.process_scheduler.start_usermode_process(SendPing, destination, opcode, count, *args, **kwargs)
+        self.process_scheduler.start_process(mode, SendPing, destination, opcode, count, *args, **kwargs)
 
     def _send_fragment_ttl_exceeded(self, dst_mac: MACAddress, dst_ip: IPAddress) -> None:
         """
@@ -722,7 +728,7 @@ class Computer:
             If one of the fragments failed to arrive - drop the packet and send a FRAGMENT_TTL_EXCEEDED message
         """
         last_fragment, last_fragment_metadata = returned_packet.packet_and_metadata
-        if not needs_reassembly(last_fragment):
+        if not needs_reassembly(last_fragment) or not self.has_this_ip(get_dst_ip(returned_packet.packet)):
             return returned_packet
 
         if last_fragment["IP"].flags & PROTOCOLS.IP.FLAGS.MORE_FRAGMENTS:

@@ -205,6 +205,7 @@ class PROTOCOLS:
         INFINITY = float("inf")  # the builtin infinity
         DEFAULT_MESSAGE_LENGTH = 26  # bytes
         MAX_MESSAGE_LENGTH = ((2 ** 13) - 1) - HEADER_LEN  # bytes
+        RESEND_TIMEOUT = 15  # seconds
 
     class DHCP:
         DEFAULT_TTL = 0
