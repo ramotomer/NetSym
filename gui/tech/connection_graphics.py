@@ -45,7 +45,9 @@ class ConnectionGraphics(ViewableGraphicsObject):
                  connection: Connection,
                  computer_graphics_start: Optional[ComputerGraphics],
                  computer_graphics_end: Optional[ComputerGraphics],
-                 packet_loss: float = 0) -> None:
+                 packet_loss: float = 0,
+                 width: float = CONNECTIONS.DEFAULT_WIDTH,
+                 ) -> None:
         """
         Initiates the Connection Graphics object which is basically a line between
         two dots (the two ends of the connection).
@@ -60,6 +62,7 @@ class ConnectionGraphics(ViewableGraphicsObject):
         self.computers = Computers(computer_graphics_start, computer_graphics_end)
         self.regular_color = CONNECTIONS.COLOR if not packet_loss else CONNECTIONS.PL_COLOR
         self.color = self.regular_color
+        self.width = width
         self.marked_as_blocked = False
         self.x, self.y = 0, 0  # isn't used, just to avoid errors!
 
@@ -85,10 +88,12 @@ class ConnectionGraphics(ViewableGraphicsObject):
     def length(self) -> float:  # the length of the connection.
         return distance(self.interfaces.start.location, self.interfaces.end.location)
 
-    def update_color_by_pl(self, packet_loss: float) -> None:
-        """Updates the color of the connection according to the pl of the connection"""
-        self.regular_color = CONNECTIONS.COLOR if not packet_loss else CONNECTIONS.PL_COLOR
+    def update_appearance(self) -> None:
+        """Updates the color of the connection according to the PL and latency of the connection"""
+        self.regular_color = CONNECTIONS.COLOR if not self.connection.packet_loss else CONNECTIONS.PL_COLOR
         self.color = self.regular_color
+
+        self.width = CONNECTIONS.DEFAULT_WIDTH if not self.connection.latency else CONNECTIONS.LATENCY_WIDTH
 
     def is_mouse_in(self) -> bool:
         """Returns whether or not the mouse is close enough to the connection for it to count as pressed"""
@@ -180,7 +185,7 @@ class ConnectionGraphics(ViewableGraphicsObject):
         """
         color = self.color if not self.is_mouse_in() else CONNECTIONS.SELECTED_COLOR
         sx, sy, ex, ey = self.get_coordinates()
-        draw_line((sx, sy), (ex, ey), color)
+        draw_line((sx, sy), (ex, ey), color, self.width)
 
     def start_viewing(self,
                       user_interface: UserInterface,
@@ -189,10 +194,9 @@ class ConnectionGraphics(ViewableGraphicsObject):
         Starts the viewing of this object in the side window.
         """
         buttons = {
-            "set PL amount (alt+p)": with_args(user_interface.ask_user_for, float, MESSAGES.INSERT.PL,
-                                               self.connection.set_pl),
-            "set speed (alt+s)": with_args(user_interface.ask_user_for, float, MESSAGES.INSERT.SPEED,
-                                           self.connection.set_speed),
+            "Set PL amount (alt+p)": with_args(user_interface.ask_user_for, float, MESSAGES.INSERT.PL,      self.connection.set_pl),
+            "Set speed (alt+s)":     with_args(user_interface.ask_user_for, float, MESSAGES.INSERT.SPEED,   self.connection.set_speed),
+            "Set latency (alt+l)":   with_args(user_interface.ask_user_for, float, MESSAGES.INSERT.LATENCY, self.connection.set_latency),
         }
 
         buttons.update(additional_buttons or {})

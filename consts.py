@@ -319,6 +319,7 @@ class MESSAGES:
     INVALID_IP_ADDRESS = "The IP address is not valid!"
 
     class INSERT:
+        LATENCY =                    "insert your desired latency (0 <= latency <= 1)!!!"
         PL =                         "insert your desired pl (0 <= pl <= 1)!!!"
         SPEED =                      "insert your desired connection speed:"
         IP =                         "Enter your desired IP for this interface:"
@@ -656,6 +657,9 @@ class CONNECTIONS:
     DEFAULT_PL = 0.5  # the point in the connection where packets are dropped
     MOUSE_TOUCH_SENSITIVITY = 5  # pixels
 
+    DEFAULT_WIDTH = 2
+    LATENCY_WIDTH = 5
+
     COLOR = COLORS.BLACK
     SELECTED_COLOR = COLORS.LIGHT_BLUE
     BLOCKED_COLOR = COLORS.LIGHT_RED
@@ -737,7 +741,7 @@ class SHAPES:
         DEFAULT_FREQUENCY = 10
 
     class RECT:
-        DEFAULT_OUTLINE_WIDTH = 5
+        DEFAULT_OUTLINE_WIDTH = 1.0
 
     class PAUSE_RECT:
         WIDTH, HEIGHT = 10, 60

@@ -44,7 +44,9 @@ class Connection:
     def __init__(self,
                  length: float = CONNECTIONS.DEFAULT_LENGTH,
                  speed: float = CONNECTIONS.DEFAULT_SPEED,
-                 packet_loss: float = 0) -> None:
+                 packet_loss: float = 0,
+                 latency: float = 0,
+                 ) -> None:
         """
         Initiates a Connection object.
 
@@ -66,6 +68,7 @@ class Connection:
         self.is_blocked = False
 
         self.packet_loss = packet_loss
+        self.latency = latency
 
         MainLoop.instance.insert_to_loop_pausable(self.move_packets)
 
@@ -105,8 +108,19 @@ class Connection:
         """Sets the PL amount of this connection"""
         if not (0 <= new_pl <= 1):
             raise ConnectionsError(f"A connection cannot have this PL amount!!! {new_pl}")
+
         self.packet_loss = new_pl
-        self.graphics.update_color_by_pl(new_pl)
+        self.graphics.update_appearance()
+
+    def set_latency(self, new_latency: float) -> None:
+        """
+        Set amount of latency the connection has
+        """
+        if not (0 <= new_latency <= 1):
+            raise ConnectionsError(f"A connection cannot have this PL amount!!! {new_pl}")
+
+        self.latency = new_latency
+        self.graphics.update_appearance()
 
     def mark_as_blocked(self) -> None:
         """
