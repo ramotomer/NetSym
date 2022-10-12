@@ -817,8 +817,8 @@ class UserInterface:
         self.selected_object = None
         self.dragged_object = None
 
-        for connection, _, _ in self.connection_data:
-            MainLoop.instance.remove_from_loop(connection.move_packets)
+        for connection_data in self.connection_data:
+            MainLoop.instance.remove_from_loop(connection_data.connection.move_packets)
 
         for computer in self.computers:
             MainLoop.instance.remove_from_loop(computer.logic)
@@ -1119,6 +1119,7 @@ class UserInterface:
         :return: None
         """
         for switch in filter(lambda computer: isinstance(computer, Switch), self.computers):
+            switch: Switch
             if switch.stp_enabled:
                 switch.start_stp()
 
@@ -1152,7 +1153,8 @@ class UserInterface:
         if not isinstance(self.selected_object, ComputerGraphics):
             return
 
-        self.send_direct_ping(self.selected_object, self.selected_object)
+        selected_computer_graphics: ComputerGraphics = self.selected_object
+        self.send_direct_ping(selected_computer_graphics, selected_computer_graphics)
 
     def _showcase_running_stp(self) -> None:
         """
@@ -1610,8 +1612,8 @@ class UserInterface:
         :param new_speed:
         :return:
         """
-        for connection, _, _ in self.connection_data:
-            connection.set_speed(new_speed)
+        for connection_data in self.connection_data:
+            connection_data.connection.set_speed(new_speed)
 
     def color_by_subnets(self) -> None:
         """

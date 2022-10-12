@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Dict, Callable
 
+import scapy
+
 from consts import *
 from gui.abstracts.animation_graphics import AnimationGraphics
 from gui.abstracts.image_graphics import ImageGraphics
@@ -26,7 +28,8 @@ class PacketGraphics(ImageGraphics):
     def __init__(self,
                  deepest_layer: scapy.packet.Packet,
                  connection_graphics: ConnectionGraphics,
-                 direction: str) -> None:
+                 direction: str,
+                 speed: float = CONNECTIONS.PACKETS.DEFAULT_SPEED) -> None:
         """
         This method initiates a `PacketGraphics` instance.
         :param deepest_layer: The deepest packet layer in the packet.
@@ -50,6 +53,7 @@ class PacketGraphics(ImageGraphics):
         self.progress = 0
         self.str = get_original_layer_name_by_instance(deepest_layer)
         self.deepest_layer = deepest_layer
+        self.speed = speed
 
         self.drop_animation = None
 
@@ -70,8 +74,11 @@ class PacketGraphics(ImageGraphics):
         self.x, self.y = self.connection_graphics.packet_location(self.direction, self.progress)
         super(PacketGraphics, self).move()
 
-        # if self.drop_animation is not None and self.drop_animation.is_finished:
-        #   MainLoop.instance.unregister_graphics_object(self.drop_animation)
+    def decrease_speed(self):
+        """
+        Decreases the speed of the packet by a half
+        """
+        self.speed *= CONNECTIONS.PACKETS.DECREASE_SPEED_BY
 
     def drop(self) -> None:
         """
@@ -106,6 +113,7 @@ class PacketGraphics(ImageGraphics):
         """
         buttons = {
             "Drop (alt+d)": with_args(user_interface.drop_packet, self),
+            "Slow down (alt+s)": self.decrease_speed,
         }
         buttons.update(additional_buttons or {})
         self.buttons_id = user_interface.add_buttons(buttons)

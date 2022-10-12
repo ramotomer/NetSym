@@ -283,6 +283,19 @@ class ObjectIsNotResizableError(GraphicsError):
     When a resizing dot is assigned to a non-resizable object.
     """
 
+
+class MainLoopError(NetworkSimulationError):
+    """
+    An error related to the main loop
+    """
+
+
+class MainLoopInstanceNotYetInitiated(MainLoopError):
+    """
+    Some code was trying to use the `MainLoop.instance` before it was initiated
+    Probably somewhere in the `UserInterface` class because it is initiated before the main loop
+    """
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 

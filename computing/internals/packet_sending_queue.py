@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import deque
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional
 
 from consts import T_Time
@@ -12,32 +13,27 @@ if TYPE_CHECKING:
     from computing.computer import Computer
 
 
+@dataclass
 class PacketSendingQueue:
     """
     a set of packets that should be sent one after the other, with some gaps of time in between - for visual prettiness
     """
-    def __init__(self,
-                 computer: Computer,
-                 requesting_usermode_pid: int,
-                 process_mode: str,
-                 packet_deque: deque,
-                 interval: T_Time,
-                 interface: Optional[Interface] = None,
-                 sending_socket: Optional[RawSocket] = None) -> None:
-        """
-        :param computer: The computer the packets will be sent from
-        :param packet_deque: a `collections.deque` object that contains in-order the packets that should be sent
-        :param interval: How long to wait between packets (seconds)
-        """
-        self.computer = computer
-        self.process_mode = process_mode
-        self.pid = requesting_usermode_pid
-        self.packets = packet_deque
-        self.interval = interval
-        self.interface = interface
-        self.sending_socket = sending_socket
+    computer:                 Computer
+    requesting_usermode_pid:  int
+    process_mode:             str
+    packet_deque:             deque
+    interval:                 T_Time
+    interface:                Optional[Interface] = None
+    sending_socket:           Optional[RawSocket] = None
+    last_packet_sending_time: T_Time              = field(default_factory=MainLoop.get_instance_time)
 
-        self.last_packet_sending_time = MainLoop.instance.time()
+    @property
+    def pid(self):
+        return self.requesting_usermode_pid
+
+    @property
+    def packets(self):
+        return self.packet_deque
 
     def send_packets_with_time_gaps(self) -> None:
         """
@@ -46,9 +42,9 @@ class PacketSendingQueue:
         if MainLoop.instance.time_since(self.last_packet_sending_time) <= self.interval:
             return
 
-        if not self.packets:
+        if not self.packet_deque:
             return
 
-        packet = self.packets.popleft()
+        packet = self.packet_deque.popleft()
         self.computer.send(packet, self.interface, self.sending_socket)
         self.last_packet_sending_time = MainLoop.instance.time()

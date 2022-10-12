@@ -651,7 +651,7 @@ class TEXT:
 
 
 class CONNECTIONS:
-    DEFAULT_SPEED = 150  # pixels / second
+    DEFAULT_SPEED = 10  # pixels / second
     DEFAULT_LENGTH = 100  # pixels
     DEFAULT_PL = 0.5  # the point in the connection where packets are dropped
     MOUSE_TOUCH_SENSITIVITY = 5  # pixels
@@ -660,6 +660,10 @@ class CONNECTIONS:
     SELECTED_COLOR = COLORS.LIGHT_BLUE
     BLOCKED_COLOR = COLORS.LIGHT_RED
     PL_COLOR = COLORS.GREEN
+
+    class PACKETS:
+        DEFAULT_SPEED = 1.0  # This a scaling factor for the connection speed - per packet
+        DECREASE_SPEED_BY = 0.9
 
     class WIRELESS:
         COLOR = COLORS.BLACK

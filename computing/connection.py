@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import random
-from typing import NamedTuple, TYPE_CHECKING, List
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, List
 
 from consts import *
 from exceptions import ConnectionsError
@@ -14,14 +15,16 @@ if TYPE_CHECKING:
     from gui.tech.computer_graphics import ComputerGraphics
 
 
-class SentPacket(NamedTuple):
+@dataclass
+class SentPacket:
     """
     a packet that is currently being sent through the connection.
     """
-    packet:       Packet
-    sending_time: T_Time
-    direction:    str
-    is_dropped:   bool
+    packet:           Packet
+    sending_time:     T_Time
+    direction:        str
+    is_dropped:       bool
+    last_update_time: T_Time = field(default_factory=MainLoop.get_instance_time)
 
 
 class Connection:
@@ -52,8 +55,7 @@ class Connection:
         """
         self.speed = speed
         self.initial_length = length
-        self.sent_packets = []
-        # ^ a list of `SentPacket`-s which represent packets that are currently being sent through the connection
+        self.sent_packets: List[SentPacket] = []  # represents the packets that are currently being sent through the connection
 
         self.right_side, self.left_side = ConnectionSide(self), ConnectionSide(self)
 
@@ -143,8 +145,9 @@ class Connection:
         This is called when the packet finished its route through this connection and is ready to be received at the
         connected `Interface`.
         """
-        packet, _, direction, _ = sent_packet
+        packet, direction = sent_packet.packet, sent_packet.direction
         MainLoop.instance.unregister_graphics_object(packet.graphics)
+
         if direction == PACKET.DIRECTION.RIGHT:
             self.right_side.packets_to_receive.append(packet)
         elif direction == PACKET.DIRECTION.LEFT:
@@ -176,12 +179,11 @@ class Connection:
         :param sent_packet: a `SentPacket`
         :return: None
         """
-        packet_travel_percent = MainLoop.instance.time_since(sent_packet.sending_time) / self.deliver_time
+        sent_packet.packet.graphics.progress += \
+            (MainLoop.instance.time_since(sent_packet.last_update_time) / self.deliver_time) * sent_packet.packet.graphics.speed
 
-        if packet_travel_percent >= 1:
+        if sent_packet.packet.graphics.progress >= 1:
             self.reach_destination(sent_packet)
-        else:
-            sent_packet.packet.graphics.progress = packet_travel_percent
 
     def move_packets(self) -> None:
         """
@@ -197,9 +199,9 @@ class Connection:
         for sent_packet in self.sent_packets[:]:  # we copy the list because we alter it during the run
             self._update_packet(sent_packet)
 
-        self._drop_packets()  # drops the packets that were chosen by the random PL (packet loss)
+        self._drop_predetermined_dropped_packets()  # drops the packets that were chosen by the random PL (packet loss)
 
-    def _drop_packets(self) -> None:
+    def _drop_predetermined_dropped_packets(self) -> None:
         """
         Goes through the packets that are being sent, When they reach the middle of the connection, check if they need
         to be dropped (by PL) if so, remove them from the list, and do the animation.
@@ -207,7 +209,7 @@ class Connection:
         """
         for sent_packet in self.sent_packets[:]:
             packet_travel_percent = MainLoop.instance.time_since(sent_packet.sending_time) / self.deliver_time
-            if sent_packet.is_dropped and packet_travel_percent >= (random.random()+0.3):
+            if sent_packet.is_dropped and packet_travel_percent >= (random.random() + 0.3):
                 self.sent_packets.remove(sent_packet)
                 sent_packet.packet.graphics.drop()
 
@@ -215,10 +217,9 @@ class Connection:
         """
         This is used to stop all of the action in the connection.
         Kills all of the packets in the connection and unregisters their `GraphicsObject`-s
-        :return: None
         """
-        for packet, _, _, _ in self.sent_packets:
-            MainLoop.instance.unregister_graphics_object(packet.graphics)
+        for sent_packet in self.sent_packets:
+            MainLoop.instance.unregister_graphics_object(sent_packet.packet.graphics)
         self.sent_packets.clear()
 
     def __repr__(self) -> str:

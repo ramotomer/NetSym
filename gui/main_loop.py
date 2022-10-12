@@ -4,6 +4,7 @@ import time
 from typing import Type, Iterable, Optional, TYPE_CHECKING, Callable, Any, List, TypeVar
 
 from consts import T_Time
+from exceptions import *
 from exceptions import NoSuchGraphicsObjectError
 from usefuls.funcs import get_the_one
 
@@ -52,6 +53,17 @@ class MainLoop:
         # ^ creates the buttons of the user interface.
 
         # self.logo_animation = self.main_window.user_interface.init_logo_animation()
+
+    @classmethod
+    def get_instance_time(cls) -> T_Time:
+        """
+        This is a class method that returns the time of the MainLoop instance - adjusted to pauses and different speeds (just like the `time` method)
+        It allows us to talk about the `time` method (without calling it) even before the `instance` being initiated
+        """
+        if cls.instance is None:
+            raise MainLoopInstanceNotYetInitiated(f"Bummer...")
+
+        return cls.instance.time()
 
     def register_graphics_object(self, graphics_object: GraphicsObject, is_in_background: bool = False) -> None:
         """
