@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Deque
 
 from consts import T_Time
 from gui.main_loop import MainLoop
 
 if TYPE_CHECKING:
+    from packets.packet import Packet
     from computing.internals.sockets.raw_socket import RawSocket
     from computing.internals.interface import Interface
     from computing.computer import Computer
@@ -28,11 +29,11 @@ class PacketSendingQueue:
     last_packet_sending_time: T_Time              = field(default_factory=MainLoop.get_instance_time)
 
     @property
-    def pid(self):
+    def pid(self) -> int:
         return self.requesting_usermode_pid
 
     @property
-    def packets(self):
+    def packets(self) -> Deque[Packet]:
         return self.packet_deque
 
     def send_packets_with_time_gaps(self) -> None:

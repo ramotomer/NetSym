@@ -49,7 +49,7 @@ class SchedulerDetails:
     latest_pid:                int
 
     @property
-    def ready_processes_instances(self):
+    def ready_processes_instances(self) -> List[Process]:
         return [ready_process.process for ready_process in self.ready_processes]
 
 

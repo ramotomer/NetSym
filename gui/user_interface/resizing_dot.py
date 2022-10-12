@@ -42,7 +42,6 @@ class ResizingDot(UserInterfaceGraphicsObject):
         if not hasattr(self._resized_object, "resize"):
             raise ObjectIsNotResizableError(f"{self._resized_object} has not 'resize' method")
 
-        self.location = x, y
         self.direction = direction
         self.constrain_proportions = constrain_proportions
 
@@ -54,45 +53,62 @@ class ResizingDot(UserInterfaceGraphicsObject):
 
     @property
     def color(self) -> T_Color:
+        """
+        Return what color the dot should be (depends on whether the mouse is in or not)
+        """
         if not self.is_mouse_in():
             return SELECTION_SQUARE.COLOR
         return SHAPES.CIRCLE.RESIZE_DOT.COLOR_WHEN_SELECTED
 
     def draw(self) -> None:
         draw_circle(self.x, self.y, self.radius, COLORS.BLACK, self.color)
-        self.__last_drawn = time.time()
+        self.__last_drawn = MainLoop.instance.time()
 
     def move(self) -> None:
-        if self.is_mouse_in() and MainWindow.main_window.mouse_pressed:
-            self.location = MainWindow.main_window.get_mouse_location()
-            x, y = self.location
+        """
+        Drag the resizing dot around - and resize the appropriate object
+        """
+        self.self_destruct_if_not_showing()
+        if not self.is_mouse_in() or not MainWindow.main_window.mouse_pressed:
+            return
 
-            current_x_diff, current_y_diff = self._resized_object.x - x, self._resized_object.y - y
+        self.location = MainWindow.main_window.get_mouse_location()
+        x, y = self.location
+        current_x_diff, current_y_diff = self._resized_object.x - x, self._resized_object.y - y
 
-            direction_x, direction_y = self.direction
-            self._resized_object.resize((self._x_diff - current_x_diff) * 2 * direction_x,
-                                        (self._y_diff - current_y_diff) * 2 * direction_y,
-                                        constrain_proportions=self.constrain_proportions)
+        direction_x, direction_y = self.direction
+        self._resized_object.resize(
+            (self._x_diff - current_x_diff) * 2 * direction_x,
+            (self._y_diff - current_y_diff) * 2 * direction_y,
+            constrain_proportions=self.constrain_proportions,
+        )
 
-            self._x_diff, self._y_diff = self._resized_object.x - x, self._resized_object.y - y
+        self._x_diff, self._y_diff = self._resized_object.x - x, self._resized_object.y - y
 
     def self_destruct_if_not_showing(self) -> None:
         """
         This method should be called every tick to check that the dot was drawn in the last 0.5 seconds.
         If it was not, it erases itself.
-        :return:
         """
-        if time.time() - self.__last_drawn > 0.5:
-            self._resized_object.resizing_dots.remove(self)
-            MainLoop.instance.unregister_graphics_object(self)
-            MainLoop.instance.remove_from_loop(self.self_destruct_if_not_showing)
+        if MainLoop.instance.time_since(self.__last_drawn) <= 0.5:
+            return
+
+        self._resized_object.resizing_dots.remove(self)
+        MainLoop.instance.unregister_graphics_object(self)
+        MainLoop.instance.remove_from_loop(self.self_destruct_if_not_showing)
 
     def update_object_location(self) -> None:
+        """
+        Set the location the object should have according to the current place of the Dot
+        """
         x, y = self._resized_object.location
         self.x = x - self._x_diff
         self.y = y - self._y_diff
 
     def update_object_size(self) -> None:
+        """
+        Set the size the object should have according to the current place of the Dot
+        """
         self.location = self._resized_object.get_corner_by_direction(self.direction)
         x, y = self.location
         self._x_diff, self._y_diff = self._resized_object.x - x, self._resized_object.y - y
@@ -100,5 +116,8 @@ class ResizingDot(UserInterfaceGraphicsObject):
     def dict_save(self) -> None:
         pass
 
+    def __str__(self) -> str:
+        return "ResizingDot"
+
     def __repr__(self) -> str:
-        return f"resizing dot for object: {repr(self._resized_object)}"
+        return f"<< ResizingDot {self.location} for object: {self._resized_object!r} >>"

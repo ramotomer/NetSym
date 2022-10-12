@@ -465,7 +465,7 @@ class SendingWindow:
         self.window = deque()
 
     @property
-    def sent(self):
+    def sent(self) -> Iterable[Packet]:
         return self.computer.get_packet_sending_queue(self.pid, COMPUTER.PROCESSES.MODES.KERNELMODE).packets
 
     def clear(self) -> None:

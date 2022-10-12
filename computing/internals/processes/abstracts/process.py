@@ -49,7 +49,7 @@ class ReturnedPacket:
             raise NoSuchPacketError("All of the packets were requested from this object already!!")
 
     @property
-    def metadata(self):
+    def metadata(self) -> PacketMetadata:
         return self.packets[self.packet]
 
     @property

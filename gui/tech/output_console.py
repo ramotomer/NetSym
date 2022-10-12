@@ -134,5 +134,8 @@ class OutputConsole(UserInterfaceGraphicsObject):
         self._text += text + '\n'
         self.child_graphics_objects.text.set_text(self._text)
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         return "OutputConsole"
+
+    def __repr__(self) -> str:
+        return f"<< OutputConsole at {self.location} >>"

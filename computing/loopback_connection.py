@@ -45,9 +45,8 @@ class LoopbackConnection(Connection):
         performs the super-method of `reach_destination` but also checks if the connection should disappear.
         All of the packets are received on the left side, all of them will also be sent on it.
         """
-        packet, _, direction, _ = sent_packet
-        MainLoop.instance.unregister_graphics_object(packet.graphics)
-        self.left_side.packets_to_receive.append(packet)                 # the direction does not matter
+        MainLoop.instance.unregister_graphics_object(sent_packet.packet.graphics)
+        self.left_side.packets_to_receive.append(sent_packet.packet)  # the direction does not matter
         self.sent_packets.remove(sent_packet)
 
         if not self.sent_packets:

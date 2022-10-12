@@ -112,7 +112,7 @@ class Frequency(Connection):
         :param sent_packet: a `SentPacket` namedtuple.
         :return: None
         """
-        wireless_packet = sent_packet[0]
+        wireless_packet = sent_packet.packet
 
         for side in self.connection_sides:
             location = side.wireless_interface.graphics.location
@@ -129,8 +129,7 @@ class Frequency(Connection):
         :param sent_packet: a `SentPacket`
         :return:
         """
-        packet = sent_packet[0]
-        MainLoop.instance.unregister_graphics_object(packet.graphics)
+        MainLoop.instance.unregister_graphics_object(sent_packet.packet.graphics)
         self.sent_packets.remove(sent_packet)
 
     def _send_packets_from_side(self, side: FrequencyConnectionSide) -> None:

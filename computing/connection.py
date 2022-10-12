@@ -181,6 +181,7 @@ class Connection:
         """
         sent_packet.packet.graphics.progress += \
             (MainLoop.instance.time_since(sent_packet.last_update_time) / self.deliver_time) * sent_packet.packet.graphics.speed
+        sent_packet.last_update_time = MainLoop.instance.time()
 
         if sent_packet.packet.graphics.progress >= 1:
             self.reach_destination(sent_packet)

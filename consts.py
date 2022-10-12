@@ -651,7 +651,7 @@ class TEXT:
 
 
 class CONNECTIONS:
-    DEFAULT_SPEED = 10  # pixels / second
+    DEFAULT_SPEED = 150  # pixels / second
     DEFAULT_LENGTH = 100  # pixels
     DEFAULT_PL = 0.5  # the point in the connection where packets are dropped
     MOUSE_TOUCH_SENSITIVITY = 5  # pixels

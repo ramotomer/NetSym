@@ -81,5 +81,8 @@ class LoopbackConnectionGraphics(ConnectionGraphics):
         """
         return self.computer_graphics.x, self.computer_graphics.y, self.computer_graphics.x, self.computer_graphics.y
 
+    def __str__(self) -> str:
+        return "LoopbackConnectionGraphics"
+
     def __repr__(self) -> str:
-        return "loopback connection graphics"
+        return f"<< LoopbackConnectionGraphics of computer {self.computer_graphics.computer.name!r}>>"

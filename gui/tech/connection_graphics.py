@@ -211,9 +211,6 @@ class ConnectionGraphics(ViewableGraphicsObject):
             f"{self.connection.speed} pixels/second\ndeliver time: {str(self.connection.deliver_time)[:4]} seconds" \
             f"\nPL percent: {self.connection.packet_loss}"
 
-    def __repr__(self) -> str:
-        return "Connection Graphics"
-
     def dict_save(self) -> Dict:
         """
         Save the connection as a dictionary in order to later save it to a file
@@ -249,3 +246,9 @@ class ConnectionGraphics(ViewableGraphicsObject):
         """
         super(ConnectionGraphics, self).delete(user_interface)
         user_interface.remove_connection(self.connection)
+
+    def __str__(self) -> str:
+        return "ConnectionGraphics"
+
+    def __repr__(self) -> str:
+        return f"<< ConnectionGraphics between ({self.computers.start.computer.name!r}, {self.computers.end.computer.name!r}) >>"

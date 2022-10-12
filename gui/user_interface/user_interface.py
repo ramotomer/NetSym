@@ -5,6 +5,7 @@ import json
 import operator
 import pprint
 import random
+import time
 from collections import defaultdict
 from functools import reduce
 from operator import concat, attrgetter
@@ -16,7 +17,6 @@ from address.ip_address import IPAddress
 from computing.computer import Computer
 from computing.internals.frequency import Frequency
 from computing.internals.interface import Interface
-from computing.internals.processes.usermode_processes.dns_process.zone import EXAMPLE, Zone
 from computing.internals.processes.usermode_processes.stp_process import STPProcess
 from computing.internals.wireless_interface import WirelessInterface
 from computing.router import Router
@@ -816,6 +816,7 @@ class UserInterface:
 
         self.selected_object = None
         self.dragged_object = None
+        self.active_window = None
 
         for connection_data in self.connection_data:
             MainLoop.instance.remove_from_loop(connection_data.connection.move_packets)
@@ -826,6 +827,7 @@ class UserInterface:
         self.computers.clear()
         self.connection_data.clear()
         self.frequencies.clear()
+        self.popup_windows.clear()
         self.set_mode(MODES.NORMAL)
 
         if reset_saving_file:
@@ -950,9 +952,8 @@ class UserInterface:
         all_sent_packets = functools.reduce(operator.concat, map(operator.attrgetter("sent_packets"), all_connections))
 
         for sent_packet in all_sent_packets:
-            packet = sent_packet[0]
-            if packet.graphics is graphics_object:
-                return packet
+            if sent_packet.packet.graphics is graphics_object:
+                return sent_packet.packet
         return None
 
     def drop_packet(self, packet_graphics: PacketGraphics) -> None:
@@ -1035,25 +1036,19 @@ class UserInterface:
         Prints out lots of useful information for debugging.
         :return: None
         """
+        print(f"\n{' debugging info ':-^100}")
+        print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
 
-        # print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
         def gos() -> List[GraphicsObject]:
-            return [go for go in MainLoop.instance.graphics_objects if not isinstance(go, UserInterfaceGraphicsObject)]
+            return [go for go in MainLoop.instance.graphics_objects if not isinstance(go, (Button, Text))]
 
-        zonefile = Zone.from_file_format(EXAMPLE)
-        str_zonefile = zonefile.to_file_format()
-
-        print(MainWindow.main_window.get_mouse_location())
+        print(f"Mouse location: {MainWindow.main_window.get_mouse_location()}\n")
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
-        goes = list(filter(lambda go: not isinstance(go, UserInterfaceGraphicsObject), MainLoop.instance.graphics_objects))
-        pprint.pprint(f"graphicsObject-s (no buttons or texts): {goes}")
-        print(f"computers, {len(self.computers)}, connections, {len(self.connection_data)},"
+        pprint.pprint(f"graphicsObject-s (no buttons or texts): ")
+        pprint.pprint(gos())
+        print(f"\ncomputers, {len(self.computers)}, connections, {len(self.connection_data)}, "
               f"packets: {len(list(filter(lambda go: isinstance(go, PacketGraphics), MainLoop.instance.graphics_objects)))}")
-        print(f"running processes: ", end='')
-        # for computer in self.computers:
-        #     processes = [f"{waiting_process.process} of {computer}" for waiting_process in computer.waiting_processes]
-        #     if processes:
-        #         print(processes, end=' ')
+
         print()
         if self.selected_object is not None and isinstance(self.selected_object, ComputerGraphics):
             computer = self.selected_object.computer
@@ -1340,7 +1335,7 @@ class UserInterface:
         try:
             self.popup_windows.remove(window)
         except ValueError:
-            raise WrongUsageError("The window is not registered in the UserInterface!!!")
+            raise WrongUsageError("The window is not registered in the UserInterface!!!")  # TODO: change exception type to be more specific
 
         if self.active_window is window:
             self.active_window = None

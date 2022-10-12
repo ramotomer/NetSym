@@ -187,3 +187,11 @@ class ShellGraphics(OutputConsole):
         self.caret_index = min(max(self.caret_index + amount, 0), len(text))
         text = text[:self.caret_index] + CONSOLE.SHELL.CARET + text[self.caret_index:]
         self.child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + text)
+
+    def __str__(self) -> str:
+        """a general string representation of the object"""
+        return "ShellGraphics"
+
+    def __repr__(self) -> str:
+        """a string representation of the object (mainly for debugging)"""
+        return f"<< ShellGraphics of computer {self.computer.name!r} >>"

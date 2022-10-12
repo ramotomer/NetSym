@@ -3,6 +3,7 @@ from operator import itemgetter
 from typing import Optional
 
 from consts import *
+from exceptions import *
 from usefuls.funcs import circular_coordinates, sine_wave_coordinates, lighten_color, darken_color, \
     normal_color_to_weird_gl_color
 
@@ -179,11 +180,21 @@ def draw_circle(x: float, y: float, radius: float,
                          )
 
 
-def debug_circle(x: float, y: float, fill_color: T_Color = COLORS.RED, size: float = 3) -> None:
+def draw_point(x: float, y: float, color: T_Color, width: float = 1) -> None:
+    """
+    Draws a point at the specified location
+    """
+    if width > 15:
+        raise WrongUsageError("Use draw_circle! your point is too big!")
+    draw_circle(x, y, width, color, color)
+
+
+def debug_circle(x: float, y: float, fill_color: T_Color = COLORS.RED, size: float = 6) -> None:
     """
     Red dot for debugging
     """
-    draw_circle(x, y, size, fill_color=fill_color, outline_color=fill_color)
+    draw_point(x, y, fill_color)
+    draw_circle(x, y, size, outline_color=fill_color)
 
 
 def draw_sine_wave(start_coordinates: Tuple[float, float], end_coordinates: Tuple[float, float],

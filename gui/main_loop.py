@@ -175,7 +175,7 @@ class MainLoop:
                     # if necessary
 
         except ValueError:
-            raise NoSuchGraphicsObjectError("The graphics object is not registered!!!")
+            raise NoSuchGraphicsObjectError(f"The graphics object is not registered!!! object: {graphics_object!r}")
 
     def toggle_pause(self) -> None:
         """

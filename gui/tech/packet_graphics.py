@@ -71,10 +71,10 @@ class PacketGraphics(ImageGraphics):
         Calculates its coordinates according to the `self.progress` attribute.
         :return: None
         """
-        self.x, self.y = self.connection_graphics.packet_location(self.direction, self.progress)
+        self.location = self.connection_graphics.packet_location(self.direction, self.progress)
         super(PacketGraphics, self).move()
 
-    def decrease_speed(self):
+    def decrease_speed(self) -> None:
         """
         Decreases the speed of the packet by a half
         """
@@ -119,9 +119,6 @@ class PacketGraphics(ImageGraphics):
         self.buttons_id = user_interface.add_buttons(buttons)
         return self.copy_sprite(self.sprite), '', self.buttons_id
 
-    def __repr__(self) -> str:
-        return self.str
-
     def dict_save(self) -> None:
         """
         The packets cannot be saved into the file.
@@ -135,3 +132,9 @@ class PacketGraphics(ImageGraphics):
         """
         super(PacketGraphics, self).delete(user_interface)
         user_interface.drop_packet(self)
+
+    def __str__(self) -> str:
+        return self.str
+
+    def __repr__(self) -> str:
+        return f"<< PacketGraphics - {self.str} on {self.connection_graphics!r} >>"
