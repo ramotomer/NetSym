@@ -721,13 +721,22 @@ class Computer:
         """
         self.process_scheduler.start_process(mode, SendPing, destination, opcode, count, *args, **kwargs)
 
+    # --------------------------------------- v  IP fragmentation  v -----------------------------------------------------------
+
     def _send_fragment_ttl_exceeded(self, dst_mac: MACAddress, dst_ip: IPAddress) -> None:
         """
         Send an ICMP TTL exceeded for a fragmented packet that could be reassembled
         """
-        self.send_to(dst_mac, dst_ip, ICMP(
-            type=OPCODES.ICMP.TYPES.TIME_EXCEEDED,
-            code=OPCODES.ICMP.CODES.FRAGMENT_TTL_EXCEEDED))
+        self.send_packet_stream_to(
+            COMPUTER.PROCESSES.INIT_PID, COMPUTER.PROCESSES.MODES.KERNELMODE,
+            PROTOCOLS.IP.FRAGMENT_SENDING_INTERVAL,
+            dst_mac,
+            dst_ip,
+            ICMP(
+                type=OPCODES.ICMP.TYPES.TIME_EXCEEDED,
+                code=OPCODES.ICMP.CODES.FRAGMENT_TTL_EXCEEDED,
+            )
+        )
 
     def _pop_fragments(self, fragments: Iterable[Packet]) -> None:
         """
@@ -759,15 +768,21 @@ class Computer:
 
     def _forget_old_ip_fragments(self) -> None:
         """
-        Check all active ip fragments in the computer - delete the ones that are too old
+        Check all active ip fragments in the computer
+        Delete the ones that are too old
+        Send an ICMP fragment TTL exceeded for them
         """
-        for fragment in self._active_packet_fragments[:]:
+        active_ip_ids = {fragment.packet["IP"].id for fragment in self._active_packet_fragments}
+        for ip_id in active_ip_ids:
             latest_sibling_fragment = max(
-                [rp for rp in self._active_packet_fragments if rp.packet["IP"].id == fragment.packet["IP"].id],
+                [rp for rp in self._active_packet_fragments if rp.packet["IP"].id == ip_id],
                 key=lambda rp: rp.metadata.time,
             )
             if MainLoop.instance.time_since(latest_sibling_fragment.metadata.time) > PROTOCOLS.IP.FRAGMENT_DROP_TIMEOUT:
-                self._active_packet_fragments.remove(fragment)
+                fragment = None
+                for fragment in self._active_packet_fragments[:]:
+                    if fragment.packet["IP"].id == ip_id:
+                        self._active_packet_fragments.remove(fragment)
                 self._send_fragment_ttl_exceeded(fragment.packet["Ether"].src_mac, fragment.packet["IP"].src_ip)
 
     # --------------------------------------- v  DHCP and DNS  v -----------------------------------------------------------
@@ -928,6 +943,22 @@ class Computer:
         :param packet: packet to wrap. Could be anything, should be something the destination computer expects.
         """
         self.send(self.ip_wrap(dst_mac, dst_ip, packet, **kwargs))
+
+    def send_packet_stream_to(self,
+                              pid: int,
+                              mode: str,
+                              interval_between_packets: T_Time,
+                              dst_mac: MACAddress,
+                              dst_ip: IPAddress,
+                              datas: List[Union[str, bytes, scapy.packet.Packet]]) -> None:
+        """
+        Just like `send_packet_stream` only applies `ethernet_wrap` on each of the packets
+        """
+        self.send_packet_stream(
+            pid, mode,
+            (self.ip_wrap(dst_mac, dst_ip, data) for data in datas),
+            interval_between_packets,
+        )
 
     def ip_wrap(self, dst_mac: MACAddress, dst_ip: IPAddress, protocol: scapy.packet.Packet, ttl: Optional[int] = None, **kwargs: Any) -> Packet:
         """
