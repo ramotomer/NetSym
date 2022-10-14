@@ -14,6 +14,7 @@ drawing_parameters = {
     'line_width': 1.0,
 }
 pyglet.gl.glLineWidth(drawing_parameters['line_width'])
+# I know this is quite disgusting - but I did not find a way to get the current line width - so I must keep track of it myself! :/
 
 
 def _set_line_width(value: float) -> None:
