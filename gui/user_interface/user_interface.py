@@ -523,7 +523,7 @@ class UserInterface:
                 )
             self.start_object_view(self.selected_object)
 
-        else:  # new_mode == MODES.NORMAL
+        else:
             self.source_of_line_drag = None
             self.mode = new_mode
             self.end_object_view()
@@ -722,10 +722,14 @@ class UserInterface:
         :param action: a function that is called with the two devices.
         :return:
         """
+        if self.is_mouse_in_side_window():
+            return
+
         connected = self.get_object_the_mouse_is_on()
-        if self.is_mouse_in_side_window() or connected is None:
+        if connected is None:
             self.set_mode(MODES.NORMAL)
             return
+
         action(self.source_of_line_drag, connected)
         self.set_mode(MODES.NORMAL)
 
