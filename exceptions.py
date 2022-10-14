@@ -357,6 +357,12 @@ class KeyActionAlreadyExistsError(KeyboardError):
     """
 
 
+class UnknownModeError(UserInterfaceError):
+    """
+    An unknown mode was specified or used without being defined first :(
+    """
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 

@@ -437,12 +437,18 @@ class ProcessScheduler:
                 return True
         return False
 
+    def is_process_running(self, pid: int, mode: str) -> bool:
+        """
+        Return whether or not that process is currently running on the computer
+        """
+        return self.get_process(pid, mode, raises=False) is not None
+
     def is_usermode_process_running(self, pid: int) -> bool:
         """
         :param pid: `int` - The process ID to check if running
         :return: `bool` - whether or not this usermode process is running
         """
-        return self.get_process(pid, COMPUTER.PROCESSES.MODES.USERMODE, raises=False) is not None
+        return self.is_process_running(pid, COMPUTER.PROCESSES.MODES.USERMODE)
 
     def is_usermode_process_running_by_type(self, process_type: Type[Process]) -> bool:
         """

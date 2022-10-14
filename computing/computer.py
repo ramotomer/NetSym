@@ -903,7 +903,7 @@ class Computer:
         )
 
     def send_packet_stream_with_ethernet(self,
-                                         requesting_usermode_pid: int,
+                                         pid: int,
                                          mode: str,
                                          interval_between_packets: T_Time,
                                          dst_mac: MACAddress,
@@ -914,7 +914,7 @@ class Computer:
         """
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
         self.send_packet_stream(
-            requesting_usermode_pid, mode,
+            pid, mode,
             (interface.ethernet_wrap(dst_mac, data) for data in datas),
             interval_between_packets,
             interface,
@@ -1082,7 +1082,7 @@ class Computer:
         return ip_for_the_mac, self.arp_cache[ip_for_the_mac].mac
 
     def send_packet_stream(self,
-                           requesting_usermode_pid: int,
+                           pid: int,
                            mode: str,
                            packets: Iterator[Packet],
                            interval_between_packets: T_Time,
@@ -1092,14 +1092,15 @@ class Computer:
         Send a large amount of packets that should be sent in quick succession one after the other
         This will make sure they are sent with the appropriate time gaps - in order to allow the user to see them
         """
-        existing_sending_queue = self.get_packet_sending_queue(requesting_usermode_pid, mode)
+        existing_sending_queue = self.get_packet_sending_queue(pid, mode)
         if existing_sending_queue is not None:
             existing_sending_queue.packets.extend(packets)
             return
+
         self._packet_sending_queues.append(
             PacketSendingQueue(
                 self,
-                requesting_usermode_pid,
+                pid,
                 mode,
                 deque(packets),
                 interval_between_packets,
@@ -1121,7 +1122,7 @@ class Computer:
         Remove PacketSendingQueues that have no running process attached to them
         """
         for packet_sending_queue in self._packet_sending_queues[:]:
-            if not self.process_scheduler.is_usermode_process_running(packet_sending_queue.pid) and \
+            if not self.process_scheduler.is_process_running(packet_sending_queue.pid, packet_sending_queue.process_mode) and \
                packet_sending_queue.pid != COMPUTER.PROCESSES.INIT_PID:
                 self._packet_sending_queues.remove(packet_sending_queue)
 

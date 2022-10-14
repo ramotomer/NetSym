@@ -17,6 +17,7 @@ from address.ip_address import IPAddress
 from computing.computer import Computer
 from computing.internals.frequency import Frequency
 from computing.internals.interface import Interface
+from computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
 from computing.internals.processes.usermode_processes.stp_process import STPProcess
 from computing.internals.wireless_interface import WirelessInterface
 from computing.router import Router
@@ -157,12 +158,10 @@ class UserInterface:
             self.key_to_action[self.key_from_string(key_string)] = with_args(self.create_device, device)
 
         self.action_at_press_by_mode = {
-            MODES.NORMAL:     self.normal_mode_at_press,
-            MODES.VIEW:       self.normal_mode_at_press,
-            MODES.CONNECTING: self.start_device_visual_connecting,
-            MODES.PINGING:    self.start_device_visual_connecting,
+            MODES.NORMAL:           self.normal_mode_at_press,
+            MODES.VIEW:             self.normal_mode_at_press,
         }
-        # ^ maps what to do when the screen is pressed in each `mode`.
+        # ^ maps what to do when the screen is pressed in each `mode`.  (No need to put here modes that are one of MODES.COMPUTER_CONNECTING_MODES)
 
         self.saving_file_class_name_to_class = {
             class_.__name__: class_ for class_ in (Computer, Switch, Router, Hub, Antenna)
@@ -190,6 +189,9 @@ class UserInterface:
             ((with_args(DeviceCreationWindow, self), "create device (e)"), {"key": (key.E, KEYBOARD.MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.CONNECTING), "connect (c / ^c / Shift+c)"), {"key": (key.C, KEYBOARD.MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.PINGING), "ping (p / ^p / Shift+p)"), {"key": (key.P, KEYBOARD.MODIFIERS.NONE)}),
+            ((with_args(self.toggle_mode, MODES.FILE_DOWNLOADING),
+              "Start file download (Ctrl+Shift+a)"),
+             {"key": (key.A, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT)}),
             ((self.ask_for_dhcp, "ask for DHCP (shift+a)"), {"key": (key.A, KEYBOARD.MODIFIERS.SHIFT)}),
             ((self.start_all_stp, "start STP (ctrl+shift+s)"), {"key": (key.S, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT)}),
             ((self.delete_all_packets, "delete all packets (Shift+d)"), {"key": (key.D, KEYBOARD.MODIFIERS.SHIFT)}),
@@ -287,10 +289,8 @@ class UserInterface:
         self._stop_viewing_dead_packets()
         self._showcase_running_stp()
 
-        if self.mode == MODES.CONNECTING:
-            self._draw_connection_to_mouse(CONNECTIONS.COLOR)
-        elif self.mode == MODES.PINGING:
-            self._draw_connection_to_mouse(COLORS.PURPLE)
+        if self.mode in MODES.COMPUTER_CONNECTING_MODES:
+            self._draw_connection_to_mouse(MODES.TO_COLORS[self.mode])
 
     def _draw_connection_to_mouse(self, color: T_Color) -> None:
         """
@@ -301,7 +301,11 @@ class UserInterface:
         if self.source_of_line_drag is None:
             return
 
-        draw_line(self.source_of_line_drag.location, MainWindow.main_window.get_mouse_location(), color=color)
+        draw_line(
+            self.source_of_line_drag.location, MainWindow.main_window.get_mouse_location(),
+            color=color,
+            width=MODES.COMPUTER_CONNECTING_MODES_LINE_TO_MOUSE_WIDTH,
+        )
         self.source_of_line_drag.mark_as_selected_non_resizable()
 
         destination = self.get_object_the_mouse_is_on()
@@ -570,12 +574,17 @@ class UserInterface:
             if not button.is_hidden and button.is_mouse_in():
                 button.action()
                 break
-        else:
-            self.action_at_press_by_mode[self.mode]()
+        else:  # If not pressing on any buttons :)
+            action = self.action_at_press_by_mode.get(self.mode)
+            if action is None:
+                if self.mode not in MODES.COMPUTER_CONNECTING_MODES:
+                    raise UnknownModeError("No handler was set for this mode! What to do when the mouse is pressed?")
+
+                action = self.start_device_visual_connecting
+            action()
 
         if self.active_window is None:
             self._create_selecting_square()
-        # AnimationGraphics(ANIMATIONS.EXPLOSION, *MainWindow.main_window.get_mouse_location())  # for debugging
 
     def pin_active_window_to(self, direction) -> None:
         """
@@ -608,12 +617,14 @@ class UserInterface:
         if self.selecting_square is not None:
             MainLoop.instance.unregister_graphics_object(self.selecting_square)
             self.selecting_square = None
+            return
 
-        elif self.mode == MODES.CONNECTING:
-            self.end_device_visual_connecting(self.connect_devices)
-
-        elif self.mode == MODES.PINGING:
-            self.end_device_visual_connecting(self.send_direct_ping)
+        if self.mode in MODES.COMPUTER_CONNECTING_MODES:
+            self.end_device_visual_connecting({
+                MODES.CONNECTING:       self.connect_devices,
+                MODES.PINGING:          self.send_direct_ping,
+                MODES.FILE_DOWNLOADING: self.start_file_download,
+            }[self.mode])
 
     def on_key_pressed(self, symbol: int, modifiers: int) -> None:
         """
@@ -794,6 +805,18 @@ class UserInterface:
         computer1, computer2 = computer_graphics1.computer, computer_graphics2.computer
         if computer1.has_ip() and computer2.has_ip():
             computer1.start_ping_process(computer2.get_ip().string_ip)
+
+    @staticmethod
+    def start_file_download(computer_graphics1: ComputerGraphics, computer_graphics2: ComputerGraphics) -> None:
+        """
+        Make `computer1` start downloading a file from `computer2`.
+        If one of them does not have an IP address, do nothing.
+        :param computer_graphics1:
+        :param computer_graphics2: The `ComputerGraphics` objects to send a ping between computers.
+        """
+        computer1, computer2 = computer_graphics1.computer, computer_graphics2.computer
+        if computer1.has_ip() and computer2.has_ip():
+            computer1.process_scheduler.start_usermode_process(ClientFTPProcess, computer2.get_ip().string_ip)
 
     def send_random_ping(self) -> None:
         """
