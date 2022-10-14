@@ -5,7 +5,7 @@ from collections import deque
 from dataclasses import dataclass
 from functools import reduce
 from operator import concat
-from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator
+from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator, Iterable
 
 import scapy
 
@@ -40,7 +40,8 @@ from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.all import ICMP, IP, TCP, UDP, ARP
 from packets.usefuls.dns import T_Hostname, validate_domain_hostname, canonize_domain_hostname
-from packets.usefuls.ip import needs_fragmentation, fragment_packet, needs_reassembly, reassemble_fragmented_packet, allows_fragmentation
+from packets.usefuls.ip import needs_fragmentation, fragment_packet, needs_reassembly, reassemble_fragmented_packet, allows_fragmentation, \
+    are_fragments_valid
 from packets.usefuls.tcp import get_src_port, get_dst_port
 from packets.usefuls.usefuls import get_dst_ip
 from usefuls.funcs import get_the_one
@@ -728,6 +729,15 @@ class Computer:
             type=OPCODES.ICMP.TYPES.TIME_EXCEEDED,
             code=OPCODES.ICMP.CODES.FRAGMENT_TTL_EXCEEDED))
 
+    def _pop_fragments(self, fragments: Iterable[Packet]) -> None:
+        """
+        Remove from the `_active_packet_fragments` list all of the fragments supplied
+        """
+        for active_fragment in self._active_packet_fragments[:]:
+            for fragment in fragments:
+                if active_fragment.packet == fragment:
+                    self._active_packet_fragments.remove(active_fragment)
+
     def _handle_ip_fragments(self, returned_packet: ReturnedPacket) -> Optional[ReturnedPacket]:
         """
         Takes in a `ReturnedPacket` that maybe needs to be reassembled from IP fragments, and reassemble all fragments of it.
@@ -740,23 +750,13 @@ class Computer:
         if not needs_reassembly(last_fragment) or not self.has_this_ip(get_dst_ip(returned_packet.packet)):
             return returned_packet
 
-        if last_fragment["IP"].flags & PROTOCOLS.IP.FLAGS.MORE_FRAGMENTS:
-            self._active_packet_fragments.append(returned_packet)
+        self._active_packet_fragments.append(returned_packet)
+        same_packet_fragments = [fragment.packet for fragment in self._active_packet_fragments if fragment.packet["IP"].id == last_fragment["IP"].id]
+        if not are_fragments_valid(same_packet_fragments):
             return None
 
-        fragments = []
-        for fragment in self._active_packet_fragments[:]:
-            if fragment.packet["IP"].id == last_fragment["IP"].id:
-                # for every relevant fragment, remove if from `_active_packet_fragments` and add to `fragments`
-                fragments.append(fragment.packet)
-                self._active_packet_fragments.remove(fragment)
-        fragments.append(last_fragment)
-
-        try:
-            return ReturnedPacket(reassemble_fragmented_packet(fragments), last_fragment_metadata)
-        except InvalidFragmentsError:
-            self._send_fragment_ttl_exceeded(fragments[0]["Ether"].src_mac, fragments[0]["IP"].src_ip)
-            return None
+        self._pop_fragments(same_packet_fragments)
+        return ReturnedPacket(reassemble_fragmented_packet(same_packet_fragments), last_fragment_metadata)
 
     def _forget_old_ip_fragments(self) -> None:
         """
