@@ -1063,6 +1063,7 @@ class UserInterface:
         Prints out lots of useful information for debugging.
         :return: None
         """
+        self.learn_all_macs()
         print(f"\n{' debugging info ':-^100}")
         print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
 
@@ -1307,6 +1308,21 @@ class UserInterface:
         del self.buttons[buttons_id]
         del self.buttons[buttons_id + 1]
 
+    def learn_all_macs(self) -> None:
+        """
+        Adds every computer every other computer's MAC and IP address mapping to its ARP cache
+        """
+        for computer in self.computers:
+            for other_computer in self.computers:
+                if other_computer is computer:
+                    continue
+
+                for interface in other_computer.interfaces:
+                    if not interface.has_ip():
+                        continue
+
+                    computer.arp_cache.add_dynamic(interface.ip, interface.mac)
+
     def add_tcp_test(self) -> None:
         """
         Adds the computers that i create every time i do a test for TCP processes. saves time.
@@ -1329,6 +1345,8 @@ class UserInterface:
             computer.domain = DEFAULT_DOMAIN
             computer.dns_server = server.get_ip()
             server.add_dns_entry(f"{computer.name}.{DEFAULT_DOMAIN} {computer.get_ip().string_ip}")
+
+        self.learn_all_macs()
 
     def register_window(self, window: PopupWindow, *buttons: Button) -> None:
         """

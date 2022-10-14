@@ -152,6 +152,7 @@ class Computer:
         self._packet_sending_queues:   List[PacketSendingQueue] = []
         self._active_packet_fragments: List[ReturnedPacket]     = []
         self.icmp_sequence_number = 0
+        self._latest_ip_id = random.randint(0, PROTOCOLS.IP.MAX_IP_ID)
 
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ method does not run when program is paused
@@ -392,7 +393,6 @@ class Computer:
         self._packet_sending_queues.clear()
         self.received.clear()
         self.received_raw.clear()
-        self.icmp_sequence_number = 0
 
     def on_startup(self) -> None:
         """
@@ -401,6 +401,9 @@ class Computer:
         """
         self.boot_time = MainLoop.instance.time()
         self.process_scheduler.run_startup_processes()
+
+        self.icmp_sequence_number = 0
+        self._latest_ip_id = random.randint(0, PROTOCOLS.IP.MAX_IP_ID)
 
     def garbage_cleanup(self) -> None:
         """
@@ -942,7 +945,8 @@ class Computer:
         :param dst_ip: destination `IPAddress` of the packet
         :param packet: packet to wrap. Could be anything, should be something the destination computer expects.
         """
-        self.send(self.ip_wrap(dst_mac, dst_ip, packet, **kwargs))
+        self.send(self.ip_wrap(dst_mac, dst_ip, packet, id=self._latest_ip_id, **kwargs))
+        self._latest_ip_id = (self._latest_ip_id + 1) % (PROTOCOLS.IP.MAX_IP_ID + 1)
 
     def send_packet_stream_to(self,
                               pid: int,

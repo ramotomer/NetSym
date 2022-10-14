@@ -188,6 +188,7 @@ class PROTOCOLS:
 
     class IP:
         MAX_TTL = 255  # time to live
+        MAX_IP_ID = 2 ** 16 - 1
 
         FRAGMENT_SENDING_INTERVAL = 0.1  # seconds
         FRAGMENT_DROP_TIMEOUT = 6  # seconds
