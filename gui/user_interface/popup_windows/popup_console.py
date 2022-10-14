@@ -75,3 +75,6 @@ class PopupConsole(PopupWindow):
         super(PopupConsole, self).resize(width, height)
         self.shell.width, self.shell.height = width, height
         self.shell.child_graphics_objects.text.resize(self.shell.get_text_padding(), width)
+
+    def __repr__(self) -> str:
+        return f"<< PopupConsoleWindow of computer {self.computer.name!r} >>"

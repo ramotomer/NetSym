@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Dict, Callable
 
+import scapy
+
 from consts import *
 from gui.abstracts.animation_graphics import AnimationGraphics
 from gui.abstracts.image_graphics import ImageGraphics
 from gui.main_loop import MainLoop
 from packets.usefuls.type_to_opcode_function import TYPE_TO_OPCODE_FUNCTION
 from packets.usefuls.usefuls import get_original_layer_name_by_instance
-from usefuls.funcs import with_args
+from usefuls.funcs import with_args, rangom
 
 if TYPE_CHECKING:
     from gui.tech.connection_graphics import ConnectionGraphics
@@ -26,7 +28,8 @@ class PacketGraphics(ImageGraphics):
     def __init__(self,
                  deepest_layer: scapy.packet.Packet,
                  connection_graphics: ConnectionGraphics,
-                 direction: str) -> None:
+                 direction: str,
+                 speed: float = CONNECTIONS.PACKETS.DEFAULT_SPEED) -> None:
         """
         This method initiates a `PacketGraphics` instance.
         :param deepest_layer: The deepest packet layer in the packet.
@@ -50,6 +53,7 @@ class PacketGraphics(ImageGraphics):
         self.progress = 0
         self.str = get_original_layer_name_by_instance(deepest_layer)
         self.deepest_layer = deepest_layer
+        self.speed = speed
 
         self.drop_animation = None
 
@@ -67,11 +71,15 @@ class PacketGraphics(ImageGraphics):
         Calculates its coordinates according to the `self.progress` attribute.
         :return: None
         """
-        self.x, self.y = self.connection_graphics.packet_location(self.direction, self.progress)
+        self.location = self.connection_graphics.packet_location(self.direction, self.progress)
         super(PacketGraphics, self).move()
 
-        # if self.drop_animation is not None and self.drop_animation.is_finished:
-        #   MainLoop.instance.unregister_graphics_object(self.drop_animation)
+    def decrease_speed(self) -> None:
+        """
+        Decreases the speed of the packet by a half
+        """
+        self.speed *= rangom(0.9) * CONNECTIONS.PACKETS.DECREASE_SPEED_BY
+        AnimationGraphics(ANIMATIONS.LATENCY, self.x, self.y, scale=CONNECTIONS.LATENCY_ANIMATION_SIZE)
 
     def drop(self) -> None:
         """
@@ -106,13 +114,11 @@ class PacketGraphics(ImageGraphics):
         """
         buttons = {
             "Drop (alt+d)": with_args(user_interface.drop_packet, self),
+            "Slow down (alt+s)": self.decrease_speed,
         }
         buttons.update(additional_buttons or {})
         self.buttons_id = user_interface.add_buttons(buttons)
         return self.copy_sprite(self.sprite), '', self.buttons_id
-
-    def __repr__(self) -> str:
-        return self.str
 
     def dict_save(self) -> None:
         """
@@ -127,3 +133,9 @@ class PacketGraphics(ImageGraphics):
         """
         super(PacketGraphics, self).delete(user_interface)
         user_interface.drop_packet(self)
+
+    def __str__(self) -> str:
+        return self.str
+
+    def __repr__(self) -> str:
+        return f"<< PacketGraphics - {self.str} on {self.connection_graphics!r} >>"

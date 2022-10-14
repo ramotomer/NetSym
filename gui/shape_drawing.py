@@ -1,15 +1,48 @@
+from __future__ import annotations
+
+from contextlib import contextmanager
 from itertools import chain
 from operator import itemgetter
-from typing import Optional
+from typing import Optional, Generator
 
 from consts import *
+from exceptions import *
 from usefuls.funcs import circular_coordinates, sine_wave_coordinates, lighten_color, darken_color, \
     normal_color_to_weird_gl_color
 
+drawing_parameters = {
+    'line_width': 1.0,
+}
+pyglet.gl.glLineWidth(drawing_parameters['line_width'])
+# I know this is quite disgusting - but I did not find a way to get the current line width - so I must keep track of it myself! :/
 
-def draw_line(point_1: Tuple[float, float], point_2: Tuple[float, float], color: T_Color = COLORS.WHITE) -> None:
+
+def _set_line_width(value: float) -> None:
+    """
+    Sets the width of all lines drawn from this point onward
+    """
+    drawing_parameters['line_width'] = value
+    pyglet.gl.glLineWidth(value)
+
+
+@contextmanager
+def temporary_line_width(value: float) -> Generator[None]:
+    """
+    A contextmanager that temporarily sets the value of the width of lines
+    """
+    previous_line_width = drawing_parameters['line_width']
+    _set_line_width(value)
+
+    try:
+        yield None
+    finally:
+        _set_line_width(previous_line_width)
+
+
+def draw_line(point_1: Tuple[float, float], point_2: Tuple[float, float], color: T_Color = COLORS.WHITE, width: float = 1.0) -> None:
     """
     Draws a line between two points on the screen.
+    :param width:
     :param point_1: a tuple of (x, y) of the first point.
     :param point_2: the same for the other point.
     :param color: the color of the line.
@@ -18,7 +51,9 @@ def draw_line(point_1: Tuple[float, float], point_2: Tuple[float, float], color:
     vertex_view = 'v2i'
     if any([isinstance(coord, float) for coord in point_1 + point_2]):
         vertex_view = 'v2f'
-    pyglet.graphics.draw(2, pyglet.gl.GL_LINES, (vertex_view, point_1 + point_2), ('c3B', color * 2))
+
+    with temporary_line_width(width):
+        pyglet.graphics.draw(2, pyglet.gl.GL_LINES, (vertex_view, point_1 + point_2), ('c3B', color * 2))
 
 
 def draw_rectangle(
@@ -44,30 +79,32 @@ def draw_rectangle(
         _draw_rect_no_outline(x, y, width, height, color)
 
     elif outline_color is not None:
-        _draw_rect_no_fill(x, y, width, height, outline_color)
+        _draw_rect_no_fill(x, y, width, height, outline_color, outline_width)
 
     else:
         _draw_rect_no_outline(x, y, width, height)
 
 
-def _draw_rect_no_fill(x: float, y: float, width: float, height: float, color: T_Color = COLORS.WHITE) -> None:
+def _draw_rect_no_fill(x: float, y: float, width: float, height: float, color: T_Color = COLORS.WHITE, outline_width: float = 1.0) -> None:
     """
     Draws an unfilled rectangle from the bottom left corner (x,y) with a width of
     `width` and a height of `height`.
     """
     int_x, int_y, int_width, int_height = map(int, (x, y, width, height))
     color = color + (0,)
-    pyglet.graphics.draw(8, pyglet.gl.GL_LINES,
-                         ('v2i', (int_x, int_y,
-                                  int_x + int_width, int_y,
-                                  int_x + int_width, int_y,
-                                  int_x + int_width, int_y + int_height,
-                                  int_x + int_width, int_y + int_height,
-                                  int_x, int_y + int_height,
-                                  int_x, int_y + int_height,
-                                  int_x, int_y)),
-                         ('c4B', color * 8)
-                         )
+
+    with temporary_line_width(outline_width):
+        pyglet.graphics.draw(8, pyglet.gl.GL_LINES,
+                             ('v2i', (int_x, int_y,
+                                      int_x + int_width, int_y,
+                                      int_x + int_width, int_y,
+                                      int_x + int_width, int_y + int_height,
+                                      int_x + int_width, int_y + int_height,
+                                      int_x, int_y + int_height,
+                                      int_x, int_y + int_height,
+                                      int_x, int_y)),
+                             ('c4B', color * 8)
+                             )
 
 
 def _draw_rect_no_outline(x: float, y: float, width: float, height: float, color: T_Color = COLORS.GRAY) -> None:
@@ -179,11 +216,21 @@ def draw_circle(x: float, y: float, radius: float,
                          )
 
 
-def debug_circle(x: float, y: float, fill_color: T_Color = COLORS.RED, size: float = 3) -> None:
+def draw_point(x: float, y: float, color: T_Color, width: float = 1) -> None:
+    """
+    Draws a point at the specified location
+    """
+    if width > 15:
+        raise WrongUsageError("Use draw_circle! your point is too big!")
+    draw_circle(x, y, width, color, color)
+
+
+def debug_circle(x: float, y: float, fill_color: T_Color = COLORS.RED, size: float = 6) -> None:
     """
     Red dot for debugging
     """
-    draw_circle(x, y, size, fill_color=fill_color, outline_color=fill_color)
+    draw_point(x, y, fill_color)
+    draw_circle(x, y, size, outline_color=fill_color)
 
 
 def draw_sine_wave(start_coordinates: Tuple[float, float], end_coordinates: Tuple[float, float],

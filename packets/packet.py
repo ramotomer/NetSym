@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Tuple, Optional
 
 import scapy
 
@@ -25,8 +25,8 @@ class Packet:
         Initiates the packet object, ip_layer is the out-most layer of the packet (usually Ethernet).
         `self.graphics` is a `PacketGraphics` object.
         """
-        self.data = data
-        self.graphics = None
+        self.data: scapy.packet.Packet = data
+        self.graphics: Optional[PacketGraphics] = None
 
     def show(self, connection_graphics: ConnectionGraphics, direction: str) -> None:
         """

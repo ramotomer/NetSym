@@ -283,6 +283,19 @@ class ObjectIsNotResizableError(GraphicsError):
     When a resizing dot is assigned to a non-resizable object.
     """
 
+
+class MainLoopError(NetworkSimulationError):
+    """
+    An error related to the main loop
+    """
+
+
+class MainLoopInstanceNotYetInitiated(MainLoopError):
+    """
+    Some code was trying to use the `MainLoop.instance` before it was initiated
+    Probably somewhere in the `UserInterface` class because it is initiated before the main loop
+    """
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -341,6 +354,12 @@ class KeyboardError(UserInterfaceError):
 class KeyActionAlreadyExistsError(KeyboardError):
     """
     Trying to assign an action to a key that an action is already assigned to it...
+    """
+
+
+class UnknownModeError(UserInterfaceError):
+    """
+    An unknown mode was specified or used without being defined first :(
     """
 
 

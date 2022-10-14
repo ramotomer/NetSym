@@ -188,6 +188,7 @@ class PROTOCOLS:
 
     class IP:
         MAX_TTL = 255  # time to live
+        MAX_IP_ID = 2 ** 16 - 1
 
         FRAGMENT_SENDING_INTERVAL = 0.1  # seconds
         FRAGMENT_DROP_TIMEOUT = 6  # seconds
@@ -319,6 +320,7 @@ class MESSAGES:
     INVALID_IP_ADDRESS = "The IP address is not valid!"
 
     class INSERT:
+        LATENCY =                    "insert your desired latency (0 <= latency <= 1)!!!"
         PL =                         "insert your desired pl (0 <= pl <= 1)!!!"
         SPEED =                      "insert your desired connection speed:"
         IP =                         "Enter your desired IP for this interface:"
@@ -536,10 +538,11 @@ class VIEW:
 
 class ANIMATIONS:
     EXPLOSION = "explosion.png"
+    LATENCY =   "latency.png"
 
     SIZE = 16
 
-    FRAME_RATE = 1 / 15.
+    FRAME_RATE = 1 / 15.  # second per frame
     X_COUNT, Y_COUNT = 5, 3
 
 
@@ -656,10 +659,19 @@ class CONNECTIONS:
     DEFAULT_PL = 0.5  # the point in the connection where packets are dropped
     MOUSE_TOUCH_SENSITIVITY = 5  # pixels
 
+    DEFAULT_WIDTH = 2
+    LATENCY_WIDTH = 7
+
     COLOR = COLORS.BLACK
     SELECTED_COLOR = COLORS.LIGHT_BLUE
     BLOCKED_COLOR = COLORS.LIGHT_RED
     PL_COLOR = COLORS.GREEN
+
+    LATENCY_ANIMATION_SIZE = 100. / 16.
+
+    class PACKETS:
+        DEFAULT_SPEED = 1.0  # This a scaling factor for the connection speed - per packet
+        DECREASE_SPEED_BY = 0.8
 
     class WIRELESS:
         COLOR = COLORS.BLACK
@@ -672,17 +684,28 @@ class CONNECTIONS:
 
 
 class MODES:
-    NORMAL = 0  # the normal mode of the simulation
-    CONNECTING = 1  # The mode when we are connecting two computers (white on the edges)
-    VIEW = 2  # the mode when an object is pressed and we see it in the side window view
-    PINGING = 3  # the mode where we choose where a ping will be sent
+    NORMAL = 0            # The normal mode of the simulation
+    CONNECTING = 1        # The mode when we are connecting two computers (white on the edges)
+    VIEW = 2              # The mode when an object is pressed and we see it in the side window view
+    PINGING = 3           # The mode where we choose where a ping will be sent
+    FILE_DOWNLOADING = 4  # The mode where we choose which computer downloads a file from which
+
+    COMPUTER_CONNECTING_MODES = [
+        CONNECTING,
+        PINGING,
+        FILE_DOWNLOADING,
+    ]
 
     TO_COLORS = {
-        NORMAL: WINDOWS.SIDE.COLOR,
-        CONNECTING: COLORS.WHITE,
-        VIEW: WINDOWS.SIDE.COLOR,
-        PINGING: COLORS.PURPLE,
+        NORMAL:           WINDOWS.SIDE.COLOR,
+        VIEW:             WINDOWS.SIDE.COLOR,
+
+        CONNECTING:       COLORS.WHITE,
+        PINGING:          COLORS.PURPLE,
+        FILE_DOWNLOADING: COLORS.GREEN,
     }
+
+    COMPUTER_CONNECTING_MODES_LINE_TO_MOUSE_WIDTH = 2.5
 
 
 class CONSOLE:
@@ -733,7 +756,7 @@ class SHAPES:
         DEFAULT_FREQUENCY = 10
 
     class RECT:
-        DEFAULT_OUTLINE_WIDTH = 5
+        DEFAULT_OUTLINE_WIDTH = 1.0
 
     class PAUSE_RECT:
         WIDTH, HEIGHT = 10, 60

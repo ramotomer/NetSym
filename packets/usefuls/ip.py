@@ -26,8 +26,10 @@ def validate_fragments(fragments: List[Packet]) -> None:
         1. All fragments' lengths are divisible by 8 (except the last one)
         2. All fragments are of the same packet (with the same ip identification)
         3. All fragments except the last have the MORE_FRAGMENTS flag set
-        4. Fragments are sorted in the correct order, and all of them exist
+        4. Fragments match the lengths specified in their 'fragment offset's (the order does not matter)
     """
+    fragments = sorted(fragments, key=lambda p: p["IP"].fragment_offset)
+
     if not fragments:
         raise InvalidFragmentsError(f"Cannot reassemble fragments if none are given... Stupid! fragment list: {fragments}")
 
@@ -50,14 +52,25 @@ def validate_fragments(fragments: List[Packet]) -> None:
         length_until_now += (len(fragment["IP"].payload) // PROTOCOLS.IP.FRAGMENT_OFFSET_UNIT)
 
 
+def are_fragments_valid(fragments: List[Packet]) -> bool:
+    """
+    The same as `validate_fragments` but instead of raising an exception - return the result
+    """
+    try:
+        validate_fragments(fragments)
+    except InvalidFragmentsError:
+        return False
+    return True
+
+
 def reassemble_fragmented_packet(fragments: List[Packet]) -> Packet:
     """
     Take in a list of packets that are all of the fragments of a fragmented packet
     Reassemble them into one big packet and return it :)
     """
-    fragments = sorted(fragments, key=lambda p: p["IP"].fragment_offset)
     validate_fragments(fragments)
 
+    fragments =          sorted(fragments, key=lambda p: p["IP"].fragment_offset)
     ether_layer =        fragments[0].get_layer_by_name_no_payload("Ether")
     ip_layer =           fragments[0].get_layer_by_name_no_payload("IP")
     summed_ip_datas =    b''.join([fragment["IP"].payload.build() for fragment in fragments])

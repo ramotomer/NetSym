@@ -5,7 +5,7 @@ from collections import deque
 from dataclasses import dataclass
 from functools import reduce
 from operator import concat
-from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator
+from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator, Iterable
 
 import scapy
 
@@ -40,7 +40,8 @@ from gui.main_loop import MainLoop
 from gui.tech.computer_graphics import ComputerGraphics
 from packets.all import ICMP, IP, TCP, UDP, ARP
 from packets.usefuls.dns import T_Hostname, validate_domain_hostname, canonize_domain_hostname
-from packets.usefuls.ip import needs_fragmentation, fragment_packet, needs_reassembly, reassemble_fragmented_packet, allows_fragmentation
+from packets.usefuls.ip import needs_fragmentation, fragment_packet, needs_reassembly, reassemble_fragmented_packet, allows_fragmentation, \
+    are_fragments_valid
 from packets.usefuls.tcp import get_src_port, get_dst_port
 from packets.usefuls.usefuls import get_dst_ip
 from usefuls.funcs import get_the_one
@@ -151,6 +152,7 @@ class Computer:
         self._packet_sending_queues:   List[PacketSendingQueue] = []
         self._active_packet_fragments: List[ReturnedPacket]     = []
         self.icmp_sequence_number = 0
+        self._latest_ip_id = random.randint(0, PROTOCOLS.IP.MAX_IP_ID)
 
         MainLoop.instance.insert_to_loop_pausable(self.logic)
         # ^ method does not run when program is paused
@@ -391,7 +393,6 @@ class Computer:
         self._packet_sending_queues.clear()
         self.received.clear()
         self.received_raw.clear()
-        self.icmp_sequence_number = 0
 
     def on_startup(self) -> None:
         """
@@ -400,6 +401,9 @@ class Computer:
         """
         self.boot_time = MainLoop.instance.time()
         self.process_scheduler.run_startup_processes()
+
+        self.icmp_sequence_number = 0
+        self._latest_ip_id = random.randint(0, PROTOCOLS.IP.MAX_IP_ID)
 
     def garbage_cleanup(self) -> None:
         """
@@ -720,55 +724,68 @@ class Computer:
         """
         self.process_scheduler.start_process(mode, SendPing, destination, opcode, count, *args, **kwargs)
 
+    # --------------------------------------- v  IP fragmentation  v -----------------------------------------------------------
+
     def _send_fragment_ttl_exceeded(self, dst_mac: MACAddress, dst_ip: IPAddress) -> None:
         """
         Send an ICMP TTL exceeded for a fragmented packet that could be reassembled
         """
-        self.send_to(dst_mac, dst_ip, ICMP(
-            type=OPCODES.ICMP.TYPES.TIME_EXCEEDED,
-            code=OPCODES.ICMP.CODES.FRAGMENT_TTL_EXCEEDED))
+        self.send_packet_stream_to(
+            COMPUTER.PROCESSES.INIT_PID, COMPUTER.PROCESSES.MODES.KERNELMODE,
+            PROTOCOLS.IP.FRAGMENT_SENDING_INTERVAL,
+            dst_mac,
+            dst_ip,
+            ICMP(
+                type=OPCODES.ICMP.TYPES.TIME_EXCEEDED,
+                code=OPCODES.ICMP.CODES.FRAGMENT_TTL_EXCEEDED,
+            )
+        )
+
+    def _pop_fragments(self, fragments: Iterable[Packet]) -> None:
+        """
+        Remove from the `_active_packet_fragments` list all of the fragments supplied
+        """
+        for active_fragment in self._active_packet_fragments[:]:
+            for fragment in fragments:
+                if active_fragment.packet == fragment:
+                    self._active_packet_fragments.remove(active_fragment)
 
     def _handle_ip_fragments(self, returned_packet: ReturnedPacket) -> Optional[ReturnedPacket]:
         """
         Takes in a `ReturnedPacket` that maybe needs to be reassembled from IP fragments, and reassemble all fragments of it.
-            If the packet is not really a fragment - do nothing
-            If it has more fragments coming, store it and do nothing
+            If the packet is not really a fragment - do nothing and return it
+            If it has more fragments coming, store it and do nothing - return None
             If it is the last one - reassemble all fragments and return the new `ReturnedPacket` object that contains the united packet
-            If one of the fragments failed to arrive - drop the packet and send a FRAGMENT_TTL_EXCEEDED message
         """
         last_fragment, last_fragment_metadata = returned_packet.packet_and_metadata
         if not needs_reassembly(last_fragment) or not self.has_this_ip(get_dst_ip(returned_packet.packet)):
             return returned_packet
 
-        if last_fragment["IP"].flags & PROTOCOLS.IP.FLAGS.MORE_FRAGMENTS:
-            self._active_packet_fragments.append(returned_packet)
+        self._active_packet_fragments.append(returned_packet)
+        same_packet_fragments = [fragment.packet for fragment in self._active_packet_fragments if fragment.packet["IP"].id == last_fragment["IP"].id]
+        if not are_fragments_valid(same_packet_fragments):
             return None
 
-        fragments = []
-        for fragment in self._active_packet_fragments[:]:
-            if fragment.packet["IP"].id == last_fragment["IP"].id:
-                # for every relevant fragment, remove if from `_active_packet_fragments` and add to `fragments`
-                fragments.append(fragment.packet)
-                self._active_packet_fragments.remove(fragment)
-        fragments.append(last_fragment)
-
-        try:
-            return ReturnedPacket(reassemble_fragmented_packet(fragments), last_fragment_metadata)
-        except InvalidFragmentsError:
-            self._send_fragment_ttl_exceeded(fragments[0]["Ether"].src_mac, fragments[0]["IP"].src_ip)
-            return None
+        self._pop_fragments(same_packet_fragments)
+        return ReturnedPacket(reassemble_fragmented_packet(same_packet_fragments), last_fragment_metadata)
 
     def _forget_old_ip_fragments(self) -> None:
         """
-        Check all active ip fragments in the computer - delete the ones that are too old
+        Check all active ip fragments in the computer
+        Delete the ones that are too old
+        Send an ICMP fragment TTL exceeded for them
         """
-        for fragment in self._active_packet_fragments[:]:
+        active_ip_ids = {fragment.packet["IP"].id for fragment in self._active_packet_fragments}
+        for ip_id in active_ip_ids:
             latest_sibling_fragment = max(
-                [rp for rp in self._active_packet_fragments if rp.packet["IP"].id == fragment.packet["IP"].id],
+                [rp for rp in self._active_packet_fragments if rp.packet["IP"].id == ip_id],
                 key=lambda rp: rp.metadata.time,
             )
             if MainLoop.instance.time_since(latest_sibling_fragment.metadata.time) > PROTOCOLS.IP.FRAGMENT_DROP_TIMEOUT:
-                self._active_packet_fragments.remove(fragment)
+                fragment = None
+                for fragment in self._active_packet_fragments[:]:
+                    if fragment.packet["IP"].id == ip_id:
+                        self._active_packet_fragments.remove(fragment)
                 self._send_fragment_ttl_exceeded(fragment.packet["Ether"].src_mac, fragment.packet["IP"].src_ip)
 
     # --------------------------------------- v  DHCP and DNS  v -----------------------------------------------------------
@@ -903,7 +920,7 @@ class Computer:
         )
 
     def send_packet_stream_with_ethernet(self,
-                                         requesting_usermode_pid: int,
+                                         pid: int,
                                          mode: str,
                                          interval_between_packets: T_Time,
                                          dst_mac: MACAddress,
@@ -914,7 +931,7 @@ class Computer:
         """
         interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
         self.send_packet_stream(
-            requesting_usermode_pid, mode,
+            pid, mode,
             (interface.ethernet_wrap(dst_mac, data) for data in datas),
             interval_between_packets,
             interface,
@@ -928,7 +945,24 @@ class Computer:
         :param dst_ip: destination `IPAddress` of the packet
         :param packet: packet to wrap. Could be anything, should be something the destination computer expects.
         """
-        self.send(self.ip_wrap(dst_mac, dst_ip, packet, **kwargs))
+        self.send(self.ip_wrap(dst_mac, dst_ip, packet, id=self._latest_ip_id, **kwargs))
+        self._latest_ip_id = (self._latest_ip_id + 1) % (PROTOCOLS.IP.MAX_IP_ID + 1)
+
+    def send_packet_stream_to(self,
+                              pid: int,
+                              mode: str,
+                              interval_between_packets: T_Time,
+                              dst_mac: MACAddress,
+                              dst_ip: IPAddress,
+                              datas: List[Union[str, bytes, scapy.packet.Packet]]) -> None:
+        """
+        Just like `send_packet_stream` only applies `ethernet_wrap` on each of the packets
+        """
+        self.send_packet_stream(
+            pid, mode,
+            (self.ip_wrap(dst_mac, dst_ip, data) for data in datas),
+            interval_between_packets,
+        )
 
     def ip_wrap(self, dst_mac: MACAddress, dst_ip: IPAddress, protocol: scapy.packet.Packet, ttl: Optional[int] = None, **kwargs: Any) -> Packet:
         """
@@ -1082,7 +1116,7 @@ class Computer:
         return ip_for_the_mac, self.arp_cache[ip_for_the_mac].mac
 
     def send_packet_stream(self,
-                           requesting_usermode_pid: int,
+                           pid: int,
                            mode: str,
                            packets: Iterator[Packet],
                            interval_between_packets: T_Time,
@@ -1092,14 +1126,15 @@ class Computer:
         Send a large amount of packets that should be sent in quick succession one after the other
         This will make sure they are sent with the appropriate time gaps - in order to allow the user to see them
         """
-        existing_sending_queue = self.get_packet_sending_queue(requesting_usermode_pid, mode)
+        existing_sending_queue = self.get_packet_sending_queue(pid, mode)
         if existing_sending_queue is not None:
             existing_sending_queue.packets.extend(packets)
             return
+
         self._packet_sending_queues.append(
             PacketSendingQueue(
                 self,
-                requesting_usermode_pid,
+                pid,
                 mode,
                 deque(packets),
                 interval_between_packets,
@@ -1121,7 +1156,7 @@ class Computer:
         Remove PacketSendingQueues that have no running process attached to them
         """
         for packet_sending_queue in self._packet_sending_queues[:]:
-            if not self.process_scheduler.is_usermode_process_running(packet_sending_queue.pid) and \
+            if not self.process_scheduler.is_process_running(packet_sending_queue.pid, packet_sending_queue.process_mode) and \
                packet_sending_queue.pid != COMPUTER.PROCESSES.INIT_PID:
                 self._packet_sending_queues.remove(packet_sending_queue)
 

@@ -5,6 +5,7 @@ import json
 import operator
 import pprint
 import random
+import time
 from collections import defaultdict
 from functools import reduce
 from operator import concat, attrgetter
@@ -16,7 +17,7 @@ from address.ip_address import IPAddress
 from computing.computer import Computer
 from computing.internals.frequency import Frequency
 from computing.internals.interface import Interface
-from computing.internals.processes.usermode_processes.dns_process.zone import EXAMPLE, Zone
+from computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
 from computing.internals.processes.usermode_processes.stp_process import STPProcess
 from computing.internals.wireless_interface import WirelessInterface
 from computing.router import Router
@@ -157,12 +158,10 @@ class UserInterface:
             self.key_to_action[self.key_from_string(key_string)] = with_args(self.create_device, device)
 
         self.action_at_press_by_mode = {
-            MODES.NORMAL:     self.normal_mode_at_press,
-            MODES.VIEW:       self.normal_mode_at_press,
-            MODES.CONNECTING: self.start_device_visual_connecting,
-            MODES.PINGING:    self.start_device_visual_connecting,
+            MODES.NORMAL:           self.normal_mode_at_press,
+            MODES.VIEW:             self.normal_mode_at_press,
         }
-        # ^ maps what to do when the screen is pressed in each `mode`.
+        # ^ maps what to do when the screen is pressed in each `mode`.  (No need to put here modes that are one of MODES.COMPUTER_CONNECTING_MODES)
 
         self.saving_file_class_name_to_class = {
             class_.__name__: class_ for class_ in (Computer, Switch, Router, Hub, Antenna)
@@ -190,6 +189,9 @@ class UserInterface:
             ((with_args(DeviceCreationWindow, self), "create device (e)"), {"key": (key.E, KEYBOARD.MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.CONNECTING), "connect (c / ^c / Shift+c)"), {"key": (key.C, KEYBOARD.MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.PINGING), "ping (p / ^p / Shift+p)"), {"key": (key.P, KEYBOARD.MODIFIERS.NONE)}),
+            ((with_args(self.toggle_mode, MODES.FILE_DOWNLOADING),
+              "Start file download (Ctrl+Shift+a)"),
+             {"key": (key.A, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT)}),
             ((self.ask_for_dhcp, "ask for DHCP (shift+a)"), {"key": (key.A, KEYBOARD.MODIFIERS.SHIFT)}),
             ((self.start_all_stp, "start STP (ctrl+shift+s)"), {"key": (key.S, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT)}),
             ((self.delete_all_packets, "delete all packets (Shift+d)"), {"key": (key.D, KEYBOARD.MODIFIERS.SHIFT)}),
@@ -287,10 +289,8 @@ class UserInterface:
         self._stop_viewing_dead_packets()
         self._showcase_running_stp()
 
-        if self.mode == MODES.CONNECTING:
-            self._draw_connection_to_mouse(CONNECTIONS.COLOR)
-        elif self.mode == MODES.PINGING:
-            self._draw_connection_to_mouse(COLORS.PURPLE)
+        if self.mode in MODES.COMPUTER_CONNECTING_MODES:
+            self._draw_connection_to_mouse(MODES.TO_COLORS[self.mode])
 
     def _draw_connection_to_mouse(self, color: T_Color) -> None:
         """
@@ -301,7 +301,11 @@ class UserInterface:
         if self.source_of_line_drag is None:
             return
 
-        draw_line(self.source_of_line_drag.location, MainWindow.main_window.get_mouse_location(), color=color)
+        draw_line(
+            self.source_of_line_drag.location, MainWindow.main_window.get_mouse_location(),
+            color=color,
+            width=MODES.COMPUTER_CONNECTING_MODES_LINE_TO_MOUSE_WIDTH,
+        )
         self.source_of_line_drag.mark_as_selected_non_resizable()
 
         destination = self.get_object_the_mouse_is_on()
@@ -523,7 +527,7 @@ class UserInterface:
                 )
             self.start_object_view(self.selected_object)
 
-        else:  # new_mode == MODES.NORMAL
+        else:
             self.source_of_line_drag = None
             self.mode = new_mode
             self.end_object_view()
@@ -570,12 +574,17 @@ class UserInterface:
             if not button.is_hidden and button.is_mouse_in():
                 button.action()
                 break
-        else:
-            self.action_at_press_by_mode[self.mode]()
+        else:  # If not pressing on any buttons :)
+            action = self.action_at_press_by_mode.get(self.mode)
+            if action is None:
+                if self.mode not in MODES.COMPUTER_CONNECTING_MODES:
+                    raise UnknownModeError("No handler was set for this mode! What to do when the mouse is pressed?")
+
+                action = self.start_device_visual_connecting
+            action()
 
         if self.active_window is None:
             self._create_selecting_square()
-        # AnimationGraphics(ANIMATIONS.EXPLOSION, *MainWindow.main_window.get_mouse_location())  # for debugging
 
     def pin_active_window_to(self, direction) -> None:
         """
@@ -608,12 +617,14 @@ class UserInterface:
         if self.selecting_square is not None:
             MainLoop.instance.unregister_graphics_object(self.selecting_square)
             self.selecting_square = None
+            return
 
-        elif self.mode == MODES.CONNECTING:
-            self.end_device_visual_connecting(self.connect_devices)
-
-        elif self.mode == MODES.PINGING:
-            self.end_device_visual_connecting(self.send_direct_ping)
+        if self.mode in MODES.COMPUTER_CONNECTING_MODES:
+            self.end_device_visual_connecting({
+                MODES.CONNECTING:       self.connect_devices,
+                MODES.PINGING:          self.send_direct_ping,
+                MODES.FILE_DOWNLOADING: self.start_file_download,
+            }[self.mode])
 
     def on_key_pressed(self, symbol: int, modifiers: int) -> None:
         """
@@ -722,10 +733,14 @@ class UserInterface:
         :param action: a function that is called with the two devices.
         :return:
         """
+        if self.is_mouse_in_side_window():
+            return
+
         connected = self.get_object_the_mouse_is_on()
-        if self.is_mouse_in_side_window() or connected is None:
+        if connected is None:
             self.set_mode(MODES.NORMAL)
             return
+
         action(self.source_of_line_drag, connected)
         self.set_mode(MODES.NORMAL)
 
@@ -791,6 +806,18 @@ class UserInterface:
         if computer1.has_ip() and computer2.has_ip():
             computer1.start_ping_process(computer2.get_ip().string_ip)
 
+    @staticmethod
+    def start_file_download(computer_graphics1: ComputerGraphics, computer_graphics2: ComputerGraphics) -> None:
+        """
+        Make `computer1` start downloading a file from `computer2`.
+        If one of them does not have an IP address, do nothing.
+        :param computer_graphics1:
+        :param computer_graphics2: The `ComputerGraphics` objects to send a ping between computers.
+        """
+        computer1, computer2 = computer_graphics1.computer, computer_graphics2.computer
+        if computer1.has_ip() and computer2.has_ip():
+            computer1.process_scheduler.start_usermode_process(ClientFTPProcess, computer2.get_ip().string_ip)
+
     def send_random_ping(self) -> None:
         """
         Sends a ping from a random computer to another random computer (both with IP addresses).
@@ -816,9 +843,10 @@ class UserInterface:
 
         self.selected_object = None
         self.dragged_object = None
+        self.active_window = None
 
-        for connection, _, _ in self.connection_data:
-            MainLoop.instance.remove_from_loop(connection.move_packets)
+        for connection_data in self.connection_data:
+            MainLoop.instance.remove_from_loop(connection_data.connection.move_packets)
 
         for computer in self.computers:
             MainLoop.instance.remove_from_loop(computer.logic)
@@ -826,6 +854,7 @@ class UserInterface:
         self.computers.clear()
         self.connection_data.clear()
         self.frequencies.clear()
+        self.popup_windows.clear()
         self.set_mode(MODES.NORMAL)
 
         if reset_saving_file:
@@ -950,9 +979,8 @@ class UserInterface:
         all_sent_packets = functools.reduce(operator.concat, map(operator.attrgetter("sent_packets"), all_connections))
 
         for sent_packet in all_sent_packets:
-            packet = sent_packet[0]
-            if packet.graphics is graphics_object:
-                return packet
+            if sent_packet.packet.graphics is graphics_object:
+                return sent_packet.packet
         return None
 
     def drop_packet(self, packet_graphics: PacketGraphics) -> None:
@@ -1035,25 +1063,20 @@ class UserInterface:
         Prints out lots of useful information for debugging.
         :return: None
         """
+        self.learn_all_macs()
+        print(f"\n{' debugging info ':-^100}")
+        print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
 
-        # print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
         def gos() -> List[GraphicsObject]:
-            return [go for go in MainLoop.instance.graphics_objects if not isinstance(go, UserInterfaceGraphicsObject)]
+            return [go for go in MainLoop.instance.graphics_objects if not isinstance(go, (Button, Text))]
 
-        zonefile = Zone.from_file_format(EXAMPLE)
-        str_zonefile = zonefile.to_file_format()
-
-        print(MainWindow.main_window.get_mouse_location())
+        print(f"Mouse location: {MainWindow.main_window.get_mouse_location()}\n")
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
-        goes = list(filter(lambda go: not isinstance(go, UserInterfaceGraphicsObject), MainLoop.instance.graphics_objects))
-        pprint.pprint(f"graphicsObject-s (no buttons or texts): {goes}")
-        print(f"computers, {len(self.computers)}, connections, {len(self.connection_data)},"
+        pprint.pprint(f"graphicsObject-s (no buttons or texts): ")
+        pprint.pprint(gos())
+        print(f"\ncomputers, {len(self.computers)}, connections, {len(self.connection_data)}, "
               f"packets: {len(list(filter(lambda go: isinstance(go, PacketGraphics), MainLoop.instance.graphics_objects)))}")
-        print(f"running processes: ", end='')
-        # for computer in self.computers:
-        #     processes = [f"{waiting_process.process} of {computer}" for waiting_process in computer.waiting_processes]
-        #     if processes:
-        #         print(processes, end=' ')
+
         print()
         if self.selected_object is not None and isinstance(self.selected_object, ComputerGraphics):
             computer = self.selected_object.computer
@@ -1119,6 +1142,7 @@ class UserInterface:
         :return: None
         """
         for switch in filter(lambda computer: isinstance(computer, Switch), self.computers):
+            switch: Switch
             if switch.stp_enabled:
                 switch.start_stp()
 
@@ -1152,7 +1176,8 @@ class UserInterface:
         if not isinstance(self.selected_object, ComputerGraphics):
             return
 
-        self.send_direct_ping(self.selected_object, self.selected_object)
+        selected_computer_graphics: ComputerGraphics = self.selected_object
+        self.send_direct_ping(selected_computer_graphics, selected_computer_graphics)
 
     def _showcase_running_stp(self) -> None:
         """
@@ -1283,6 +1308,21 @@ class UserInterface:
         del self.buttons[buttons_id]
         del self.buttons[buttons_id + 1]
 
+    def learn_all_macs(self) -> None:
+        """
+        Adds every computer every other computer's MAC and IP address mapping to its ARP cache
+        """
+        for computer in self.computers:
+            for other_computer in self.computers:
+                if other_computer is computer:
+                    continue
+
+                for interface in other_computer.interfaces:
+                    if not interface.has_ip():
+                        continue
+
+                    computer.arp_cache.add_dynamic(interface.ip, interface.mac)
+
     def add_tcp_test(self) -> None:
         """
         Adds the computers that i create every time i do a test for TCP processes. saves time.
@@ -1305,6 +1345,8 @@ class UserInterface:
             computer.domain = DEFAULT_DOMAIN
             computer.dns_server = server.get_ip()
             server.add_dns_entry(f"{computer.name}.{DEFAULT_DOMAIN} {computer.get_ip().string_ip}")
+
+        self.learn_all_macs()
 
     def register_window(self, window: PopupWindow, *buttons: Button) -> None:
         """
@@ -1338,7 +1380,7 @@ class UserInterface:
         try:
             self.popup_windows.remove(window)
         except ValueError:
-            raise WrongUsageError("The window is not registered in the UserInterface!!!")
+            raise WrongUsageError("The window is not registered in the UserInterface!!!")  # TODO: change exception type to be more specific
 
         if self.active_window is window:
             self.active_window = None
@@ -1610,8 +1652,8 @@ class UserInterface:
         :param new_speed:
         :return:
         """
-        for connection, _, _ in self.connection_data:
-            connection.set_speed(new_speed)
+        for connection_data in self.connection_data:
+            connection_data.connection.set_speed(new_speed)
 
     def color_by_subnets(self) -> None:
         """

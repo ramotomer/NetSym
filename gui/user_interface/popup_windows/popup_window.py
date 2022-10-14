@@ -273,5 +273,5 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.resize(*self._size_before_pinning)
         self._pinned_directions = set()
 
-    def __str__(self) -> str:
-        return f"PopupWindow(title='{self.child_graphics_objects[0].text}')"
+    def __repr__(self) -> str:
+        return f"<< PopupWindow(title='{self.child_graphics_objects[0].text}') >>"

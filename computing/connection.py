@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import random
-from typing import NamedTuple, TYPE_CHECKING, List
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, List
 
 from consts import *
 from exceptions import ConnectionsError
@@ -14,14 +15,18 @@ if TYPE_CHECKING:
     from gui.tech.computer_graphics import ComputerGraphics
 
 
-class SentPacket(NamedTuple):
+@dataclass
+class SentPacket:
     """
     a packet that is currently being sent through the connection.
     """
-    packet:       Packet
-    sending_time: T_Time
-    direction:    str
-    is_dropped:   bool
+    packet:           Packet
+    sending_time:     T_Time
+    direction:        str
+    will_be_dropped:  bool
+    will_be_delayed:  bool
+
+    last_update_time: T_Time = field(default_factory=MainLoop.get_instance_time)
 
 
 class Connection:
@@ -41,7 +46,9 @@ class Connection:
     def __init__(self,
                  length: float = CONNECTIONS.DEFAULT_LENGTH,
                  speed: float = CONNECTIONS.DEFAULT_SPEED,
-                 packet_loss: float = 0) -> None:
+                 packet_loss: float = 0,
+                 latency: float = 0,
+                 ) -> None:
         """
         Initiates a Connection object.
 
@@ -52,8 +59,7 @@ class Connection:
         """
         self.speed = speed
         self.initial_length = length
-        self.sent_packets = []
-        # ^ a list of `SentPacket`-s which represent packets that are currently being sent through the connection
+        self.sent_packets: List[SentPacket] = []  # represents the packets that are currently being sent through the connection
 
         self.right_side, self.left_side = ConnectionSide(self), ConnectionSide(self)
 
@@ -64,6 +70,7 @@ class Connection:
         self.is_blocked = False
 
         self.packet_loss = packet_loss
+        self.latency = latency
 
         MainLoop.instance.insert_to_loop_pausable(self.move_packets)
 
@@ -103,8 +110,19 @@ class Connection:
         """Sets the PL amount of this connection"""
         if not (0 <= new_pl <= 1):
             raise ConnectionsError(f"A connection cannot have this PL amount!!! {new_pl}")
+
         self.packet_loss = new_pl
-        self.graphics.update_color_by_pl(new_pl)
+        self.graphics.update_appearance()
+
+    def set_latency(self, new_latency: float) -> None:
+        """
+        Set amount of latency the connection has
+        """
+        if not (0 <= new_latency <= 1):
+            raise ConnectionsError(f"A connection cannot have this PL amount!!! {new_pl}")
+
+        self.latency = new_latency
+        self.graphics.update_appearance()
 
     def mark_as_blocked(self) -> None:
         """
@@ -133,8 +151,15 @@ class Connection:
 
         :direction: the direction the packet is going to (PACKET.DIRECTION.RIGHT or PACKET.DIRECTION.LEFT)
         """
-        is_dropped = (random.random() < self.packet_loss)
-        self.sent_packets.append(SentPacket(packet, MainLoop.instance.time(), direction, is_dropped))
+        self.sent_packets.append(
+            SentPacket(
+                packet,
+                MainLoop.instance.time(),
+                direction,
+                will_be_dropped=(random.random() < self.packet_loss),
+                will_be_delayed=(random.random() < self.latency),
+            )
+        )
         packet.show(self.graphics, direction)  # initiate the `GraphicsObject` of the packet.
 
     def reach_destination(self, sent_packet: SentPacket) -> None:
@@ -143,8 +168,9 @@ class Connection:
         This is called when the packet finished its route through this connection and is ready to be received at the
         connected `Interface`.
         """
-        packet, _, direction, _ = sent_packet
+        packet, direction = sent_packet.packet, sent_packet.direction
         MainLoop.instance.unregister_graphics_object(packet.graphics)
+
         if direction == PACKET.DIRECTION.RIGHT:
             self.right_side.packets_to_receive.append(packet)
         elif direction == PACKET.DIRECTION.LEFT:
@@ -176,12 +202,12 @@ class Connection:
         :param sent_packet: a `SentPacket`
         :return: None
         """
-        packet_travel_percent = MainLoop.instance.time_since(sent_packet.sending_time) / self.deliver_time
+        sent_packet.packet.graphics.progress += \
+            (MainLoop.instance.time_since(sent_packet.last_update_time) / self.deliver_time) * sent_packet.packet.graphics.speed
+        sent_packet.last_update_time = MainLoop.instance.time()
 
-        if packet_travel_percent >= 1:
+        if sent_packet.packet.graphics.progress >= 1:
             self.reach_destination(sent_packet)
-        else:
-            sent_packet.packet.graphics.progress = packet_travel_percent
 
     def move_packets(self) -> None:
         """
@@ -197,28 +223,38 @@ class Connection:
         for sent_packet in self.sent_packets[:]:  # we copy the list because we alter it during the run
             self._update_packet(sent_packet)
 
-        self._drop_packets()  # drops the packets that were chosen by the random PL (packet loss)
+        self._drop_predetermined_dropped_packets()  # drops the packets that were chosen by the random PL (packet loss)
+        self._delay_predetermined_delayed_packets()
 
-    def _drop_packets(self) -> None:
+    def _drop_predetermined_dropped_packets(self) -> None:
         """
         Goes through the packets that are being sent, When they reach the middle of the connection, check if they need
         to be dropped (by PL) if so, remove them from the list, and do the animation.
         :return: None
         """
         for sent_packet in self.sent_packets[:]:
-            packet_travel_percent = MainLoop.instance.time_since(sent_packet.sending_time) / self.deliver_time
-            if sent_packet.is_dropped and packet_travel_percent >= (random.random()+0.3):
+            if sent_packet.will_be_dropped and sent_packet.packet.graphics.progress >= (random.random() + 0.3):
                 self.sent_packets.remove(sent_packet)
                 sent_packet.packet.graphics.drop()
+
+    def _delay_predetermined_delayed_packets(self) -> None:
+        """
+        Goes through the packets that are being sent, When they reach the middle of the connection, check if they need
+        to be dropped (by PL) if so, remove them from the list, and do the animation.
+        :return: None
+        """
+        for sent_packet in self.sent_packets:
+            if sent_packet.will_be_delayed and sent_packet.packet.graphics.progress >= (random.random() + 0.3):
+                sent_packet.packet.graphics.decrease_speed()
+                sent_packet.will_be_delayed = False
 
     def stop_packets(self) -> None:
         """
         This is used to stop all of the action in the connection.
         Kills all of the packets in the connection and unregisters their `GraphicsObject`-s
-        :return: None
         """
-        for packet, _, _, _ in self.sent_packets:
-            MainLoop.instance.unregister_graphics_object(packet.graphics)
+        for sent_packet in self.sent_packets:
+            MainLoop.instance.unregister_graphics_object(sent_packet.packet.graphics)
         self.sent_packets.clear()
 
     def __repr__(self) -> str:

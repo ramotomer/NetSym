@@ -311,12 +311,6 @@ class ComputerGraphics(ImageGraphics):
         super(ComputerGraphics, self).resize(width_diff, height_diff, constrain_proportions)
         self.update_text_location()
 
-    def __str__(self) -> str:
-        return f"ComputerGraphics ({self.computer.name})"
-
-    def __repr__(self) -> str:
-        return f"ComputerGraphics of computer '{self.computer}'"
-
     def dict_save(self) -> Dict:
         """
         Save the computer object with all of its attributes to tex
@@ -347,3 +341,9 @@ class ComputerGraphics(ImageGraphics):
         super(ComputerGraphics, self).delete(user_interface)
         user_interface.remove_computer(self.computer)
         user_interface.delete_connections_to(self.computer)
+
+    def __str__(self) -> str:
+        return f"ComputerGraphics ({self.computer.name})"
+
+    def __repr__(self) -> str:
+        return f"<< ComputerGraphics of computer '{self.computer}' >>"

@@ -5,7 +5,7 @@ from math import sqrt
 from typing import NamedTuple, TYPE_CHECKING, List
 
 from computing.connection import Connection, ConnectionSide
-from consts import CONNECTIONS, T_Time
+from consts import CONNECTIONS, T_Time, T_Color
 from exceptions import NoSuchConnectionSideError
 from gui.main_loop import MainLoop
 from gui.main_window import MainWindow
@@ -28,6 +28,8 @@ class Frequency(Connection):
     A Wifi connection is a frequency on which the antennas transmit.
     It is a global object, since you do not need
     """
+    sent_packets: List[SentWirelessPacket]
+
     def __init__(self, frequency: float) -> None:
         width, height = MainWindow.main_window.width, MainWindow.main_window.height
         longest_line_in_screen = sqrt((width ** 2) + (height ** 2))
@@ -40,7 +42,7 @@ class Frequency(Connection):
 
         self.sent_packet_id = 0
 
-        self.color = (random.randint(0, 150), random.randint(0, 150), random.randint(0, 150))
+        self.color: T_Color = (random.randint(0, 150), random.randint(0, 150), random.randint(0, 150))
 
     @property
     def length(self) -> float:
@@ -110,7 +112,7 @@ class Frequency(Connection):
         :param sent_packet: a `SentPacket` namedtuple.
         :return: None
         """
-        wireless_packet = sent_packet[0]
+        wireless_packet = sent_packet.packet
 
         for side in self.connection_sides:
             location = side.wireless_interface.graphics.location
@@ -127,8 +129,7 @@ class Frequency(Connection):
         :param sent_packet: a `SentPacket`
         :return:
         """
-        packet = sent_packet[0]
-        MainLoop.instance.unregister_graphics_object(packet.graphics)
+        MainLoop.instance.unregister_graphics_object(sent_packet.packet.graphics)
         self.sent_packets.remove(sent_packet)
 
     def _send_packets_from_side(self, side: FrequencyConnectionSide) -> None:
@@ -172,16 +173,6 @@ class Frequency(Connection):
         for sent_packet in self.sent_packets[:]:  # we copy the list because we alter it during the run
             self._update_packet(sent_packet)
             self._reach_destinations(sent_packet)
-
-    def stop_packets(self) -> None:
-        """
-        This is used to stop all of the action in the connection.
-        Kills all of the packets in the connection and unregisters their `GraphicsObject`-s
-        :return: None
-        """
-        for packet, _, _ in self.sent_packets:
-            MainLoop.instance.unregister_graphics_object(packet.graphics)
-        self.sent_packets.clear()
 
     def __repr__(self) -> str:
         """The ip_layer representation of the connection"""

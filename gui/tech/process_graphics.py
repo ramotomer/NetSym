@@ -132,8 +132,11 @@ class ProcessGraphics(ImageGraphics):
         self.y = self.server_graphics.y + pad_y + (self.process_index * IMAGES.PROCESSES.GAP)
         super(ProcessGraphics, self).move()
 
+    def __str__(self) -> str:
+        return "ProcessGraphics"
+
     def __repr__(self) -> str:
-        return f"Process Graphics {self.port}"
+        return f"<< ProcessGraphics of port {self.port} on computer {self.server_graphics.computer.name!r} >>"
 
     def dict_save(self) -> None:
         pass

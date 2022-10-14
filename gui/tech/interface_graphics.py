@@ -150,9 +150,6 @@ class InterfaceGraphics(ViewableGraphicsObject):
             outline_color=SELECTED_OBJECT.COLOR,
         )
 
-    def __repr__(self) -> str:
-        return f"Interface Graphics ({self.interface.name})"
-
     def dict_save(self) -> Dict:
         """
         Save the interface as a dict that can be later reconstructed to a new interface
@@ -176,3 +173,9 @@ class InterfaceGraphics(ViewableGraphicsObject):
         """
         super(InterfaceGraphics, self).delete(user_interface)
         user_interface.remove_interface(self.interface)
+
+    def __str__(self) -> str:
+        return "InterfaceGraphics"
+
+    def __repr__(self) -> str:
+        return f"<< InterfaceGraphics of interface {self.interface.name!r} in computer {self.computer_graphics.computer.name!r} >>"

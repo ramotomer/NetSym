@@ -48,7 +48,7 @@ class SelectingSquare(GraphicsObject):
         :return:
         """
         mouse_location = MainWindow.main_window.get_mouse_location()
-        draw_rect_by_corners(self.location, mouse_location, outline_color=SELECTION_SQUARE.COLOR)
+        draw_rect_by_corners(self.location, mouse_location, outline_color=SELECTION_SQUARE.COLOR, outline_width=1)
 
     def __contains__(self, item: Union[Tuple[float, float], ImageGraphics]) -> bool:
         """
