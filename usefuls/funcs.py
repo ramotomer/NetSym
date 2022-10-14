@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import cmath
 import datetime
+import random
 import re
 from contextlib import contextmanager
 from functools import reduce
@@ -17,6 +18,15 @@ T = TypeVar("T")
 K = TypeVar("K")
 K2 = TypeVar("K2")
 V = TypeVar("V")
+
+
+def rangom(start: float, end: float = 1.0) -> float:
+    """
+    random range - rangom (shit name but too good to not use it)
+
+    Like random.random only with not from 0.0 to 1.0 - but with your custom range :)
+    """
+    return (random.random() + start) / (1 + end)
 
 
 def get_the_one(iterable: Iterable[T],

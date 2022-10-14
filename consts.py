@@ -537,10 +537,11 @@ class VIEW:
 
 class ANIMATIONS:
     EXPLOSION = "explosion.png"
+    LATENCY =   "latency.png"
 
     SIZE = 16
 
-    FRAME_RATE = 1 / 15.
+    FRAME_RATE = 1 / 15.  # second per frame
     X_COUNT, Y_COUNT = 5, 3
 
 
@@ -658,16 +659,18 @@ class CONNECTIONS:
     MOUSE_TOUCH_SENSITIVITY = 5  # pixels
 
     DEFAULT_WIDTH = 2
-    LATENCY_WIDTH = 5
+    LATENCY_WIDTH = 7
 
     COLOR = COLORS.BLACK
     SELECTED_COLOR = COLORS.LIGHT_BLUE
     BLOCKED_COLOR = COLORS.LIGHT_RED
     PL_COLOR = COLORS.GREEN
 
+    LATENCY_ANIMATION_SIZE = 100. / 16.
+
     class PACKETS:
         DEFAULT_SPEED = 1.0  # This a scaling factor for the connection speed - per packet
-        DECREASE_SPEED_BY = 0.9
+        DECREASE_SPEED_BY = 0.8
 
     class WIRELESS:
         COLOR = COLORS.BLACK
