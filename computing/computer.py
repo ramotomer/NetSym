@@ -741,10 +741,9 @@ class Computer:
     def _handle_ip_fragments(self, returned_packet: ReturnedPacket) -> Optional[ReturnedPacket]:
         """
         Takes in a `ReturnedPacket` that maybe needs to be reassembled from IP fragments, and reassemble all fragments of it.
-            If the packet is not really a fragment - do nothing
-            If it has more fragments coming, store it and do nothing
+            If the packet is not really a fragment - do nothing and return it
+            If it has more fragments coming, store it and do nothing - return None
             If it is the last one - reassemble all fragments and return the new `ReturnedPacket` object that contains the united packet
-            If one of the fragments failed to arrive - drop the packet and send a FRAGMENT_TTL_EXCEEDED message
         """
         last_fragment, last_fragment_metadata = returned_packet.packet_and_metadata
         if not needs_reassembly(last_fragment) or not self.has_this_ip(get_dst_ip(returned_packet.packet)):
