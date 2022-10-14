@@ -11,9 +11,6 @@ if TYPE_CHECKING:
     from computing.computer import Computer
 
 
-# TODO: why do servers do not answer SYNs sometimes?????
-
-
 class ClientFTPProcess(Process):
     """
     The client side process
