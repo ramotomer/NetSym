@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import reduce
 from operator import ior as binary_or
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING
 
 import pyWinhook
 

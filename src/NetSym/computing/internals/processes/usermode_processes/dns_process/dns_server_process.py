@@ -5,14 +5,12 @@ import struct
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict
 
-import scapy
-
 from address.ip_address import IPAddress
 from computing.internals.filesystem.file import File
 from computing.internals.processes.abstracts.process import Process, T_ProcessCode, WaitingFor
 from computing.internals.processes.usermode_processes.dns_process.dns_client_process import DNSClientProcess
 from computing.internals.processes.usermode_processes.dns_process.zone import Zone, ZoneRecord
-from consts import PORTS, T_Port, OPCODES
+from consts import PORTS, T_Port
 from exceptions import DNSRouteNotFound, WrongUsageError, NoSuchFileError
 from packets.all import DNS
 from packets.usefuls.dns import *
