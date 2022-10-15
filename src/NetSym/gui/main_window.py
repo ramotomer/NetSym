@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING
 
 import pyWinhook
 
-from consts import *
-from gui.main_loop import MainLoop
-from usefuls.funcs import normal_color_to_weird_gl_color
-from usefuls.paths import add_path_basename_if_needed
+from NetSym.consts import *
+from NetSym.gui.main_loop import MainLoop
+from NetSym.usefuls.funcs import normal_color_to_weird_gl_color
+from NetSym.usefuls.paths import add_path_basename_if_needed
 
 if TYPE_CHECKING:
-    from gui.user_interface.user_interface import UserInterface
+    from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 class MainWindow(pyglet.window.Window):

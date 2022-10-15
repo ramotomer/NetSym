@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 
 import scapy
 
-from consts import OPCODES, TCPFlag
-from packets.usefuls.usefuls import get_packet_attribute
+from NetSym.consts import OPCODES, TCPFlag
+from NetSym.packets.usefuls.usefuls import get_packet_attribute
 
 if TYPE_CHECKING:
-    from packets.packet import Packet
+    from NetSym.packets.packet import Packet
 
 
 def get_dominant_tcp_flag(tcp: scapy.packet.Packet) -> TCPFlag:

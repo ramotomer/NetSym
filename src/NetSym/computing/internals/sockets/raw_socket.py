@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, List, Callable
 
-from computing.internals.interface import Interface
-from computing.internals.sockets.socket import Socket
-from consts import COMPUTER, INTERFACES
-from exceptions import RawSocketError
+from NetSym.computing.internals.interface import Interface
+from NetSym.computing.internals.sockets.socket import Socket
+from NetSym.consts import COMPUTER, INTERFACES
+from NetSym.exceptions import RawSocketError
 
 if TYPE_CHECKING:
-    from packets.packet import Packet
-    from computing.internals.processes.abstracts.process import ReturnedPacket
-    from computing.computer import Computer
+    from NetSym.packets.packet import Packet
+    from NetSym.computing.internals.processes.abstracts.process import ReturnedPacket
+    from NetSym.computing.computer import Computer
 
 
 class RawSocket(Socket):

@@ -2,21 +2,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Optional
 
-from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, WaitingFor, Timeout
-from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_InvalidParameters, \
+from NetSym.address.ip_address import IPAddress
+from NetSym.computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, WaitingFor, Timeout
+from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_InvalidParameters, \
     ProcessInternalError_PacketTooLongButDoesNotAllowFragmentation
-from consts import OPCODES, PROTOCOLS
-from exceptions import *
-from exceptions import NoIPAddressError, WrongUsageError
-from packets.usefuls.dns import T_Hostname, validate_domain_hostname
-from packets.usefuls.icmp import get_icmp_data
-from usefuls.funcs import my_range
+from NetSym.consts import OPCODES, PROTOCOLS
+from NetSym.exceptions import *
+from NetSym.exceptions import NoIPAddressError, WrongUsageError
+from NetSym.packets.usefuls.dns import T_Hostname, validate_domain_hostname
+from NetSym.packets.usefuls.icmp import get_icmp_data
+from NetSym.usefuls.funcs import my_range
 
 if TYPE_CHECKING:
-    from address.mac_address import MACAddress
-    from packets.packet import Packet
-    from computing.computer import Computer
+    from NetSym.address.mac_address import MACAddress
+    from NetSym.packets.packet import Packet
+    from NetSym.computing.computer import Computer
 
 
 class SendPing(Process):

@@ -6,17 +6,17 @@ from typing import TYPE_CHECKING, Tuple, Optional
 import scapy
 from scapy.layers.dns import dnstypes
 
-from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode
-from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_DNSNameErrorFromServer, \
+from NetSym.address.ip_address import IPAddress
+from NetSym.computing.internals.processes.abstracts.process import Process, T_ProcessCode
+from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_DNSNameErrorFromServer, \
     ProcessInternalError_NoResponseForDNSQuery
-from consts import OPCODES, PROTOCOLS, T_Time, T_Port, PORTS
-from packets.all import DNS
-from packets.usefuls.dns import list_to_dns_query, DNSQueryRecord
+from NetSym.consts import OPCODES, PROTOCOLS, T_Time, T_Port, PORTS
+from NetSym.packets.all import DNS
+from NetSym.packets.usefuls.dns import list_to_dns_query, DNSQueryRecord
 
 if TYPE_CHECKING:
-    from computing.internals.sockets.udp_socket import UDPSocket
-    from computing.computer import Computer
+    from NetSym.computing.internals.sockets.udp_socket import UDPSocket
+    from NetSym.computing.computer import Computer
 
 
 class DNSClientProcess(Process):

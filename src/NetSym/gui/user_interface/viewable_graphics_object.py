@@ -5,10 +5,10 @@ from typing import Optional, Dict, Callable, TYPE_CHECKING, Tuple, Any
 
 import pyglet
 
-from gui.abstracts.graphics_object import GraphicsObject
+from NetSym.gui.abstracts.graphics_object import GraphicsObject
 
 if TYPE_CHECKING:
-    from gui.user_interface.user_interface import UserInterface
+    from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 class ViewableGraphicsObject(GraphicsObject, metaclass=ABCMeta):

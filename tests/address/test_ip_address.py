@@ -1,7 +1,7 @@
 import pytest
 
 from NetSym.address.ip_address import IPAddress
-from exceptions import AddressTooLargeError
+from NetSym.exceptions import AddressTooLargeError
 
 
 @pytest.mark.parametrize(
@@ -37,7 +37,7 @@ def test_is_same_subnet(ip1, ip2, expected):
     assert (IPAddress(ip1).is_same_subnet(IPAddress(ip2))) is expected
 
 
-# TODO: test is broadcast
+# TODO: test is_broadcast
 
 
 @pytest.mark.parametrize(

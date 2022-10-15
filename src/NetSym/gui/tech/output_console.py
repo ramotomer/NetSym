@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Tuple, NamedTuple
 
-from consts import CONSOLE, TEXT
-from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
-from gui.main_loop import MainLoop
-from gui.shape_drawing import draw_rectangle
-from gui.user_interface.text_graphics import Text
+from NetSym.consts import CONSOLE, TEXT
+from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
+from NetSym.gui.main_loop import MainLoop
+from NetSym.gui.shape_drawing import draw_rectangle
+from NetSym.gui.user_interface.text_graphics import Text
 
 
 class ChildGraphicsObjects(NamedTuple):

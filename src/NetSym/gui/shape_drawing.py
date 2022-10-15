@@ -5,9 +5,9 @@ from itertools import chain
 from operator import itemgetter
 from typing import Optional, Generator
 
-from consts import *
-from exceptions import *
-from usefuls.funcs import circular_coordinates, sine_wave_coordinates, lighten_color, darken_color, \
+from NetSym.consts import *
+from NetSym.exceptions import *
+from NetSym.usefuls.funcs import circular_coordinates, sine_wave_coordinates, lighten_color, darken_color, \
     normal_color_to_weird_gl_color
 
 drawing_parameters = {

@@ -4,17 +4,17 @@ import random
 from math import sqrt
 from typing import NamedTuple, TYPE_CHECKING, List
 
-from computing.connection import Connection, ConnectionSide
-from consts import CONNECTIONS, T_Time, T_Color
-from exceptions import NoSuchConnectionSideError
-from gui.main_loop import MainLoop
-from gui.main_window import MainWindow
-from packets.packet import Packet
-from packets.wireless_packet import WirelessPacket
-from usefuls.funcs import distance
+from NetSym.computing.connection import Connection, ConnectionSide
+from NetSym.consts import CONNECTIONS, T_Time, T_Color
+from NetSym.exceptions import NoSuchConnectionSideError
+from NetSym.gui.main_loop import MainLoop
+from NetSym.gui.main_window import MainWindow
+from NetSym.packets.packet import Packet
+from NetSym.packets.wireless_packet import WirelessPacket
+from NetSym.usefuls.funcs import distance
 
 if TYPE_CHECKING:
-    from computing.internals.wireless_interface import WirelessInterface
+    from NetSym.computing.internals.wireless_interface import WirelessInterface
 
 
 class SentWirelessPacket(NamedTuple):

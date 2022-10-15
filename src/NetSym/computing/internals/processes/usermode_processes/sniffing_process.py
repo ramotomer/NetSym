@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Optional
 
-from computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode
-from consts import INTERFACES
-from exceptions import SocketIsClosedError
+from NetSym.computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode
+from NetSym.consts import INTERFACES
+from NetSym.exceptions import SocketIsClosedError
 
 if TYPE_CHECKING:
-    from packets.packet import Packet
-    from computing.internals.interface import Interface
-    from computing.computer import Computer
+    from NetSym.packets.packet import Packet
+    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.computer import Computer
 
 
 class SniffingProcess(Process):

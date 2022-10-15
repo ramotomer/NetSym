@@ -2,17 +2,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Dict, Callable
 
-from consts import *
-from gui.abstracts.image_graphics import ImageGraphics
-from gui.main_window import MainWindow
-from gui.shape_drawing import draw_circle, draw_rectangle
-from gui.tech.packet_graphics import PacketGraphics
-from gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
-from usefuls.funcs import distance
+from NetSym.consts import *
+from NetSym.gui.abstracts.image_graphics import ImageGraphics
+from NetSym.gui.main_window import MainWindow
+from NetSym.gui.shape_drawing import draw_circle, draw_rectangle
+from NetSym.gui.tech.packet_graphics import PacketGraphics
+from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
+from NetSym.usefuls.funcs import distance
 
 if TYPE_CHECKING:
-    from gui.user_interface.user_interface import UserInterface
-    from computing.internals.frequency import Frequency
+    from NetSym.gui.user_interface.user_interface import UserInterface
+    from NetSym.computing.internals.frequency import Frequency
 
 
 class WirelessPacketGraphics(ViewableGraphicsObject):

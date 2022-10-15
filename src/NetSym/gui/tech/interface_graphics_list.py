@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from consts import INTERFACES
-from exceptions import NoSuchInterfaceError
-from gui.abstracts.graphics_object import GraphicsObject
-from gui.tech.interface_graphics import InterfaceGraphics
-from gui.tech.wireless_interface_graphics import WirelessInterfaceGraphics
-from usefuls.funcs import circular_coordinates
+from NetSym.consts import INTERFACES
+from NetSym.exceptions import NoSuchInterfaceError
+from NetSym.gui.abstracts.graphics_object import GraphicsObject
+from NetSym.gui.tech.interface_graphics import InterfaceGraphics
+from NetSym.gui.tech.wireless_interface_graphics import WirelessInterfaceGraphics
+from NetSym.usefuls.funcs import circular_coordinates
 
 if TYPE_CHECKING:
-    from computing.internals.interface import Interface
-    from gui.tech.computer_graphics import ComputerGraphics
+    from NetSym.computing.internals.interface import Interface
+    from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
 class InterfaceGraphicsList(GraphicsObject):

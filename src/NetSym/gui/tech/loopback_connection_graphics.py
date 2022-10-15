@@ -3,13 +3,13 @@ from __future__ import annotations
 from math import pi, sin, cos
 from typing import TYPE_CHECKING, Iterable
 
-from consts import *
-from gui.shape_drawing import draw_circle
-from gui.tech.connection_graphics import ConnectionGraphics
+from NetSym.consts import *
+from NetSym.gui.shape_drawing import draw_circle
+from NetSym.gui.tech.connection_graphics import ConnectionGraphics
 
 if TYPE_CHECKING:
-    from computing.connection import Connection
-    from gui.tech.computer_graphics import ComputerGraphics
+    from NetSym.computing.connection import Connection
+    from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
 def circle_parameter(radius: float) -> float:

@@ -3,9 +3,9 @@ from __future__ import annotations
 import random
 from typing import Union
 
-from consts import ADDRESSES
-from exceptions import *
-from usefuls.funcs import is_hex
+from NetSym.consts import ADDRESSES
+from NetSym.exceptions import *
+from NetSym.usefuls.funcs import is_hex
 
 
 class MACAddress:

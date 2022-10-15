@@ -4,12 +4,12 @@ import argparse
 from abc import ABCMeta
 from typing import Type, Iterable, Any, Dict, TYPE_CHECKING
 
-from computing.internals.processes.abstracts.process import Process
-from computing.internals.shell.commands.command import Command, CommandOutput
+from NetSym.computing.internals.processes.abstracts.process import Process
+from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
-    from computing.internals.shell.shell import Shell
+    from NetSym.computing.computer import Computer
+    from NetSym.computing.internals.shell.shell import Shell
 
 
 class ProcessCreatingCommand(Command, metaclass=ABCMeta):

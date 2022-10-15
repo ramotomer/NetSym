@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from typing import Dict
 
-from address.ip_address import IPAddress
-from consts import T_Time
-from exceptions import WrongUsageError
-from gui.main_loop import MainLoop
-from packets.usefuls.dns import T_Hostname
+from NetSym.address.ip_address import IPAddress
+from NetSym.consts import T_Time
+from NetSym.exceptions import WrongUsageError
+from NetSym.gui.main_loop import MainLoop
+from NetSym.packets.usefuls.dns import T_Hostname
 
 
 @dataclass

@@ -3,14 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional, Deque
 
-from consts import T_Time
-from gui.main_loop import MainLoop
+from NetSym.consts import T_Time
+from NetSym.gui.main_loop import MainLoop
 
 if TYPE_CHECKING:
-    from packets.packet import Packet
-    from computing.internals.sockets.raw_socket import RawSocket
-    from computing.internals.interface import Interface
-    from computing.computer import Computer
+    from NetSym.packets.packet import Packet
+    from NetSym.computing.internals.sockets.raw_socket import RawSocket
+    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.computer import Computer
 
 
 @dataclass

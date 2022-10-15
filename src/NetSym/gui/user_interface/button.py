@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import NamedTuple, Callable, Optional
 
-from consts import *
-from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
-from gui.main_window import MainWindow
-from gui.shape_drawing import draw_button
-from gui.user_interface.text_graphics import Text
-from usefuls.funcs import sum_tuples
+from NetSym.consts import *
+from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
+from NetSym.gui.main_window import MainWindow
+from NetSym.gui.shape_drawing import draw_button
+from NetSym.gui.user_interface.text_graphics import Text
+from NetSym.usefuls.funcs import sum_tuples
 
 
 class ChildGraphicsObjects(NamedTuple):

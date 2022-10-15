@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import List, TYPE_CHECKING
 
-from consts import PROTOCOLS
-from exceptions import PacketAlreadyFragmentedError, InvalidFragmentsError, PacketTooLongToFragment
-from packets.all import IP
-from usefuls.funcs import split_by_size
+from NetSym.consts import PROTOCOLS
+from NetSym.exceptions import PacketAlreadyFragmentedError, InvalidFragmentsError, PacketTooLongToFragment
+from NetSym.packets.all import IP
+from NetSym.usefuls.funcs import split_by_size
 
 if TYPE_CHECKING:
-    from packets.packet import Packet
+    from NetSym.packets.packet import Packet
 
 
 def get_fragment_size(mtu: int) -> int:

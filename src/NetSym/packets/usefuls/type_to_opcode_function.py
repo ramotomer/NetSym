@@ -1,9 +1,9 @@
 from scapy.layers.dhcp import DHCPTypes
 
-from consts import OPCODES
-from packets.usefuls.dns import get_dns_opcode
-from packets.usefuls.ip import needs_reassembly
-from packets.usefuls.tcp import get_dominant_tcp_flag
+from NetSym.consts import OPCODES
+from NetSym.packets.usefuls.dns import get_dns_opcode
+from NetSym.packets.usefuls.ip import needs_reassembly
+from NetSym.packets.usefuls.tcp import get_dominant_tcp_flag
 
 TYPE_TO_OPCODE_FUNCTION = {
     "IP": needs_reassembly,

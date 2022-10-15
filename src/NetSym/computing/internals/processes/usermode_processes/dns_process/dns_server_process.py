@@ -5,20 +5,20 @@ import struct
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict
 
-from address.ip_address import IPAddress
-from computing.internals.filesystem.file import File
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode, WaitingFor
-from computing.internals.processes.usermode_processes.dns_process.dns_client_process import DNSClientProcess
-from computing.internals.processes.usermode_processes.dns_process.zone import Zone, ZoneRecord
-from consts import PORTS, T_Port
-from exceptions import DNSRouteNotFound, WrongUsageError, NoSuchFileError
-from packets.all import DNS
-from packets.usefuls.dns import *
-from usefuls.funcs import get_the_one, with_args
+from NetSym.address.ip_address import IPAddress
+from NetSym.computing.internals.filesystem.file import File
+from NetSym.computing.internals.processes.abstracts.process import Process, T_ProcessCode, WaitingFor
+from NetSym.computing.internals.processes.usermode_processes.dns_process.dns_client_process import DNSClientProcess
+from NetSym.computing.internals.processes.usermode_processes.dns_process.zone import Zone, ZoneRecord
+from NetSym.consts import PORTS, T_Port
+from NetSym.exceptions import DNSRouteNotFound, WrongUsageError, NoSuchFileError
+from NetSym.packets.all import DNS
+from NetSym.packets.usefuls.dns import *
+from NetSym.usefuls.funcs import get_the_one, with_args
 
 if TYPE_CHECKING:
-    from computing.internals.sockets.udp_socket import UDPSocket
-    from computing.computer import Computer
+    from NetSym.computing.internals.sockets.udp_socket import UDPSocket
+    from NetSym.computing.computer import Computer
 
 
 @dataclass

@@ -2,18 +2,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional, Set
 
-from consts import *
-from exceptions import WrongUsageError
-from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
-from gui.main_loop import MainLoop
-from gui.main_window import MainWindow
-from gui.shape_drawing import draw_rectangle
-from gui.user_interface.button import Button
-from gui.user_interface.text_graphics import Text
-from usefuls.funcs import with_args
+from NetSym.consts import *
+from NetSym.exceptions import WrongUsageError
+from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
+from NetSym.gui.main_loop import MainLoop
+from NetSym.gui.main_window import MainWindow
+from NetSym.gui.shape_drawing import draw_rectangle
+from NetSym.gui.user_interface.button import Button
+from NetSym.gui.user_interface.text_graphics import Text
+from NetSym.usefuls.funcs import with_args
 
 if TYPE_CHECKING:
-    from gui.user_interface.user_interface import UserInterface
+    from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 class PopupWindow(UserInterfaceGraphicsObject):

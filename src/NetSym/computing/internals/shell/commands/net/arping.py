@@ -3,13 +3,13 @@ from __future__ import annotations
 import argparse
 from typing import TYPE_CHECKING
 
-from computing.internals.processes.kernelmode_processes.arp_process import ARPProcess
-from computing.internals.shell.commands.command import Command, CommandOutput
-from consts import PROTOCOLS
+from NetSym.computing.internals.processes.kernelmode_processes.arp_process import ARPProcess
+from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
+from NetSym.consts import PROTOCOLS
 
 if TYPE_CHECKING:
-    from computing.internals.shell.shell import Shell
-    from computing.computer import Computer
+    from NetSym.computing.internals.shell.shell import Shell
+    from NetSym.computing.computer import Computer
 
 
 class Arping(Command):

@@ -5,15 +5,15 @@ from dataclasses import dataclass
 from operator import attrgetter
 from typing import NamedTuple, Optional, TYPE_CHECKING, List, Type, Tuple, Generator, Any, TypeVar
 
-from computing.internals.processes.abstracts.process import Process, WaitingFor, ReturnedPacket
-from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError
-from consts import COMPUTER, T_Time
-from exceptions import NoSuchProcessError
-from gui.main_loop import MainLoop
-from usefuls.funcs import get_the_one
+from NetSym.computing.internals.processes.abstracts.process import Process, WaitingFor, ReturnedPacket
+from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError
+from NetSym.consts import COMPUTER, T_Time
+from NetSym.exceptions import NoSuchProcessError
+from NetSym.gui.main_loop import MainLoop
+from NetSym.usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
+    from NetSym.computing.computer import Computer
 
 
 T = TypeVar("T")

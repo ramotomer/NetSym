@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Tuple, NamedTuple
 
-from computing.internals.shell.commands.command import Command, CommandOutput
-from consts import CONSOLE
-from exceptions import InvalidAliasCommand
+from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
+from NetSym.consts import CONSOLE
+from NetSym.exceptions import InvalidAliasCommand
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
-    from computing.internals.shell.shell import Shell
+    from NetSym.computing.computer import Computer
+    from NetSym.computing.internals.shell.shell import Shell
 
 
 class ParsedAliasCommand(NamedTuple):

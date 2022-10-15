@@ -3,13 +3,13 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from typing import Tuple, TYPE_CHECKING, Optional, Any, List
 
-from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import WaitingFor, T_ProcessCode, Timeout
-from consts import COMPUTER, T_Port, T_Time
-from exceptions import SocketNotBoundError, SocketIsClosedError
+from NetSym.address.ip_address import IPAddress
+from NetSym.computing.internals.processes.abstracts.process import WaitingFor, T_ProcessCode, Timeout
+from NetSym.consts import COMPUTER, T_Port, T_Time
+from NetSym.exceptions import SocketNotBoundError, SocketIsClosedError
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
+    from NetSym.computing.computer import Computer
 
 
 class Socket(metaclass=ABCMeta):

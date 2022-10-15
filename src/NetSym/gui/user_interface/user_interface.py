@@ -13,43 +13,43 @@ from typing import TYPE_CHECKING, Optional, NamedTuple, List, Type, Callable, Di
 
 from pyglet.window import key
 
-from address.ip_address import IPAddress
-from computing.computer import Computer
-from computing.internals.frequency import Frequency
-from computing.internals.interface import Interface
-from computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
-from computing.internals.processes.usermode_processes.stp_process import STPProcess
-from computing.internals.wireless_interface import WirelessInterface
-from computing.router import Router
-from computing.switch import Switch, Hub, Antenna
-from consts import *
-from exceptions import *
-from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
-from gui.main_loop import MainLoop
-from gui.main_window import MainWindow
-from gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
-from gui.shape_drawing import draw_pause_rectangles, draw_rectangle
-from gui.tech.computer_graphics import ComputerGraphics
-from gui.tech.interface_graphics import InterfaceGraphics
-from gui.tech.packet_graphics import PacketGraphics
-from gui.user_interface.button import Button
-from gui.user_interface.popup_windows.device_creation_window import DeviceCreationWindow
-from gui.user_interface.popup_windows.popup_console import PopupConsole
-from gui.user_interface.popup_windows.popup_error import PopupError
-from gui.user_interface.popup_windows.popup_help import PopupHelp
-from gui.user_interface.popup_windows.popup_text_box import PopupTextBox
-from gui.user_interface.popup_windows.popup_window import PopupWindow
-from gui.user_interface.popup_windows.yes_no_popup_window import YesNoPopupWindow
-from gui.user_interface.selecting_square import SelectingSquare
-from gui.user_interface.text_graphics import Text
-from gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
-from usefuls.funcs import get_the_one, distance, with_args, called_in_order, circular_coordinates, sum_tuples, \
+from NetSym.address.ip_address import IPAddress
+from NetSym.computing.computer import Computer
+from NetSym.computing.internals.frequency import Frequency
+from NetSym.computing.internals.interface import Interface
+from NetSym.computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
+from NetSym.computing.internals.processes.usermode_processes.stp_process import STPProcess
+from NetSym.computing.internals.wireless_interface import WirelessInterface
+from NetSym.computing.router import Router
+from NetSym.computing.switch import Switch, Hub, Antenna
+from NetSym.consts import *
+from NetSym.exceptions import *
+from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
+from NetSym.gui.main_loop import MainLoop
+from NetSym.gui.main_window import MainWindow
+from NetSym.gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
+from NetSym.gui.shape_drawing import draw_pause_rectangles, draw_rectangle
+from NetSym.gui.tech.computer_graphics import ComputerGraphics
+from NetSym.gui.tech.interface_graphics import InterfaceGraphics
+from NetSym.gui.tech.packet_graphics import PacketGraphics
+from NetSym.gui.user_interface.button import Button
+from NetSym.gui.user_interface.popup_windows.device_creation_window import DeviceCreationWindow
+from NetSym.gui.user_interface.popup_windows.popup_console import PopupConsole
+from NetSym.gui.user_interface.popup_windows.popup_error import PopupError
+from NetSym.gui.user_interface.popup_windows.popup_help import PopupHelp
+from NetSym.gui.user_interface.popup_windows.popup_text_box import PopupTextBox
+from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
+from NetSym.gui.user_interface.popup_windows.yes_no_popup_window import YesNoPopupWindow
+from NetSym.gui.user_interface.selecting_square import SelectingSquare
+from NetSym.gui.user_interface.text_graphics import Text
+from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
+from NetSym.usefuls.funcs import get_the_one, distance, with_args, called_in_order, circular_coordinates, sum_tuples, \
     scale_tuple
 
 if TYPE_CHECKING:
-    from gui.abstracts.graphics_object import GraphicsObject
-    from packets.packet import Packet
-    from computing.connection import Connection
+    from NetSym.gui.abstracts.graphics_object import GraphicsObject
+    from NetSym.packets.packet import Packet
+    from NetSym.computing.connection import Connection
 
 
 T = TypeVar("T")

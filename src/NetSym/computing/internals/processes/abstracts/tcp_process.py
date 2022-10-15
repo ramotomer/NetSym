@@ -8,19 +8,19 @@ from functools import reduce
 from operator import attrgetter, concat
 from typing import Optional, List, TYPE_CHECKING, Iterable
 
-from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import Process, Timeout, ReturnedPacket, T_ProcessCode, WaitingFor
-from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError
-from consts import *
-from exceptions import TCPDataLargerThanMaxSegmentSize
-from gui.main_loop import MainLoop
-from packets.all import TCP
-from packets.packet import Packet
-from usefuls.funcs import insort
-from usefuls.funcs import split_by_size
+from NetSym.address.ip_address import IPAddress
+from NetSym.computing.internals.processes.abstracts.process import Process, Timeout, ReturnedPacket, T_ProcessCode, WaitingFor
+from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError
+from NetSym.consts import *
+from NetSym.exceptions import TCPDataLargerThanMaxSegmentSize
+from NetSym.gui.main_loop import MainLoop
+from NetSym.packets.all import TCP
+from NetSym.packets.packet import Packet
+from NetSym.usefuls.funcs import insort
+from NetSym.usefuls.funcs import split_by_size
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
+    from NetSym.computing.computer import Computer
 
 
 @dataclass

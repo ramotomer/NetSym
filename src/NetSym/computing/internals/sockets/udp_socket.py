@@ -4,13 +4,13 @@ from typing import Tuple, List, Union, Optional, TYPE_CHECKING, NamedTuple
 
 import scapy
 
-from address.ip_address import IPAddress
-from computing.internals.sockets.l4_socket import L4Socket
-from consts import COMPUTER, T_Port
-from exceptions import *
+from NetSym.address.ip_address import IPAddress
+from NetSym.computing.internals.sockets.l4_socket import L4Socket
+from NetSym.consts import COMPUTER, T_Port
+from NetSym.exceptions import *
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
+    from NetSym.computing.computer import Computer
 
 
 class ReturnedUDPPacket(NamedTuple):

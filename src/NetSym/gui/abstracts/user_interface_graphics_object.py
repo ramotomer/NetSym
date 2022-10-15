@@ -1,8 +1,8 @@
 from abc import ABCMeta
 from typing import Optional, Tuple
 
-from gui.abstracts.graphics_object import GraphicsObject
-from usefuls.funcs import sum_tuples
+from NetSym.gui.abstracts.graphics_object import GraphicsObject
+from NetSym.usefuls.funcs import sum_tuples
 
 
 class UserInterfaceGraphicsObject(GraphicsObject, metaclass=ABCMeta):

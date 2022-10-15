@@ -4,18 +4,18 @@ from typing import Callable, TYPE_CHECKING, Optional
 
 import scapy
 
-from address.mac_address import MACAddress
-from computing.internals.processes.abstracts.process import Process, Timeout, \
+from NetSym.address.mac_address import MACAddress
+from NetSym.computing.internals.processes.abstracts.process import Process, Timeout, \
     T_ProcessCode, WaitingFor
-from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_NoResponseForARP
-from consts import OPCODES, PROTOCOLS
-from packets.usefuls.dns import T_Hostname
-from usefuls.funcs import my_range
+from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_NoResponseForARP
+from NetSym.consts import OPCODES, PROTOCOLS
+from NetSym.packets.usefuls.dns import T_Hostname
+from NetSym.usefuls.funcs import my_range
 
 if TYPE_CHECKING:
-    from address.ip_address import IPAddress
-    from packets.packet import Packet
-    from computing.computer import Computer
+    from NetSym.address.ip_address import IPAddress
+    from NetSym.packets.packet import Packet
+    from NetSym.computing.computer import Computer
 
 
 def arp_reply_from(ip_address: IPAddress) -> Callable[[Packet], bool]:

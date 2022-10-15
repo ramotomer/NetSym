@@ -3,14 +3,13 @@ from __future__ import annotations
 import time
 from typing import Type, Iterable, Optional, TYPE_CHECKING, Callable, Any, List, TypeVar
 
-from consts import T_Time
-from exceptions import *
-from exceptions import NoSuchGraphicsObjectError
-from usefuls.funcs import get_the_one
+from NetSym.consts import T_Time
+from NetSym.exceptions import *
+from NetSym.usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
-    from gui.abstracts.graphics_object import GraphicsObject
-    from gui.main_window import MainWindow
+    from NetSym.gui.abstracts.graphics_object import GraphicsObject
+    from NetSym.gui.main_window import MainWindow
 
 
 T = TypeVar("T")

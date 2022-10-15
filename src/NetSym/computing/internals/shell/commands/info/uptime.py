@@ -3,14 +3,14 @@ from __future__ import annotations
 from datetime import timedelta, datetime
 from typing import TYPE_CHECKING
 
-from computing.internals.shell.commands.command import Command, CommandOutput
-from consts import T_Time
-from gui.main_loop import MainLoop
+from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
+from NetSym.consts import T_Time
+from NetSym.gui.main_loop import MainLoop
 
 if TYPE_CHECKING:
     import argparse
-    from computing.computer import Computer
-    from computing.internals.shell.shell import Shell
+    from NetSym.computing.computer import Computer
+    from NetSym.computing.internals.shell.shell import Shell
 
 
 class Uptime(Command):

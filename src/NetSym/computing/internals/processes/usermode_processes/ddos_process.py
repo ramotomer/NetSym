@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from address.ip_address import IPAddress
-from address.mac_address import MACAddress
-from computing.internals.processes.abstracts.process import Process, WaitingFor, Timeout, T_ProcessCode
-from consts import T_Time
-from packets.all import UDP
+from NetSym.address.ip_address import IPAddress
+from NetSym.address.mac_address import MACAddress
+from NetSym.computing.internals.processes.abstracts.process import Process, WaitingFor, Timeout, T_ProcessCode
+from NetSym.consts import T_Time
+from NetSym.packets.all import UDP
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
+    from NetSym.computing.computer import Computer
 
 
 class DDOSProcess(Process):

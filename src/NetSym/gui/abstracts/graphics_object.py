@@ -3,10 +3,10 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from typing import Optional, Tuple, Callable, TYPE_CHECKING
 
-from gui.main_loop import MainLoop
+from NetSym.gui.main_loop import MainLoop
 
 if TYPE_CHECKING:
-    from gui.user_interface.user_interface import UserInterface
+    from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 class GraphicsObject(metaclass=ABCMeta):

@@ -3,12 +3,12 @@ from __future__ import annotations
 import argparse
 from typing import TYPE_CHECKING
 
-from computing.internals.shell.commands.command import Command, CommandOutput
-from computing.internals.shell.commands.net.brctl.brctl_showbr import BrctlShowbrCommand
+from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
+from NetSym.computing.internals.shell.commands.net.brctl.brctl_showbr import BrctlShowbrCommand
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
-    from computing.internals.shell.shell import Shell
+    from NetSym.computing.computer import Computer
+    from NetSym.computing.internals.shell.shell import Shell
 
 
 class Brctl(Command):

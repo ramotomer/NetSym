@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import List, TYPE_CHECKING, Set, Iterable
 
-from consts import *
-from exceptions import UnknownPortError
-from gui.abstracts.graphics_object import GraphicsObject
-from gui.abstracts.image_graphics import ImageGraphics
-from gui.main_loop import MainLoop
+from NetSym.consts import *
+from NetSym.exceptions import UnknownPortError
+from NetSym.gui.abstracts.graphics_object import GraphicsObject
+from NetSym.gui.abstracts.image_graphics import ImageGraphics
+from NetSym.gui.main_loop import MainLoop
 
 if TYPE_CHECKING:
-    from gui.tech.computer_graphics import ComputerGraphics
+    from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
 class ProcessGraphicsList(GraphicsObject):

@@ -4,15 +4,15 @@ import random
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, List
 
-from consts import *
-from exceptions import ConnectionsError
-from exceptions import WrongUsageError, NoSuchConnectionSideError, SomethingWentTerriblyWrongError
-from gui.main_loop import MainLoop
-from gui.tech.connection_graphics import ConnectionGraphics
+from NetSym.consts import *
+from NetSym.exceptions import ConnectionsError
+from NetSym.exceptions import WrongUsageError, NoSuchConnectionSideError, SomethingWentTerriblyWrongError
+from NetSym.gui.main_loop import MainLoop
+from NetSym.gui.tech.connection_graphics import ConnectionGraphics
 
 if TYPE_CHECKING:
-    from packets.packet import Packet
-    from gui.tech.computer_graphics import ComputerGraphics
+    from NetSym.packets.packet import Packet
+    from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
 @dataclass

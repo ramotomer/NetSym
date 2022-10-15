@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from computing.internals.shell.commands.command import Command, CommandOutput
-from computing.loopback_connection import LoopbackConnection
-from exceptions import DeviceAlreadyConnectedError, NoSuchInterfaceError
+from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
+from NetSym.computing.loopback_connection import LoopbackConnection
+from NetSym.exceptions import DeviceAlreadyConnectedError, NoSuchInterfaceError
 
 if TYPE_CHECKING:
     import argparse
-    from computing.internals.interface import Interface
-    from computing.internals.shell.shell import Shell
-    from computing.computer import Computer
+    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.internals.shell.shell import Shell
+    from NetSym.computing.computer import Computer
 
 
 class IpLinkCommand(Command):

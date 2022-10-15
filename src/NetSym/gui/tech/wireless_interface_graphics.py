@@ -2,17 +2,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, Callable
 
-from address.mac_address import MACAddress
-from consts import INTERFACES
-from exceptions import NoSuchInterfaceError
-from gui.main_window import MainWindow
-from gui.shape_drawing import draw_circle
-from gui.tech.interface_graphics import InterfaceGraphics
-from usefuls.funcs import with_args, get_the_one, distance
+from NetSym.address.mac_address import MACAddress
+from NetSym.consts import INTERFACES
+from NetSym.exceptions import NoSuchInterfaceError
+from NetSym.gui.main_window import MainWindow
+from NetSym.gui.shape_drawing import draw_circle
+from NetSym.gui.tech.interface_graphics import InterfaceGraphics
+from NetSym.usefuls.funcs import with_args, get_the_one, distance
 
 if TYPE_CHECKING:
-    from computing.internals.interface import Interface
-    from gui.tech.computer_graphics import ComputerGraphics
+    from NetSym.computing.internals.interface import Interface
+    from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
 class WirelessInterfaceGraphics(InterfaceGraphics):

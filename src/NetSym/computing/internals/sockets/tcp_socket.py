@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from typing import Tuple, TYPE_CHECKING, Union
 
-from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import WaitingFor, T_ProcessCode, Process
-from computing.internals.processes.kernelmode_processes.tcp_socket_process import ListeningTCPSocketProcess, \
+from NetSym.address.ip_address import IPAddress
+from NetSym.computing.internals.processes.abstracts.process import WaitingFor, T_ProcessCode, Process
+from NetSym.computing.internals.processes.kernelmode_processes.tcp_socket_process import ListeningTCPSocketProcess, \
     ConnectingTCPSocketProcess
-from computing.internals.sockets.l4_socket import L4Socket
-from consts import COMPUTER, T_Port
-from exceptions import TCPSocketConnectionRefused
+from NetSym.computing.internals.sockets.l4_socket import L4Socket
+from NetSym.consts import COMPUTER, T_Port
+from NetSym.exceptions import TCPSocketConnectionRefused
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
+    from NetSym.computing.computer import Computer
 
 
 class TCPSocket(L4Socket):

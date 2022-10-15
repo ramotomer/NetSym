@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, List, Dict
 
-from computing.internals.processes.usermode_processes.ping_process import SendPing
-from computing.internals.shell.commands.process_creating_command import ProcessCreatingCommand
-from consts import PROTOCOLS
+from NetSym.computing.internals.processes.usermode_processes.ping_process import SendPing
+from NetSym.computing.internals.shell.commands.process_creating_command import ProcessCreatingCommand
+from NetSym.consts import PROTOCOLS
 
 if TYPE_CHECKING:
     import argparse
-    from computing.computer import Computer
-    from computing.internals.shell.shell import Shell
+    from NetSym.computing.computer import Computer
+    from NetSym.computing.internals.shell.shell import Shell
 
 
 class Ping(ProcessCreatingCommand):

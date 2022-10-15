@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import Optional, Iterable, Dict
 
-from computing.computer import Computer
-from computing.internals.filesystem.filesystem import Filesystem
-from computing.internals.interface import Interface
-from computing.internals.processes.kernelmode_processes.route_packet_process import RoutePacket
-from computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
-from computing.internals.routing_table import RoutingTable
-from consts import *
-from gui.main_loop import MainLoop
-from gui.tech.computer_graphics import ComputerGraphics
+from NetSym.computing.computer import Computer
+from NetSym.computing.internals.filesystem.filesystem import Filesystem
+from NetSym.computing.internals.interface import Interface
+from NetSym.computing.internals.processes.kernelmode_processes.route_packet_process import RoutePacket
+from NetSym.computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
+from NetSym.computing.internals.routing_table import RoutingTable
+from NetSym.consts import *
+from NetSym.gui.main_loop import MainLoop
+from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
 class Router(Computer):

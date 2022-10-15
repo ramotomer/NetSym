@@ -4,28 +4,28 @@ from dataclasses import dataclass
 from os import linesep
 from typing import TYPE_CHECKING, Optional, Dict, Callable, Iterable
 
-from address.ip_address import IPAddress
-from computing.internals.processes.usermode_processes.daytime_process.daytime_client_process import DAYTIMEClientProcess
-from computing.internals.processes.usermode_processes.ddos_process import DDOSProcess
-from computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
-from computing.internals.processes.usermode_processes.dns_process.dns_server_process import DNSServerProcess
-from computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
-from consts import *
-from gui.abstracts.image_graphics import ImageGraphics
-from gui.main_window import MainWindow
-from gui.tech.interface_graphics_list import InterfaceGraphicsList
-from gui.tech.loopback_connection_graphics import LoopbackConnectionGraphics
-from gui.tech.output_console import OutputConsole
-from gui.tech.process_graphics import ProcessGraphicsList
-from gui.user_interface.popup_windows.popup_console import PopupConsole
-from gui.user_interface.popup_windows.popup_error import PopupError
-from gui.user_interface.text_graphics import Text
-from usefuls.funcs import with_args
+from NetSym.address.ip_address import IPAddress
+from NetSym.computing.internals.processes.usermode_processes.daytime_process.daytime_client_process import DAYTIMEClientProcess
+from NetSym.computing.internals.processes.usermode_processes.ddos_process import DDOSProcess
+from NetSym.computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
+from NetSym.computing.internals.processes.usermode_processes.dns_process.dns_server_process import DNSServerProcess
+from NetSym.computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
+from NetSym.consts import *
+from NetSym.gui.abstracts.image_graphics import ImageGraphics
+from NetSym.gui.main_window import MainWindow
+from NetSym.gui.tech.interface_graphics_list import InterfaceGraphicsList
+from NetSym.gui.tech.loopback_connection_graphics import LoopbackConnectionGraphics
+from NetSym.gui.tech.output_console import OutputConsole
+from NetSym.gui.tech.process_graphics import ProcessGraphicsList
+from NetSym.gui.user_interface.popup_windows.popup_console import PopupConsole
+from NetSym.gui.user_interface.popup_windows.popup_error import PopupError
+from NetSym.gui.user_interface.text_graphics import Text
+from NetSym.usefuls.funcs import with_args
 
 if TYPE_CHECKING:
-    from computing.internals.interface import Interface
-    from computing.computer import Computer
-    from gui.user_interface.user_interface import UserInterface
+    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.computer import Computer
+    from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 @dataclass

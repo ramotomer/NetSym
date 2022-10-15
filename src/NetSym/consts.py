@@ -7,7 +7,7 @@ from typing import Tuple, Union, Any
 
 import pyglet
 
-from exceptions import TCPDoneReceiving
+from NetSym.exceptions import TCPDoneReceiving
 
 
 def debugp(*strings: str) -> None:

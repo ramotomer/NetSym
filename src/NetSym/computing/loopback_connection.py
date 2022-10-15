@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from computing.connection import Connection
-from consts import *
-from gui.main_window import MainLoop
-from gui.tech.loopback_connection_graphics import LoopbackConnectionGraphics
+from NetSym.computing.connection import Connection
+from NetSym.consts import *
+from NetSym.gui.main_window import MainLoop
+from NetSym.gui.tech.loopback_connection_graphics import LoopbackConnectionGraphics
 
 if TYPE_CHECKING:
-    from packets.packet import Packet
-    from computing.connection import SentPacket
-    from computing.connection import ConnectionSide
-    from gui.tech.computer_graphics import ComputerGraphics
+    from NetSym.packets.packet import Packet
+    from NetSym.computing.connection import SentPacket
+    from NetSym.computing.connection import ConnectionSide
+    from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
 class LoopbackConnection(Connection):

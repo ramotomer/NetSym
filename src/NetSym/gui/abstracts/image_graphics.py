@@ -4,18 +4,18 @@ from abc import ABCMeta
 from itertools import product
 from typing import Set, Optional, Dict, TYPE_CHECKING, Callable
 
-from consts import *
-from exceptions import NoSuchGraphicsObjectError, PopupWindowWithThisError
-from gui.main_loop import MainLoop
-from gui.main_window import MainWindow
-from gui.shape_drawing import draw_rectangle
-from gui.user_interface.resizing_dot import ResizingDot
-from gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
-from usefuls.funcs import get_the_one, scale_tuple, sum_tuples
-from usefuls.paths import add_path_basename_if_needed
+from NetSym.consts import *
+from NetSym.exceptions import NoSuchGraphicsObjectError, PopupWindowWithThisError
+from NetSym.gui.main_loop import MainLoop
+from NetSym.gui.main_window import MainWindow
+from NetSym.gui.shape_drawing import draw_rectangle
+from NetSym.gui.user_interface.resizing_dot import ResizingDot
+from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
+from NetSym.usefuls.funcs import get_the_one, scale_tuple, sum_tuples
+from NetSym.usefuls.paths import add_path_basename_if_needed
 
 if TYPE_CHECKING:
-    from gui.user_interface.user_interface import UserInterface
+    from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):

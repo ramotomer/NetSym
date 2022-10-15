@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Union, Optional
 
-from consts import ADDRESSES, MESSAGES
-from exceptions import InvalidAddressError, AddressTooLargeError
-from usefuls.funcs import bindigits
+from NetSym.consts import ADDRESSES, MESSAGES
+from NetSym.exceptions import InvalidAddressError, AddressTooLargeError
+from NetSym.usefuls.funcs import bindigits
 
 
 class IPAddress:

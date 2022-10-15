@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import Tuple, TYPE_CHECKING, Optional
 
-from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode
-from consts import PROTOCOLS, T_Port
-from packets.usefuls.dns import T_Hostname
+from NetSym.address.ip_address import IPAddress
+from NetSym.computing.internals.processes.abstracts.process import Process, T_ProcessCode
+from NetSym.consts import PROTOCOLS, T_Port
+from NetSym.packets.usefuls.dns import T_Hostname
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
+    from NetSym.computing.computer import Computer
 
 
 class EchoClientProcess(Process):

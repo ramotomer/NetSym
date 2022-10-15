@@ -1,9 +1,9 @@
 import pyglet
 
-from consts import WINDOWS
-from gui.main_loop import MainLoop
-from gui.main_window import MainWindow
-from gui.user_interface.user_interface import UserInterface
+from NetSym.consts import WINDOWS
+from NetSym.gui.main_loop import MainLoop
+from NetSym.gui.main_window import MainWindow
+from NetSym.gui.user_interface.user_interface import UserInterface
 
 if __name__ == '__main__':
     user_interface = UserInterface()

@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, WaitingFor
-from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_NoIPAddressError
-from consts import OPCODES, PROTOCOLS
-from packets.usefuls.dns import T_Hostname
+from NetSym.computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, WaitingFor
+from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_NoIPAddressError
+from NetSym.consts import OPCODES, PROTOCOLS
+from NetSym.packets.usefuls.dns import T_Hostname
 
 if TYPE_CHECKING:
-    from address.mac_address import MACAddress
-    from address.ip_address import IPAddress
-    from packets.packet import Packet
-    from computing.computer import Computer
+    from NetSym.address.mac_address import MACAddress
+    from NetSym.address.ip_address import IPAddress
+    from NetSym.packets.packet import Packet
+    from NetSym.computing.computer import Computer
 
 
 class TraceRouteProcess(Process):

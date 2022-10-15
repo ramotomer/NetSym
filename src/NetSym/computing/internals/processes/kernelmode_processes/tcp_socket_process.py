@@ -3,14 +3,14 @@ from __future__ import annotations
 from abc import ABCMeta
 from typing import Tuple, TYPE_CHECKING, Optional
 
-from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import T_ProcessCode
-from computing.internals.processes.abstracts.tcp_process import TCPProcess
-from consts import COMPUTER, T_Port
+from NetSym.address.ip_address import IPAddress
+from NetSym.computing.internals.processes.abstracts.process import T_ProcessCode
+from NetSym.computing.internals.processes.abstracts.tcp_process import TCPProcess
+from NetSym.consts import COMPUTER, T_Port
 
 if TYPE_CHECKING:
-    from computing.internals.sockets.tcp_socket import TCPSocket
-    from computing.computer import Computer
+    from NetSym.computing.internals.sockets.tcp_socket import TCPSocket
+    from NetSym.computing.computer import Computer
 
 
 class TCPSocketProcess(TCPProcess, metaclass=ABCMeta):

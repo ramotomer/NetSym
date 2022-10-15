@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Optional, Union, Dict
 
-from computing.internals.filesystem.file import File, PipingFile
-from consts import FILESYSTEM
-from exceptions import NoSuchDirectoryError, NoSuchFileError, DirectoryAlreadyExistsError, WrongUsageError, \
+from NetSym.computing.internals.filesystem.file import File, PipingFile
+from NetSym.consts import FILESYSTEM
+from NetSym.exceptions import NoSuchDirectoryError, NoSuchFileError, DirectoryAlreadyExistsError, WrongUsageError, \
     NoSuchItemError
 
 

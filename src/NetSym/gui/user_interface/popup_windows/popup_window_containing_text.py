@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional
 
-from consts import WINDOWS, T_Color, SHAPES
-from gui.user_interface.popup_windows.popup_window import PopupWindow
-from gui.user_interface.text_graphics import Text
+from NetSym.consts import WINDOWS, T_Color, SHAPES
+from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
+from NetSym.gui.user_interface.text_graphics import Text
 
 if TYPE_CHECKING:
-    from gui.user_interface.user_interface import UserInterface
-    from gui.user_interface.button import Button
+    from NetSym.gui.user_interface.user_interface import UserInterface
+    from NetSym.gui.user_interface.button import Button
 
 
 class PopupWindowContainingText(PopupWindow):

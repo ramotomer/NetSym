@@ -3,14 +3,14 @@ from __future__ import annotations
 import argparse
 from typing import TYPE_CHECKING
 
-from computing.internals.processes.usermode_processes.dns_process.dns_client_process import DNSClientProcess
-from computing.internals.shell.commands.command import Command, CommandOutput
-from consts import PROTOCOLS
-from packets.usefuls.dns import is_domain_hostname_valid
+from NetSym.computing.internals.processes.usermode_processes.dns_process.dns_client_process import DNSClientProcess
+from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
+from NetSym.consts import PROTOCOLS
+from NetSym.packets.usefuls.dns import is_domain_hostname_valid
 
 if TYPE_CHECKING:
-    from computing.internals.shell.shell import Shell
-    from computing.computer import Computer
+    from NetSym.computing.internals.shell.shell import Shell
+    from NetSym.computing.computer import Computer
 
 
 class Nslookup(Command):

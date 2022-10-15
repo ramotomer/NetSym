@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Callable, Dict
 
-from address.ip_address import IPAddress
-from address.mac_address import MACAddress
-from computing.internals.interface import Interface
-from consts import *
-from exceptions import *
-from gui.main_window import MainWindow
+from NetSym.address.ip_address import IPAddress
+from NetSym.address.mac_address import MACAddress
+from NetSym.computing.internals.interface import Interface
+from NetSym.consts import *
+from NetSym.exceptions import *
+from NetSym.gui.main_window import MainWindow
 
 if TYPE_CHECKING:
-    from packets.packet import Packet
-    from computing.internals.frequency import Frequency
+    from NetSym.packets.packet import Packet
+    from NetSym.computing.internals.frequency import Frequency
 
 
 class WirelessInterface(Interface):

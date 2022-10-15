@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from computing.internals.processes.abstracts.process import Process, \
+from NetSym.computing.internals.processes.abstracts.process import Process, \
     T_ProcessCode
-from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_RoutedPacketTTLExceeded, \
+from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_RoutedPacketTTLExceeded, \
     ProcessInternalError_NoResponseForARP, ProcessInternalError_PacketTooLongButDoesNotAllowFragmentation
-from consts import OPCODES, COMPUTER
-from packets.usefuls.ip import needs_fragmentation, allows_fragmentation
+from NetSym.consts import OPCODES, COMPUTER
+from NetSym.packets.usefuls.ip import needs_fragmentation, allows_fragmentation
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
-    from packets.packet import Packet
+    from NetSym.computing.computer import Computer
+    from NetSym.packets.packet import Packet
 
 
 class RoutePacket(Process):

@@ -9,48 +9,48 @@ from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterato
 
 import scapy
 
-from address.ip_address import IPAddress
-from address.mac_address import MACAddress
-from computing.internals.arp_cache import ArpCache
-from computing.internals.dns_cache import DNSCache
-from computing.internals.filesystem.filesystem import Filesystem
-from computing.internals.interface import Interface
-from computing.internals.packet_sending_queue import PacketSendingQueue
-from computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket, WaitingFor
-from computing.internals.processes.kernelmode_processes.arp_process import ARPProcess, SendPacketWithARPProcess
-from computing.internals.processes.process_scheduler import ProcessScheduler
-from computing.internals.processes.usermode_processes.daytime_process.daytime_server_process import DAYTIMEServerProcess
-from computing.internals.processes.usermode_processes.dhcp_process.dhcp_client_process import DHCPClientProcess
-from computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
-from computing.internals.processes.usermode_processes.dns_process.dns_client_process import DNSClientProcess
-from computing.internals.processes.usermode_processes.dns_process.dns_server_process import DNSServerProcess
-from computing.internals.processes.usermode_processes.echo_server_process.echo_server_process import EchoServerProcess
-from computing.internals.processes.usermode_processes.ftp_process.ftp_server_process import ServerFTPProcess
-from computing.internals.processes.usermode_processes.ping_process import SendPing
-from computing.internals.processes.usermode_processes.sniffing_process import SniffingProcess
-from computing.internals.routing_table import RoutingTable, RoutingTableItem
-from computing.internals.sockets.l4_socket import L4Socket
-from computing.internals.sockets.raw_socket import RawSocket
-from computing.internals.sockets.tcp_socket import TCPSocket
-from computing.internals.sockets.udp_socket import ReturnedUDPPacket, UDPSocket
-from computing.internals.wireless_interface import WirelessInterface
-from consts import *
-from exceptions import *
-from gui.main_loop import MainLoop
-from gui.tech.computer_graphics import ComputerGraphics
-from packets.all import ICMP, IP, TCP, UDP, ARP
-from packets.usefuls.dns import T_Hostname, validate_domain_hostname, canonize_domain_hostname
-from packets.usefuls.ip import needs_fragmentation, fragment_packet, needs_reassembly, reassemble_fragmented_packet, allows_fragmentation, \
+from NetSym.address.ip_address import IPAddress
+from NetSym.address.mac_address import MACAddress
+from NetSym.computing.internals.arp_cache import ArpCache
+from NetSym.computing.internals.dns_cache import DNSCache
+from NetSym.computing.internals.filesystem.filesystem import Filesystem
+from NetSym.computing.internals.interface import Interface
+from NetSym.computing.internals.packet_sending_queue import PacketSendingQueue
+from NetSym.computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket, WaitingFor
+from NetSym.computing.internals.processes.kernelmode_processes.arp_process import ARPProcess, SendPacketWithARPProcess
+from NetSym.computing.internals.processes.process_scheduler import ProcessScheduler
+from NetSym.computing.internals.processes.usermode_processes.daytime_process.daytime_server_process import DAYTIMEServerProcess
+from NetSym.computing.internals.processes.usermode_processes.dhcp_process.dhcp_client_process import DHCPClientProcess
+from NetSym.computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
+from NetSym.computing.internals.processes.usermode_processes.dns_process.dns_client_process import DNSClientProcess
+from NetSym.computing.internals.processes.usermode_processes.dns_process.dns_server_process import DNSServerProcess
+from NetSym.computing.internals.processes.usermode_processes.echo_server_process.echo_server_process import EchoServerProcess
+from NetSym.computing.internals.processes.usermode_processes.ftp_process.ftp_server_process import ServerFTPProcess
+from NetSym.computing.internals.processes.usermode_processes.ping_process import SendPing
+from NetSym.computing.internals.processes.usermode_processes.sniffing_process import SniffingProcess
+from NetSym.computing.internals.routing_table import RoutingTable, RoutingTableItem
+from NetSym.computing.internals.sockets.l4_socket import L4Socket
+from NetSym.computing.internals.sockets.raw_socket import RawSocket
+from NetSym.computing.internals.sockets.tcp_socket import TCPSocket
+from NetSym.computing.internals.sockets.udp_socket import ReturnedUDPPacket, UDPSocket
+from NetSym.computing.internals.wireless_interface import WirelessInterface
+from NetSym.consts import *
+from NetSym.exceptions import *
+from NetSym.gui.main_loop import MainLoop
+from NetSym.gui.tech.computer_graphics import ComputerGraphics
+from NetSym.packets.all import ICMP, IP, TCP, UDP, ARP
+from NetSym.packets.usefuls.dns import T_Hostname, validate_domain_hostname, canonize_domain_hostname
+from NetSym.packets.usefuls.ip import needs_fragmentation, fragment_packet, needs_reassembly, reassemble_fragmented_packet, allows_fragmentation, \
     are_fragments_valid
-from packets.usefuls.tcp import get_src_port, get_dst_port
-from packets.usefuls.usefuls import get_dst_ip
-from usefuls.funcs import get_the_one
+from NetSym.packets.usefuls.tcp import get_src_port, get_dst_port
+from NetSym.packets.usefuls.usefuls import get_dst_ip
+from NetSym.usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
-    from computing.internals.processes.abstracts.process import Process
-    from computing.internals.sockets.socket import Socket
-    from computing.connection import Connection
-    from packets.packet import Packet
+    from NetSym.computing.internals.processes.abstracts.process import Process
+    from NetSym.computing.internals.sockets.socket import Socket
+    from NetSym.computing.connection import Connection
+    from NetSym.packets.packet import Packet
 
 
 @dataclass

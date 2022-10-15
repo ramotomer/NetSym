@@ -3,13 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Optional, Tuple, TYPE_CHECKING, Iterable
 
-from consts import OPCODES
-from exceptions import FilesystemError
-from packets.usefuls.dns import T_Hostname, canonize_domain_hostname, is_domain_hostname_valid
-from usefuls.funcs import get_the_one
+from NetSym.consts import OPCODES
+from NetSym.exceptions import FilesystemError
+from NetSym.packets.usefuls.dns import T_Hostname, canonize_domain_hostname, is_domain_hostname_valid
+from NetSym.usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
+    from NetSym.computing.computer import Computer
 
 
 VARIABLE_DEFINITION_PREFIX = "$"

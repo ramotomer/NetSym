@@ -3,50 +3,50 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING, Tuple, List
 
-from computing.internals.shell.commands.command import SyntaxArgumentMessage, CommandOutput
-from computing.internals.shell.commands.filesystem.cat import Cat
-from computing.internals.shell.commands.filesystem.cd import Cd
-from computing.internals.shell.commands.filesystem.cp import Cp
-from computing.internals.shell.commands.filesystem.head import Head
-from computing.internals.shell.commands.filesystem.ls import Ls
-from computing.internals.shell.commands.filesystem.mkdir import Mkdir
-from computing.internals.shell.commands.filesystem.mv import Mv
-from computing.internals.shell.commands.filesystem.pwd import Pwd
-from computing.internals.shell.commands.filesystem.rm import Rm
-from computing.internals.shell.commands.filesystem.tail import Tail
-from computing.internals.shell.commands.filesystem.touch import Touch
-from computing.internals.shell.commands.info.hostname import Hostname
-from computing.internals.shell.commands.info.uname import Uname
-from computing.internals.shell.commands.info.uptime import Uptime
-from computing.internals.shell.commands.meta.alias import Alias
-from computing.internals.shell.commands.meta.help import Help
-from computing.internals.shell.commands.meta.man import Man
-from computing.internals.shell.commands.meta.unalias import Unalias
-from computing.internals.shell.commands.meta.watch import Watch
-from computing.internals.shell.commands.misc.echo import Echo
-from computing.internals.shell.commands.misc.grep import Grep
-from computing.internals.shell.commands.net.arp import Arp
-from computing.internals.shell.commands.net.arping import Arping
-from computing.internals.shell.commands.net.brctl.brctl import Brctl
-from computing.internals.shell.commands.net.dns import Dns
-from computing.internals.shell.commands.net.echoc import Echoc
-from computing.internals.shell.commands.net.echos import Echos
-from computing.internals.shell.commands.net.ip.ip import Ip
-from computing.internals.shell.commands.net.ip.ip_address import IpAddressCommand
-from computing.internals.shell.commands.net.ip.ip_route import IpRouteCommand
-from computing.internals.shell.commands.net.netstat import Netstat
-from computing.internals.shell.commands.net.nslookup import Nslookup
-from computing.internals.shell.commands.net.ping import Ping
-from computing.internals.shell.commands.net.tcpdump import Tcpdump
-from computing.internals.shell.commands.net.traceroute import Traceroute
-from computing.internals.shell.commands.processes.kill import Kill
-from computing.internals.shell.commands.processes.ps import Ps
-from consts import CONSOLE, FILESYSTEM
-from usefuls.funcs import called_in_order, all_indexes
+from NetSym.computing.internals.shell.commands.command import SyntaxArgumentMessage, CommandOutput
+from NetSym.computing.internals.shell.commands.filesystem.cat import Cat
+from NetSym.computing.internals.shell.commands.filesystem.cd import Cd
+from NetSym.computing.internals.shell.commands.filesystem.cp import Cp
+from NetSym.computing.internals.shell.commands.filesystem.head import Head
+from NetSym.computing.internals.shell.commands.filesystem.ls import Ls
+from NetSym.computing.internals.shell.commands.filesystem.mkdir import Mkdir
+from NetSym.computing.internals.shell.commands.filesystem.mv import Mv
+from NetSym.computing.internals.shell.commands.filesystem.pwd import Pwd
+from NetSym.computing.internals.shell.commands.filesystem.rm import Rm
+from NetSym.computing.internals.shell.commands.filesystem.tail import Tail
+from NetSym.computing.internals.shell.commands.filesystem.touch import Touch
+from NetSym.computing.internals.shell.commands.info.hostname import Hostname
+from NetSym.computing.internals.shell.commands.info.uname import Uname
+from NetSym.computing.internals.shell.commands.info.uptime import Uptime
+from NetSym.computing.internals.shell.commands.meta.alias import Alias
+from NetSym.computing.internals.shell.commands.meta.help import Help
+from NetSym.computing.internals.shell.commands.meta.man import Man
+from NetSym.computing.internals.shell.commands.meta.unalias import Unalias
+from NetSym.computing.internals.shell.commands.meta.watch import Watch
+from NetSym.computing.internals.shell.commands.misc.echo import Echo
+from NetSym.computing.internals.shell.commands.misc.grep import Grep
+from NetSym.computing.internals.shell.commands.net.arp import Arp
+from NetSym.computing.internals.shell.commands.net.arping import Arping
+from NetSym.computing.internals.shell.commands.net.brctl.brctl import Brctl
+from NetSym.computing.internals.shell.commands.net.dns import Dns
+from NetSym.computing.internals.shell.commands.net.echoc import Echoc
+from NetSym.computing.internals.shell.commands.net.echos import Echos
+from NetSym.computing.internals.shell.commands.net.ip.ip import Ip
+from NetSym.computing.internals.shell.commands.net.ip.ip_address import IpAddressCommand
+from NetSym.computing.internals.shell.commands.net.ip.ip_route import IpRouteCommand
+from NetSym.computing.internals.shell.commands.net.netstat import Netstat
+from NetSym.computing.internals.shell.commands.net.nslookup import Nslookup
+from NetSym.computing.internals.shell.commands.net.ping import Ping
+from NetSym.computing.internals.shell.commands.net.tcpdump import Tcpdump
+from NetSym.computing.internals.shell.commands.net.traceroute import Traceroute
+from NetSym.computing.internals.shell.commands.processes.kill import Kill
+from NetSym.computing.internals.shell.commands.processes.ps import Ps
+from NetSym.consts import CONSOLE, FILESYSTEM
+from NetSym.usefuls.funcs import called_in_order, all_indexes
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
-    from gui.tech.shell_graphics import ShellGraphics
+    from NetSym.computing.computer import Computer
+    from NetSym.gui.tech.shell_graphics import ShellGraphics
 
 
 class Shell:

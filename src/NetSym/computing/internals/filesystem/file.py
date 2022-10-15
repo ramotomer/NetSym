@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional, List, Dict
 
-from exceptions import FileNotOpenError
-from usefuls.funcs import datetime_from_string
+from NetSym.exceptions import FileNotOpenError
+from NetSym.usefuls.funcs import datetime_from_string
 
 
 class File:

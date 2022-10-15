@@ -3,21 +3,21 @@ from __future__ import annotations
 from math import acos, sin
 from typing import TYPE_CHECKING, NamedTuple, Optional, Dict, Callable
 
-from consts import *
-from exceptions import *
-from gui.abstracts.image_graphics import ImageGraphics
-from gui.main_window import MainWindow
-from gui.shape_drawing import draw_line
-from gui.shape_drawing import draw_rectangle
-from gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
-from usefuls.funcs import distance
-from usefuls.funcs import with_args, get_the_one
+from NetSym.consts import *
+from NetSym.exceptions import *
+from NetSym.gui.abstracts.image_graphics import ImageGraphics
+from NetSym.gui.main_window import MainWindow
+from NetSym.gui.shape_drawing import draw_line
+from NetSym.gui.shape_drawing import draw_rectangle
+from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
+from NetSym.usefuls.funcs import distance
+from NetSym.usefuls.funcs import with_args, get_the_one
 
 if TYPE_CHECKING:
-    from computing.connection import Connection
-    from gui.tech.computer_graphics import ComputerGraphics
-    from gui.tech.interface_graphics import InterfaceGraphics
-    from gui.user_interface.user_interface import UserInterface
+    from NetSym.computing.connection import Connection
+    from NetSym.gui.tech.computer_graphics import ComputerGraphics
+    from NetSym.gui.tech.interface_graphics import InterfaceGraphics
+    from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 class Computers(NamedTuple):

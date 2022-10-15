@@ -1,4 +1,4 @@
-from exceptions import *
+from NetSym.exceptions import *
 
 
 class ProcessInternalError(Exception):

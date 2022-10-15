@@ -3,14 +3,14 @@ from __future__ import annotations
 import random
 from typing import Optional, List, Dict
 
-from address.ip_address import IPAddress
-from address.mac_address import MACAddress
-from computing.connection import Connection
-from computing.loopback_connection import LoopbackConnection
-from consts import *
-from exceptions import *
-from packets.all import Ether
-from packets.packet import Packet
+from NetSym.address.ip_address import IPAddress
+from NetSym.address.mac_address import MACAddress
+from NetSym.computing.connection import Connection
+from NetSym.computing.loopback_connection import LoopbackConnection
+from NetSym.consts import *
+from NetSym.exceptions import *
+from NetSym.packets.all import Ether
+from NetSym.packets.packet import Packet
 
 
 class Interface:

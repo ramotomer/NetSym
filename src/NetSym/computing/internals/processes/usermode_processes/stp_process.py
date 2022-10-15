@@ -4,17 +4,17 @@ from dataclasses import dataclass
 from os import linesep
 from typing import Optional, TYPE_CHECKING, Dict
 
-from address.mac_address import MACAddress
-from computing.internals.processes.abstracts.process import Process, Timeout, T_ProcessCode, WaitingFor
-from consts import *
-from exceptions import *
-from gui.main_loop import MainLoop
-from packets.all import STP
-from packets.packet import Packet
+from NetSym.address.mac_address import MACAddress
+from NetSym.computing.internals.processes.abstracts.process import Process, Timeout, T_ProcessCode, WaitingFor
+from NetSym.consts import *
+from NetSym.exceptions import *
+from NetSym.gui.main_loop import MainLoop
+from NetSym.packets.all import STP
+from NetSym.packets.packet import Packet
 
 if TYPE_CHECKING:
-    from computing.internals.interface import Interface
-    from computing.switch import Switch
+    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.switch import Switch
 
 
 class BID:

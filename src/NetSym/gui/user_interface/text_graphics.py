@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from consts import *
-from gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
+from NetSym.consts import *
+from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 
 if TYPE_CHECKING:
-    from gui.abstracts.graphics_object import GraphicsObject
+    from NetSym.gui.abstracts.graphics_object import GraphicsObject
 
 
 class Text(UserInterfaceGraphicsObject):

@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from address.ip_address import IPAddress
-from computing.internals.shell.commands.command import Command, CommandOutput
-from consts import ADDRESSES
-from exceptions import RoutingTableError, WrongIPRouteUsageError
-from usefuls.funcs import get_the_one
+from NetSym.address.ip_address import IPAddress
+from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
+from NetSym.consts import ADDRESSES
+from NetSym.exceptions import RoutingTableError, WrongIPRouteUsageError
+from NetSym.usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
     import argparse
-    from computing.computer import Computer
-    from computing.internals.shell.shell import Shell
+    from NetSym.computing.computer import Computer
+    from NetSym.computing.internals.shell.shell import Shell
 
 
 class IpRouteCommand(Command):

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar, Type, Dict, Any, Callable
 
-from address.ip_address import IPAddress
-from address.mac_address import MACAddress
-from exceptions import AttributeError_
+from NetSym.address.ip_address import IPAddress
+from NetSym.address.mac_address import MACAddress
+from NetSym.exceptions import AttributeError_
 
 if TYPE_CHECKING:
     pass

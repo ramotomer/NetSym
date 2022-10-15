@@ -1,8 +1,8 @@
 import time
 
-from consts import *
-from gui.abstracts.image_graphics import ImageGraphics
-from gui.main_loop import MainLoop
+from NetSym.consts import *
+from NetSym.gui.abstracts.image_graphics import ImageGraphics
+from NetSym.gui.main_loop import MainLoop
 
 
 class AnimationGraphics(ImageGraphics):

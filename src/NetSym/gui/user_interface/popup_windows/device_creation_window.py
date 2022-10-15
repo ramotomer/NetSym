@@ -2,18 +2,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from computing.computer import Computer
-# from computing.nat import NAT
-from computing.router import Router
-from computing.switch import Switch, Hub, Antenna
-# from computing.internet import Internet
-from consts import *
-from gui.user_interface.popup_windows.image_button import ImageButton
-from gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText
-from usefuls.funcs import with_args, called_in_order
+from NetSym.computing.computer import Computer
+# from NetSym.computing.nat import NAT
+from NetSym.computing.router import Router
+from NetSym.computing.switch import Switch, Hub, Antenna
+# from NetSym.computing.internet import Internet
+from NetSym.consts import *
+from NetSym.gui.user_interface.popup_windows.image_button import ImageButton
+from NetSym.gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText
+from NetSym.usefuls.funcs import with_args, called_in_order
 
 if TYPE_CHECKING:
-    from gui.user_interface.user_interface import UserInterface
+    from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 class DeviceCreationWindow(PopupWindowContainingText):

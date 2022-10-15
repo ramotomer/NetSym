@@ -4,12 +4,12 @@ from typing import TYPE_CHECKING
 
 import scapy
 
-from gui.tech.wireless_packet_graphics import WirelessPacketGraphics
-from packets.packet import Packet
+from NetSym.gui.tech.wireless_packet_graphics import WirelessPacketGraphics
+from NetSym.packets.packet import Packet
 
 if TYPE_CHECKING:
-    from computing.internals.frequency import Frequency
-    from computing.internals.wireless_interface import WirelessInterface
+    from NetSym.computing.internals.frequency import Frequency
+    from NetSym.computing.internals.wireless_interface import WirelessInterface
 
 
 class WirelessPacket(Packet):

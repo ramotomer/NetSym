@@ -4,13 +4,13 @@ import random
 from abc import ABCMeta, abstractmethod
 from typing import Tuple, Optional, TYPE_CHECKING
 
-from address.ip_address import IPAddress
-from computing.internals.sockets.socket import Socket
-from consts import COMPUTER, PORTS, T_Port
-from exceptions import *
+from NetSym.address.ip_address import IPAddress
+from NetSym.computing.internals.sockets.socket import Socket
+from NetSym.consts import COMPUTER, PORTS, T_Port
+from NetSym.exceptions import *
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
+    from NetSym.computing.computer import Computer
 
 
 class L4Socket(Socket, metaclass=ABCMeta):

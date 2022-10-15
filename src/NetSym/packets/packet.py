@@ -4,13 +4,13 @@ from typing import TYPE_CHECKING, Tuple, Optional
 
 import scapy
 
-from exceptions import *
-from gui.tech.packet_graphics import PacketGraphics
-from packets.all import Ether
-from packets.usefuls.usefuls import is_raw_layer, scapy_layer_class_to_our_class
+from NetSym.exceptions import *
+from NetSym.gui.tech.packet_graphics import PacketGraphics
+from NetSym.packets.all import Ether
+from NetSym.packets.usefuls.usefuls import is_raw_layer, scapy_layer_class_to_our_class
 
 if TYPE_CHECKING:
-    from gui.tech.connection_graphics import ConnectionGraphics
+    from NetSym.gui.tech.connection_graphics import ConnectionGraphics
 
 
 class Packet:

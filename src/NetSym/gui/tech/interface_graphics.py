@@ -2,19 +2,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Dict, Callable
 
-from address.mac_address import MACAddress
-from consts import *
-from exceptions import *
-from gui.abstracts.image_graphics import ImageGraphics
-from gui.main_window import MainWindow
-from gui.shape_drawing import draw_rectangle
-from gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
-from usefuls.funcs import distance, with_args, get_the_one
+from NetSym.address.mac_address import MACAddress
+from NetSym.consts import *
+from NetSym.exceptions import *
+from NetSym.gui.abstracts.image_graphics import ImageGraphics
+from NetSym.gui.main_window import MainWindow
+from NetSym.gui.shape_drawing import draw_rectangle
+from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
+from NetSym.usefuls.funcs import distance, with_args, get_the_one
 
 if TYPE_CHECKING:
-    from computing.internals.interface import Interface
-    from gui.tech.computer_graphics import ComputerGraphics
-    from gui.user_interface.user_interface import UserInterface
+    from NetSym.computing.internals.interface import Interface
+    from NetSym.gui.tech.computer_graphics import ComputerGraphics
+    from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 class InterfaceGraphics(ViewableGraphicsObject):

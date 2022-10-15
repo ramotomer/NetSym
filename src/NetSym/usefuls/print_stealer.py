@@ -1,6 +1,6 @@
 import sys
 
-from usefuls.my_string_io import MyStringIO
+from NetSym.usefuls.my_string_io import MyStringIO
 
 
 class PrintStealer:

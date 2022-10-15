@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode
-from consts import *
-from exceptions import TCPSocketConnectionRefused
-from packets.usefuls.dns import T_Hostname
+from NetSym.computing.internals.processes.abstracts.process import Process, T_ProcessCode
+from NetSym.consts import *
+from NetSym.exceptions import TCPSocketConnectionRefused
+from NetSym.packets.usefuls.dns import T_Hostname
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
+    from NetSym.computing.computer import Computer
 
 
 class DAYTIMEClientProcess(Process):

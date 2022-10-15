@@ -3,11 +3,11 @@ from __future__ import annotations
 from abc import ABCMeta
 from typing import Type, TYPE_CHECKING
 
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode
-from consts import T_Port
+from NetSym.computing.internals.processes.abstracts.process import Process, T_ProcessCode
+from NetSym.consts import T_Port
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
+    from NetSym.computing.computer import Computer
 
 
 class TCPServerProcess(Process, metaclass=ABCMeta):

@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import NamedTuple, TYPE_CHECKING, List
 
-from computing.internals.interface import Interface
-from computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, WaitingFor
-from consts import *
-from exceptions import *
-from gui.main_loop import MainLoop
+from NetSym.computing.internals.interface import Interface
+from NetSym.computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, WaitingFor
+from NetSym.consts import *
+from NetSym.exceptions import *
+from NetSym.gui.main_loop import MainLoop
 
 if TYPE_CHECKING:
-    from packets.packet import Packet
-    from computing.switch import Switch
+    from NetSym.packets.packet import Packet
+    from NetSym.computing.switch import Switch
 
 
 class SwitchTableItem(NamedTuple):

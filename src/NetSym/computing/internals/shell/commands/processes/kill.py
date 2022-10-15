@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from computing.internals.shell.commands.command import Command, CommandOutput
-from consts import COMPUTER
-from exceptions import NoSuchProcessError
+from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
+from NetSym.consts import COMPUTER
+from NetSym.exceptions import NoSuchProcessError
 
 if TYPE_CHECKING:
     import argparse
-    from computing.computer import Computer
-    from computing.internals.shell.shell import Shell
+    from NetSym.computing.computer import Computer
+    from NetSym.computing.internals.shell.shell import Shell
 
 
 class Kill(Command):

@@ -6,16 +6,16 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Iterator, Union, Callable, TYPE_CHECKING, Optional, Tuple, Type, Generator
 
-from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_Suicide
-from consts import COMPUTER, T_Time
-from exceptions import *
-from gui.main_loop import MainLoop
-from packets.packet import Packet
-from usefuls.iterable_dataclass import IterableDataclass
+from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_Suicide
+from NetSym.consts import COMPUTER, T_Time
+from NetSym.exceptions import *
+from NetSym.gui.main_loop import MainLoop
+from NetSym.packets.packet import Packet
+from NetSym.usefuls.iterable_dataclass import IterableDataclass
 
 if TYPE_CHECKING:
-    from computing.internals.interface import Interface
-    from computing.computer import Computer
+    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.computer import Computer
 
 
 class ReturnedPacket:

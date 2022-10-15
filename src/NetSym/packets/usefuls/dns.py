@@ -6,11 +6,11 @@ from typing import List, Optional
 import scapy
 from scapy.layers.dns import DNSRR, DNSQR
 
-from computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_InvalidDomainHostname
-from consts import COMPUTER, PROTOCOLS, OPCODES
-from exceptions import InvalidDomainHostnameError
-from usefuls.attribute_renamer import define_attribute_aliases
-from usefuls.funcs import is_matching
+from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_InvalidDomainHostname
+from NetSym.consts import COMPUTER, PROTOCOLS, OPCODES
+from NetSym.exceptions import InvalidDomainHostnameError
+from NetSym.usefuls.attribute_renamer import define_attribute_aliases
+from NetSym.usefuls.funcs import is_matching
 
 T_Hostname = str
 

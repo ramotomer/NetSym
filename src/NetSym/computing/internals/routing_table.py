@@ -3,13 +3,13 @@ from __future__ import annotations
 from os import linesep
 from typing import NamedTuple, Optional, TYPE_CHECKING, Union, Dict, Any
 
-from address.ip_address import IPAddress
-from consts import ADDRESSES
-from exceptions import *
+from NetSym.address.ip_address import IPAddress
+from NetSym.consts import ADDRESSES
+from NetSym.exceptions import *
 
 if TYPE_CHECKING:
-    from computing.internals.interface import Interface
-    from computing.computer import Computer
+    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.computer import Computer
 
 
 class RoutingTableItem(NamedTuple):

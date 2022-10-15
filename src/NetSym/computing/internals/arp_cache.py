@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import NamedTuple, Dict, Optional, Union, Iterator
 
-from address.ip_address import IPAddress
-from address.mac_address import MACAddress
-from consts import COMPUTER, T_Time
-from exceptions import InvalidAddressError
-from gui.main_loop import MainLoop
+from NetSym.address.ip_address import IPAddress
+from NetSym.address.mac_address import MACAddress
+from NetSym.consts import COMPUTER, T_Time
+from NetSym.exceptions import InvalidAddressError
+from NetSym.gui.main_loop import MainLoop
 
 
 class ARPCacheItem(NamedTuple):

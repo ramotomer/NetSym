@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING
 
-from computing.internals.processes.abstracts.process import Process, WaitingFor, T_ProcessCode
+from NetSym.computing.internals.processes.abstracts.process import Process, WaitingFor, T_ProcessCode
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
+    from NetSym.computing.computer import Computer
 
 
 class NOPProcess(Process):

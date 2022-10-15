@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from address.ip_address import IPAddress
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode
-from consts import PORTS
+from NetSym.address.ip_address import IPAddress
+from NetSym.computing.internals.processes.abstracts.process import Process, T_ProcessCode
+from NetSym.consts import PORTS
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
+    from NetSym.computing.computer import Computer
 
 
 class EchoServerProcess(Process):

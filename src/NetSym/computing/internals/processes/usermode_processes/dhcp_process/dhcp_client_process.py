@@ -2,18 +2,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from address.ip_address import IPAddress
-from address.mac_address import MACAddress
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode
-from consts import OPCODES, PORTS, PROTOCOLS
-from exceptions import *
-from packets.all import DHCP, BOOTP, IP, UDP
-from usefuls.funcs import get_the_one
+from NetSym.address.ip_address import IPAddress
+from NetSym.address.mac_address import MACAddress
+from NetSym.computing.internals.processes.abstracts.process import Process, T_ProcessCode
+from NetSym.consts import OPCODES, PORTS, PROTOCOLS
+from NetSym.exceptions import *
+from NetSym.packets.all import DHCP, BOOTP, IP, UDP
+from NetSym.usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
-    from packets.packet import Packet
-    from computing.internals.interface import Interface
-    from computing.computer import Computer
+    from NetSym.packets.packet import Packet
+    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.computer import Computer
 
 
 class DHCPClientProcess(Process):

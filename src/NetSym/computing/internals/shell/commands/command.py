@@ -4,12 +4,12 @@ import argparse
 from abc import ABCMeta, abstractmethod
 from typing import Union, NamedTuple, TYPE_CHECKING
 
-from usefuls.funcs import split_with_escaping
-from usefuls.print_stealer import PrintStealer
+from NetSym.usefuls.funcs import split_with_escaping
+from NetSym.usefuls.print_stealer import PrintStealer
 
 if TYPE_CHECKING:
-    from computing.computer import Computer
-    from computing.internals.shell.shell import Shell
+    from NetSym.computing.computer import Computer
+    from NetSym.computing.internals.shell.shell import Shell
 
 
 class CommandOutput(NamedTuple):

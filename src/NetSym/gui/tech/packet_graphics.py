@@ -4,17 +4,17 @@ from typing import TYPE_CHECKING, Optional, Dict, Callable
 
 import scapy
 
-from consts import *
-from gui.abstracts.animation_graphics import AnimationGraphics
-from gui.abstracts.image_graphics import ImageGraphics
-from gui.main_loop import MainLoop
-from packets.usefuls.type_to_opcode_function import TYPE_TO_OPCODE_FUNCTION
-from packets.usefuls.usefuls import get_original_layer_name_by_instance
-from usefuls.funcs import with_args, rangom
+from NetSym.consts import *
+from NetSym.gui.abstracts.animation_graphics import AnimationGraphics
+from NetSym.gui.abstracts.image_graphics import ImageGraphics
+from NetSym.gui.main_loop import MainLoop
+from NetSym.packets.usefuls.type_to_opcode_function import TYPE_TO_OPCODE_FUNCTION
+from NetSym.packets.usefuls.usefuls import get_original_layer_name_by_instance
+from NetSym.usefuls.funcs import with_args, rangom
 
 if TYPE_CHECKING:
-    from gui.tech.connection_graphics import ConnectionGraphics
-    from gui.user_interface.user_interface import UserInterface
+    from NetSym.gui.tech.connection_graphics import ConnectionGraphics
+    from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 class PacketGraphics(ImageGraphics):

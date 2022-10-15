@@ -4,14 +4,14 @@ from typing import TYPE_CHECKING, Callable, NamedTuple
 
 from pyglet.window import key
 
-from consts import *
-from gui.user_interface.button import Button
-from gui.user_interface.key_writer import KeyWriter
-from gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText
-from gui.user_interface.text_graphics import Text
+from NetSym.consts import *
+from NetSym.gui.user_interface.button import Button
+from NetSym.gui.user_interface.key_writer import KeyWriter
+from NetSym.gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText
+from NetSym.gui.user_interface.text_graphics import Text
 
 if TYPE_CHECKING:
-    from gui.user_interface.user_interface import UserInterface
+    from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 class ChildGraphicsObjects(NamedTuple):

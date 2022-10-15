@@ -4,8 +4,8 @@ from typing import List, Union, Callable
 
 from pyglet.window import key
 
-from consts import KEYBOARD
-from exceptions import KeyActionAlreadyExistsError
+from NetSym.consts import KEYBOARD
+from NetSym.exceptions import KeyActionAlreadyExistsError
 
 
 class KeyWriter:

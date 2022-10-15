@@ -2,20 +2,20 @@ from __future__ import annotations
 
 from typing import Optional, TYPE_CHECKING, Dict
 
-from address.mac_address import MACAddress
-from computing.computer import Computer, COMPUTER
-from computing.internals.filesystem.filesystem import Filesystem
-from computing.internals.processes.kernelmode_processes.switching_process import SwitchingProcess
-from computing.internals.processes.usermode_processes.stp_process import STPProcess, BID
-from computing.internals.routing_table import RoutingTable
-from computing.internals.wireless_interface import WirelessInterface
-from consts import OS, PROTOCOLS, IMAGES, CONNECTIONS, ADDRESSES
-from gui.tech.computer_graphics import ComputerGraphics
-from packets.all import LLC, STP
+from NetSym.address.mac_address import MACAddress
+from NetSym.computing.computer import Computer, COMPUTER
+from NetSym.computing.internals.filesystem.filesystem import Filesystem
+from NetSym.computing.internals.processes.kernelmode_processes.switching_process import SwitchingProcess
+from NetSym.computing.internals.processes.usermode_processes.stp_process import STPProcess, BID
+from NetSym.computing.internals.routing_table import RoutingTable
+from NetSym.computing.internals.wireless_interface import WirelessInterface
+from NetSym.consts import OS, PROTOCOLS, IMAGES, CONNECTIONS, ADDRESSES
+from NetSym.gui.tech.computer_graphics import ComputerGraphics
+from NetSym.packets.all import LLC, STP
 
 if TYPE_CHECKING:
-    from packets.packet import Packet
-    from computing.internals.interface import Interface
+    from NetSym.packets.packet import Packet
+    from NetSym.computing.internals.interface import Interface
 
 
 class Switch(Computer):

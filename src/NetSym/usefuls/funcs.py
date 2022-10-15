@@ -10,8 +10,8 @@ from math import sin, cos, pi, atan
 from operator import mul
 from typing import Dict, Iterable, Callable, TypeVar, Optional, List, Generator
 
-from consts import *
-from exceptions import WrongUsageError
+from NetSym.consts import *
+from NetSym.exceptions import WrongUsageError
 
 T = TypeVar("T")
 

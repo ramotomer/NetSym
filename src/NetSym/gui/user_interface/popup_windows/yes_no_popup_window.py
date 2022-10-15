@@ -4,13 +4,13 @@ from typing import TYPE_CHECKING, Callable
 
 from pyglet.window import key
 
-from consts import *
-from gui.user_interface.button import Button
-from gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText
-from usefuls.funcs import called_in_order
+from NetSym.consts import *
+from NetSym.gui.user_interface.button import Button
+from NetSym.gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText
+from NetSym.usefuls.funcs import called_in_order
 
 if TYPE_CHECKING:
-    from gui.user_interface.user_interface import UserInterface
+    from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 class YesNoPopupWindow(PopupWindowContainingText):

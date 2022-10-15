@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from computing.internals.processes.abstracts.process import Process, T_ProcessCode
-from computing.internals.processes.abstracts.tcp_server_process import TCPServerProcess
-from consts import PORTS
+from NetSym.computing.internals.processes.abstracts.process import Process, T_ProcessCode
+from NetSym.computing.internals.processes.abstracts.tcp_server_process import TCPServerProcess
+from NetSym.consts import PORTS
 
 if TYPE_CHECKING:
-    from computing.internals.sockets.tcp_socket import TCPSocket
-    from computing.computer import Computer
+    from NetSym.computing.internals.sockets.tcp_socket import TCPSocket
+    from NetSym.computing.computer import Computer
 
 
 class ServerFTPProcess(TCPServerProcess):

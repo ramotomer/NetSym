@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from computing.internals.processes.usermode_processes.watching_process import WatchingProcess
-from computing.internals.shell.commands.command import Command, CommandOutput
+from NetSym.computing.internals.processes.usermode_processes.watching_process import WatchingProcess
+from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
 
 if TYPE_CHECKING:
     import argparse
-    from computing.computer import Computer
-    from computing.internals.shell.shell import Shell
+    from NetSym.computing.computer import Computer
+    from NetSym.computing.internals.shell.shell import Shell
 
 
 class Watch(Command):

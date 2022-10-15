@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from computing.internals.shell.commands.command import Command, CommandOutput
-from computing.internals.shell.commands.net.ip.ip_address import IpAddressCommand
-from computing.internals.shell.commands.net.ip.ip_link import IpLinkCommand
-from computing.internals.shell.commands.net.ip.ip_route import IpRouteCommand
+from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
+from NetSym.computing.internals.shell.commands.net.ip.ip_address import IpAddressCommand
+from NetSym.computing.internals.shell.commands.net.ip.ip_link import IpLinkCommand
+from NetSym.computing.internals.shell.commands.net.ip.ip_route import IpRouteCommand
 
 if TYPE_CHECKING:
     import argparse
-    from computing.computer import Computer
-    from computing.internals.shell.shell import Shell
+    from NetSym.computing.computer import Computer
+    from NetSym.computing.internals.shell.shell import Shell
 
 
 class Ip(Command):

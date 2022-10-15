@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, NamedTuple
 
-from consts import COLORS, CONSOLE, COMPUTER
-from gui.main_loop import MainLoop
-from gui.tech.shell_graphics import ShellGraphics
-from gui.user_interface.popup_windows.popup_window import PopupWindow
+from NetSym.consts import COLORS, CONSOLE, COMPUTER
+from NetSym.gui.main_loop import MainLoop
+from NetSym.gui.tech.shell_graphics import ShellGraphics
+from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 
 if TYPE_CHECKING:
-    from gui.user_interface.text_graphics import Text
-    from gui.user_interface.button import Button
-    from computing.computer import Computer
-    from gui.user_interface.user_interface import UserInterface
+    from NetSym.gui.user_interface.text_graphics import Text
+    from NetSym.gui.user_interface.button import Button
+    from NetSym.computing.computer import Computer
+    from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 class ChildrenGraphicsObjects(NamedTuple):

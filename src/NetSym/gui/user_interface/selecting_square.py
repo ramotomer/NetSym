@@ -3,15 +3,15 @@ from __future__ import annotations
 from operator import itemgetter
 from typing import TYPE_CHECKING, Iterable
 
-from consts import *
-from exceptions import WrongUsageError
-from gui.abstracts.graphics_object import GraphicsObject
-from gui.abstracts.image_graphics import ImageGraphics
-from gui.main_window import MainWindow
-from gui.shape_drawing import draw_rect_by_corners
+from NetSym.consts import *
+from NetSym.exceptions import WrongUsageError
+from NetSym.gui.abstracts.graphics_object import GraphicsObject
+from NetSym.gui.abstracts.image_graphics import ImageGraphics
+from NetSym.gui.main_window import MainWindow
+from NetSym.gui.shape_drawing import draw_rect_by_corners
 
 if TYPE_CHECKING:
-    from gui.user_interface.user_interface import UserInterface
+    from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 class SelectingSquare(GraphicsObject):

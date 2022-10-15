@@ -4,16 +4,16 @@ from typing import TYPE_CHECKING, Union, NamedTuple
 
 from pyglet.window import key
 
-from computing.internals.shell.shell import Shell
-from consts import CONSOLE, TEXT, KEYBOARD
-from gui.tech.output_console import OutputConsole
-from gui.user_interface.key_writer import KeyWriter
-from gui.user_interface.text_graphics import Text
-from usefuls.funcs import with_args
+from NetSym.computing.internals.shell.shell import Shell
+from NetSym.consts import CONSOLE, TEXT, KEYBOARD
+from NetSym.gui.tech.output_console import OutputConsole
+from NetSym.gui.user_interface.key_writer import KeyWriter
+from NetSym.gui.user_interface.text_graphics import Text
+from NetSym.usefuls.funcs import with_args
 
 if TYPE_CHECKING:
-    from gui.user_interface.popup_windows.popup_window import PopupWindow
-    from computing.computer import Computer
+    from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
+    from NetSym.computing.computer import Computer
 
 
 class ChildGraphicsObjects(NamedTuple):

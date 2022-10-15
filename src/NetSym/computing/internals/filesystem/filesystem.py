@@ -4,10 +4,10 @@ import os
 from contextlib import contextmanager
 from typing import Optional, Dict, List, Union, Generator, Tuple
 
-from computing.internals.filesystem.directory import Directory, T_ContainedItem
-from computing.internals.filesystem.file import File, PipingFile
-from consts import FILESYSTEM, DIRECTORIES, TRANSFER_FILE
-from exceptions import PathError, NoSuchItemError, CannotBeUsedWithPiping, WrongUsageError
+from NetSym.computing.internals.filesystem.directory import Directory, T_ContainedItem
+from NetSym.computing.internals.filesystem.file import File, PipingFile
+from NetSym.consts import FILESYSTEM, DIRECTORIES, TRANSFER_FILE
+from NetSym.exceptions import PathError, NoSuchItemError, CannotBeUsedWithPiping, WrongUsageError
 
 
 class Filesystem:

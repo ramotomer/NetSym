@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Optional, Callable
 
-from consts import *
-from gui.abstracts.image_graphics import ImageGraphics
-from gui.user_interface.button import Button
+from NetSym.consts import *
+from NetSym.gui.abstracts.image_graphics import ImageGraphics
+from NetSym.gui.user_interface.button import Button
 
 
 class ImageButton(Button):

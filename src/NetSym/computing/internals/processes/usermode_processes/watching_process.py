@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from computing.internals.processes.abstracts.process import Process, WaitingFor, Timeout, T_ProcessCode
-from consts import T_Time
+from NetSym.computing.internals.processes.abstracts.process import Process, WaitingFor, Timeout, T_ProcessCode
+from NetSym.consts import T_Time
 
 if TYPE_CHECKING:
-    from computing.internals.shell.shell import Shell
-    from computing.computer import Computer
+    from NetSym.computing.internals.shell.shell import Shell
+    from NetSym.computing.computer import Computer
 
 
 class WatchingProcess(Process):
