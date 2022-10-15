@@ -1,0 +1,2 @@
+pyWinhook==1.6.2
+pyglet==1.5.2
