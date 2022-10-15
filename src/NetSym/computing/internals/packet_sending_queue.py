@@ -25,7 +25,7 @@ class PacketSendingQueue:
     interval:                 T_Time
     interface:                Optional[Interface] = None
     sending_socket:           Optional[RawSocket] = None
-    last_packet_sending_time: T_Time              = field(default_factory=MainLoop.get_instance_time)
+    last_packet_sending_time: T_Time              = field(default_factory=MainLoop.get_time)
 
     def send_packets_with_time_gaps(self) -> None:
         """

@@ -54,7 +54,7 @@ class MainLoop:
         # self.logo_animation = self.main_window.user_interface.init_logo_animation()
 
     @classmethod
-    def get_instance_time(cls) -> T_Time:
+    def get_time(cls) -> T_Time:
         """
         This is a class method that returns the time of the MainLoop instance - adjusted to pauses and different speeds (just like the `time` method)
         It allows us to talk about the `time` method (without calling it) even before the `instance` being initiated

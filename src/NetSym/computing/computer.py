@@ -75,8 +75,6 @@ class Computer:
 
     The computer runs many `Process`-s that are all either currently running or waiting for a certain packet to arrive.
     """
-
-    POSSIBLE_COMPUTER_NAMES = [line.strip() for line in open(COMPUTER_NAMES_FILE_PATH).readlines()]
     PORTS_TO_PROCESSES = {
         "TCP": {
             PORTS.DAYTIME: DAYTIMEServerProcess,
@@ -95,6 +93,7 @@ class Computer:
         },
     }
 
+    POSSIBLE_COMPUTER_NAMES = None
     EXISTING_COMPUTER_NAMES = set()
 
     def __init__(self, name: Optional[str] = None, os: str = OS.WINDOWS, gateway: Optional[IPAddress] = None, *interfaces: Interface) -> None:
@@ -118,7 +117,7 @@ class Computer:
         if not interfaces:
             self.interfaces = []  # a list of all of the interfaces without the loopback
         self.loopback = Interface.loopback()
-        self.boot_time = MainLoop.instance.time()
+        self.boot_time = MainLoop.get_time()
 
         self.received:     List[ReturnedPacket] = []
         self.received_raw: List[ReturnedPacket] = []
@@ -248,6 +247,9 @@ class Computer:
         Theoretically can randomize the same name twice, but unlikely.
         :return: a random string that is the name.
         """
+        if cls.POSSIBLE_COMPUTER_NAMES is None:
+            cls.POSSIBLE_COMPUTER_NAMES = [line.strip() for line in open(COMPUTER_NAMES_FILE_PATH).readlines()]
+
         name = ''.join([random.choice(cls.POSSIBLE_COMPUTER_NAMES), str(random.randint(0, 100))])
         if name in cls.EXISTING_COMPUTER_NAMES:
             name = cls.random_name()

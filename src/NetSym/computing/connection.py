@@ -26,7 +26,7 @@ class SentPacket:
     will_be_dropped:  bool
     will_be_delayed:  bool
 
-    last_update_time: T_Time = field(default_factory=MainLoop.get_instance_time)
+    last_update_time: T_Time = field(default_factory=MainLoop.get_time)
 
 
 class Connection:
