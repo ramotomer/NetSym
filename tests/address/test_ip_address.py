@@ -79,3 +79,31 @@ def test_increased(ip, expected, raises):
 
     else:
         assert IPAddress.increased(IPAddress(ip)) == IPAddress(expected)
+
+
+@pytest.mark.parametrize(
+    "ip, expected",
+    [
+        ("1.1.1.1/24",     "1.1.1.1"),
+        ("1.1.1.250/24",   "1.1.1.1"),
+        ("1.1.1.0/16",     "1.1.1.1"),
+        ("10.168.1.100/8", "10.168.1.1"),
+    ]
+)
+def test_expected_gateway(ip, expected):
+    assert IPAddress(ip).expected_gateway() == IPAddress(expected)
+
+
+@pytest.mark.parametrize(
+    "ip, expected",
+    [
+        ("1.1.1.1/24",           "1.1.1.0/24"),
+        ("1.1.1.0/24",           "1.1.1.0/24"),
+        ("1.1.1.1/16",           "1.1.0.0/16"),
+        ("3.4.5.7/8",            "3.0.0.0/8"),
+        ("250.2.2.2/1",          "128.0.0.0/1"),
+        ("255.255.255.255/24",   "255.255.255.0/24"),
+    ]
+)
+def test_subnet(ip, expected):
+    assert IPAddress(ip).subnet() == IPAddress(expected)
