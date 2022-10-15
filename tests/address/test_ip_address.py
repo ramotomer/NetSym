@@ -107,3 +107,125 @@ def test_expected_gateway(ip, expected):
 )
 def test_subnet(ip, expected):
     assert IPAddress(ip).subnet() == IPAddress(expected)
+
+
+@pytest.mark.parametrize(
+    "ip, expected",
+    [
+        ("1.1.1.1/24",     "1.1.1.255"),
+        ("1.1.1.1/16",     "1.1.255.255"),
+        ("1.1.1.1/8",      "1.255.255.255"),
+        ("192.168.1.1/20", "192.168.15.255"),
+        ("1.168.2.14/1",   "127.255.255.255"),
+    ]
+)
+def test_subnet_broadcast(ip, expected):
+    assert IPAddress(ip).subnet_broadcast() == IPAddress(expected)
+
+
+@pytest.mark.parametrize(
+    "ip, expected",
+    [
+        ("1.1.1.1",         b"\x01\x01\x01\x01"),
+        ("255.255.255.255", b"\xff\xff\xff\xff"),
+        ("192.168.1.2",     b"\xc0\xa8\x01\x02"),
+        ("0.0.0.0",         b"\x00\x00\x00\x00"),
+    ]
+)
+def test_as_bytes(ip, expected):
+    assert IPAddress.as_bytes(ip) == expected
+
+
+@pytest.mark.parametrize(
+    "ip, expected",
+    [
+        ("1.1.1.1",         True),
+        ("192.168.1.2",     True),
+        ("10.0.0.0",        True),
+        ("0.0.0.0",         True),
+        ("255.255.255.255", True),
+        ("1.2.3.4.5.6",     False),
+        ("1.2.3",           False),
+        ("1.2.3.5f",        False),
+        ("3-4-5-6",         False),
+        ("hello world",     False),
+    ]
+)
+def test_is_valid(ip, expected):
+    assert IPAddress.is_valid(ip) is expected
+
+
+@pytest.mark.parametrize(
+    "mask, expected",
+    [
+        ("30", True),
+        ("24", True),
+        ("16", True),
+        ("8",  True),
+        ("2",  True),
+        ("0",  True),
+        (24,   False),
+        (None, False),
+        ("33", False),
+        ("-3", False),
+    ]
+)
+def test_is_valid_subnet_mask(mask, expected):
+    assert IPAddress.is_valid_subnet_mask(mask) is expected
+
+
+@pytest.mark.parametrize(
+    "number, expected",
+    [
+        (31, "255.255.255.254"),
+        (24, "255.255.255.0"),
+        (21, "255.255.248.0"),
+        (16, "255.255.0.0"),
+        (8,  "255.0.0.0"),
+        (1,  "128.0.0.0"),
+        (0,  "0.0.0.0"),
+    ]
+)
+def test_mask_from_number(number, expected):
+    assert IPAddress.mask_from_number(number) == expected
+
+
+@pytest.mark.parametrize(
+    "ip, expected",
+    [
+        ('1.1.1.1',         '0b00000001000000010000000100000001'),
+        ('255.255.255.255', '0b11111111111111111111111111111111'),
+        ('192.168.1.2',     '0b11000000101010000000000100000010'),
+        ('0.0.0.0',         '0b00000000000000000000000000000000'),
+    ]
+)
+def test_is_bits(ip, expected):
+    assert IPAddress.as_bits(ip) == expected
+
+
+@pytest.mark.parametrize(
+    "bits, ip",
+    [
+        ('0b00000001000000010000000100000001', '1.1.1.1'),
+        ('0b11111111111111111111111111111111', '255.255.255.255'),
+        ('0b11000000101010000000000100000010', '192.168.1.2'),
+        ('0b00000000000000000000000000000000', '0.0.0.0'),
+    ]
+)
+def test_from_bites(bits, ip):
+    assert IPAddress.from_bits(bits) == IPAddress(ip)
+
+
+@pytest.mark.parametrize(
+    "ip",
+    [
+        "1.1.1.1",
+        "255.255.255.255",
+        "192.168.1.2",
+        "0.0.0.0",
+    ]
+)
+def test_copy(ip):
+    ip_address = IPAddress(ip)
+    copy = IPAddress.copy(ip_address)
+    assert (copy == ip_address) and (copy is not ip_address)

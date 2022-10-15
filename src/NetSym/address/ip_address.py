@@ -69,7 +69,7 @@ class IPAddress:
         """
         # TODO: Shit method! What about subnet masks that are not a multiple of 8!!!
         _, _, _, last_byte = self.string_ip.split(ADDRESSES.IP.SEPARATOR)
-        return int(last_byte) == 255  # I had some thinking if to put in constant, decided not to...
+        return int(last_byte) == 255
 
     def is_private_address(self) -> bool:
         """
@@ -143,14 +143,13 @@ class IPAddress:
         return self.from_bits(masked_address_bin, int(self.subnet_mask))
 
     @staticmethod
-    def as_bytes(address: str) -> bytearray:
+    def as_bytes(address: str) -> bytes:
         """
         Returns a byte representation of the IP address
         :param address: The string address
-        :return: a `bytearray` object which is the representation of the ip address.
+        :return: the representation of the ip address in bytes
         """
-        address_as_numbers = [int(part) for part in address.split(ADDRESSES.IP.SEPARATOR)]
-        return bytearray(address_as_numbers)
+        return bytes([int(part) for part in address.split(ADDRESSES.IP.SEPARATOR)])
 
     @staticmethod
     def is_valid(address: str) -> bool:
