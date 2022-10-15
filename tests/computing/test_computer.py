@@ -17,10 +17,24 @@ IPS = [
 ]
 
 
+class MimicingMainLoop:
+    def __init__(self):
+        pass
+
+    def time(self):
+        return 0
+
+
+class MimicingComputer(Computer):
+    @property
+    def main_loop(self):
+        return MimicingMainLoop()
+
+
 @pytest.fixture
 def example_computers():
     return [
-        Computer(
+        MimicingComputer(
             "c1",
             OS.WINDOWS,
             None,

@@ -117,7 +117,7 @@ class Computer:
         if not interfaces:
             self.interfaces = []  # a list of all of the interfaces without the loopback
         self.loopback = Interface.loopback()
-        self.boot_time = MainLoop.get_time()
+        self.boot_time = self.main_loop.time()
 
         self.received:     List[ReturnedPacket] = []
         self.received_raw: List[ReturnedPacket] = []
@@ -154,8 +154,12 @@ class Computer:
         self.icmp_sequence_number = 0
         self._latest_ip_id = random.randint(0, PROTOCOLS.IP.MAX_IP_ID)
 
-        MainLoop.instance.insert_to_loop_pausable(self.logic)
+        self.main_loop.insert_to_loop_pausable(self.logic)
         # ^ method does not run when program is paused
+
+    @property
+    def main_loop(self):
+        return MainLoop.instance
 
     @property
     def macs(self) -> List[MACAddress]:
@@ -402,7 +406,7 @@ class Computer:
         Things the computer should do when it is turned on
         :return:
         """
-        self.boot_time = MainLoop.instance.time()
+        self.boot_time = self.main_loop.time()
         self.process_scheduler.run_startup_processes()
 
         self.icmp_sequence_number = 0
@@ -454,7 +458,7 @@ class Computer:
         if interface.has_ip():
             self.routing_table.delete_interface(interface)
         self.interfaces.remove(interface)
-        MainLoop.instance.unregister_graphics_object(interface.graphics)
+        self.main_loop.unregister_graphics_object(interface.graphics)
         self.graphics.update_text()
 
     def add_remove_interface(self, name: str) -> None:
@@ -784,7 +788,7 @@ class Computer:
                 [rp for rp in self._active_packet_fragments if rp.packet["IP"].id == ip_id],
                 key=lambda rp: rp.metadata.time,
             )
-            if MainLoop.instance.time_since(latest_sibling_fragment.metadata.time) > PROTOCOLS.IP.FRAGMENT_DROP_TIMEOUT:
+            if self.main_loop.time_since(latest_sibling_fragment.metadata.time) > PROTOCOLS.IP.FRAGMENT_DROP_TIMEOUT:
                 fragment = None
                 for fragment in self._active_packet_fragments[:]:
                     if fragment.packet["IP"].id == ip_id:
@@ -905,7 +909,7 @@ class Computer:
                 packet,
                 PacketMetadata(
                     interface,
-                    MainLoop.instance.time(),
+                    self.main_loop.time(),
                     PACKET.DIRECTION.OUTGOING
                 )
             ),
@@ -1392,13 +1396,12 @@ class Computer:
             if not self.process_scheduler.is_usermode_process_running(socket_metadata.pid):
                 self.remove_socket(socket)
 
-    @staticmethod
-    def select(socket_list: List[Socket], timeout: Optional[Union[int, float]] = None) -> Generator[WaitingFor, None, Optional[Socket]]:
+    def select(self, socket_list: List[Socket], timeout: Optional[Union[int, float]] = None) -> Generator[WaitingFor, None, Optional[Socket]]:
         """
         Similar to the `select` syscall of linux
         Loops over all sockets until one of them has something to receive
         The selected socket will later be returned. Use in the format:
-            >>> ready_socket = yield from Computer.select([socket], timeout)
+            >>> ready_socket = yield from self.select([socket], timeout)
 
         This is a generator that yields `WaitingFor` objects
         To use in a computer `Process` - yield from this
@@ -1406,12 +1409,12 @@ class Computer:
         :param socket_list: List[Socket]
         :param timeout: the amount of seconds to wait before returning without a selected socket
         """
-        start_time = MainLoop.instance.time()
+        start_time = self.main_loop.time()
         while True:
             for socket in socket_list:
                 if socket.has_data_to_receive:
                     return socket
-            if (timeout is not None) and (start_time + timeout < MainLoop.instance.time()):
+            if (timeout is not None) and (start_time + timeout < self.main_loop.time()):
                 return None
             yield WaitingFor.nothing()
 
@@ -1434,7 +1437,7 @@ class Computer:
             if not interface.is_connected():
                 continue
             for packet in interface.receive():
-                packet_with_metadata = ReturnedPacket(packet, PacketMetadata(interface, MainLoop.instance.time(), PACKET.DIRECTION.INCOMING))
+                packet_with_metadata = ReturnedPacket(packet, PacketMetadata(interface, self.main_loop.time(), PACKET.DIRECTION.INCOMING))
                 self.received_raw.append(packet_with_metadata)
                 self._sniff_packet_on_relevant_raw_sockets(packet_with_metadata)
 

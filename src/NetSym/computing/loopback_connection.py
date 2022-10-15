@@ -51,3 +51,6 @@ class LoopbackConnection(Connection):
 
         if not self.sent_packets:
             self.graphics.hide()
+
+    def __repr__(self) -> str:
+        return "LoopbackConnection"

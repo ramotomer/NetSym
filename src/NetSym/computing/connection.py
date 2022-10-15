@@ -63,7 +63,7 @@ class Connection:
 
         self.right_side, self.left_side = ConnectionSide(self), ConnectionSide(self)
 
-        self.last_packet_motion = MainLoop.instance.time()
+        self.last_packet_motion = self.main_loop.time()
 
         self.graphics = None
 
@@ -72,7 +72,11 @@ class Connection:
         self.packet_loss = packet_loss
         self.latency = latency
 
-        MainLoop.instance.insert_to_loop_pausable(self.move_packets)
+        self.main_loop.insert_to_loop_pausable(self.move_packets)
+
+    @property
+    def main_loop(self):
+        return MainLoop.instance
 
     @property
     def length(self) -> float:
@@ -119,7 +123,7 @@ class Connection:
         Set amount of latency the connection has
         """
         if not (0 <= new_latency <= 1):
-            raise ConnectionsError(f"A connection cannot have this PL amount!!! {new_pl}")
+            raise ConnectionsError(f"A connection cannot have this PL amount!!! {new_latency}")
 
         self.latency = new_latency
         self.graphics.update_appearance()
@@ -154,7 +158,7 @@ class Connection:
         self.sent_packets.append(
             SentPacket(
                 packet,
-                MainLoop.instance.time(),
+                self.main_loop.time(),
                 direction,
                 will_be_dropped=(random.random() < self.packet_loss),
                 will_be_delayed=(random.random() < self.latency),
@@ -169,7 +173,7 @@ class Connection:
         connected `Interface`.
         """
         packet, direction = sent_packet.packet, sent_packet.direction
-        MainLoop.instance.unregister_graphics_object(packet.graphics)
+        self.main_loop.unregister_graphics_object(packet.graphics)
 
         if direction == PACKET.DIRECTION.RIGHT:
             self.right_side.packets_to_receive.append(packet)
@@ -203,8 +207,8 @@ class Connection:
         :return: None
         """
         sent_packet.packet.graphics.progress += \
-            (MainLoop.instance.time_since(sent_packet.last_update_time) / self.deliver_time) * sent_packet.packet.graphics.speed
-        sent_packet.last_update_time = MainLoop.instance.time()
+            (self.main_loop.time_since(sent_packet.last_update_time) / self.deliver_time) * sent_packet.packet.graphics.speed
+        sent_packet.last_update_time = self.main_loop.time()
 
         if sent_packet.packet.graphics.progress >= 1:
             self.reach_destination(sent_packet)
@@ -254,7 +258,7 @@ class Connection:
         Kills all of the packets in the connection and unregisters their `GraphicsObject`-s
         """
         for sent_packet in self.sent_packets:
-            MainLoop.instance.unregister_graphics_object(sent_packet.packet.graphics)
+            self.main_loop.unregister_graphics_object(sent_packet.packet.graphics)
         self.sent_packets.clear()
 
     def __repr__(self) -> str:
