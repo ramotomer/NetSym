@@ -341,10 +341,10 @@ class DIRECTORIES:
     SAVES =      "./res/files/saves"
 
 
-INTERFACE_NAMES = [line.strip() for line in open(os.path.join(DIRECTORIES.FILES, "interface_names.txt")).readlines()]
-COMPUTER_NAMES = [line.strip() for line in open(os.path.join(DIRECTORIES.FILES, "computer_names.txt")).readlines()]
-TRANSFER_FILE = "transfer_me.txt"
-WINDOW_INPUT_LIST_FILE = os.path.join(DIRECTORIES.FILES, "window_inputs.txt")
+INTERFACE_NAMES_FILE_PATH = os.path.join(DIRECTORIES.FILES, "interface_names.txt")
+COMPUTER_NAMES_FILE_PATH =  os.path.join(DIRECTORIES.FILES, "computer_names.txt")
+WINDOW_INPUT_LIST_FILE =    os.path.join(DIRECTORIES.FILES, "window_inputs.txt")
+TRANSFER_FILE =             "transfer_me.txt"
 
 
 class COLORS:

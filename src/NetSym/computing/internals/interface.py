@@ -23,6 +23,7 @@ class Interface:
     down the connection further.
     """
 
+    POSSIBLE_INTERFACE_NAMES = [line.strip() for line in open(INTERFACE_NAMES_FILE_PATH).readlines()]
     EXISTING_INTERFACE_NAMES = set()
 
     def __init__(self,
@@ -78,7 +79,7 @@ class Interface:
     @classmethod
     def random_name(cls) -> str:
         """Returns a random Interface name"""
-        name = random.choice(INTERFACE_NAMES) + str(random.randint(0, 10))
+        name = random.choice(cls.POSSIBLE_INTERFACE_NAMES) + str(random.randint(0, 10))
         if name in cls.EXISTING_INTERFACE_NAMES:
             name = cls.random_name()
         cls.EXISTING_INTERFACE_NAMES.add(name)

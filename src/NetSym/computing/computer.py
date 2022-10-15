@@ -76,6 +76,7 @@ class Computer:
     The computer runs many `Process`-s that are all either currently running or waiting for a certain packet to arrive.
     """
 
+    POSSIBLE_COMPUTER_NAMES = [line.strip() for line in open(COMPUTER_NAMES_FILE_PATH).readlines()]
     PORTS_TO_PROCESSES = {
         "TCP": {
             PORTS.DAYTIME: DAYTIMEServerProcess,
@@ -247,7 +248,7 @@ class Computer:
         Theoretically can randomize the same name twice, but unlikely.
         :return: a random string that is the name.
         """
-        name = ''.join([random.choice(COMPUTER_NAMES), str(random.randint(0, 100))])
+        name = ''.join([random.choice(cls.POSSIBLE_COMPUTER_NAMES), str(random.randint(0, 100))])
         if name in cls.EXISTING_COMPUTER_NAMES:
             name = cls.random_name()
         cls.EXISTING_COMPUTER_NAMES.add(name)
