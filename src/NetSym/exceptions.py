@@ -1,3 +1,6 @@
+# DO NOT IMPORT ANYTHING TO THIS FILE!!!!
+
+
 class NetworkSimulationError(Exception):
     """
     Every exception that I make will inherit from this one.
@@ -334,6 +337,12 @@ class NoSuchConnectionSideError(ConnectionsError):
 class NoSuchConnectionError(ConnectionsError):
     """
     Occurs when a connection that does not exist is requested or used.
+    """
+
+
+class ConnectionComputerNotDefined(ConnectionsError):
+    """
+    One of the computers in `connection.computers` is None - that means the connection is not connected on one of its sides
     """
 
 # ----------------------------------------------------------------------------------------------------------------------

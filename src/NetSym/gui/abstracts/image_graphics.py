@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import os
 from abc import ABCMeta
 from itertools import product
-from typing import Set, Optional, Dict, TYPE_CHECKING, Callable
+from typing import Set, Optional, Dict, TYPE_CHECKING, Callable, Tuple
 
-from NetSym.consts import *
+import pyglet
+
+from NetSym.consts import IMAGES, T_Color, SELECTED_OBJECT, DIRECTORIES, VIEW, SHAPES, COLORS
 from NetSym.exceptions import NoSuchGraphicsObjectError, PopupWindowWithThisError
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.main_window import MainWindow

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Optional, Callable, Dict
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.internals.interface import Interface
-from NetSym.consts import *
+from NetSym.consts import T_Color, INTERFACES
 from NetSym.exceptions import *
 from NetSym.gui.main_window import MainWindow
 

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import os
 from typing import Optional, Callable
 
-from NetSym.consts import *
+from NetSym.consts import BUTTONS, IMAGES, DIRECTORIES, T_Color
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
 from NetSym.gui.user_interface.button import Button
 

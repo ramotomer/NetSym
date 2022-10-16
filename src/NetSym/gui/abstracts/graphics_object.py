@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Optional, Tuple, Callable, TYPE_CHECKING
+from typing import Optional, Tuple, Callable, TYPE_CHECKING, Dict
 
 from NetSym.gui.main_loop import MainLoop
 
@@ -109,7 +109,7 @@ class GraphicsObject(metaclass=ABCMeta):
         return ' '.join([rendered, centered]) + f" GraphicsObject(x={self.x}, y={self.y})"
 
     @abstractmethod
-    def dict_save(self) -> None:
+    def dict_save(self) -> Dict:
         """
         Returns a representation of the object as a dict (that will be converted to string in the end).
         The object should be able to be initiated from the string alone to the exact state that it is in now.

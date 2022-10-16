@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import NamedTuple, Callable, Optional
+from typing import NamedTuple, Callable, Optional, Tuple
 
-from NetSym.consts import *
+from NetSym.consts import BUTTONS, T_Color, COLORS, WINDOWS
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_button

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from NetSym.computing.internals.processes.abstracts.process import Process, T_ProcessCode
-from NetSym.consts import *
+from NetSym.consts import T_Port, PORTS
 from NetSym.exceptions import TCPSocketConnectionRefused
 from NetSym.packets.usefuls.dns import T_Hostname
 

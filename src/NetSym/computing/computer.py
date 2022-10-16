@@ -5,7 +5,7 @@ from collections import deque
 from dataclasses import dataclass
 from functools import reduce
 from operator import concat
-from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator, Iterable
+from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator, Iterable, Union, Tuple, Any
 
 import scapy
 
@@ -34,7 +34,8 @@ from NetSym.computing.internals.sockets.raw_socket import RawSocket
 from NetSym.computing.internals.sockets.tcp_socket import TCPSocket
 from NetSym.computing.internals.sockets.udp_socket import ReturnedUDPPacket, UDPSocket
 from NetSym.computing.internals.wireless_interface import WirelessInterface
-from NetSym.consts import *
+from NetSym.consts import IMAGES, COMPUTER, OPCODES, PACKET, PROTOCOLS, CONNECTIONS, INTERFACES, OS, T_Time, SENDING_GRAT_ARPS, \
+    COMPUTER_NAMES_FILE_PATH, T_Port, TTL, PORTS
 from NetSym.exceptions import *
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.tech.computer_graphics import ComputerGraphics
@@ -115,7 +116,7 @@ class Computer:
 
         self.interfaces = list(interfaces)
         if not interfaces:
-            self.interfaces = []  # a list of all of the interfaces without the loopback
+            self.interfaces: List[Interface] = []  # a list of all of the interfaces without the loopback
         self.loopback = Interface.loopback()
         self.boot_time = self.main_loop.time()
 

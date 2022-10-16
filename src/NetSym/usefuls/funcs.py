@@ -6,12 +6,12 @@ import random
 import re
 from contextlib import contextmanager
 from functools import reduce
-from math import sin, cos, pi, atan
+from math import sin, cos, pi, atan, sqrt
 from operator import mul
-from typing import Dict, Iterable, Callable, TypeVar, Optional, List, Generator
+from typing import Dict, Iterable, Callable, TypeVar, Optional, List, Generator, Tuple, Any, Union
 
-from NetSym.consts import *
-from NetSym.exceptions import WrongUsageError
+from NetSym.consts import SHAPES, COLORS, T_Color
+from NetSym.exceptions import *
 
 T = TypeVar("T")
 

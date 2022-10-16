@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Dict, Callable
+from typing import TYPE_CHECKING, Optional, Dict, Callable, Tuple
 
+import pyglet
 import scapy
 
-from NetSym.consts import *
+from NetSym.consts import CONNECTIONS, IMAGES, ANIMATIONS, PACKET
 from NetSym.gui.abstracts.animation_graphics import AnimationGraphics
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
 from NetSym.gui.main_loop import MainLoop

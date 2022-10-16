@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Set
+from typing import TYPE_CHECKING, List, Optional, Set, Tuple
 
-from NetSym.consts import *
+from NetSym.consts import WINDOWS, T_Color, COLORS, SHAPES
 from NetSym.exceptions import WrongUsageError
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from NetSym.gui.main_loop import MainLoop

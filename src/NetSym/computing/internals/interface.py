@@ -1,16 +1,21 @@
 from __future__ import annotations
 
 import random
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union, Any, TYPE_CHECKING
+
+import scapy
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.connection import Connection
 from NetSym.computing.loopback_connection import LoopbackConnection
-from NetSym.consts import *
+from NetSym.consts import T_Time, INTERFACE_NAMES_FILE_PATH, INTERFACES, PROTOCOLS, T_Color
 from NetSym.exceptions import *
 from NetSym.packets.all import Ether
 from NetSym.packets.packet import Packet
+
+if TYPE_CHECKING:
+    from NetSym.computing.connection import ConnectionSide
 
 
 class Interface:
@@ -30,7 +35,7 @@ class Interface:
                  mac: Optional[Union[str, MACAddress]] = None,
                  ip: Optional[Union[str, IPAddress]] = None,
                  name: Optional[str] = None,
-                 connection: Optional[Connection] = None,
+                 connection: Optional[ConnectionSide] = None,
                  display_color: T_Color = INTERFACES.COLOR,
                  type_: str = INTERFACES.TYPE.ETHERNET,
                  mtu: int = PROTOCOLS.ETHERNET.MTU) -> None:

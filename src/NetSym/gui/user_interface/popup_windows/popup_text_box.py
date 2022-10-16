@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING, Callable, NamedTuple
 
 from pyglet.window import key
 
-from NetSym.consts import *
+from NetSym.consts import WINDOWS, KEYBOARD, WINDOW_INPUT_LIST_FILE
 from NetSym.gui.user_interface.button import Button
 from NetSym.gui.user_interface.key_writer import KeyWriter
 from NetSym.gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText

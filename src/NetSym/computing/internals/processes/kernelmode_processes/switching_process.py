@@ -4,7 +4,7 @@ from typing import NamedTuple, TYPE_CHECKING, List
 
 from NetSym.computing.internals.interface import Interface
 from NetSym.computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, WaitingFor
-from NetSym.consts import *
+from NetSym.consts import COMPUTER, T_Time
 from NetSym.exceptions import *
 from NetSym.gui.main_loop import MainLoop
 

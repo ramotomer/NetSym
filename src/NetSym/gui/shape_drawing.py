@@ -3,9 +3,11 @@ from __future__ import annotations
 from contextlib import contextmanager
 from itertools import chain
 from operator import itemgetter
-from typing import Optional, Generator
+from typing import Optional, Generator, Tuple
 
-from NetSym.consts import *
+import pyglet
+
+from NetSym.consts import T_Color, WINDOWS, SHAPES, COLORS, BUTTONS, CONNECTIONS
 from NetSym.exceptions import *
 from NetSym.usefuls.funcs import circular_coordinates, sine_wave_coordinates, lighten_color, darken_color, \
     normal_color_to_weird_gl_color

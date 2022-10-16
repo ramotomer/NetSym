@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 from NetSym.computing.connection import Connection
-from NetSym.consts import *
+from NetSym.consts import CONNECTIONS
 from NetSym.gui.main_window import MainLoop
 from NetSym.gui.tech.loopback_connection_graphics import LoopbackConnectionGraphics
 

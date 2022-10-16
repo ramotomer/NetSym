@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from NetSym.computing.internals.processes.abstracts.process import Process, T_ProcessCode
 from NetSym.computing.internals.processes.abstracts.tcp_server_process import TCPServerProcess
-from NetSym.consts import *
+from NetSym.consts import PORTS
 
 if TYPE_CHECKING:
     from NetSym.computing.internals.sockets.tcp_socket import TCPSocket

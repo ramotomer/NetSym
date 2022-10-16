@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Callable
 
 from pyglet.window import key
 
-from NetSym.consts import *
+from NetSym.consts import WINDOWS, COLORS, KEYBOARD
 from NetSym.gui.user_interface.button import Button
 from NetSym.gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText
 from NetSym.usefuls.funcs import called_in_order

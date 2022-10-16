@@ -1,6 +1,11 @@
-import time
+from __future__ import annotations
 
-from NetSym.consts import *
+import time
+from typing import Tuple
+
+import pyglet
+
+from NetSym.consts import ANIMATIONS, DIRECTORIES
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
 from NetSym.gui.main_loop import MainLoop
 

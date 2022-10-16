@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Dict, Callable
+import os
+from typing import TYPE_CHECKING, Optional, Dict, Callable, Tuple
+
+import pyglet
 
 from NetSym.address.mac_address import MACAddress
-from NetSym.consts import *
+from NetSym.consts import INTERFACES, SELECTED_OBJECT, DIRECTORIES, IMAGES
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
 from NetSym.gui.main_window import MainWindow

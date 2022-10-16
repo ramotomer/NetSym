@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from functools import reduce
 from operator import ior as binary_or
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple, Any, Union
 
 import pyWinhook
+import pyglet
 
-from NetSym.consts import *
+from NetSym.consts import KEYBOARD, WINDOWS, IMAGES, DIRECTORIES, MODES, BUTTONS, T_Time
 from NetSym.gui.main_loop import MainLoop
 from NetSym.usefuls.funcs import normal_color_to_weird_gl_color
 from NetSym.usefuls.paths import add_path_basename_if_needed

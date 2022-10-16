@@ -8,7 +8,7 @@ from NetSym.computing.internals.interface import Interface
 from NetSym.computing.internals.processes.kernelmode_processes.route_packet_process import RoutePacket
 from NetSym.computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
 from NetSym.computing.internals.routing_table import RoutingTable
-from NetSym.consts import *
+from NetSym.consts import OS, IMAGES
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.tech.computer_graphics import ComputerGraphics
 

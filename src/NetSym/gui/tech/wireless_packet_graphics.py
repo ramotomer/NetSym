@@ -1,8 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Dict, Callable
+import os
+from typing import TYPE_CHECKING, Optional, Dict, Callable, Tuple
 
-from NetSym.consts import *
+import pyglet
+import scapy
+
+from NetSym.consts import PACKET, COLORS, SELECTED_OBJECT, DIRECTORIES
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
 from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_circle, draw_rectangle

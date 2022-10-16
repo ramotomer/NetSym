@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from os import linesep
-from typing import TYPE_CHECKING, Optional, Dict, Callable, Iterable
+from typing import TYPE_CHECKING, Optional, Dict, Callable, Iterable, Tuple
+
+import pyglet
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.computing.internals.processes.usermode_processes.daytime_process.daytime_client_process import DAYTIMEClientProcess
@@ -10,7 +12,7 @@ from NetSym.computing.internals.processes.usermode_processes.ddos_process import
 from NetSym.computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
 from NetSym.computing.internals.processes.usermode_processes.dns_process.dns_server_process import DNSServerProcess
 from NetSym.computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
-from NetSym.consts import *
+from NetSym.consts import IMAGES, WINDOWS, CONSOLE, MESSAGES, INTERFACES, TEXT, PORTS
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
 from NetSym.gui.main_window import MainWindow
 from NetSym.gui.tech.interface_graphics_list import InterfaceGraphicsList

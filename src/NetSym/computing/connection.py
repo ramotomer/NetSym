@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Tuple
 
-from NetSym.consts import *
+from NetSym.consts import CONNECTIONS, PACKET, T_Time
 from NetSym.exceptions import ConnectionsError
 from NetSym.exceptions import WrongUsageError, NoSuchConnectionSideError, SomethingWentTerriblyWrongError
 from NetSym.gui.main_loop import MainLoop

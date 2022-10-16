@@ -3,11 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from NetSym.computing.computer import Computer
-# from NetSym.computing.nat import NAT
 from NetSym.computing.router import Router
 from NetSym.computing.switch import Switch, Hub, Antenna
-# from NetSym.computing.internet import Internet
-from NetSym.consts import *
+from NetSym.consts import WINDOWS, BUTTONS, COLORS, IMAGES
 from NetSym.gui.user_interface.popup_windows.image_button import ImageButton
 from NetSym.gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText
 from NetSym.usefuls.funcs import with_args, called_in_order

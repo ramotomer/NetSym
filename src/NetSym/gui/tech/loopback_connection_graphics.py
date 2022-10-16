@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from math import pi, sin, cos
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Iterable, Tuple
 
-from NetSym.consts import *
+from NetSym.consts import PACKET
 from NetSym.gui.shape_drawing import draw_circle
 from NetSym.gui.tech.connection_graphics import ConnectionGraphics
 

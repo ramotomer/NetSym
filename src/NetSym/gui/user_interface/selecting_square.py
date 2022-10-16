@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from operator import itemgetter
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Iterable, Union, Tuple
 
-from NetSym.consts import *
+from NetSym.consts import SELECTION_SQUARE
 from NetSym.exceptions import WrongUsageError
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.abstracts.image_graphics import ImageGraphics

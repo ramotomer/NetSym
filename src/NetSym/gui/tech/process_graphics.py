@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, TYPE_CHECKING, Set, Iterable
 
-from NetSym.consts import *
+from NetSym.consts import PORTS, IMAGES, T_Port
 from NetSym.exceptions import UnknownPortError
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.abstracts.image_graphics import ImageGraphics

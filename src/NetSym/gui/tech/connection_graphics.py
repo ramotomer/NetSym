@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import os
 from math import acos, sin
-from typing import TYPE_CHECKING, NamedTuple, Optional, Dict, Callable
+from typing import TYPE_CHECKING, NamedTuple, Optional, Dict, Callable, Tuple
 
-from NetSym.consts import *
+import pyglet
+
+from NetSym.consts import CONNECTIONS, PACKET, SELECTED_OBJECT, MESSAGES, DIRECTORIES, IMAGES
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
 from NetSym.gui.main_window import MainWindow
@@ -73,12 +76,12 @@ class ConnectionGraphics(ViewableGraphicsObject):
         if all(computer is not None for computer in self.computers):
             self.interfaces = Interfaces(
                 get_the_one(
-                    self.computers.start.computer.interfaces,
+                    self.start_computer.computer.interfaces,
                     lambda i: i.connection is not None and i.connection.connection is connection,
                     NoSuchInterfaceError,
                 ).graphics,
                 get_the_one(
-                    self.computers.end.computer.interfaces,
+                    self.end_computer.computer.interfaces,
                     lambda i: i.connection is not None and i.connection.connection is connection,
                     NoSuchInterfaceError,
                 ).graphics,
@@ -87,6 +90,22 @@ class ConnectionGraphics(ViewableGraphicsObject):
     @property
     def length(self) -> float:  # the length of the connection.
         return distance(self.interfaces.start.location, self.interfaces.end.location)
+
+    @property
+    def start_computer(self) -> ComputerGraphics:
+        if self.computers.start is None:
+            raise ConnectionComputerNotDefined(f"The start computer of the connection was never defined! "
+                                               f"The connection is probably disconnected on that end!")
+
+        return self.computers.start
+
+    @property
+    def end_computer(self) -> ComputerGraphics:
+        if self.computers.end is None:
+            raise ConnectionComputerNotDefined(f"The end computer of the connection was never defined! "
+                                               f"The connection is probably disconnected on that end!")
+
+        return self.computers.end
 
     def update_appearance(self) -> None:
         """Updates the color of the connection according to the PL and latency of the connection"""
@@ -124,7 +143,7 @@ class ConnectionGraphics(ViewableGraphicsObject):
         Receives a `direction` that the we look at the connection from (to know which is the end and which is the start)
         If the connection is opposite the coordinates will also be flipped.
         :param direction: `PACKET.DIRECTION.RIGHT` or `PACKET.DIRECTION.LEFT`.
-        :return: (self.computers.start.x, self.computers.start.y, self.computers.end.x, self.computers.end.y)
+        :return: (self.start_computer.x, self.start_computer.y, self.end_computer.x, self.end_computer.y)
         """
         if direction == PACKET.DIRECTION.RIGHT:
             return self.interfaces.start.x, self.interfaces.start.y, self.interfaces.end.x, self.interfaces.end.y
@@ -138,12 +157,12 @@ class ConnectionGraphics(ViewableGraphicsObject):
         Receives a `direction` that we look at the connection from (to know which is the end and which is the start)
         If the connection is opposite the coordinates will also be flipped.
         :param direction: `PACKET.DIRECTION.RIGHT` or `PACKET.DIRECTION.LEFT`.
-        :return: (self.computers.start.x, self.computers.start.y, self.computers.end.x, self.computers.end.y)
+        :return: (self.start_computer.x, self.start_computer.y, self.end_computer.x, self.end_computer.y)
         """
         if direction == PACKET.DIRECTION.RIGHT:
-            return self.computers.start.x, self.computers.start.y, self.computers.end.x, self.computers.end.y
+            return self.start_computer.x, self.start_computer.y, self.end_computer.x, self.end_computer.y
         elif direction == PACKET.DIRECTION.LEFT:
-            return self.computers.end.x, self.computers.end.y, self.computers.start.x, self.computers.start.y
+            return self.end_computer.x, self.end_computer.y, self.start_computer.x, self.start_computer.y
         raise WrongUsageError("a packet can only go left or right!")
 
     def packet_location(self, direction: str, progress: float) -> Tuple[float, float]:
@@ -210,8 +229,8 @@ class ConnectionGraphics(ViewableGraphicsObject):
         Generates the text that is under the buttons in the side-window when the connection is viewed.
         :return: None
         """
-        return f"\nConnection:\n\nfrom: {self.computers.start.computer.name}\nto: " \
-            f"{self.computers.end.computer.name}\nlength: {str(self.connection.length)[:6]} pixels\nspeed: " \
+        return f"\nConnection:\n\nfrom: {self.start_computer.computer.name}\nto: " \
+            f"{self.end_computer.computer.name}\nlength: {str(self.connection.length)[:6]} pixels\nspeed: " \
             f"{self.connection.speed} pixels/second\ndeliver time: {str(self.connection.deliver_time)[:4]} seconds" \
             f"\nPL percent: {self.connection.packet_loss}"
 
@@ -225,17 +244,17 @@ class ConnectionGraphics(ViewableGraphicsObject):
             "packet_loss": self.connection.packet_loss,
             "speed": self.connection.speed,
             "start": {
-                "computer": self.computers.start.computer.name,
+                "computer": self.start_computer.computer.name,
                 "interface": get_the_one(
-                                self.computers.start.computer.interfaces,
+                                self.start_computer.computer.interfaces,
                                 lambda i: i.is_connected() and i.connection.connection is self.connection,
                                 ThisCodeShouldNotBeReached,
                             ).name,
             },
             "end": {
-                "computer": self.computers.end.computer.name,
+                "computer": self.end_computer.computer.name,
                 "interface": get_the_one(
-                                self.computers.end.computer.interfaces,
+                                self.end_computer.computer.interfaces,
                                 lambda i: i.is_connected() and i.connection.connection is self.connection,
                                 ThisCodeShouldNotBeReached,
                             ).name,
@@ -255,4 +274,4 @@ class ConnectionGraphics(ViewableGraphicsObject):
         return "ConnectionGraphics"
 
     def __repr__(self) -> str:
-        return f"<< ConnectionGraphics between ({self.computers.start.computer.name!r}, {self.computers.end.computer.name!r}) >>"
+        return f"<< ConnectionGraphics between ({self.start_computer.computer.name!r}, {self.end_computer.computer.name!r}) >>"

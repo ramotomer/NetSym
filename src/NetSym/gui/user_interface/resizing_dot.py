@@ -3,11 +3,11 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING, Tuple
 
-from NetSym.consts import T_Color
+from NetSym.consts import T_Color, SHAPES, SELECTION_SQUARE, COLORS
 from NetSym.exceptions import ObjectIsNotResizableError
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from NetSym.gui.main_loop import MainLoop
-from NetSym.gui.main_window import MainWindow, SHAPES, SELECTION_SQUARE, COLORS
+from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_circle
 from NetSym.usefuls.funcs import distance
 

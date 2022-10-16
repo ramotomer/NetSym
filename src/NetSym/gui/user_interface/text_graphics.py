@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Tuple
 
-from NetSym.consts import *
+import pyglet
+
+from NetSym.consts import TEXT, T_Color, WINDOWS
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 
 if TYPE_CHECKING:

@@ -18,7 +18,7 @@ class ViewableGraphicsObject(GraphicsObject, metaclass=ABCMeta):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super(ViewableGraphicsObject, self).__init__(*args, **kwargs)
 
-        self.buttons_id = None
+        self.buttons_id: Optional[int] = None
 
     @abstractmethod
     def start_viewing(self,

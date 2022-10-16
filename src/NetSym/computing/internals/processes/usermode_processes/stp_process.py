@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from os import linesep
-from typing import Optional, TYPE_CHECKING, Dict
+from typing import Optional, TYPE_CHECKING, Dict, Any, Union
 
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.internals.processes.abstracts.process import Process, Timeout, T_ProcessCode, WaitingFor
-from NetSym.consts import *
+from NetSym.consts import PROTOCOLS, T_Time
 from NetSym.exceptions import *
 from NetSym.gui.main_loop import MainLoop
 from NetSym.packets.all import STP

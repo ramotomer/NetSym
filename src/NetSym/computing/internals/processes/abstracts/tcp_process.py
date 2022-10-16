@@ -6,12 +6,12 @@ from collections import deque
 from dataclasses import dataclass
 from functools import reduce
 from operator import attrgetter, concat
-from typing import Optional, List, TYPE_CHECKING, Iterable
+from typing import Optional, List, TYPE_CHECKING, Iterable, Union, Tuple
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.computing.internals.processes.abstracts.process import Process, Timeout, ReturnedPacket, T_ProcessCode, WaitingFor
 from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError
-from NetSym.consts import *
+from NetSym.consts import OPCODES, T_Time, COMPUTER, PORTS, PROTOCOLS, TCPFlag
 from NetSym.exceptions import TCPDataLargerThanMaxSegmentSize
 from NetSym.gui.main_loop import MainLoop
 from NetSym.packets.all import TCP
