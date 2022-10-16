@@ -44,6 +44,8 @@ class GraphicsObject(metaclass=ABCMeta):
         self.centered = centered
         self.is_pressable = is_pressable
 
+        self.unregister_me_from_main_loop = False
+
         if self.do_render:
             MainLoop.instance.register_graphics_object(self, is_in_background)
 
@@ -121,4 +123,4 @@ class GraphicsObject(metaclass=ABCMeta):
         """
         Deletes the graphics object and performs other operations that are necessary for deletion (cleanup)
         """
-        MainLoop.instance.unregister_graphics_object(self)
+        self.unregister_me_from_main_loop = True

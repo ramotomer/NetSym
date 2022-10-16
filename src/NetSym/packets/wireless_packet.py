@@ -19,8 +19,9 @@ class WirelessPacket(Packet):
     def __init__(self, data: scapy.packet.Packet) -> None:
         super(WirelessPacket, self).__init__(data)
 
-    def show(self, frequency_object: Frequency, sending_interface: WirelessInterface) -> None:
+    def init_graphics(self, frequency_object: Frequency, sending_interface: WirelessInterface) -> WirelessPacketGraphics:
         """
         Starts the display of the object. (Creating the graphics object)
         """
         self.graphics = WirelessPacketGraphics(sending_interface.graphics.x, sending_interface.graphics.y, self.deepest_layer(), frequency_object)
+        return self.graphics

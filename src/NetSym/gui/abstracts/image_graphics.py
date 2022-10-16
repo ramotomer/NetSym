@@ -39,7 +39,7 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
                  is_in_background: bool = False,
                  scale_factor: float = IMAGES.SCALE_FACTORS.SPRITES,
                  is_pressable: bool = False) -> None:
-        super(ImageGraphics, self).__init__(x, y, False, centered, is_in_background, is_pressable=is_pressable)
+        super(ImageGraphics, self).__init__(x, y, do_render=False, centered=centered, is_in_background=is_in_background, is_pressable=is_pressable)
         self.image_name = add_path_basename_if_needed(self.PARENT_DIRECTORY, image_name or IMAGES.IMAGE_NOT_FOUND)
 
         self.scale_factor = scale_factor

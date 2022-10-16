@@ -102,7 +102,7 @@ class Frequency(Connection):
         self.sent_packets.append(SentWirelessPacket(wireless_packet, MainLoop.get_time(), self.sent_packet_id))
         sending_side.received_packet_ids.append(self.sent_packet_id)
         self.sent_packet_id += 1
-        wireless_packet.show(self, sending_side.wireless_interface)
+        wireless_packet.init_graphics(self, sending_side.wireless_interface)
 
     def _reach_destinations(self, sent_packet: SentWirelessPacket) -> None:
         """

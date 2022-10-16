@@ -90,7 +90,7 @@ class Connection:
         """The time in seconds a packet takes to go through the connection"""
         return self.length / self.speed
 
-    def show(self, start_computer: ComputerGraphics, end_computer: ComputerGraphics) -> None:
+    def init_graphics(self, start_computer: ComputerGraphics, end_computer: ComputerGraphics) -> ConnectionGraphics:
         """
         Adds the `GraphicObject` of this class and gives it the parameters it requires.
 
@@ -99,6 +99,7 @@ class Connection:
         :return: None
         """
         self.graphics = ConnectionGraphics(self, start_computer, end_computer, self.packet_loss)
+        return self.graphics
 
     def get_sides(self) -> Tuple[ConnectionSide, ConnectionSide]:
         """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""
@@ -164,7 +165,7 @@ class Connection:
                 will_be_delayed=(random.random() < self.latency),
             )
         )
-        packet.show(self.graphics, direction)  # initiate the `GraphicsObject` of the packet.
+        packet.init_graphics(self.graphics, direction)  # initiate the `GraphicsObject` of the packet.
 
     def reach_destination(self, sent_packet: SentPacket) -> None:
         """

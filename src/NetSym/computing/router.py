@@ -37,7 +37,7 @@ class Router(Computer):
 
         self.is_dhcp_server = is_dhcp_server
 
-    def show(self, x: float, y: float) -> None:
+    def init_graphics(self, x: float, y: float) -> ComputerGraphics:
         """
         overrides Computer.show and shows the same computer_graphics object only
         with a router's photo.
@@ -46,7 +46,8 @@ class Router(Computer):
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.ROUTER)
-        self.loopback.connection.connection.show(self.graphics)
+        self.loopback.connection.connection.init_graphics(self.graphics)
+        return self.graphics
 
     def route_new_packets(self) -> None:
         """

@@ -36,7 +36,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         :param buttons: a list of buttons that will be displayed on this window. The `X` button is not included.
         """
         super(PopupWindow, self).__init__(x, y)
-        self.buttons = buttons or []
+        buttons = buttons or []
 
         self.width, self.height = width, height
         self.__is_active = False
@@ -54,7 +54,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
             max_width=self.width
         )
 
-        for button in self.buttons:
+        for button in buttons:
             button.set_parent_graphics(self, (button.x - self.x, button.y - self.y))
 
         self.exit_button = Button(
@@ -70,15 +70,18 @@ class PopupWindow(UserInterfaceGraphicsObject):
         )
         self.exit_button.set_parent_graphics(self, self.get_exit_button_padding())
 
-        self.remove_buttons = None
         self.child_graphics_objects = [
             self.title_text,
             self.exit_button,
-        ] + self.buttons
+        ] + buttons
+
+        self.buttons = [self.exit_button] + buttons
 
         self._x_before_pinning, self._y_before_pinning = None, None
         self._size_before_pinning = self.width, self.height
         self._pinned_directions = set()
+
+        self.unregister_this_window_from_user_interface = False
 
     @property
     def location(self) -> Tuple[float, float]:
@@ -124,8 +127,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         :return: None
         """
         super(PopupWindow, self).delete(user_interface)
-        self.remove_buttons()
-        user_interface.unregister_window(self)
+        self.unregister_this_window_from_user_interface = True
 
     def draw(self) -> None:
         """

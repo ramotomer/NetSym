@@ -14,7 +14,7 @@ from NetSym.exceptions import TCPDoneReceiving
 def debugp(*strings: str) -> None:
     """
     A print i use for debugging so i know where to delete it afterwards.
-    :param string:
+    :param strings:
     :return:
     """
     print(f"DEBUG:", *strings)

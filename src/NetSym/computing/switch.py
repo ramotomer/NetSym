@@ -44,7 +44,7 @@ class Switch(Computer):
         self.priority = priority
         self.process_scheduler.add_startup_process(COMPUTER.PROCESSES.MODES.KERNELMODE, SwitchingProcess)
 
-    def show(self, x: float, y: float) -> None:
+    def init_graphics(self, x: float, y: float) -> ComputerGraphics:
         """
         overrides `Computer.show` and shows the same `ComputerGraphics` object only with a switch's photo.
         :param x:
@@ -52,7 +52,8 @@ class Switch(Computer):
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.SWITCH)
-        self.loopback.connection.connection.show(self.graphics)
+        self.loopback.connection.connection.init_graphics(self.graphics)
+        return self.graphics
 
     def is_for_me(self, packet: Packet) -> bool:
         """
@@ -118,7 +119,7 @@ class Hub(Switch):
         self.is_hub = True
         self.stp_enabled = True
 
-    def show(self, x: float, y: float) -> None:
+    def init_graphics(self, x: float, y: float) -> ComputerGraphics:
         """
         Overrides `Switch.show` and shows the same `ComputerGraphics` object only with a hub's photo.
         :param x:
@@ -126,7 +127,8 @@ class Hub(Switch):
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.HUB)
-        self.loopback.connection.connection.show(self.graphics)
+        self.loopback.connection.connection.init_graphics(self.graphics)
+        return self.graphics
 
 
 class Antenna(Switch):
@@ -138,7 +140,7 @@ class Antenna(Switch):
         self.stp_enabled = False
         self.interfaces = [WirelessInterface(frequency=CONNECTIONS.WIRELESS.DEFAULT_FREQUENCY)] if not interfaces else list(interfaces)
 
-    def show(self, x: float, y: float) -> None:
+    def init_graphics(self, x: float, y: float) -> ComputerGraphics:
         """
         Overrides `Switch.show` and shows the same `ComputerGraphics` object only with a antenna's photo.
         :param x:
@@ -146,7 +148,8 @@ class Antenna(Switch):
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.ANTENNA)
-        self.loopback.connection.connection.show(self.graphics)
+        self.loopback.connection.connection.init_graphics(self.graphics)
+        return self.graphics
 
     @classmethod
     def from_dict_load(cls, dict_: Dict) -> Switch:

@@ -192,7 +192,7 @@ class UserInterface:
         self.__active_window: Optional[PopupWindow] = None
 
         self.button_arguments = [
-            ((with_args(DeviceCreationWindow, self), "create device (e)"), {"key": (key.E, KEYBOARD.MODIFIERS.NONE)}),
+            ((self.open_device_creation_window, "create device (e)"), {"key": (key.E, KEYBOARD.MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.CONNECTING), "connect (c / ^c / Shift+c)"), {"key": (key.C, KEYBOARD.MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.PINGING), "ping (p / ^p / Shift+p)"), {"key": (key.P, KEYBOARD.MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.FILE_DOWNLOADING),
@@ -297,6 +297,7 @@ class UserInterface:
         self.drag_objects()
         self._stop_viewing_dead_packets()
         self._showcase_running_stp()
+        self._unregister_requesting_popup_windows()
 
         if self.mode in MODES.COMPUTER_CONNECTING_MODES:
             self._draw_connection_to_mouse(MODES.TO_COLORS[self.mode])
@@ -681,7 +682,7 @@ class UserInterface:
             x, y = WINDOWS.MAIN.WIDTH / 2, WINDOWS.MAIN.HEIGHT / 2
 
         object_ = object_type()
-        object_.show(x, y)
+        object_.init_graphics(x, y)
         self.computers.append(object_)
 
     def two_pressed_objects(self,
@@ -788,7 +789,7 @@ class UserInterface:
             self.register_window(PopupError("That interface is already connected :("))
             return
         self.connection_data.append(ConnectionData(connection, *computers))
-        connection.show(computers[0].graphics, computers[1].graphics)
+        connection.init_graphics(computers[0].graphics, computers[1].graphics)
         return connection
 
     @staticmethod
@@ -1102,7 +1103,7 @@ class UserInterface:
 
         new_computer = Computer.with_ip(given_ip) if not wireless else Computer.wireless_with_ip(given_ip)
         self.computers.append(new_computer)
-        new_computer.show(x, y)
+        new_computer.init_graphics(x, y)
         return new_computer
 
     def _get_largest_ip_in_nearest_subnet(self, x: float, y: float) -> IPAddress:
@@ -1358,15 +1359,7 @@ class UserInterface:
         self.popup_windows.append(window)
         self.selected_object = window
 
-        buttons = [window.exit_button] + window.buttons
-        self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID] = self.buttons.get(BUTTONS.ON_POPUP_WINDOWS.ID, []) + list(buttons)
-
-        def remove_buttons() -> None:
-            for button_ in buttons:
-                self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID].remove(button_)
-                self.main_loop.unregister_graphics_object(button_)
-
-        window.remove_buttons = remove_buttons
+        self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID] = self.buttons.get(BUTTONS.ON_POPUP_WINDOWS.ID, []) + list(window.buttons)
 
     def unregister_window(self, window: PopupWindow) -> None:
         """
@@ -1374,6 +1367,10 @@ class UserInterface:
         :param window: a `PopupWindow` object
         :return: None
         """
+        for button_ in window.buttons:
+            self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID].remove(button_)
+            self.main_loop.unregister_graphics_object(button_)
+
         try:
             self.popup_windows.remove(window)
         except ValueError:
@@ -1387,12 +1384,20 @@ class UserInterface:
         if self.popup_windows:
             self.active_window = self.popup_windows[0]
 
+    def _unregister_requesting_popup_windows(self) -> None:
+        """
+        Call the `unregister_window` upon every window that has the `unregister_this_window_from_user_interface` flag set
+        """
+        for window in self.popup_windows[:]:
+            if window.unregister_this_window_from_user_interface:
+                self.unregister_window(window)
+
     def open_device_creation_window(self) -> None:
         """
         Creates the device creation window
         :return:
         """
-        DeviceCreationWindow(self)
+        self.register_window(DeviceCreationWindow(self))
 
     def _connect_interfaces_by_name(self,
                                     start_computer_name: str,
@@ -1485,7 +1490,7 @@ class UserInterface:
         for computer_dict in dict_from_file["computers"]:
             class_ = self.saving_file_class_name_to_class[computer_dict["class"]]
             computer = class_.from_dict_load(computer_dict)
-            computer.show(*computer_dict["location"])
+            computer.init_graphics(*computer_dict["location"])
             self.computers.append(computer)
             for port in computer_dict["open_tcp_ports"]:
                 computer.open_port(port, "TCP")
@@ -1508,6 +1513,9 @@ class UserInterface:
         Returns a string of all of the files that are saved already
         :return:
         """
+        if not os.path.isdir(DIRECTORIES.SAVES):
+            return ""
+
         file_list = os.listdir(DIRECTORIES.SAVES)
         return ", ".join(map(lambda f: f.split('.')[0], file_list))
 

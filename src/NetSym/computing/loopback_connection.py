@@ -31,9 +31,10 @@ class LoopbackConnection(Connection):
         """Returns the only side of the connection"""
         return self.left_side
 
-    def show(self, computer_graphics: ComputerGraphics, end_computer: Optional[ComputerGraphics] = None) -> None:
+    def init_graphics(self, computer_graphics: ComputerGraphics, end_computer: Optional[ComputerGraphics] = None) -> LoopbackConnectionGraphics:
         """Starts the graphical appearance of the connection"""
         self.graphics = LoopbackConnectionGraphics(self, computer_graphics, self.radius)
+        return self.graphics
 
     def add_packet(self, packet: Packet, direction: str) -> None:
         """performs the super-method of `add_packet` but also makes sure the connection is visible."""

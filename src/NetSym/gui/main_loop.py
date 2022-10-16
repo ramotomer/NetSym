@@ -51,7 +51,7 @@ class MainLoop:
         self.call_functions: Dict[MAIN_LOOP.FunctionPriority, List[FunctionToCall]] = {priority: [] for priority in MAIN_LOOP.FunctionPriority}
         # ^ lists of `FunctionToCall` that will all be called in every `update` call
 
-        self.graphics_objects = []
+        self.graphics_objects: List[GraphicsObject] = []
         # ^ a list of all registered `GraphicsObject`-s that are being drawn and moved.
 
         self.is_paused = False
@@ -121,6 +121,16 @@ class MainLoop:
         if hasattr(graphics_object, "child_graphics_objects"):
             for child in graphics_object.child_graphics_objects:
                 self.unregister_graphics_object(child)
+
+    def _unregister_requesting_graphics_object(self) -> None:
+        """
+        Goes over all registered graphics objects
+        Checks which of them have the `unregister_me_from_main_loop` flag set
+        Unregisters them
+        """
+        for graphics_object in self.graphics_objects[:]:
+            if graphics_object.unregister_me_from_main_loop:
+                self.unregister_graphics_object(graphics_object)
 
     def insert_to_loop_prioritized(self,
                                    function: Callable,
@@ -281,6 +291,7 @@ class MainLoop:
         """
         function = None
         self.update_time()
+        self._unregister_requesting_graphics_object()
 
         try:
             for priority in MAIN_LOOP.FunctionPriority:

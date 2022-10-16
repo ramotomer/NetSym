@@ -261,7 +261,7 @@ class Computer:
         cls.EXISTING_COMPUTER_NAMES.add(name)
         return name
 
-    def show(self, x: float, y: float) -> None:
+    def init_graphics(self, x: float, y: float) -> ComputerGraphics:
         """
         This is called once to initiate the graphics of the computer.
         Gives it a `GraphicsObject`. (`ComputerGraphics`)
@@ -270,7 +270,8 @@ class Computer:
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.COMPUTER if not self.get_open_ports() else IMAGES.COMPUTERS.SERVER)
-        self.loopback.connection.connection.show(self.graphics)
+        self.loopback.connection.connection.init_graphics(self.graphics)
+        return self.graphics
 
     def print(self, string: str) -> None:
         """
