@@ -29,7 +29,6 @@ from NetSym.consts import VIEW, TEXT, BUTTONS, IMAGES, DIRECTORIES, T_Color, SEL
     INTERFACES, ADDRESSES, MESSAGES
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
-from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
 from NetSym.gui.shape_drawing import draw_pause_rectangles, draw_rectangle
@@ -54,6 +53,7 @@ if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.packets.packet import Packet
     from NetSym.computing.connection import Connection
+    from NetSym.gui.main_loop import MainLoop
 
 
 T = TypeVar("T")
@@ -124,7 +124,7 @@ class UserInterface:
             (key.W, KEYBOARD.MODIFIERS.NONE): self.add_tcp_test,
             (key.Q, KEYBOARD.MODIFIERS.CTRL): self.exit,
             (key.A, KEYBOARD.MODIFIERS.CTRL): self.select_all,
-            (key.SPACE, KEYBOARD.MODIFIERS.NONE): self.toggle_pause,
+            (key.SPACE, KEYBOARD.MODIFIERS.NONE): self.main_loop.toggle_pause,
             (key.TAB, KEYBOARD.MODIFIERS.NONE): self.tab_through_selected,
             (key.TAB, KEYBOARD.MODIFIERS.SHIFT): with_args(self.tab_through_selected, True),
             (key.ESCAPE, KEYBOARD.MODIFIERS.NONE): self.clear_selected_objects_and_active_window,
@@ -260,8 +260,8 @@ class UserInterface:
             window.activate()
         self.__active_window = window
 
-        if MainLoop.instance is not None and window is not None:
-            MainLoop.instance.move_to_front(window)
+        if window is not None:
+            self.main_loop.move_to_front(window)
 
     @property
     def selected_object(self) -> GraphicsObject:
@@ -290,7 +290,7 @@ class UserInterface:
         :return: None
         """
         self._draw_side_window()
-        if MainLoop.instance.is_paused:
+        if self.main_loop.is_paused:
             draw_pause_rectangles()
         if MainWindow.main_window.is_ignoring_keyboard_escape_keys:
             draw_tiny_corner_windows_icon()
@@ -381,7 +381,7 @@ class UserInterface:
             sprite.update(*self.viewing_image_location,
                           scale_x=VIEW.IMAGE_SIZE / sprite.image.width,
                           scale_y=VIEW.IMAGE_SIZE / sprite.image.height)
-            MainLoop.instance.insert_to_loop(sprite.draw)
+            self.main_loop.insert_to_loop(sprite.draw)
 
             if isinstance(graphics_object, PacketGraphics):
                 text = self.packet_from_graphics_object(graphics_object).multiline_repr()
@@ -422,9 +422,9 @@ class UserInterface:
         """
         if self.object_view is not None:
             self.object_view.viewed_object.end_viewing(self)
-            MainLoop.instance.unregister_graphics_object(self.object_view.text)
+            self.main_loop.unregister_graphics_object(self.object_view.text)
             if self.object_view.sprite is not None:  # if the viewed graphics object is an image graphics object.
-                MainLoop.instance.remove_from_loop(self.object_view.sprite.draw)
+                self.main_loop.remove_from_loop(self.object_view.sprite.draw)
 
             if isinstance(self.object_view.viewed_object, ComputerGraphics):
                 self.object_view.viewed_object.child_graphics_objects.console.hide()
@@ -481,7 +481,7 @@ class UserInterface:
         :param reverse:
         :return:
         """
-        available_windows = sorted(list(filter(lambda o: isinstance(o, PopupWindow), MainLoop.instance.graphics_objects)),
+        available_windows = sorted(list(filter(lambda o: isinstance(o, PopupWindow), self.main_loop.graphics_objects)),
                                    key=lambda w: w.creation_time)
         if not available_windows:
             return
@@ -501,7 +501,7 @@ class UserInterface:
         Allows working without the mouse when there are not a lot of objects on the screen
         :return:
         """
-        available_graphics_objects = [object_ for object_ in MainLoop.instance.graphics_objects
+        available_graphics_objects = [object_ for object_ in self.main_loop.graphics_objects
                                       if object_.is_pressable and isinstance(object_, ViewableGraphicsObject)]
         if not available_graphics_objects:
             return
@@ -563,15 +563,6 @@ class UserInterface:
         else:
             self.set_mode(mode)
 
-    @staticmethod
-    def toggle_pause() -> None:
-        """
-        Toggling from pause back and fourth.
-        This is done because when the keys are paired in the __init__ method `MainLoop.instance` is not yet initiated
-        :return: None
-        """
-        MainLoop.instance.toggle_pause()
-
     def on_mouse_press(self) -> None:
         """
         Happens when the mouse is pressed.
@@ -613,7 +604,7 @@ class UserInterface:
             mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
             self.selecting_square = SelectingSquare(
                 mouse_x, mouse_y,
-                MainLoop.instance.graphics_objects_of_types(ComputerGraphics, PacketGraphics),
+                self.main_loop.graphics_objects_of_types(ComputerGraphics, PacketGraphics),
                 self,
             )
 
@@ -624,7 +615,7 @@ class UserInterface:
         """
         self.dragging_points.clear()
         if self.selecting_square is not None:
-            MainLoop.instance.unregister_graphics_object(self.selecting_square)
+            self.main_loop.unregister_graphics_object(self.selecting_square)
             self.selecting_square = None
             return
 
@@ -729,12 +720,11 @@ class UserInterface:
         if self.source_of_line_drag is None or self.is_mouse_in_side_window():
             self.set_mode(MODES.NORMAL)
 
-    @staticmethod
-    def get_object_the_mouse_is_on() -> GraphicsObject:
+    def get_object_the_mouse_is_on(self) -> GraphicsObject:
         """
         Get the object the mouse is on - but exclude buttons
         """
-        return MainLoop.instance.get_object_the_mouse_is_on(exclude_types=[Button])
+        return self.main_loop.get_object_the_mouse_is_on(exclude_types=[Button])
 
     def end_device_visual_connecting(self, action: Callable[[GraphicsObject, GraphicsObject], None]) -> None:
         """
@@ -847,18 +837,18 @@ class UserInterface:
         """
         for object_ in list(filter(
                 lambda go: not isinstance(go, Button) and not (isinstance(go, Text) and go.is_button),
-                MainLoop.instance.graphics_objects)):
-            MainLoop.instance.unregister_graphics_object(object_)
+                self.main_loop.graphics_objects)):
+            self.main_loop.unregister_graphics_object(object_)
 
         self.selected_object = None
         self.dragged_object = None
         self.active_window = None
 
         for connection_data in self.connection_data:
-            MainLoop.instance.remove_from_loop(connection_data.connection.move_packets)
+            self.main_loop.remove_from_loop(connection_data.connection.move_packets)
 
         for computer in self.computers:
-            MainLoop.instance.remove_from_loop(computer.logic)
+            self.main_loop.remove_from_loop(computer.logic)
 
         self.computers.clear()
         self.connection_data.clear()
@@ -929,7 +919,7 @@ class UserInterface:
                 computer.disconnect(connection)
                 (computer1 if computer is computer2 else computer2).disconnect(connection)  # disconnect other computer
 
-                MainLoop.instance.unregister_graphics_object(connection.graphics)
+                self.main_loop.unregister_graphics_object(connection.graphics)
                 connection.stop_packets()
                 self.connection_data.remove(connection_data)
 
@@ -1074,17 +1064,17 @@ class UserInterface:
         """
         self.learn_all_macs()
         print(f"\n{' debugging info ':-^100}")
-        print(f"time: {int(time.time())}, program time: {int(MainLoop.get_time())}")
+        print(f"time: {int(time.time())}, program time: {int(self.main_loop.time())}")
 
         def gos() -> List[GraphicsObject]:
-            return [go for go in MainLoop.instance.graphics_objects if not isinstance(go, (Button, Text))]
+            return [go for go in self.main_loop.graphics_objects if not isinstance(go, (Button, Text))]
 
         print(f"Mouse location: {MainWindow.main_window.get_mouse_location()}\n")
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
         pprint.pprint(f"graphicsObject-s (no buttons or texts): ")
         pprint.pprint(gos())
         print(f"\ncomputers, {len(self.computers)}, connections, {len(self.connection_data)}, "
-              f"packets: {len(list(filter(lambda go: isinstance(go, PacketGraphics), MainLoop.instance.graphics_objects)))}")
+              f"packets: {len(list(filter(lambda go: isinstance(go, PacketGraphics), self.main_loop.graphics_objects)))}")
 
         print()
         if self.selected_object is not None and isinstance(self.selected_object, ComputerGraphics):
@@ -1313,7 +1303,7 @@ class UserInterface:
         :return: None
         """
         for button in self.buttons[buttons_id] + self.buttons[buttons_id + 1]:
-            MainLoop.instance.unregister_graphics_object(button)
+            self.main_loop.unregister_graphics_object(button)
         del self.buttons[buttons_id]
         del self.buttons[buttons_id + 1]
 
@@ -1376,7 +1366,7 @@ class UserInterface:
         def remove_buttons() -> None:
             for button_ in buttons:
                 self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID].remove(button_)
-                MainLoop.instance.unregister_graphics_object(button_)
+                self.main_loop.unregister_graphics_object(button_)
 
         window.remove_buttons = remove_buttons
 
