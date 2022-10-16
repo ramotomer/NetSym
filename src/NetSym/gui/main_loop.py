@@ -15,10 +15,20 @@ T = TypeVar("T")
 
 
 class FunctionToCall(NamedTuple):
-    function:      Callable
-    args:          Tuple[Any]
-    kwargs:        Dict[str, Any]
-    can_be_paused: bool = False
+    """
+    Represents a function that should be called every tick of the simulation.
+
+    function:                The object to call when calling the function
+    args:                    A Tuple to unpack into the function when calling it
+    kwargs                   A dict to unpack into the function when calling it
+    can_be_paused:           Whether or not the function should be called when the program is paused
+    supply_main_loop_object: Whether or not the first parameter that will be given to the function is the MainLoop object itself
+    """
+    function:                Callable
+    args:                    Tuple[Any]
+    kwargs:                  Dict[str, Any]
+    can_be_paused:           bool = False
+    supply_main_loop_object: bool = False
 
 
 class MainLoop:
@@ -118,6 +128,7 @@ class MainLoop:
                                    *args: Any,
                                    function_can_be_paused: bool = False,
                                    function_reverse_insert: bool = False,
+                                   supply_function_with_main_loop_object: bool = False,
                                    **kwargs: Any,
                                    ) -> None:
         """
@@ -125,7 +136,7 @@ class MainLoop:
         The priority of a function will determine when in the simulation tick it runs
         First all HIGH priority functions run, then MEDIUM and then LOW
         """
-        function_with_args = FunctionToCall(function, args, kwargs, function_can_be_paused)
+        function_with_args = FunctionToCall(function, args, kwargs, function_can_be_paused, supply_function_with_main_loop_object)
 
         if function_reverse_insert:
             self.call_functions[priority].insert(0, function_with_args)
@@ -276,7 +287,9 @@ class MainLoop:
                 for function in self.call_functions[priority]:
                     if self.is_paused and function.can_be_paused:
                         continue
-                    function.function(*function.args, **function.kwargs)
+
+                    args = ((self,) + function.args) if function.supply_main_loop_object else function.args
+                    function.function(*args, **function.kwargs)
         except AttributeError as e:
             # for some reason pyglet makes AttributeErrors silent - we reraise them or else it is very hard to debug
             print(f"AttributeError!!!! during mainloop '{e.args[0]}' - in function: {function}" if function else '')

@@ -68,7 +68,6 @@ class ResizingDot(UserInterfaceGraphicsObject):
         """
         Drag the resizing dot around - and resize the appropriate object
         """
-        self.self_destruct_if_not_showing()
         if not self.is_mouse_in() or not MainWindow.main_window.mouse_pressed:
             return
 
@@ -85,17 +84,17 @@ class ResizingDot(UserInterfaceGraphicsObject):
 
         self._x_diff, self._y_diff = self._resized_object.x - x, self._resized_object.y - y
 
-    def self_destruct_if_not_showing(self) -> None:
+    def self_destruct_if_not_showing(self, main_loop: MainLoop) -> None:
         """
         This method should be called every tick to check that the dot was drawn in the last 0.5 seconds.
         If it was not, it erases itself.
         """
-        if MainLoop.instance.time_since(self.__last_drawn) <= 0.5:
+        if main_loop.time_since(self.__last_drawn) <= 0.5:
             return
 
         self._resized_object.resizing_dots.remove(self)
-        MainLoop.instance.unregister_graphics_object(self)
-        MainLoop.instance.remove_from_loop(self.self_destruct_if_not_showing)
+        main_loop.unregister_graphics_object(self)
+        main_loop.remove_from_loop(self.self_destruct_if_not_showing)
 
     def update_object_location(self) -> None:
         """

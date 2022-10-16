@@ -251,7 +251,7 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
             dot = ResizingDot(corner_x, corner_y, self, direction, constrain_proportions)
             self.resizing_dots.append(dot)
             MainLoop.instance.graphics_objects.append(dot)
-            MainLoop.instance.insert_to_loop(dot.self_destruct_if_not_showing)
+            MainLoop.instance.insert_to_loop(dot.self_destruct_if_not_showing, supply_function_with_main_loop_object=True)
 
         dot = get_the_one(self.resizing_dots, lambda d: d.direction == direction, NoSuchGraphicsObjectError)
         dot.draw()
