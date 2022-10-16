@@ -777,16 +777,15 @@ class UserInterface:
             return
 
         if any(isinstance(interface, WirelessInterface) for interface in interfaces):
-            PopupError(
+            self.register_window(PopupError(
                 "Wireless interfaces do not connect peer-to-peer! They just need to be on the same frequency and then they can communicate :)",
-                self
-            )
+            ))
             return
 
         try:
             connection = interfaces[0].connect(interfaces[1])
         except DeviceAlreadyConnectedError:
-            PopupError("That interface is already connected :(", self)
+            self.register_window(PopupError("That interface is already connected :("))
             return
         self.connection_data.append(ConnectionData(connection, *computers))
         connection.show(computers[0].graphics, computers[1].graphics)
@@ -1209,16 +1208,16 @@ class UserInterface:
             try:
                 user_input_object = type_(string)
             except (ValueError, InvalidAddressError):
-                PopupError(error_msg, self)
+                self.register_window(PopupError(error_msg))
                 return
 
             try:
                 action(user_input_object)
             except PopupWindowWithThisError as err:
-                PopupError(str(err), self)
+                self.register_window(PopupError(str(err)))
                 return
 
-        PopupTextBox(window_text, self, try_casting_with_action)
+        self.register_window(PopupTextBox(window_text, try_casting_with_action))
 
     @staticmethod
     def key_from_string(string: str) -> Optional[Tuple[int, int]]:
@@ -1347,20 +1346,19 @@ class UserInterface:
 
         self.learn_all_macs()
 
-    def register_window(self, window: PopupWindow, *buttons: Button) -> None:
+    def register_window(self, window: PopupWindow) -> None:
         """
         Receives a window and adds it to the window list and make it known to the user interface
         object.
         :param window: a PopupWindow object
-        :param buttons: the buttons that the
-        window contains
-        :return:
         """
         if self.popup_windows:
             window.x, window.y = map(sum, zip(self.popup_windows[-1].location, WINDOWS.POPUP.STACKING_PADDING))
 
         self.popup_windows.append(window)
         self.selected_object = window
+
+        buttons = [window.exit_button] + window.buttons
         self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID] = self.buttons.get(BUTTONS.ON_POPUP_WINDOWS.ID, []) + list(buttons)
 
         def remove_buttons() -> None:
@@ -1440,7 +1438,7 @@ class UserInterface:
         :return: None
         """
         if os.path.isfile(os.path.join(DIRECTORIES.SAVES, f"{filename}.json")):
-            YesNoPopupWindow("file exists! override?", self, yes_action=with_args(self.save_to_file, filename))
+            self.register_window(YesNoPopupWindow("file exists! override?", yes_action=with_args(self.save_to_file, filename)))
         else:
             self.save_to_file(filename)
 
@@ -1615,7 +1613,7 @@ class UserInterface:
         Closes the simulation
         :return:
         """
-        YesNoPopupWindow("Are you sure you want to exit?", self, yes_action=pyglet.app.exit)
+        self.register_window(YesNoPopupWindow("Are you sure you want to exit?", yes_action=pyglet.app.exit))
 
     def select_all(self) -> None:
         """
@@ -1631,7 +1629,7 @@ class UserInterface:
         Opens the help window.
         :return:
         """
-        PopupHelp(self)
+        self.register_window(PopupHelp())
 
     def set_mouse_pressed_objects(self) -> None:
         """

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Callable, NamedTuple
+from typing import Callable, NamedTuple
 
 from pyglet.window import key
 
@@ -10,9 +10,6 @@ from NetSym.gui.user_interface.button import Button
 from NetSym.gui.user_interface.key_writer import KeyWriter
 from NetSym.gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText
 from NetSym.gui.user_interface.text_graphics import Text
-
-if TYPE_CHECKING:
-    from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 class ChildGraphicsObjects(NamedTuple):
@@ -31,7 +28,6 @@ class PopupTextBox(PopupWindowContainingText):
 
     def __init__(self,
                  text: str,
-                 user_interface: UserInterface,
                  action: Callable = lambda s: None) -> None:
         """
         Initiates the `PopupTextBox` object.
@@ -51,7 +47,6 @@ class PopupTextBox(PopupWindowContainingText):
 
         super(PopupTextBox, self).__init__(*WINDOWS.POPUP.TEXTBOX.COORDINATES,
                                            text=text,
-                                           user_interface=user_interface,
                                            buttons=[submit_button],
                                            color=WINDOWS.POPUP.TEXTBOX.OUTLINE_COLOR,
                                            title="input text")

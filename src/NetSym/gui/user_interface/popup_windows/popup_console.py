@@ -24,11 +24,10 @@ class PopupConsole(PopupWindow):
     """
     A console in a popup window that you can also write in.
     """
-    def __init__(self, user_interface: UserInterface, computer: Computer) -> None:
+    def __init__(self, computer: Computer) -> None:
         x, y = CONSOLE.SHELL.START_LOCATION
         super(PopupConsole, self).__init__(
             x, y,
-            user_interface,
             color=COLORS.PINK,
             title='console',
             width=CONSOLE.SHELL.WIDTH,

@@ -216,7 +216,6 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
         """
         Marks a rectangle around a `GraphicsObject` that is selected.
         Only call this function if the object is selected.
-        :return: None
         """
         self.mark_as_selected_non_resizable()
 

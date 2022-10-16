@@ -10,7 +10,6 @@ from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_rectangle
 from NetSym.gui.user_interface.button import Button
 from NetSym.gui.user_interface.text_graphics import Text
-from NetSym.usefuls.funcs import with_args
 
 if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
@@ -25,7 +24,6 @@ class PopupWindow(UserInterfaceGraphicsObject):
     def __init__(self,
                  x: float,
                  y: float,
-                 user_interface: UserInterface,
                  buttons: Optional[List[Button]] = None,
                  width: float = WINDOWS.POPUP.TEXTBOX.WIDTH,
                  height: float = WINDOWS.POPUP.TEXTBOX.HEIGHT,
@@ -35,11 +33,10 @@ class PopupWindow(UserInterfaceGraphicsObject):
         """
         Initiates the `PopupWindow` object.
         :param x, y: the location of the bottom left corner of the window
-        :param user_interface: the UserInterface object that holds all of the windows
         :param buttons: a list of buttons that will be displayed on this window. The `X` button is not included.
         """
         super(PopupWindow, self).__init__(x, y)
-        buttons = buttons or []
+        self.buttons = buttons or []
 
         self.width, self.height = width, height
         self.__is_active = False
@@ -57,7 +54,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
             max_width=self.width
         )
 
-        for button in buttons:
+        for button in self.buttons:
             button.set_parent_graphics(self, (button.x - self.x, button.y - self.y))
 
         self.exit_button = Button(
@@ -77,9 +74,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.child_graphics_objects = [
             self.title_text,
             self.exit_button,
-        ] + buttons
-        user_interface.register_window(self, self.exit_button, *buttons)
-        self.unregister_from_user_interface = with_args(user_interface.unregister_window, self)
+        ] + self.buttons
 
         self._x_before_pinning, self._y_before_pinning = None, None
         self._size_before_pinning = self.width, self.height
@@ -130,7 +125,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         """
         super(PopupWindow, self).delete(user_interface)
         self.remove_buttons()
-        self.unregister_from_user_interface()
+        user_interface.unregister_window(self)
 
     def draw(self) -> None:
         """

@@ -267,9 +267,9 @@ class ComputerGraphics(ImageGraphics):
         :return:
         """
         if not self.computer.is_powered_on:
-            PopupError(f"{self.computer.name} is turned off! \nCannot open console", user_interface)
+            user_interface.register_window(PopupError(f"{self.computer.name} is turned off! \nCannot open console"))
             return
-        PopupConsole(user_interface, self.computer)
+        user_interface.register_window(PopupConsole(self.computer))
 
     def generate_view_text(self) -> str:
         """
