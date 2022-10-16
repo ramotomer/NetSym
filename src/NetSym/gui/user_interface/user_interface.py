@@ -102,7 +102,7 @@ class UserInterface:
     """
     WIDTH = WINDOWS.SIDE.WIDTH  # pixels
 
-    def __init__(self) -> None:
+    def __init__(self, main_loop: MainLoop) -> None:
         """
         Initiates the UserInterface class!
         `key_to_action` is a dictionary from keys and their modifiers to actions to perform when that key is pressed.
@@ -110,6 +110,8 @@ class UserInterface:
         the `MainWindow` is initiated.
 
         """
+        self.main_loop = main_loop
+
         self.key_to_action = {
             (key.N, KEYBOARD.MODIFIERS.CTRL): self.create_computer_with_ip,
             (key.N, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT): with_args(self.create_computer_with_ip, True),
@@ -218,6 +220,9 @@ class UserInterface:
         self.__selected_object: Optional[GraphicsObject] = None
         # ^ the object that is currently surrounded by the blue square
         self.selected_object = None  # this sets the `selected_object` attribute
+
+        self.main_loop.insert_to_loop(self.select_selected_and_marked_objects)
+        self.main_loop.insert_to_loop(self.show)
 
     @property
     def all_marked_objects(self) -> List[GraphicsObject]:
@@ -1544,6 +1549,18 @@ class UserInterface:
         for object_ in self.marked_objects:
             self.delete(object_)
         self.marked_objects.clear()
+
+    def select_selected_and_marked_objects(self) -> None:
+        """
+        Draws a rectangle around the selected object.
+        The selected object is the object that was last pressed and is surrounded by a white square.
+        :return: None
+        """
+        if self.selected_object is not None:
+            self.selected_object.mark_as_selected()
+
+        for marked_object in self.marked_objects:
+            marked_object.mark_as_selected_non_resizable()
 
     def move_selected_mark(self, direction: int) -> None:
         """

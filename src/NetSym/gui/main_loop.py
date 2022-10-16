@@ -1,18 +1,24 @@
 from __future__ import annotations
 
 import time
-from typing import Type, Iterable, Optional, TYPE_CHECKING, Callable, Any, List, TypeVar
+from typing import Type, Iterable, Optional, TYPE_CHECKING, Callable, Any, List, TypeVar, Tuple, Dict, NamedTuple
 
-from NetSym.consts import T_Time
+from NetSym.consts import T_Time, MAIN_LOOP
 from NetSym.exceptions import *
 from NetSym.usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
-    from NetSym.gui.main_window import MainWindow
 
 
 T = TypeVar("T")
+
+
+class FunctionToCall(NamedTuple):
+    function:      Callable
+    args:          Tuple[Any]
+    kwargs:        Dict[str, Any]
+    can_be_paused: bool = False
 
 
 class MainLoop:
@@ -26,16 +32,14 @@ class MainLoop:
     """
     instance: Optional[MainLoop] = None
 
-    def __init__(self, main_window: MainWindow) -> None:
+    def __init__(self) -> None:
         """
-        Initiates the MainLoop object with a main window.
-        :param main_window: a `MainWindow` object.
+        Initiates the MainLoop object
         """
         self.__class__.instance = self
-        self.main_window = main_window
 
-        self.call_functions = []
-        # ^ a list of tuples (function, args, kwargs) that will all be called in every `update` call
+        self.call_functions: Dict[MAIN_LOOP.FunctionPriority, List[FunctionToCall]] = {priority: [] for priority in MAIN_LOOP.FunctionPriority}
+        # ^ lists of `FunctionToCall` that will all be called in every `update` call
 
         self.graphics_objects = []
         # ^ a list of all registered `GraphicsObject`-s that are being drawn and moved.
@@ -48,10 +52,9 @@ class MainLoop:
         #  ^ the total time the program has been paused so far
         self.last_time_update = time.time()  # the last time that the `self.update_time` method was called.
 
-        self.main_window.user_interface.initiate_buttons()
-        # ^ creates the buttons of the user interface.
-
-        # self.logo_animation = self.main_window.user_interface.init_logo_animation()
+    @property
+    def medium_priority_call_functions(self):
+        return self.call_functions[MAIN_LOOP.FunctionPriority.MEDIUM]
 
     @classmethod
     def get_time(cls) -> T_Time:
@@ -109,8 +112,30 @@ class MainLoop:
             for child in graphics_object.child_graphics_objects:
                 self.unregister_graphics_object(child)
 
+    def insert_to_loop_prioritized(self,
+                                   function: Callable,
+                                   priority: MAIN_LOOP.FunctionPriority,
+                                   *args: Any,
+                                   function_can_be_paused: bool = False,
+                                   function_reverse_insert: bool = False,
+                                   **kwargs: Any,
+                                   ) -> None:
+        """
+        Some functions MUST be called before others! (for example MainWindow.clear must be called first!)
+        The priority of a function will determine when in the simulation tick it runs
+        First all HIGH priority functions run, then MEDIUM and then LOW
+        """
+        function_with_args = FunctionToCall(function, args, kwargs, function_can_be_paused)
+
+        if function_reverse_insert:
+            self.call_functions[priority].insert(0, function_with_args)
+        else:
+            self.call_functions[priority].append(function_with_args)
+
     def insert_to_loop(self, function: Callable, *args: Any, **kwargs: Any) -> None:
         """
+        A 'nice to have' method - is just less parameters for `insert_to_loop_prioritized`
+
         This method receives a function and inserts it into the main loop of the program. After this is called,
         every clock tick will call the given function with the given arguments.
 
@@ -119,10 +144,12 @@ class MainLoop:
         :param kwargs: Key-word arguments to call it with
         :return: None
         """
-        self.call_functions.append((function, args, kwargs, False))  # the False is for "can it be paused"
+        self.insert_to_loop_prioritized(function, MAIN_LOOP.FunctionPriority.MEDIUM, *args, **kwargs)
 
     def reversed_insert_to_loop(self, function: Callable, *args: Any, **kwargs: Any) -> None:
         """
+        A 'nice to have' method - is just less parameters for `insert_to_loop_prioritized`
+
         This is just like `insert_to_loop` but the function is inserted to the
         head of the list so it is called first. this is done for example so `Connection`
         objects will be drawn in the background.
@@ -131,27 +158,33 @@ class MainLoop:
         :param kwargs:
         :return: None
         """
-        self.call_functions.insert(0, (function, args, kwargs, False))  # the False is "can it be paused"
+        self.insert_to_loop_prioritized(function, MAIN_LOOP.FunctionPriority.MEDIUM, *args, function_reverse_insert=True, **kwargs)
 
     def insert_to_loop_pausable(self, function: Callable, *args: Any, **kwargs: Any) -> None:
         """
-        Exactly like `insert_to_loop` but the function is paused when the program is paused (when space bar is pressed)
-        """
-        self.call_functions.append((function, args, kwargs, True))
+        A 'nice to have' method - is just less parameters for `insert_to_loop_prioritized`
 
-    def remove_from_loop(self, function: Callable) -> None:
+        It is exactly like it but the function is paused when the program is paused (when space bar is pressed)
+        """
+        self.insert_to_loop_prioritized(function, MAIN_LOOP.FunctionPriority.MEDIUM, *args, function_can_be_paused=True, **kwargs)
+
+    def remove_from_loop(self, function: Callable, priority: Optional[MAIN_LOOP.FunctionPriority] = None) -> None:
         """
         Does the opposite of `insert_to_loop`. removes a given function off the loop.
         If the function is called a few times in the loop, all of the calls are removed.
+        :param priority:
         :param function: The function to remove from the loop.
         :return: None
         """
-        to_remove = [function_and_args for function_and_args in self.call_functions if function_and_args[0] == function]
-        for function_and_args in to_remove:
-            try:
-                self.call_functions.remove(function_and_args)
-            except ValueError:
-                pass
+        priorities = [priority] if priority is not None else MAIN_LOOP.FunctionPriority
+
+        for priority_ in priorities:
+            to_remove = [function_and_args for function_and_args in self.medium_priority_call_functions if function_and_args.function == function]
+            for function_and_args in to_remove:
+                try:
+                    self.call_functions[priority_].remove(function_and_args)
+                except ValueError:
+                    pass
 
     def move_to_front(self, graphics_object: GraphicsObject) -> None:
         """
@@ -182,18 +215,6 @@ class MainLoop:
         :return:
         """
         self.is_paused = not self.is_paused
-
-    def select_selected_and_marked_objects(self) -> None:
-        """
-        Draws a rectangle around the selected object.
-        The selected object is the object that was last pressed and is surrounded by a white square.
-        :return: None
-        """
-        if self.main_window.user_interface.selected_object is not None:
-            self.main_window.user_interface.selected_object.mark_as_selected()
-
-        for marked_object in self.main_window.user_interface.marked_objects:
-            marked_object.mark_as_selected_non_resizable()
 
     def get_object_the_mouse_is_on(self, exclude_types: Iterable[Type] = ()) -> GraphicsObject:
         """
@@ -244,21 +265,18 @@ class MainLoop:
 
         This is the method that is called repeatedly, every clock tick.
         It updates the program and runs all other functions in the main loop.
-        The `self.call_functions` list is the list of function that it calls with their arguments.
+        The `self.medium_priority_call_functions` list is the list of function that it calls with their arguments.
         :return: None
         """
         function = None
-        self.main_window.clear()
-
         self.update_time()
-        self.select_selected_and_marked_objects()
-        self.main_window.user_interface.show()
 
         try:
-            for function, args, kwargs, can_be_paused in self.call_functions:
-                if self.is_paused and can_be_paused:
-                    continue
-                function(*args, **kwargs)
+            for priority in MAIN_LOOP.FunctionPriority:
+                for function in self.call_functions[priority]:
+                    if self.is_paused and function.can_be_paused:
+                        continue
+                    function.function(*function.args, **function.kwargs)
         except AttributeError as e:
             # for some reason pyglet makes AttributeErrors silent - we reraise them or else it is very hard to debug
             print(f"AttributeError!!!! during mainloop '{e.args[0]}' - in function: {function}" if function else '')

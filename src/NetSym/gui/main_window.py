@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Tuple, Any, Union
 import pyWinhook
 import pyglet
 
-from NetSym.consts import KEYBOARD, WINDOWS, IMAGES, DIRECTORIES, MODES, BUTTONS, T_Time
+from NetSym.consts import KEYBOARD, WINDOWS, IMAGES, DIRECTORIES, MODES, BUTTONS, T_Time, MAIN_LOOP
 from NetSym.gui.main_loop import MainLoop
 from NetSym.usefuls.funcs import normal_color_to_weird_gl_color
 from NetSym.usefuls.paths import add_path_basename_if_needed
@@ -64,6 +64,9 @@ class MainWindow(pyglet.window.Window):
         self._keyboard_hook_manager = pyWinhook.HookManager()
         self._keyboard_hook_manager.KeyDown = self.block_keyboard_escape_keys
         self.set_is_ignoring_keyboard_escape_keys(True)
+
+        self.user_interface.main_loop.insert_to_loop_prioritized(self.clear, MAIN_LOOP.FunctionPriority.HIGH)
+        self.user_interface.initiate_buttons()
 
     @property
     def _active_keyboard_modifiers(self) -> int:

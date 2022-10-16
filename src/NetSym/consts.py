@@ -2,6 +2,7 @@ from __future__ import annotations
 
 # this cannot import from anything!!! (almost)
 import os
+from enum import Enum
 from math import sqrt
 from typing import Tuple, Union, Any
 
@@ -436,6 +437,13 @@ class WINDOWS:
             COORDINATES = 90, 40
             PADDING = 200 + (WIDTH / 2), 8
             OK_BUTTON_COORDINATES = tuple(map(sum, zip((90, 40), PADDING)))
+
+
+class MAIN_LOOP:
+    class FunctionPriority(Enum):
+        HIGH =   "high"
+        MEDIUM = "medium"
+        # LOW =    "low"
 
 
 class IMAGES:
