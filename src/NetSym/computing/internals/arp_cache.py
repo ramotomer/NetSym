@@ -49,7 +49,7 @@ class ArpCache:
         :return:
         """
         self.__cache[IPAddress(ip_address)] = ARPCacheItem(MACAddress(mac_address),
-                                                           MainLoop.instance.time(),
+                                                           MainLoop.get_time(),
                                                            COMPUTER.ARP_CACHE.DYNAMIC)
 
     def add_static(self, ip_address: Union[str, IPAddress], mac_address: Union[str, MACAddress]) -> None:
@@ -60,7 +60,7 @@ class ArpCache:
         :return:
         """
         self.__cache[IPAddress(ip_address)] = ARPCacheItem(mac_address,
-                                                           MainLoop.instance.time(),
+                                                           MainLoop.get_time(),
                                                            COMPUTER.ARP_CACHE.STATIC)
 
     def wipe(self) -> None:

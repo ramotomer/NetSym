@@ -481,7 +481,7 @@ class SendingWindow:
         Fills the window until it is in its full window size
         """
         while len(self.window) < self.window_size and self.waiting_for_sending:
-            self.window.append(NotAckedPacket(self.waiting_for_sending.popleft(), MainLoop.instance.time(), False))
+            self.window.append(NotAckedPacket(self.waiting_for_sending.popleft(), MainLoop.get_time(), False))
 
     def slide_window(self, count: int) -> None:
         """
@@ -535,7 +535,7 @@ class SendingWindow:
             if MainLoop.instance.time_since(non_acked_packet.sending_time) > PROTOCOLS.TCP.RESEND_TIME:
                 non_acked_packet.packet["TCP"].is_retransmission = True
                 self.add_no_wait(non_acked_packet.packet)
-                non_acked_packet.sending_time = MainLoop.instance.time()
+                non_acked_packet.sending_time = MainLoop.get_time()
 
     def __repr__(self) -> str:
         """

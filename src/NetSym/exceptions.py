@@ -299,6 +299,18 @@ class MainLoopInstanceNotYetInitiated(MainLoopError):
     Probably somewhere in the `UserInterface` class because it is initiated before the main loop
     """
 
+
+class ImageError(GraphicsError):
+    """
+    An error related to an ImageGraphicsObject
+    """
+
+
+class ImageNotLoadedError(ImageError):
+    """
+    An image was used before being loaded from the file!
+    """
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 

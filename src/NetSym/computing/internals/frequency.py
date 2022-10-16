@@ -99,7 +99,7 @@ class Frequency(Connection):
         :param sending_side: the connection side the packet was sent from
         """
         wireless_packet = WirelessPacket(packet.data)
-        self.sent_packets.append(SentWirelessPacket(wireless_packet, MainLoop.instance.time(), self.sent_packet_id))
+        self.sent_packets.append(SentWirelessPacket(wireless_packet, MainLoop.get_time(), self.sent_packet_id))
         sending_side.received_packet_ids.append(self.sent_packet_id)
         self.sent_packet_id += 1
         wireless_packet.show(self, sending_side.wireless_interface)

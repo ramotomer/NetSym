@@ -33,7 +33,7 @@ class Router(Computer):
         super(Router, self).__init__(name, OS.SOLARIS, None, *interfaces)
         self.routing_table = RoutingTable.create_default(self, False)
 
-        self.last_route_check = MainLoop.instance.time()
+        self.last_route_check = MainLoop.get_time()
 
         self.is_dhcp_server = is_dhcp_server
 
@@ -54,7 +54,7 @@ class Router(Computer):
         :return: None
         """
         new_packets = self.new_packets_since(self.last_route_check, is_raw=True)
-        self.last_route_check = MainLoop.instance.time()
+        self.last_route_check = MainLoop.get_time()
 
         for received_packet in new_packets:
             packet, interface = received_packet.packet_and_interface

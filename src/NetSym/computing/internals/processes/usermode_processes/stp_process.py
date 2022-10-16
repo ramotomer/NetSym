@@ -125,15 +125,15 @@ class STPProcess(Process):
         self.root_bid = self.my_bid
         self.stp_ports: Dict[Interface, STPPortData] = {}
 
-        self.last_root_changing_time = MainLoop.instance.time()
-        self.last_sending_time = MainLoop.instance.time()
-        self.last_port_blocking_time = MainLoop.instance.time()
+        self.last_root_changing_time = MainLoop.get_time()
+        self.last_sending_time = MainLoop.get_time()
+        self.last_port_blocking_time = MainLoop.get_time()
 
         self.sending_interval = PROTOCOLS.STP.NORMAL_SENDING_INTERVAL
         self.tree_stable = False
 
         self.root_timeout = PROTOCOLS.STP.ROOT_MAX_DISAPPEARING_TIME
-        self.root_declaration_time = MainLoop.instance.time()
+        self.root_declaration_time = MainLoop.get_time()
         self.root_age = 0
         self.root_max_age = PROTOCOLS.STP.DEFAULT_ROOT_MAX_AGE
         self._root_disappeared = False
@@ -187,15 +187,15 @@ class STPProcess(Process):
             sending_interval=self.sending_interval,
             root_max_age=PROTOCOLS.STP.ROOT_MAX_DISAPPEARING_TIME,
         )
-        self.last_sending_time = MainLoop.instance.time()
+        self.last_sending_time = MainLoop.get_time()
 
     def _update_root(self, new_root: BID, distance_to_root: int, root_age: int, receiving_port: Interface) -> None:
         """
         Updates the root switch according to the information from other received STP packets.
         """
         self.root_bid = new_root
-        self.last_root_changing_time = MainLoop.instance.time()
-        self.root_declaration_time = MainLoop.instance.time()
+        self.last_root_changing_time = MainLoop.get_time()
+        self.root_declaration_time = MainLoop.get_time()
         self.root_age = root_age
 
         if self.tree_stable:
@@ -222,7 +222,7 @@ class STPProcess(Process):
         :param interface: an `Interface` object of the switch.
         :return: None
         """
-        self.stp_ports[interface] = STPPortData(interface, PROTOCOLS.STP.NO_STATE, 0, MainLoop.instance.time())
+        self.stp_ports[interface] = STPPortData(interface, PROTOCOLS.STP.NO_STATE, 0, MainLoop.get_time())
 
     def _set_state(self, port: Interface, state: str) -> None:
         """
@@ -309,7 +309,7 @@ class STPProcess(Process):
         # if MainLoop.instance.time_since(self.last_port_blocking_time) < PROTOCOLS.STP.BLOCKED_INTERFACE_UPDATE_INTERVAL:
         #     return
 
-        self.last_port_blocking_time = MainLoop.instance.time()
+        self.last_port_blocking_time = MainLoop.get_time()
         for port in self.stp_ports:
             if self.stp_ports[port].state == PROTOCOLS.STP.BLOCKED_PORT and not port.is_blocked:
                 port.block(accept="STP")
@@ -356,7 +356,7 @@ class STPProcess(Process):
             self._add_port(receiving_port)
 
         self.root_max_age = stp_layer.max_age
-        self.stp_ports[receiving_port].last_time_got_packet = MainLoop.instance.time()
+        self.stp_ports[receiving_port].last_time_got_packet = MainLoop.get_time()
 
         if stp_layer.age >= stp_layer.max_age:
             return
@@ -381,7 +381,7 @@ class STPProcess(Process):
         if stp_layer.age > self.root_age:
             self._root_disappeared = True
 
-        self.root_declaration_time = MainLoop.instance.time()
+        self.root_declaration_time = MainLoop.get_time()
         self.root_age = stp_layer.age
 
     def _remove_disconnected_ports(self) -> None:

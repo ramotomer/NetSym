@@ -39,4 +39,4 @@ class PacketSendingQueue:
 
         packet = self.packets.popleft()
         self.computer.send(packet, self.interface, self.sending_socket)
-        self.last_packet_sending_time = MainLoop.instance.time()
+        self.last_packet_sending_time = MainLoop.get_time()

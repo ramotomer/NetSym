@@ -8,14 +8,14 @@ from typing import Set, Optional, Dict, TYPE_CHECKING, Callable, Tuple
 import pyglet
 
 from NetSym.consts import IMAGES, T_Color, SELECTED_OBJECT, DIRECTORIES, VIEW, SHAPES, COLORS
-from NetSym.exceptions import NoSuchGraphicsObjectError, PopupWindowWithThisError
+from NetSym.exceptions import *
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_rectangle
 from NetSym.gui.user_interface.resizing_dot import ResizingDot
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
 from NetSym.usefuls.funcs import get_the_one, scale_tuple, sum_tuples
-from NetSym.usefuls.paths import add_path_basename_if_needed
+from NetSym.usefuls.paths import add_path_basename_if_needed, are_paths_equal
 
 if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
@@ -26,6 +26,9 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
     This class is a superclass of any `GraphicsObject` subclass which uses an image in its `draw` method.
     Put simply, it is a graphics object with a picture.
     """
+    x: float
+    y: float
+
     PARENT_DIRECTORY = DIRECTORIES.IMAGES
 
     def __init__(self,
@@ -40,7 +43,7 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
         self.image_name = add_path_basename_if_needed(self.PARENT_DIRECTORY, image_name or IMAGES.IMAGE_NOT_FOUND)
 
         self.scale_factor = scale_factor
-        self.sprite = None
+        self._sprite: Optional[pyglet.sprite.Sprite] = None
 
         self.resizing_dots = []
 
@@ -84,6 +87,17 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
             (self.x + (self.width / 2), self.y - (self.height / 2)),
             (self.x + (self.width / 2), self.y + (self.height / 2)),
         }
+
+    @property
+    def sprite(self):
+        if self._sprite is None:
+            raise ImageNotLoadedError(f"{self!r} - not yet loaded!")
+
+        return self._sprite
+
+    @sprite.setter
+    def sprite(self, value: pyglet.sprite.Sprite) -> None:
+        self._sprite = value
 
     @staticmethod
     def get_image_sprite(
@@ -271,16 +285,18 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
         """
         try:
             self.sprite = self.get_image_sprite(self.image_name, self.x, self.y)
-        except FileNotFoundError:
-            print(f"Error on finding path '{self.image_name}' :(")
+
+        except FileNotFoundError:  # If the image cannot be loaded - load the image for 'image not found'
+            print(f"Error: path '{self.image_name}' not found :(")
             image_not_found_image_path = os.path.join(DIRECTORIES.IMAGES, IMAGES.IMAGE_NOT_FOUND)
-            if self.image_name == image_not_found_image_path:
-                raise
+            if are_paths_equal(self.image_name, image_not_found_image_path):
+                raise  # If the image for 'image not found' is not found :)
+
             self.image_name = image_not_found_image_path
-            self.load()  # try again if the image cannot be loaded
+            self.load()
+            return
 
         self.sprite.update(scale_x=self.scale_factor, scale_y=self.scale_factor)
-
         if self.centered:
             x, y = self.get_centered_coordinates()
             self.sprite.update(x, y)

@@ -68,7 +68,7 @@ class ObjectView(NamedTuple):
     """
     sprite:        pyglet.sprite.Sprite
     text:          Text
-    viewed_object: GraphicsObject
+    viewed_object: ViewableGraphicsObject
 
 
 class ConnectionData(NamedTuple):
@@ -424,7 +424,7 @@ class UserInterface:
             if isinstance(self.object_view.viewed_object, ComputerGraphics):
                 self.object_view.viewed_object.child_graphics_objects.console.hide()
 
-            self.object_view = None
+            self.object_view: Optional[ObjectView] = None
             self.scrolled_view = None
 
     def scroll_view(self, scroll_count: int) -> None:
@@ -1069,7 +1069,7 @@ class UserInterface:
         """
         self.learn_all_macs()
         print(f"\n{' debugging info ':-^100}")
-        print(f"time: {int(time.time())}, program time: {int(MainLoop.instance.time())}")
+        print(f"time: {int(time.time())}, program time: {int(MainLoop.get_time())}")
 
         def gos() -> List[GraphicsObject]:
             return [go for go in MainLoop.instance.graphics_objects if not isinstance(go, (Button, Text))]

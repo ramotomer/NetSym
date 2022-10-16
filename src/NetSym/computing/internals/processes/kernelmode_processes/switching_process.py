@@ -42,7 +42,7 @@ class SwitchingProcess(Process):
                 src_mac = packet["Ether"].src_mac
             except KeyError:
                 raise UnknownPacketTypeError("The packet contains no Ethernet layer!!!")
-            self.switching_table[src_mac] = SwitchTableItem(leg=packet_metadata.interface, time=MainLoop.instance.time())
+            self.switching_table[src_mac] = SwitchTableItem(leg=packet_metadata.interface, time=MainLoop.get_time())
 
     def delete_old_switch_table_items(self) -> None:
         """

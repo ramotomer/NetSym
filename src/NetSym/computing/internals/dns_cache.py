@@ -45,7 +45,7 @@ class DNSCache:
         if ttl is None:
             raise WrongUsageError("Do not add a DNS item with TTL (Time to live) which is `None`!!!!")
 
-        self.__cache[name] = DNSCacheItem(ip_address, ttl, MainLoop.instance.time())
+        self.__cache[name] = DNSCacheItem(ip_address, ttl, MainLoop.get_time())
 
     def forget_old_items(self) -> None:
         """

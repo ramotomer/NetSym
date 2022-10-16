@@ -62,7 +62,7 @@ class ResizingDot(UserInterfaceGraphicsObject):
 
     def draw(self) -> None:
         draw_circle(self.x, self.y, self.radius, COLORS.BLACK, self.color)
-        self.__last_drawn = MainLoop.instance.time()
+        self.__last_drawn = MainLoop.get_time()
 
     def move(self) -> None:
         """

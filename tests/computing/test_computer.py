@@ -282,7 +282,7 @@ def test_domain(example_computers):
 #     Things the computer should do when it is turned on
 #     :return:
 #     """
-#     self.boot_time = MainLoop.instance.time()
+#     self.boot_time = MainLoop.get_time()
 #     self.process_scheduler.run_startup_processes()
 #
 #     self.icmp_sequence_number = 0
@@ -828,7 +828,7 @@ def test_domain(example_computers):
 #             packet,
 #             PacketMetadata(
 #                 interface,
-#                 MainLoop.instance.time(),
+#                 MainLoop.get_time(),
 #                 PACKET.DIRECTION.OUTGOING
 #             )
 #         ),
@@ -1364,12 +1364,12 @@ def test_domain(example_computers):
 #     :param socket_list: List[Socket]
 #     :param timeout: the amount of seconds to wait before returning without a selected socket
 #     """
-#     start_time = MainLoop.instance.time()
+#     start_time = MainLoop.get_time()
 #     while True:
 #         for socket in socket_list:
 #             if socket.has_data_to_receive:
 #                 return socket
-#         if (timeout is not None) and (start_time + timeout < MainLoop.instance.time()):
+#         if (timeout is not None) and (start_time + timeout < MainLoop.get_time()):
 #             return None
 #         yield WaitingFor.nothing()
 #
@@ -1393,7 +1393,7 @@ def test_domain(example_computers):
 #         if not interface.is_connected():
 #             continue
 #         for packet in interface.receive():
-#             packet_with_metadata = ReturnedPacket(packet, PacketMetadata(interface, MainLoop.instance.time(), PACKET.DIRECTION.INCOMING))
+#             packet_with_metadata = ReturnedPacket(packet, PacketMetadata(interface, MainLoop.get_time(), PACKET.DIRECTION.INCOMING))
 #             self.received_raw.append(packet_with_metadata)
 #             self._sniff_packet_on_relevant_raw_sockets(packet_with_metadata)
 #

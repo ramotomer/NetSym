@@ -208,7 +208,7 @@ class Timeout:
         :param seconds: the amount of seconds of the timeout
         """
         self.seconds = seconds
-        self.init_time = MainLoop.instance.time()
+        self.init_time = MainLoop.get_time()
 
     def __bool__(self) -> bool:
         """
@@ -224,7 +224,7 @@ class Timeout:
         Resets the timeout object's initiation time.
         :return: None
         """
-        self.init_time = MainLoop.instance.time()
+        self.init_time = MainLoop.get_time()
 
 
 @dataclass

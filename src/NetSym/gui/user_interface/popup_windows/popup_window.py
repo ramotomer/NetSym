@@ -31,7 +31,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
                  height: float = WINDOWS.POPUP.TEXTBOX.HEIGHT,
                  color: T_Color = WINDOWS.POPUP.TEXTBOX.OUTLINE_COLOR,
                  title: str = "window!",
-                 outline_width: int = SHAPES.RECT.DEFAULT_OUTLINE_WIDTH) -> None:
+                 outline_width: float = SHAPES.RECT.DEFAULT_OUTLINE_WIDTH) -> None:
         """
         Initiates the `PopupWindow` object.
         :param x, y: the location of the bottom left corner of the window
@@ -45,7 +45,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.__is_active = False
         self.outline_color = color
         self.outline_width = outline_width
-        self.creation_time = MainLoop.instance.time()
+        self.creation_time = MainLoop.get_time()
 
         self.title_text = Text(
             title,

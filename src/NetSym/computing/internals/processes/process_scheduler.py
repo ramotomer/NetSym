@@ -91,7 +91,7 @@ class ProcessScheduler:
                 currently_running_process=None,
                 ready_processes=[],
                 waiting_processes=[],
-                process_last_check_time=MainLoop.instance.time(),
+                process_last_check_time=MainLoop.get_time(),
                 latest_pid=COMPUTER.PROCESSES.INIT_PID,
             ),
             COMPUTER.PROCESSES.MODES.KERNELMODE: SchedulerDetails(
@@ -99,7 +99,7 @@ class ProcessScheduler:
                 currently_running_process=None,
                 ready_processes=[],
                 waiting_processes=[],
-                process_last_check_time=MainLoop.instance.time(),
+                process_last_check_time=MainLoop.get_time(),
                 latest_pid=COMPUTER.PROCESSES.INIT_PID,
             ),
         }
@@ -208,7 +208,7 @@ class ProcessScheduler:
         """
         new_packets     = self.computer.new_packets_since(self.__details_by_mode[mode].process_last_check_time, is_raw=False)
         new_packets_raw = self.computer.new_packets_since(self.__details_by_mode[mode].process_last_check_time, is_raw=True)
-        self.__details_by_mode[mode].process_last_check_time = MainLoop.instance.time()
+        self.__details_by_mode[mode].process_last_check_time = MainLoop.get_time()
 
         ready_processes = self._start_new_processes(mode)
         self._decide_ready_processes_no_packet(ready_processes, mode)
