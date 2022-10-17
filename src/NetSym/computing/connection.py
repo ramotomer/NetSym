@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, List, Tuple
 from NetSym.consts import CONNECTIONS, PACKET, T_Time
 from NetSym.exceptions import ConnectionsError
 from NetSym.exceptions import WrongUsageError, NoSuchConnectionSideError, SomethingWentTerriblyWrongError
+from NetSym.gui.abstracts.animation_graphics import AnimationGraphics
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.tech.connection_graphics import ConnectionGraphics
 
@@ -168,7 +169,7 @@ class Connection:
         connected `Interface`.
         """
         packet, direction = sent_packet.packet, sent_packet.direction
-        packet.graphics.uregister()
+        packet.graphics.unregister()
 
         if direction == PACKET.DIRECTION.RIGHT:
             self.right_side.packets_to_receive.append(packet)
@@ -225,30 +226,35 @@ class Connection:
         for sent_packet in self.sent_packets[:]:  # we copy the list because we alter it during the run
             self._update_packet(sent_packet)
 
-        self._drop_predetermined_dropped_packets()  # drops the packets that were chosen by the random PL (packet loss)
-        self._delay_predetermined_delayed_packets()
+        main_loop.register_graphics_object(self._drop_predetermined_dropped_packets())
+        main_loop.register_graphics_object(self._delay_predetermined_delayed_packets())
 
-    def _drop_predetermined_dropped_packets(self) -> None:
+    def _drop_predetermined_dropped_packets(self) -> List[AnimationGraphics]:
         """
         Goes through the packets that are being sent, When they reach the middle of the connection, check if they need
         to be dropped (by PL) if so, remove them from the list, and do the animation.
-        :return: None
         """
+        animations_to_register = []
         for sent_packet in self.sent_packets[:]:
             if sent_packet.will_be_dropped and sent_packet.packet.graphics.progress >= (random.random() + 0.3):
                 self.sent_packets.remove(sent_packet)
-                sent_packet.packet.graphics.drop()
+                sent_packet.packet.graphics.unregister()
+                animations_to_register.append(sent_packet.packet.graphics.get_drop_animation())
+        return animations_to_register
 
-    def _delay_predetermined_delayed_packets(self) -> None:
+    def _delay_predetermined_delayed_packets(self) -> List[AnimationGraphics]:
         """
         Goes through the packets that are being sent, When they reach the middle of the connection, check if they need
         to be dropped (by PL) if so, remove them from the list, and do the animation.
         :return: None
         """
+        animations_to_register = []
         for sent_packet in self.sent_packets:
             if sent_packet.will_be_delayed and sent_packet.packet.graphics.progress >= (random.random() + 0.3):
-                sent_packet.packet.graphics.decrease_speed()
                 sent_packet.will_be_delayed = False
+                sent_packet.packet.graphics.decrease_speed()
+                animations_to_register.append(sent_packet.packet.graphics.get_decrease_speed_animation())
+        return animations_to_register
 
     def stop_packets(self) -> None:
         """
@@ -256,7 +262,7 @@ class Connection:
         Kills all of the packets in the connection and unregisters their `GraphicsObject`-s
         """
         for sent_packet in self.sent_packets:
-            MainLoop.instance.unregister_graphics_object(sent_packet.packet.graphics)
+            sent_packet.packet.graphics.unregister()
         self.sent_packets.clear()
 
     def __repr__(self) -> str:

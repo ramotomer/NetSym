@@ -8,7 +8,6 @@ import pyWinhook
 import pyglet
 
 from NetSym.consts import KEYBOARD, WINDOWS, IMAGES, DIRECTORIES, MODES, BUTTONS, T_Time, MAIN_LOOP
-from NetSym.gui.main_loop import MainLoop
 from NetSym.usefuls.funcs import normal_color_to_weird_gl_color
 from NetSym.usefuls.paths import add_path_basename_if_needed
 
@@ -247,7 +246,7 @@ class MainWindow(pyglet.window.Window):
         The try and except here are because pyglet likes catching certain exceptions and it makes debugging practically
         impossible.
         """
-        MainLoop.instance.main_loop()
+        self.user_interface.main_loop.main_loop()
 
         if self.width != self.previous_width or self.height != self.previous_height:
             self._on_resize()  # `on_resize` does not work, I wrote `_on_resize` instead.

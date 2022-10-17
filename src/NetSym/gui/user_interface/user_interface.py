@@ -1000,9 +1000,17 @@ class UserInterface:
                     self.selected_object = None
                     self.set_mode(MODES.NORMAL)
                     connection.sent_packets.remove(sent_packet)
-                    packet_graphics.drop()
+                    packet_graphics.unregister()
+                    self.main_loop.register_graphics_object(packet_graphics.get_drop_animation())
                     return
         raise NoSuchPacketError("That packet cannot be found!")
+
+    def decrease_packet_speed(self, packet_graphics: PacketGraphics) -> None:
+        """
+        Decrease the speed of the supplied packet and play the appropriate animation
+        """
+        packet_graphics.decrease_speed()
+        self.main_loop.register_graphics_object(packet_graphics.get_decrease_speed_animation())
 
     def ask_user_for_ip(self) -> None:
         """
