@@ -32,8 +32,8 @@ class ProcessGraphicsList(GraphicsObject):
     def add(self, port: T_Port) -> None:
         """Add a new process to the list"""
         self.child_graphics_objects.append(ProcessGraphics(port, self.server_graphics, self.process_count))
-        # TODO: add a separate list for UDP ports (maybe the drawings of tcp have red glow and udp has blue glow IDK...)
         self.process_count += 1
+        self.register_children()
 
     def remove(self, port: T_Port) -> None:
         """
@@ -93,7 +93,7 @@ class ProcessGraphicsList(GraphicsObject):
         pass
 
     def __repr__(self) -> str:
-        return f"Process Graphics List {[pg.port for pg in self.child_graphics_objects]}"
+        return f"<< ProcessGraphicsList {[pg.port for pg in self.child_graphics_objects]} >>"
 
     def dict_save(self) -> None:
         pass

@@ -2,19 +2,16 @@ from __future__ import annotations
 
 import os
 from abc import ABCMeta
-from itertools import product
 from typing import Set, Optional, Dict, TYPE_CHECKING, Callable, Tuple
 
 import pyglet
 
 from NetSym.consts import IMAGES, T_Color, SELECTED_OBJECT, DIRECTORIES, VIEW, SHAPES, COLORS
 from NetSym.exceptions import *
-from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_rectangle
-from NetSym.gui.user_interface.resizing_dot import ResizingDot
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
-from NetSym.usefuls.funcs import get_the_one, scale_tuple, sum_tuples
+from NetSym.usefuls.funcs import scale_tuple, sum_tuples
 from NetSym.usefuls.paths import add_path_basename_if_needed, are_paths_equal
 
 if TYPE_CHECKING:
@@ -45,8 +42,6 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
         self.scale_factor = scale_factor
         self._sprite: Optional[pyglet.sprite.Sprite] = None
 
-        self.resizing_dots = []
-
         # MainLoop.instance.register_graphics_object(self, is_in_background)
         self.load()
 
@@ -57,9 +52,6 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
     @location.setter
     def location(self, value: Tuple[float, float]) -> None:
         self.x, self.y = value
-
-        for dot in self.resizing_dots:
-            dot.update_object_location()
 
     @property
     def width(self) -> float:
@@ -197,7 +189,6 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
     def mark_as_selected_non_resizable(self) -> None:
         """
         Marks the object as selected, but does not show the resizing dots :)
-        :return:
         """
         x, y = self.x, self.y
         if self.centered:
@@ -220,10 +211,6 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
         """
         self.mark_as_selected_non_resizable()
 
-        directions = map(tuple, set(product((-1, 0, 1), repeat=2)) - {(0, 0)})
-        for direction in directions:
-            self.show_resizing_dot(direction, constrain_proportions=(0 not in direction))
-
     def get_corner_by_direction(self, direction: Tuple[int, int]) -> Tuple[float, float]:
         """
         Returns the location of a corner based on a direction, which is a tuple indicating the
@@ -241,21 +228,6 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
 
         dx, dy = direction
         return (bottom_left_x + width / 2) + ((width / 2) * dx), (bottom_left_y + height / 2) + ((height / 2) * dy)
-
-    def show_resizing_dot(self, direction: Tuple[int, int], constrain_proportions: bool = False) -> None:
-        """
-        Displays and enables the little dot that allows resizing of objects.
-        """
-        if get_the_one(self.resizing_dots, lambda d: d.direction == direction) is None:
-            corner_x, corner_y = self.get_corner_by_direction(direction)
-            dot = ResizingDot(corner_x, corner_y, self, direction, constrain_proportions)
-            self.resizing_dots.append(dot)
-            MainLoop.instance.graphics_objects.append(dot)
-            MainLoop.instance.insert_to_loop(dot.self_destruct_if_not_showing, supply_function_with_main_loop_object=True)
-
-        dot = get_the_one(self.resizing_dots, lambda d: d.direction == direction, NoSuchGraphicsObjectError)
-        dot.draw()
-        dot.move()
 
     def start_viewing(self,
                       user_interface: UserInterface,
@@ -363,9 +335,6 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
             scale_y = current_proportions * scale_x
 
         self.sprite.update(scale_x=scale_x, scale_y=scale_y)
-
-        for dot in self.resizing_dots:
-            dot.update_object_size()
 
     def add_hue(self, hue: T_Color) -> None:
         """

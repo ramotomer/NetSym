@@ -43,6 +43,7 @@ from NetSym.gui.user_interface.popup_windows.popup_help import PopupHelp
 from NetSym.gui.user_interface.popup_windows.popup_text_box import PopupTextBox
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 from NetSym.gui.user_interface.popup_windows.yes_no_popup_window import YesNoPopupWindow
+from NetSym.gui.user_interface.resizing_dots_handler import ResizingDotsHandler
 from NetSym.gui.user_interface.selecting_square import SelectingSquare
 from NetSym.gui.user_interface.text_graphics import Text
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
@@ -220,6 +221,7 @@ class UserInterface:
         self.__selected_object: Optional[GraphicsObject] = None
         # ^ the object that is currently surrounded by the blue square
         self.selected_object = None  # this sets the `selected_object` attribute
+        self.resizing_dots_handler = ResizingDotsHandler()
 
         self.main_loop.insert_to_loop(self.select_selected_and_marked_objects)
         self.main_loop.insert_to_loop(self.show)
@@ -298,6 +300,7 @@ class UserInterface:
         self._stop_viewing_dead_packets()
         self._showcase_running_stp()
         self._unregister_requesting_popup_windows()
+        self._handle_resizing_dots()
 
         if self.mode in MODES.COMPUTER_CONNECTING_MODES:
             self._draw_connection_to_mouse(MODES.TO_COLORS[self.mode])
@@ -1567,6 +1570,9 @@ class UserInterface:
         """
         if self.selected_object is not None:
             self.selected_object.mark_as_selected()
+            self.resizing_dots_handler.select(self.selected_object)
+        else:
+            self.resizing_dots_handler.deselect()
 
         for marked_object in self.marked_objects:
             marked_object.mark_as_selected_non_resizable()
@@ -1725,3 +1731,13 @@ class UserInterface:
         self.frequencies.append(new_freq)
         self.main_loop.insert_to_loop_pausable(new_freq.move_packets, supply_function_with_main_loop_object=True)
         return new_freq
+
+    def _handle_resizing_dots(self) -> None:
+        """
+        Perform all of the actions `ResizingDot`s require doing periodically
+        Register the new dots that are created as `GraphicsObject`s in the main loop.
+        """
+        has_new_dots = self.resizing_dots_handler.update_dot_state()
+
+        if has_new_dots:
+            self.main_loop.register_graphics_object(self.resizing_dots_handler.dots)

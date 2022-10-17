@@ -44,7 +44,8 @@ class GraphicsObject(metaclass=ABCMeta):
         self.centered = centered
         self.is_pressable = is_pressable
 
-        self.unregister_me_from_main_loop = False
+        self.is_requesting_to_be_unregistered_from_main_loop = False
+        self.is_requesting_to_register_children         = False
 
         # if self.do_render:
         # MainLoop.instance.register_graphics_object(self, is_in_background)
@@ -130,7 +131,13 @@ class GraphicsObject(metaclass=ABCMeta):
         """
         Request from the MainLoop for this object to be unregistered
         """
-        self.unregister_me_from_main_loop = True
+        self.is_requesting_to_be_unregistered_from_main_loop = True
+
+    def register_children(self) -> None:
+        """
+        Request from the MainLoop to go over the 'child_graphics_objects' and register the ones that are not registered
+        """
+        self.is_requesting_to_register_children = True
 
     def delete(self, user_interface: UserInterface) -> None:
         """

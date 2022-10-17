@@ -61,33 +61,37 @@ class MainLoop:
 
         return cls.instance.time()
 
+    def is_registered(self, graphics_object: GraphicsObject) -> bool:
+        """
+        Return whether or not the supplied `GraphicsObject` is alredy registered in the main loop.
+        """
+        return graphics_object in self.graphics_objects
+
     def register_graphics_object(self, graphics_object: Union[GraphicsObject, List[GraphicsObject]], is_in_background: bool = False) -> None:
         """
         This method receives a `GraphicsObject` instance, loads it, and enters
         it into the update main loop with its `move` and `draw` methods.
-        :param graphics_object: The `GraphicsObject`
+
+        If any of the objects supplied is already registered - skip it
+        :param graphics_object: The `GraphicsObject` or a list of them
         :param is_in_background: Whether the object will be drawn in the front
             or the back of the other objects.
-        :return: None
         """
         graphics_object_list = graphics_object if isinstance(graphics_object, list) else [graphics_object]
 
         for graphics_object_ in graphics_object_list:
-            if graphics_object_ in self.graphics_objects:
-                # raise GraphicsObjectAlreadyRegistered() ?
-                return
+            if not self.is_registered(graphics_object_):
+                graphics_object_.load()
+                if is_in_background:
+                    self.graphics_objects.insert(0, graphics_object_)
+                    self.reversed_insert_to_loop(graphics_object_.draw)
+                else:
+                    self.graphics_objects.append(graphics_object_)
+                    self.insert_to_loop(graphics_object_.draw)
 
-            graphics_object_.load()
-            if is_in_background:
-                self.graphics_objects.insert(0, graphics_object_)
-                self.reversed_insert_to_loop(graphics_object_.draw)
-            else:
-                self.graphics_objects.append(graphics_object_)
-                self.insert_to_loop(graphics_object_.draw)
-
-            self.insert_to_loop(graphics_object_.move)
-            for function_to_call in graphics_object_.additional_functions_to_register:
-                self.insert_to_loop(function_to_call)
+                self.insert_to_loop(graphics_object_.move)
+                for function_to_call in graphics_object_.additional_functions_to_register:
+                    self.insert_to_loop(function_to_call)
 
             if hasattr(graphics_object_, "child_graphics_objects"):
                 for child in graphics_object_.child_graphics_objects:
@@ -121,12 +125,24 @@ class MainLoop:
     def _unregister_requesting_graphics_object(self) -> None:
         """
         Goes over all registered graphics objects
-        Checks which of them have the `unregister_me_from_main_loop` flag set
+        Checks which of them have the `is_requesting_to_be_unregistered_from_main_loop` flag set
         Unregisters them
         """
         for graphics_object in self.graphics_objects[:]:
-            if graphics_object.unregister_me_from_main_loop:
+            if graphics_object.is_requesting_to_be_unregistered_from_main_loop:
                 self.unregister_graphics_object(graphics_object)
+
+    def _register_children_of_requesting_graphics_object(self) -> None:
+        """
+        Goes over all registered graphics objects
+        Checks which of them have the `is_requesting_to_be_unregistered_from_main_loop` flag set
+
+        Registers them again - to make sure all of their children are registered
+        """
+        for graphics_object in self.graphics_objects:
+            if graphics_object.is_requesting_to_register_children:
+                self.register_graphics_object(graphics_object)
+                graphics_object.is_requesting_to_register_children = False
 
     def insert_to_loop_prioritized(self,
                                    function: Union[Callable, FunctionToCall],
@@ -291,6 +307,7 @@ class MainLoop:
         function = None
         self.update_time()
         self._unregister_requesting_graphics_object()
+        self._register_children_of_requesting_graphics_object()
 
         try:
             for priority in MAIN_LOOP.FunctionPriority:

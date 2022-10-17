@@ -1331,7 +1331,7 @@ class Computer:
         process = self.PORTS_TO_PROCESSES[protocol][port_number]
         if process is not None:
             if port_number in self.get_open_ports(protocol):
-                self.process_scheduler.kill_all_usermode_processes_by_type(process)
+                self.process_scheduler.kill_all_usermode_processes_by_type(process, force=True)
             else:
                 self.process_scheduler.start_usermode_process(self.PORTS_TO_PROCESSES[protocol][port_number])
 
