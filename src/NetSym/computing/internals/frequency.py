@@ -130,7 +130,7 @@ class Frequency(Connection):
         :param sent_packet: a `SentPacket`
         :return:
         """
-        MainLoop.instance.unregister_graphics_object(sent_packet.packet.graphics)
+        sent_packet.packet.graphics.unregister()
         self.sent_packets.remove(sent_packet)
 
     def _send_packets_from_side(self, side: FrequencyConnectionSide) -> List[WirelessPacketGraphics]:

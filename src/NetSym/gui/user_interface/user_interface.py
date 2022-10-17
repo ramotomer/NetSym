@@ -608,6 +608,7 @@ class UserInterface:
                 self.main_loop.graphics_objects_of_types(ComputerGraphics, PacketGraphics),
                 self,
             )
+            self.main_loop.register_graphics_object(self.selecting_square)
 
     def on_mouse_release(self) -> None:
         """

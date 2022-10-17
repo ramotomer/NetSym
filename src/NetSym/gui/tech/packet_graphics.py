@@ -8,7 +8,6 @@ import scapy
 from NetSym.consts import CONNECTIONS, IMAGES, ANIMATIONS, PACKET
 from NetSym.gui.abstracts.animation_graphics import AnimationGraphics
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
-from NetSym.gui.main_loop import MainLoop
 from NetSym.packets.usefuls.type_to_opcode_function import TYPE_TO_OPCODE_FUNCTION
 from NetSym.packets.usefuls.usefuls import get_original_layer_name_by_instance
 from NetSym.usefuls.funcs import with_args, rangom
@@ -87,7 +86,7 @@ class PacketGraphics(ImageGraphics):
         Displays the animation of the packet when it is dropped by PL in a connection.
         :return: None
         """
-        MainLoop.instance.unregister_graphics_object(self)
+        self.unregister()
         AnimationGraphics(ANIMATIONS.EXPLOSION, self.x, self.y)
 
     @staticmethod

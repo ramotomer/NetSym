@@ -126,8 +126,14 @@ class GraphicsObject(metaclass=ABCMeta):
         """
         pass
 
+    def unregister(self) -> None:
+        """
+        Request from the MainLoop for this object to be unregistered
+        """
+        self.unregister_me_from_main_loop = True
+
     def delete(self, user_interface: UserInterface) -> None:
         """
         Deletes the graphics object and performs other operations that are necessary for deletion (cleanup)
         """
-        self.unregister_me_from_main_loop = True
+        self.unregister()

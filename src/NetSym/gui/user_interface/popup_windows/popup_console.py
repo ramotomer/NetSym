@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, NamedTuple
 
 from NetSym.consts import COLORS, CONSOLE, COMPUTER
-from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.tech.shell_graphics import ShellGraphics
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 
@@ -45,7 +44,6 @@ class PopupConsole(PopupWindow):
             exit_button,
             shell,
         )
-        MainLoop.instance.move_to_front(shell.child_graphics_objects.input_line)
 
     def _generate_computer_shell(self) -> ShellGraphics:
         """
@@ -57,7 +55,6 @@ class PopupConsole(PopupWindow):
         shell.set_parent_graphics(self)
         shell.show()
         self.computer.active_shells.append(shell)
-        MainLoop.instance.move_to_front(shell)
         return shell
 
     @property

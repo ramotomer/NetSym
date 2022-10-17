@@ -4,7 +4,6 @@ from typing import Tuple, NamedTuple
 
 from NetSym.consts import CONSOLE, TEXT
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
-from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.shape_drawing import draw_rectangle
 from NetSym.gui.user_interface.text_graphics import Text
 
@@ -72,8 +71,6 @@ class OutputConsole(UserInterfaceGraphicsObject):
         """
         self.is_hidden = False
         self.child_graphics_objects.text.show()
-        MainLoop.instance.move_to_front(self)
-        MainLoop.instance.move_to_front(self.child_graphics_objects.text)
 
     def hide(self) -> None:
         """

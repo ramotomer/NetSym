@@ -6,7 +6,6 @@ from NetSym.consts import PORTS, IMAGES, T_Port
 from NetSym.exceptions import UnknownPortError
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
-from NetSym.gui.main_loop import MainLoop
 
 if TYPE_CHECKING:
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
@@ -23,7 +22,7 @@ class ProcessGraphicsList(GraphicsObject):
         """
         super(ProcessGraphicsList, self).__init__(*server_graphics.location, do_render=False)
         self.server_graphics = server_graphics
-        self.child_graphics_objects = []
+        self.child_graphics_objects: List[ProcessGraphics] = []
         self.process_count = 0
 
     @property
@@ -45,7 +44,7 @@ class ProcessGraphicsList(GraphicsObject):
         found = False
         for process_graphics in self.child_graphics_objects[:]:
             if process_graphics.port == port:
-                MainLoop.instance.unregister_graphics_object(process_graphics)
+                process_graphics.unregister()
                 self.child_graphics_objects.remove(process_graphics)
                 found = True
             elif found:

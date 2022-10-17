@@ -64,7 +64,7 @@ class Connection:
 
         self.right_side, self.left_side = ConnectionSide(self), ConnectionSide(self)
 
-        self.last_packet_motion = self.main_loop.time()
+        self.last_packet_motion = MainLoop.instance.time()
 
         self.graphics = None
 
@@ -72,10 +72,6 @@ class Connection:
 
         self.packet_loss = packet_loss
         self.latency = latency
-
-    @property
-    def main_loop(self):
-        return MainLoop.instance
 
     @property
     def length(self) -> float:
@@ -158,7 +154,7 @@ class Connection:
         self.sent_packets.append(
             SentPacket(
                 packet,
-                self.main_loop.time(),
+                MainLoop.instance.time(),
                 direction,
                 will_be_dropped=(random.random() < self.packet_loss),
                 will_be_delayed=(random.random() < self.latency),
@@ -172,7 +168,7 @@ class Connection:
         connected `Interface`.
         """
         packet, direction = sent_packet.packet, sent_packet.direction
-        self.main_loop.unregister_graphics_object(packet.graphics)
+        packet.graphics.uregister()
 
         if direction == PACKET.DIRECTION.RIGHT:
             self.right_side.packets_to_receive.append(packet)
@@ -209,8 +205,8 @@ class Connection:
         :return: None
         """
         sent_packet.packet.graphics.progress += \
-            (self.main_loop.time_since(sent_packet.last_update_time) / self.deliver_time) * sent_packet.packet.graphics.speed
-        sent_packet.last_update_time = self.main_loop.time()
+            (MainLoop.instance.time_since(sent_packet.last_update_time) / self.deliver_time) * sent_packet.packet.graphics.speed
+        sent_packet.last_update_time = MainLoop.instance.time()
 
         if sent_packet.packet.graphics.progress >= 1:
             self.reach_destination(sent_packet)
@@ -260,7 +256,7 @@ class Connection:
         Kills all of the packets in the connection and unregisters their `GraphicsObject`-s
         """
         for sent_packet in self.sent_packets:
-            self.main_loop.unregister_graphics_object(sent_packet.packet.graphics)
+            MainLoop.instance.unregister_graphics_object(sent_packet.packet.graphics)
         self.sent_packets.clear()
 
     def __repr__(self) -> str:
