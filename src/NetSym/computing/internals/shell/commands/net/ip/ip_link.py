@@ -79,8 +79,10 @@ link:
 
         if name in [nic.name for nic in self.computer.interfaces]:
             return CommandOutput('', f'An interface named {name} already exists')
-        self.computer.add_interface(name, mac)
-        return CommandOutput(f"Added interface {name} successfully :)", '')
+
+        raise NotImplementedError("Must think how to register the interface created by this command... sorry...")
+        # self.computer.add_interface(name, mac)
+        # return CommandOutput(f"Added interface {name} successfully :)", '')
 
     def _del_link(self, args: argparse.Namespace) -> CommandOutput:
         """

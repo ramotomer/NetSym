@@ -12,6 +12,7 @@ from NetSym.gui.tech.connection_graphics import ConnectionGraphics
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
+    from NetSym.gui.tech.packet_graphics import PacketGraphics
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
@@ -72,8 +73,6 @@ class Connection:
         self.packet_loss = packet_loss
         self.latency = latency
 
-        self.main_loop.insert_to_loop_pausable(self.move_packets)
-
     @property
     def main_loop(self):
         return MainLoop.instance
@@ -90,7 +89,7 @@ class Connection:
         """The time in seconds a packet takes to go through the connection"""
         return self.length / self.speed
 
-    def init_graphics(self, start_computer: ComputerGraphics, end_computer: ComputerGraphics) -> ConnectionGraphics:
+    def init_graphics(self, start_computer: ComputerGraphics, end_computer: ComputerGraphics) -> List[ConnectionGraphics]:
         """
         Adds the `GraphicObject` of this class and gives it the parameters it requires.
 
@@ -99,7 +98,7 @@ class Connection:
         :return: None
         """
         self.graphics = ConnectionGraphics(self, start_computer, end_computer, self.packet_loss)
-        return self.graphics
+        return [self.graphics]
 
     def get_sides(self) -> Tuple[ConnectionSide, ConnectionSide]:
         """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""
@@ -165,7 +164,6 @@ class Connection:
                 will_be_delayed=(random.random() < self.latency),
             )
         )
-        packet.init_graphics(self.graphics, direction)  # initiate the `GraphicsObject` of the packet.
 
     def reach_destination(self, sent_packet: SentPacket) -> None:
         """
@@ -185,7 +183,7 @@ class Connection:
 
         self.sent_packets.remove(sent_packet)
 
-    def _send_packets_from_side(self, side: ConnectionSide) -> None:
+    def _send_packets_from_side(self, side: ConnectionSide) -> List[PacketGraphics]:
         """
         Takes all of the packets that are waiting to be sent on one ConnectionSide and sends them down the main connection.
         :param side: a `ConnectionSide` object.
@@ -194,11 +192,14 @@ class Connection:
         if side not in self.get_sides():
             raise NoSuchConnectionSideError()
 
+        new_graphics_to_register = []
         direction = PACKET.DIRECTION.LEFT if side is self.right_side else PACKET.DIRECTION.RIGHT
         if side.is_sending():
             for packet in side.packets_to_send:
                 self.add_packet(packet, direction)
+                new_graphics_to_register.extend(packet.init_graphics(self.graphics, direction))
             side.packets_to_send.clear()
+        return new_graphics_to_register
 
     def _update_packet(self, sent_packet: SentPacket) -> None:
         """
@@ -214,16 +215,16 @@ class Connection:
         if sent_packet.packet.graphics.progress >= 1:
             self.reach_destination(sent_packet)
 
-    def move_packets(self) -> None:
+    def move_packets(self, main_loop: MainLoop) -> None:
         """
         This method is inserted into the main loop of the simulation when this `Connection` object is initiated.
         The packets in the connection should always be moving. (unless paused)
         This method sends new packets from the `ConnectionSide` object, updates the time they have been in the cable, and
             removes them if they reached the end.
-        :return: None
         """
         for side in self.get_sides():
-            self._send_packets_from_side(side)
+            new_packet_graphics_objects = self._send_packets_from_side(side)
+            main_loop.register_graphics_object(new_packet_graphics_objects)
 
         for sent_packet in self.sent_packets[:]:  # we copy the list because we alter it during the run
             self._update_packet(sent_packet)

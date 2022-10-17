@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple, Optional
+from typing import TYPE_CHECKING, Tuple, Optional, List
 
 import scapy
 
@@ -28,7 +28,7 @@ class Packet:
         self.data: scapy.packet.Packet = data
         self.graphics: Optional[PacketGraphics] = None
 
-    def init_graphics(self, connection_graphics: ConnectionGraphics, direction: str) -> PacketGraphics:
+    def init_graphics(self, connection_graphics: ConnectionGraphics, direction: str) -> List[PacketGraphics]:
         """
         This signals the packet that it starts to be sent and that where it
         is sent from and to (Graphically).
@@ -36,7 +36,7 @@ class Packet:
         :param direction: The direction that the packet is going in the connection.
         """
         self.graphics = PacketGraphics(self.deepest_layer(), connection_graphics, direction)
-        return self.graphics
+        return [self.graphics]
 
     def deepest_layer(self) -> scapy.packet.Packet:
         """

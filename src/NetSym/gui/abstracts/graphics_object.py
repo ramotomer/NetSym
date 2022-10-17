@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Optional, Tuple, Callable, TYPE_CHECKING, Dict
+from typing import Optional, Tuple, Callable, TYPE_CHECKING, Dict, List
 
-from NetSym.gui.main_loop import MainLoop
+from NetSym.gui.main_loop_function_to_call import FunctionToCall
 
 if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
@@ -46,8 +46,8 @@ class GraphicsObject(metaclass=ABCMeta):
 
         self.unregister_me_from_main_loop = False
 
-        if self.do_render:
-            MainLoop.instance.register_graphics_object(self, is_in_background)
+        # if self.do_render:
+        # MainLoop.instance.register_graphics_object(self, is_in_background)
 
     @property
     def location(self) -> Tuple[float, float]:
@@ -64,6 +64,13 @@ class GraphicsObject(metaclass=ABCMeta):
     @property
     def mark_as_selected_non_resizable(self) -> Callable:
         return self.mark_as_selected
+
+    @property
+    def additional_functions_to_register(self) -> List[FunctionToCall]:
+        """
+        The functions that will be registered to run periodically when the object is registered
+        """
+        return []
 
     def is_mouse_in(self) -> bool:
         """

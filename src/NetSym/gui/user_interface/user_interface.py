@@ -388,16 +388,15 @@ class UserInterface:
                 text = self.packet_from_graphics_object(graphics_object).multiline_repr()
 
         x, y = self.viewing_text_location
-        self.object_view = ObjectView(
-            sprite,
-            Text(
-                text, x, y,
-                max_width=(WINDOWS.SIDE.WIDTH - WINDOWS.SIDE.VIEWING_OBJECT.TEXT.PADDING[0]),
-                align=TEXT.ALIGN.LEFT,
-                padding=WINDOWS.SIDE.VIEWING_OBJECT.TEXT.PADDING
-            ),
-            graphics_object,
+        text = Text(
+            text, x, y,
+            max_width=(WINDOWS.SIDE.WIDTH - WINDOWS.SIDE.VIEWING_OBJECT.TEXT.PADDING[0]),
+            align=TEXT.ALIGN.LEFT,
+            padding=WINDOWS.SIDE.VIEWING_OBJECT.TEXT.PADDING
         )
+        self.main_loop.register_graphics_object(text)
+        self.object_view = ObjectView(sprite, text, graphics_object)
+
         self.adjust_viewed_text_to_buttons(buttons_id + 1)
 
     def adjust_viewed_text_to_buttons(self, buttons_id: int) -> None:
@@ -475,6 +474,7 @@ class UserInterface:
             x, y = MainWindow.main_window.button_location_by_index(i - 1)
             padding = x - WINDOWS.MAIN.WIDTH, y - WINDOWS.MAIN.HEIGHT
             button.set_parent_graphics(MainWindow.main_window, padding)
+            self.main_loop.register_graphics_object(button)
 
     def tab_through_windows(self, reverse: bool = False) -> None:
         """
@@ -682,7 +682,7 @@ class UserInterface:
             x, y = WINDOWS.MAIN.WIDTH / 2, WINDOWS.MAIN.HEIGHT / 2
 
         object_ = object_type()
-        object_.init_graphics(x, y)
+        self.main_loop.register_graphics_object(object_.init_graphics(x, y))
         self.computers.append(object_)
 
     def two_pressed_objects(self,
@@ -789,7 +789,7 @@ class UserInterface:
             self.register_window(PopupError("That interface is already connected :("))
             return
         self.connection_data.append(ConnectionData(connection, *computers))
-        connection.init_graphics(computers[0].graphics, computers[1].graphics)
+        self.main_loop.register_graphics_object(connection.init_graphics(computers[0].graphics, computers[1].graphics))
         return connection
 
     @staticmethod
@@ -894,7 +894,7 @@ class UserInterface:
         if interface.is_connected:
             connection = interface.connection.connection
             self.delete(connection.graphics)
-        computer.add_remove_interface(interface.name)
+        computer.remove_interface(interface.name)
 
     def delete(self, graphics_object: GraphicsObject) -> None:
         """
@@ -938,7 +938,9 @@ class UserInterface:
         computer = computer_graphics.computer
         interface = get_the_one(computer.interfaces, lambda i: i.name == interface_name)
         try:
-            computer.add_interface(interface_name, type_=interface_type)
+            interface = computer.add_interface(interface_name, type_=interface_type)
+            self.main_loop.register_graphics_object(interface.graphics)
+
         except DeviceNameAlreadyExists:
             if interface.is_connected():
                 self.delete(interface.connection.connection.graphics)
@@ -1103,7 +1105,7 @@ class UserInterface:
 
         new_computer = Computer.with_ip(given_ip) if not wireless else Computer.wireless_with_ip(given_ip)
         self.computers.append(new_computer)
-        new_computer.init_graphics(x, y)
+        self.main_loop.register_graphics_object(new_computer.init_graphics(x, y))
         return new_computer
 
     def _get_largest_ip_in_nearest_subnet(self, x: float, y: float) -> IPAddress:
@@ -1279,7 +1281,6 @@ class UserInterface:
                 for i, (string, action) in enumerate(dictionary.items())
             ],
         ]
-
         self.buttons[buttons_id + 1] = [
             Button(
                 MainWindow.main_window.button_location_by_index(1)[0],
@@ -1294,6 +1295,7 @@ class UserInterface:
             ),
         ]
         self.showing_buttons_id = buttons_id + 1
+        self.main_loop.register_graphics_object(self.buttons[buttons_id] + self.buttons[buttons_id + 1])
         return buttons_id
 
     def remove_buttons(self, buttons_id: int) -> None:
@@ -1353,6 +1355,8 @@ class UserInterface:
         object.
         :param window: a PopupWindow object
         """
+        self.main_loop.register_graphics_object(window)
+
         if self.popup_windows:
             window.x, window.y = map(sum, zip(self.popup_windows[-1].location, WINDOWS.POPUP.STACKING_PADDING))
 
@@ -1490,7 +1494,7 @@ class UserInterface:
         for computer_dict in dict_from_file["computers"]:
             class_ = self.saving_file_class_name_to_class[computer_dict["class"]]
             computer = class_.from_dict_load(computer_dict)
-            computer.init_graphics(*computer_dict["location"])
+            self.main_loop.register_graphics_object(computer.init_graphics(*computer_dict["location"]))
             self.computers.append(computer)
             for port in computer_dict["open_tcp_ports"]:
                 computer.open_port(port, "TCP")
@@ -1710,4 +1714,5 @@ class UserInterface:
 
         new_freq = Frequency(frequency)
         self.frequencies.append(new_freq)
+        self.main_loop.insert_to_loop_pausable(new_freq.move_packets, supply_function_with_main_loop_object=True)
         return new_freq

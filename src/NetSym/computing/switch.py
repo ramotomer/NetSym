@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, TYPE_CHECKING, Dict
+from typing import Optional, TYPE_CHECKING, Dict, List
 
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.computer import Computer, COMPUTER
@@ -15,6 +15,7 @@ from NetSym.packets.all import LLC, STP
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
+    from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.computing.internals.interface import Interface
 
 
@@ -44,7 +45,7 @@ class Switch(Computer):
         self.priority = priority
         self.process_scheduler.add_startup_process(COMPUTER.PROCESSES.MODES.KERNELMODE, SwitchingProcess)
 
-    def init_graphics(self, x: float, y: float) -> ComputerGraphics:
+    def init_graphics(self, x: float, y: float) -> List[GraphicsObject]:
         """
         overrides `Computer.show` and shows the same `ComputerGraphics` object only with a switch's photo.
         :param x:
@@ -52,8 +53,7 @@ class Switch(Computer):
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.SWITCH)
-        self.loopback.connection.connection.init_graphics(self.graphics)
-        return self.graphics
+        return [self.graphics] + self.loopback.connection.connection.init_graphics(self.graphics)
 
     def is_for_me(self, packet: Packet) -> bool:
         """
@@ -119,7 +119,7 @@ class Hub(Switch):
         self.is_hub = True
         self.stp_enabled = True
 
-    def init_graphics(self, x: float, y: float) -> ComputerGraphics:
+    def init_graphics(self, x: float, y: float) -> List[GraphicsObject]:
         """
         Overrides `Switch.show` and shows the same `ComputerGraphics` object only with a hub's photo.
         :param x:
@@ -127,8 +127,7 @@ class Hub(Switch):
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.HUB)
-        self.loopback.connection.connection.init_graphics(self.graphics)
-        return self.graphics
+        return [self.graphics] + self.loopback.connection.connection.init_graphics(self.graphics)
 
 
 class Antenna(Switch):
@@ -140,7 +139,7 @@ class Antenna(Switch):
         self.stp_enabled = False
         self.interfaces = [WirelessInterface(frequency=CONNECTIONS.WIRELESS.DEFAULT_FREQUENCY)] if not interfaces else list(interfaces)
 
-    def init_graphics(self, x: float, y: float) -> ComputerGraphics:
+    def init_graphics(self, x: float, y: float) -> List[GraphicsObject]:
         """
         Overrides `Switch.show` and shows the same `ComputerGraphics` object only with a antenna's photo.
         :param x:
@@ -148,8 +147,7 @@ class Antenna(Switch):
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.ANTENNA)
-        self.loopback.connection.connection.init_graphics(self.graphics)
-        return self.graphics
+        return [self.graphics] + self.loopback.connection.connection.init_graphics(self.graphics)
 
     @classmethod
     def from_dict_load(cls, dict_: Dict) -> Switch:

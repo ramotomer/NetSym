@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, List
 
 from NetSym.computing.connection import Connection
 from NetSym.consts import CONNECTIONS
@@ -31,10 +31,10 @@ class LoopbackConnection(Connection):
         """Returns the only side of the connection"""
         return self.left_side
 
-    def init_graphics(self, computer_graphics: ComputerGraphics, end_computer: Optional[ComputerGraphics] = None) -> LoopbackConnectionGraphics:
+    def init_graphics(self, computer_graphics: ComputerGraphics, end_computer: Optional[ComputerGraphics] = None) -> List[LoopbackConnectionGraphics]:
         """Starts the graphical appearance of the connection"""
         self.graphics = LoopbackConnectionGraphics(self, computer_graphics, self.radius)
-        return self.graphics
+        return [self.graphics]
 
     def add_packet(self, packet: Packet, direction: str) -> None:
         """performs the super-method of `add_packet` but also makes sure the connection is visible."""

@@ -345,7 +345,7 @@ class ComputerGraphics(ImageGraphics):
         user_interface.delete_connections_to(self.computer)
 
     def __str__(self) -> str:
-        return f"ComputerGraphics ({self.computer.name})"
+        return f"ComputerGraphics"
 
     def __repr__(self) -> str:
         return f"<< ComputerGraphics of computer '{self.computer}' >>"

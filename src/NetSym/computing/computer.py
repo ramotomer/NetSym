@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     from NetSym.computing.internals.sockets.socket import Socket
     from NetSym.computing.connection import Connection
     from NetSym.packets.packet import Packet
+    from NetSym.gui.abstracts.graphics_object import GraphicsObject
 
 
 @dataclass
@@ -261,7 +262,7 @@ class Computer:
         cls.EXISTING_COMPUTER_NAMES.add(name)
         return name
 
-    def init_graphics(self, x: float, y: float) -> ComputerGraphics:
+    def init_graphics(self, x: float, y: float) -> List[GraphicsObject]:
         """
         This is called once to initiate the graphics of the computer.
         Gives it a `GraphicsObject`. (`ComputerGraphics`)
@@ -270,8 +271,7 @@ class Computer:
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.COMPUTER if not self.get_open_ports() else IMAGES.COMPUTERS.SERVER)
-        self.loopback.connection.connection.init_graphics(self.graphics)
-        return self.graphics
+        return [self.graphics] + self.loopback.connection.connection.init_graphics(self.graphics)
 
     def print(self, string: str) -> None:
         """
@@ -463,17 +463,6 @@ class Computer:
         self.main_loop.unregister_graphics_object(interface.graphics)
         self.graphics.update_text()
 
-    def add_remove_interface(self, name: str) -> None:
-        """
-        Adds a new interface to this computer with a given name
-        :param name: a string or None, if None, chooses random name.
-        :return: None
-        """
-        try:
-            self.add_interface(name)
-        except DeviceNameAlreadyExists:
-            self.remove_interface(name)
-
     def available_interface(self) -> Interface:
         """
         Returns an interface of the computer that is disconnected and
@@ -483,7 +472,9 @@ class Computer:
         try:
             return get_the_one(self.interfaces, lambda i: not i.is_connected(), NoSuchInterfaceError)
         except NoSuchInterfaceError:
-            return self.add_interface()
+            interface = self.add_interface()
+            self.main_loop.register_graphics_object(interface.graphics)
+            return interface
 
     def disconnect(self, connection: Connection) -> None:
         """

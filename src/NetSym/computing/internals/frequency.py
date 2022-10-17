@@ -14,6 +14,7 @@ from NetSym.packets.wireless_packet import WirelessPacket
 from NetSym.usefuls.funcs import distance
 
 if TYPE_CHECKING:
+    from NetSym.gui.tech.wireless_packet_graphics import WirelessPacketGraphics
     from NetSym.computing.internals.wireless_interface import WirelessInterface
 
 
@@ -91,7 +92,7 @@ class Frequency(Connection):
         """
         raise NotImplementedError()
 
-    def add_packet(self, packet: Packet, sending_side: FrequencyConnectionSide) -> None:
+    def add_packet(self, packet: Packet, sending_side: FrequencyConnectionSide) -> WirelessPacket:
         """
         Add a packet that was sent on one of the `FrequencyConnectionSide`-s to the `self.sent_packets` list.
         This method starts the motion of the packet through the connection.
@@ -102,7 +103,7 @@ class Frequency(Connection):
         self.sent_packets.append(SentWirelessPacket(wireless_packet, MainLoop.get_time(), self.sent_packet_id))
         sending_side.received_packet_ids.append(self.sent_packet_id)
         self.sent_packet_id += 1
-        wireless_packet.init_graphics(self, sending_side.wireless_interface)
+        return wireless_packet
 
     def _reach_destinations(self, sent_packet: SentWirelessPacket) -> None:
         """
@@ -132,19 +133,21 @@ class Frequency(Connection):
         MainLoop.instance.unregister_graphics_object(sent_packet.packet.graphics)
         self.sent_packets.remove(sent_packet)
 
-    def _send_packets_from_side(self, side: FrequencyConnectionSide) -> None:
+    def _send_packets_from_side(self, side: FrequencyConnectionSide) -> List[WirelessPacketGraphics]:
         """
         Takes all of the packets that are waiting to be sent on one ConnectionSide and sends them down the main connection.
         :param side: a `ConnectionSide` object.
-        :return: None
         """
         if side not in self.get_sides():
             raise NoSuchConnectionSideError()
 
+        packet_graphics_to_register = []
         if side.is_sending():
             for packet in side.packets_to_send:
-                self.add_packet(packet, side)
+                wireless_packet = self.add_packet(packet, side)
+                packet_graphics_to_register.extend(wireless_packet.init_graphics(self, side.wireless_interface))
             side.packets_to_send.clear()
+        return packet_graphics_to_register
 
     def _update_packet(self, sent_packet: SentWirelessPacket) -> None:
         """
@@ -159,7 +162,7 @@ class Frequency(Connection):
         if distance_ > self.length:
             self._remove_out_of_screen_packet(sent_packet)
 
-    def move_packets(self) -> None:
+    def move_packets(self, main_loop: MainLoop) -> None:
         """
         This method is inserted into the main loop of the simulation when this `Connection` object is initiated.
         The packets in the connection should always be moving. (unless paused)
@@ -168,7 +171,8 @@ class Frequency(Connection):
         :return: None
         """
         for side in self.get_sides():
-            self._send_packets_from_side(side)
+            new_packet_graphics_objects = self._send_packets_from_side(side)
+            main_loop.register_graphics_object(new_packet_graphics_objects)
 
         for sent_packet in self.sent_packets[:]:  # we copy the list because we alter it during the run
             self._update_packet(sent_packet)

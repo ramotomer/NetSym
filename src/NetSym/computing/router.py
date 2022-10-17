@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, Iterable, Dict
+from typing import Optional, Iterable, Dict, List, TYPE_CHECKING
 
 from NetSym.computing.computer import Computer
 from NetSym.computing.internals.filesystem.filesystem import Filesystem
@@ -11,6 +11,9 @@ from NetSym.computing.internals.routing_table import RoutingTable
 from NetSym.consts import OS, IMAGES
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.tech.computer_graphics import ComputerGraphics
+
+if TYPE_CHECKING:
+    from NetSym.gui.abstracts.graphics_object import GraphicsObject
 
 
 class Router(Computer):
@@ -37,7 +40,7 @@ class Router(Computer):
 
         self.is_dhcp_server = is_dhcp_server
 
-    def init_graphics(self, x: float, y: float) -> ComputerGraphics:
+    def init_graphics(self, x: float, y: float) -> List[GraphicsObject]:
         """
         overrides Computer.show and shows the same computer_graphics object only
         with a router's photo.
@@ -46,8 +49,7 @@ class Router(Computer):
         :return: None
         """
         self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.ROUTER)
-        self.loopback.connection.connection.init_graphics(self.graphics)
-        return self.graphics
+        return [self.graphics] + self.loopback.connection.connection.init_graphics(self.graphics)
 
     def route_new_packets(self) -> None:
         """

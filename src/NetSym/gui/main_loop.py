@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import time
-from typing import Type, Iterable, Optional, TYPE_CHECKING, Callable, Any, List, TypeVar, Tuple, Dict, NamedTuple
+from typing import Type, Iterable, Optional, TYPE_CHECKING, Callable, Any, List, TypeVar, Dict, Union
 
 from NetSym.consts import T_Time, MAIN_LOOP
 from NetSym.exceptions import *
+from NetSym.gui.main_loop_function_to_call import FunctionToCall
 from NetSym.usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
@@ -12,23 +13,6 @@ if TYPE_CHECKING:
 
 
 T = TypeVar("T")
-
-
-class FunctionToCall(NamedTuple):
-    """
-    Represents a function that should be called every tick of the simulation.
-
-    function:                The object to call when calling the function
-    args:                    A Tuple to unpack into the function when calling it
-    kwargs                   A dict to unpack into the function when calling it
-    can_be_paused:           Whether or not the function should be called when the program is paused
-    supply_main_loop_object: Whether or not the first parameter that will be given to the function is the MainLoop object itself
-    """
-    function:                Callable
-    args:                    Tuple[Any]
-    kwargs:                  Dict[str, Any]
-    can_be_paused:           bool = False
-    supply_main_loop_object: bool = False
 
 
 class MainLoop:
@@ -63,7 +47,7 @@ class MainLoop:
         self.last_time_update = time.time()  # the last time that the `self.update_time` method was called.
 
     @property
-    def medium_priority_call_functions(self):
+    def medium_priority_call_functions(self) -> List[FunctionToCall]:
         return self.call_functions[MAIN_LOOP.FunctionPriority.MEDIUM]
 
     @classmethod
@@ -77,7 +61,7 @@ class MainLoop:
 
         return cls.instance.time()
 
-    def register_graphics_object(self, graphics_object: GraphicsObject, is_in_background: bool = False) -> None:
+    def register_graphics_object(self, graphics_object: Union[GraphicsObject, List[GraphicsObject]], is_in_background: bool = False) -> None:
         """
         This method receives a `GraphicsObject` instance, loads it, and enters
         it into the update main loop with its `move` and `draw` methods.
@@ -86,16 +70,28 @@ class MainLoop:
             or the back of the other objects.
         :return: None
         """
-        graphics_object.load()
+        graphics_object_list = graphics_object if isinstance(graphics_object, list) else [graphics_object]
 
-        if is_in_background:
-            self.graphics_objects.insert(0, graphics_object)
-            self.reversed_insert_to_loop(graphics_object.draw)
-        else:
-            self.graphics_objects.append(graphics_object)
-            self.insert_to_loop(graphics_object.draw)
+        for graphics_object_ in graphics_object_list:
+            if graphics_object_ in self.graphics_objects:
+                # raise GraphicsObjectAlreadyRegistered() ?
+                return
 
-        self.insert_to_loop(graphics_object.move)
+            graphics_object_.load()
+            if is_in_background:
+                self.graphics_objects.insert(0, graphics_object_)
+                self.reversed_insert_to_loop(graphics_object_.draw)
+            else:
+                self.graphics_objects.append(graphics_object_)
+                self.insert_to_loop(graphics_object_.draw)
+
+            self.insert_to_loop(graphics_object_.move)
+            for function_to_call in graphics_object_.additional_functions_to_register:
+                self.insert_to_loop(function_to_call)
+
+            if hasattr(graphics_object_, "child_graphics_objects"):
+                for child in graphics_object_.child_graphics_objects:
+                    self.register_graphics_object(child)
 
     def unregister_graphics_object(self, graphics_object: GraphicsObject) -> None:
         """
@@ -133,7 +129,7 @@ class MainLoop:
                 self.unregister_graphics_object(graphics_object)
 
     def insert_to_loop_prioritized(self,
-                                   function: Callable,
+                                   function: Union[Callable, FunctionToCall],
                                    priority: MAIN_LOOP.FunctionPriority,
                                    *args: Any,
                                    function_can_be_paused: bool = False,
@@ -146,14 +142,17 @@ class MainLoop:
         The priority of a function will determine when in the simulation tick it runs
         First all HIGH priority functions run, then MEDIUM and then LOW
         """
-        function_with_args = FunctionToCall(function, args, kwargs, function_can_be_paused, supply_function_with_main_loop_object)
+        if isinstance(function, FunctionToCall):
+            function_with_args = function
+        else:
+            function_with_args = FunctionToCall(function, args, kwargs, function_can_be_paused, supply_function_with_main_loop_object)
 
         if function_reverse_insert:
             self.call_functions[priority].insert(0, function_with_args)
         else:
             self.call_functions[priority].append(function_with_args)
 
-    def insert_to_loop(self, function: Callable, *args: Any, **kwargs: Any) -> None:
+    def insert_to_loop(self, function: Union[Callable, FunctionToCall], *args: Any, **kwargs: Any) -> None:
         """
         A 'nice to have' method - is just less parameters for `insert_to_loop_prioritized`
 

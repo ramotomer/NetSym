@@ -274,6 +274,12 @@ class NoSuchGraphicsObjectError(GraphicsError):
     """
 
 
+class GraphicsObjectAlreadyRegistered(GraphicsError):
+    """
+    Trying to register a `GraphicsObject` which is already registered
+    """
+
+
 class PopupWindowWithThisError(GraphicsError):
     """
     This is raised inside an action of a popup window and it is caught inside the popup and a popup error window

@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import os
 from math import acos, sin
-from typing import TYPE_CHECKING, NamedTuple, Optional, Dict, Callable, Tuple
+from typing import TYPE_CHECKING, NamedTuple, Optional, Dict, Callable, Tuple, List
 
 import pyglet
 
 from NetSym.consts import CONNECTIONS, PACKET, SELECTED_OBJECT, MESSAGES, DIRECTORIES, IMAGES
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
+from NetSym.gui.main_loop_function_to_call import FunctionToCall
 from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_line
 from NetSym.gui.shape_drawing import draw_rectangle
@@ -21,6 +22,7 @@ if TYPE_CHECKING:
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
     from NetSym.gui.tech.interface_graphics import InterfaceGraphics
     from NetSym.gui.user_interface.user_interface import UserInterface
+    from NetSym.gui.main_loop import MainLoop
 
 
 class Computers(NamedTuple):
@@ -106,6 +108,16 @@ class ConnectionGraphics(ViewableGraphicsObject):
                                                f"The connection is probably disconnected on that end!")
 
         return self.computers.end
+
+    def move_packets(self, main_loop: MainLoop) -> None:
+        """
+        This is temporary i promise
+        """
+        self.connection.move_packets(main_loop)
+
+    @property
+    def additional_functions_to_register(self) -> List[FunctionToCall]:
+        return [FunctionToCall(self.move_packets, can_be_paused=True, supply_main_loop_object=True)]
 
     def update_appearance(self) -> None:
         """Updates the color of the connection according to the PL and latency of the connection"""

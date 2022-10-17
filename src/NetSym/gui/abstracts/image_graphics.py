@@ -47,7 +47,8 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
 
         self.resizing_dots = []
 
-        MainLoop.instance.register_graphics_object(self, is_in_background)
+        # MainLoop.instance.register_graphics_object(self, is_in_background)
+        self.load()
 
     @property
     def location(self) -> Tuple[float, float]:
