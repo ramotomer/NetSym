@@ -386,6 +386,24 @@ class WINDOWS:
         FRAME_RATE = 1 / 60.0
         BACKGROUND = COLORS.VERY_LIGHT_GRAY  # if not __debug__ else COLORS.WHITE
 
+        class KEY_HOOKS:
+            BLOCK_KEY = False
+            PASS_KEY_TO_OTHER_HANDLERS = True
+
+        class Event(Enum):
+            RESIZE =        'on_resize'
+            MOUSE_MOTION =  'on_mouse_motion'
+            MOUSE_DRAG =    'on_mouse_drag'
+            MOUSE_ENTER =   'on_mouse_enter'
+            MOUSE_SCROLL =  'on_mouse_scroll'
+            MOUSE_PRESS =   'on_mouse_press'
+            MOUSE_RELEASE = 'on_mouse_release'
+            KEY_PRESS =     'on_key_press'
+            KEY_RELEASE =   'on_key_release'
+            DRAW =          'on_draw'
+            ACTIVATE =      'on_activate'
+            DEACTIVATE =    'on_deactivate'
+
     class SIDE:
         WIDTH = 230
         COLOR = COLORS.LIGHT_GRAY

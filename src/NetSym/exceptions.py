@@ -306,6 +306,18 @@ class MainLoopInstanceNotYetInitiated(MainLoopError):
     """
 
 
+class MainWindowError(GraphicsError):
+    """
+    An error related to the MainWindow object
+    """
+
+
+class UnknownEventType(MainWindowError):
+    """
+    Trying to register a function to handle an event which is unknown
+    """
+
+
 class ImageError(GraphicsError):
     """
     An error related to an ImageGraphicsObject

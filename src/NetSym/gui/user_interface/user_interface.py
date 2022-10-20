@@ -28,6 +28,7 @@ from NetSym.computing.switch import Switch, Hub, Antenna
 from NetSym.consts import VIEW, TEXT, BUTTONS, IMAGES, DIRECTORIES, T_Color, SELECTED_OBJECT, KEYBOARD, MODES, WINDOWS, COLORS, CONNECTIONS, \
     INTERFACES, ADDRESSES, MESSAGES
 from NetSym.exceptions import *
+from NetSym.gui.abstracts.resizable import is_resizable
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
@@ -567,6 +568,29 @@ class UserInterface:
         else:
             self.set_mode(mode)
 
+    def _get_pressed_button(self) -> Optional[Button]:
+        """
+        Get the button the mouse is on.
+        If the mouse is not hovering over any buttons - return None
+        """
+        for button in reversed(reduce(concat, list(self.buttons.values()))):
+            if not button.is_hidden and button.is_mouse_in():
+                return button
+        return None
+
+    def _get_on_mouse_pressed_action_by_mode(self) -> Callable[[], None]:
+        """
+        Decide what happens when the mouse is pressed - only with the things that regard the current MODE of the simulation
+        If the mode has no action related to it - raise UnknownModeError
+        """
+        action = self.action_at_press_by_mode.get(self.mode)
+        if action is None:
+            if self.mode not in MODES.COMPUTER_CONNECTING_MODES:
+                raise UnknownModeError("No handler was set for this mode! What to do when the mouse is pressed?")
+
+            action = self.start_device_visual_connecting
+        return action
+
     def on_mouse_press(self) -> None:
         """
         Happens when the mouse is pressed.
@@ -574,18 +598,13 @@ class UserInterface:
         The choosing of a selected and dragged objects should be performed BEFORE this is called!
         :return: None
         """
-        for button in reversed(reduce(concat, list(self.buttons.values()))):
-            if not button.is_hidden and button.is_mouse_in():
-                button.action()
-                break
-        else:  # If not pressing on any buttons :)
-            action = self.action_at_press_by_mode.get(self.mode)
-            if action is None:
-                if self.mode not in MODES.COMPUTER_CONNECTING_MODES:
-                    raise UnknownModeError("No handler was set for this mode! What to do when the mouse is pressed?")
+        button = self._get_pressed_button()
+        if button is not None:
+            button.action()
+            return
 
-                action = self.start_device_visual_connecting
-            action()
+        action_by_mode = self._get_on_mouse_pressed_action_by_mode()
+        action_by_mode()
 
         if self.active_window is None:
             self._create_selecting_square()
@@ -666,7 +685,9 @@ class UserInterface:
 
         if self.selected_object is not None and isinstance(self.selected_object, ViewableGraphicsObject):
             self.set_mode(MODES.VIEW)
-        elif self.selected_object is None:
+            return
+
+        if self.selected_object is None:
             self.set_mode(MODES.NORMAL)
 
         # we only get here if an an object that cannot be viewed is pressed - do nothing
@@ -1570,7 +1591,8 @@ class UserInterface:
         """
         if self.selected_object is not None:
             self.selected_object.mark_as_selected()
-            self.resizing_dots_handler.select(self.selected_object)
+            if is_resizable(self.selected_object):
+                self.resizing_dots_handler.select(self.selected_object)
         else:
             self.resizing_dots_handler.deselect()
 

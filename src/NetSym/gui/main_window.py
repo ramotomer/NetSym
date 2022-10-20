@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from functools import reduce
 from operator import ior as binary_or
-from typing import TYPE_CHECKING, Tuple, Any, Union
+from typing import TYPE_CHECKING, Tuple, Any, Union, Callable, List
 
 import pyWinhook
 import pyglet
 
 from NetSym.consts import KEYBOARD, WINDOWS, IMAGES, DIRECTORIES, MODES, BUTTONS, T_Time, MAIN_LOOP
+from NetSym.exceptions import *
 from NetSym.usefuls.funcs import normal_color_to_weird_gl_color
 from NetSym.usefuls.paths import add_path_basename_if_needed
 
@@ -55,6 +56,8 @@ class MainWindow(pyglet.window.Window):
 
         pyglet.gl.glClearColor(*normal_color_to_weird_gl_color(WINDOWS.MAIN.BACKGROUND))
 
+        self.registered_event_handlers = {event: [] for event in WINDOWS.MAIN.Event}
+
         # v  allows ignoring the Winkey and Alt+tab keys...
         self._ignored_keys = {
             'lwin': (pyglet.window.key.LWINDOWS, KEYBOARD.MODIFIERS.WINKEY),
@@ -86,9 +89,9 @@ class MainWindow(pyglet.window.Window):
             if event.Key.lower() == pywinhook_key:
                 self.pressed_keys.add(pyglet_key)
                 self.on_key_press(pyglet_key, self._active_keyboard_modifiers, is_manually_called=True)
-                return False
-        return True
-        # ^ return True to pass the event to other handlers
+                return WINDOWS.MAIN.KEY_HOOKS.BLOCK_KEY
+
+        return WINDOWS.MAIN.KEY_HOOKS.PASS_KEY_TO_OTHER_HANDLERS
 
     def set_is_ignoring_keyboard_escape_keys(self, value: bool) -> None:
         """
@@ -111,6 +114,13 @@ class MainWindow(pyglet.window.Window):
     def center(self) -> Tuple[float, float]:
         return self.width / 2 - WINDOWS.SIDE.WIDTH, self.height / 2
 
+    def _call_registered_event_handlers(self, event: WINDOWS.MAIN.Event) -> None:
+        """
+        Call the registered functions for the supplied event
+        """
+        for function in self.registered_event_handlers[event]:
+            function(self)
+
     def get_mouse_location(self) -> Tuple[float, float]:
         """Return the mouse's location as a tuple"""
         return self.mouse_x, self.mouse_y
@@ -132,6 +142,7 @@ class MainWindow(pyglet.window.Window):
         :param dy:  The difference from the last location of the mouse
         :return:
         """
+        self._call_registered_event_handlers(WINDOWS.MAIN.Event.MOUSE_MOTION)
         self.mouse_x, self.mouse_y = x, y
 
     def on_mouse_drag(self, x: float, y: float, dx: float, dy: float, buttons: int, modifiers: int) -> None:
@@ -146,6 +157,7 @@ class MainWindow(pyglet.window.Window):
         :param modifiers:
         :return:
         """
+        self._call_registered_event_handlers(WINDOWS.MAIN.Event.MOUSE_DRAG)
         self.mouse_x, self.mouse_y = x, y
 
     def on_mouse_enter(self, x: float, y: float) -> None:
@@ -156,6 +168,7 @@ class MainWindow(pyglet.window.Window):
         :param y:
         :return:
         """
+        self._call_registered_event_handlers(WINDOWS.MAIN.Event.MOUSE_ENTER)
         self.mouse_x, self.mouse_y = x, y
 
     def on_mouse_scroll(self, x: float, y: float, scroll_x: Union[int, float], scroll_y: Union[int, float]) -> None:
@@ -167,6 +180,7 @@ class MainWindow(pyglet.window.Window):
         :param scroll_y:  The amount of scrolls in each direction
         :return: None
         """
+        self._call_registered_event_handlers(WINDOWS.MAIN.Event.MOUSE_SCROLL)
         if self.user_interface.is_mouse_in_side_window() and self.user_interface.mode == MODES.VIEW:
             self.user_interface.scroll_view(scroll_y)
         else:
@@ -185,6 +199,7 @@ class MainWindow(pyglet.window.Window):
         :param modifiers:
         :return:
         """
+        self._call_registered_event_handlers(WINDOWS.MAIN.Event.MOUSE_PRESS)
         self.mouse_pressed = True
         self.user_interface.on_mouse_press()  # this should will be last!
 
@@ -197,6 +212,7 @@ class MainWindow(pyglet.window.Window):
         :param modifiers:
         :return:
         """
+        self._call_registered_event_handlers(WINDOWS.MAIN.Event.MOUSE_RELEASE)
         self.user_interface.on_mouse_release()
         self.mouse_pressed = False
         self.user_interface.dragged_object = None
@@ -208,6 +224,7 @@ class MainWindow(pyglet.window.Window):
         :param modifiers:  additional keys that are pressed (ctrl, shift, caps lock, etc..)
         :param is_manually_called:
         """
+        self._call_registered_event_handlers(WINDOWS.MAIN.Event.KEY_PRESS)
         if any(symbol == other_symbol for other_symbol, _ in self._ignored_keys.values()) and not is_manually_called:
             # Due to the way pyWinhook works - this actually means the key is released - so turn off the modifier
             try:
@@ -226,6 +243,7 @@ class MainWindow(pyglet.window.Window):
         :param modifiers:  additional keys that are pressed (ctrl, shift, caps lock, etc..)
         :return:  None
         """
+        self._call_registered_event_handlers(WINDOWS.MAIN.Event.KEY_RELEASE)
         try:
             self.pressed_keys.remove(symbol)
         except KeyError:
@@ -236,6 +254,7 @@ class MainWindow(pyglet.window.Window):
         The original on_resize does not work, so i wrote one of my own...
         :return:
         """
+        self._call_registered_event_handlers(WINDOWS.MAIN.Event.RESIZE)
         self.user_interface.set_mode(MODES.NORMAL)
         self.previous_width = self.width
         self.previous_height = self.height
@@ -247,6 +266,7 @@ class MainWindow(pyglet.window.Window):
         impossible.
         """
         self.user_interface.main_loop.main_loop()
+        self._call_registered_event_handlers(WINDOWS.MAIN.Event.DRAW)
 
         if self.width != self.previous_width or self.height != self.previous_height:
             self._on_resize()  # `on_resize` does not work, I wrote `_on_resize` instead.
@@ -255,13 +275,41 @@ class MainWindow(pyglet.window.Window):
         """
         Called when the `MainWindow` is activated
         """
+        self._call_registered_event_handlers(WINDOWS.MAIN.Event.ACTIVATE)
         self.set_is_ignoring_keyboard_escape_keys(True)
 
     def on_deactivate(self) -> None:
         """
         Called when the `MainWindow` is deactivated
         """
+        self._call_registered_event_handlers(WINDOWS.MAIN.Event.DEACTIVATE)
         self.set_is_ignoring_keyboard_escape_keys(False)
+
+    def register_event_handler(self, event: Union[WINDOWS.MAIN.Event, List[WINDOWS.MAIN.Event]], function: Callable[[MainWindow], None]) -> None:
+        """
+        Tell the main window what to do when a certain event occurs in it.
+        Supply it with the event type (for example: 'on_resize') or a list of events and the function to call when that event happens
+        :param event:
+        :param function:
+        :return:
+        """
+        events = event if isinstance(event, list) else [event]
+        for event_ in events:
+            try:
+                self.registered_event_handlers[event_].append(function)
+            except KeyError:
+                raise UnknownEventType(event_)
+
+    def unregister_event_handler(self, event: Union[WINDOWS.MAIN.Event, List[WINDOWS.MAIN.Event]], function: Callable[[MainWindow], None]) -> None:
+        """
+        Remove one of my registered event handlers
+        """
+        events = event if isinstance(event, list) else [event]
+        for event_ in events:
+            try:
+                self.registered_event_handlers[event_].remove(function)
+            except KeyError:
+                raise UnknownEventType(event_)
 
     def update(self, time_interval: T_Time) -> None:
         """
