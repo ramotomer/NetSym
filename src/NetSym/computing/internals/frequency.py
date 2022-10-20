@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 import random
-from math import sqrt
 from typing import NamedTuple, TYPE_CHECKING, List
 
 from NetSym.computing.connection import Connection, ConnectionSide
 from NetSym.consts import CONNECTIONS, T_Time, T_Color
 from NetSym.exceptions import NoSuchConnectionSideError
 from NetSym.gui.main_loop import MainLoop
-from NetSym.gui.main_window import MainWindow
 from NetSym.packets.packet import Packet
 from NetSym.packets.wireless_packet import WirelessPacket
 from NetSym.usefuls.funcs import distance
@@ -31,10 +29,7 @@ class Frequency(Connection):
     """
     sent_packets: List[SentWirelessPacket]
 
-    def __init__(self, frequency: float) -> None:
-        width, height = MainWindow.main_window.width, MainWindow.main_window.height
-        longest_line_in_screen = sqrt((width ** 2) + (height ** 2))
-
+    def __init__(self, frequency: float, longest_line_in_screen: float) -> None:
         super(Frequency, self).__init__(length=longest_line_in_screen, speed=CONNECTIONS.WIRELESS.DEFAULT_SPEED)
         self.frequency = frequency
 

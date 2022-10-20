@@ -27,6 +27,7 @@ from NetSym.computing.switch import Switch, Hub, Antenna
 from NetSym.consts import VIEW, TEXT, BUTTONS, IMAGES, DIRECTORIES, T_Color, SELECTED_OBJECT, KEYBOARD, MODES, WINDOWS, COLORS, CONNECTIONS, \
     INTERFACES, ADDRESSES, MESSAGES, MAIN_LOOP
 from NetSym.exceptions import *
+from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.resizable import is_resizable
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from NetSym.gui.main_window import MainWindow
@@ -317,6 +318,7 @@ class UserInterface:
         self._showcase_running_stp()
         self._unregister_requesting_popup_windows()
         self._handle_resizing_dots()
+        self._color_hovered_objects_differently()
 
         if self.mode in MODES.COMPUTER_CONNECTING_MODES:
             self._draw_connection_to_mouse(MODES.TO_COLORS[self.mode])
@@ -341,14 +343,25 @@ class UserInterface:
         if destination is not None:
             destination.mark_as_selected_non_resizable()
 
+    def _color_hovered_objects_differently(self) -> None:
+        """
+        Some objects need to be colored a different color once the mouse is hovering over them!
+        This function is in charge to find that out and changing the color if necessary
+        """
+        for graphics_object in self.main_loop.graphics_objects:
+            if isinstance(graphics_object, DifferentColorWhenHovered):
+                if graphics_object.is_mouse_in():
+                    graphics_object.set_hovered_color()
+                else:
+                    graphics_object.set_normal_color()
+
     def _stop_viewing_dead_packets(self) -> None:
         """
         Checks if a packet that is currently viewed has left the screen (reached the destination or dropped) and if so
         stops viewing it.
         :return:
         """
-        if self.selected_object is not None and \
-                isinstance(self.selected_object, PacketGraphics) and \
+        if isinstance(self.selected_object, PacketGraphics) and \
                 self.packet_from_graphics_object(self.selected_object) is None:
             self.set_mode(MODES.NORMAL)
 
@@ -1780,10 +1793,10 @@ class UserInterface:
             if freq.frequency == frequency:
                 return freq
 
-        new_freq = Frequency(frequency)
-        self.frequencies.append(new_freq)
-        self.main_loop.insert_to_loop_pausable(new_freq.move_packets, supply_function_with_main_loop_object=True)
-        return new_freq
+        new_frequency = Frequency(frequency, longest_line_in_screen=sqrt((self.main_window.width ** 2) + (self.main_window.height ** 2)))
+        self.frequencies.append(new_frequency)
+        self.main_loop.insert_to_loop_pausable(new_frequency.move_packets, supply_function_with_main_loop_object=True)
+        return new_frequency
 
     def set_interface_frequency(self, interface: WirelessInterface, frequency: float) -> None:
         """

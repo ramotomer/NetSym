@@ -8,6 +8,7 @@ import pyglet
 
 from NetSym.consts import CONNECTIONS, PACKET, SELECTED_OBJECT, MESSAGES, DIRECTORIES, IMAGES
 from NetSym.exceptions import *
+from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
 from NetSym.gui.main_loop_function_to_call import FunctionToCall
 from NetSym.gui.main_window import MainWindow
@@ -41,7 +42,7 @@ class Interfaces(NamedTuple):
     end:   Optional[InterfaceGraphics]
 
 
-class ConnectionGraphics(ViewableGraphicsObject):
+class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered):
     """
     This is a GraphicsObject subclass which displays a connection.
     It shows the graphics of the connection (a line) between the two endpoints it is connected to.
@@ -108,6 +109,12 @@ class ConnectionGraphics(ViewableGraphicsObject):
                                                f"The connection is probably disconnected on that end!")
 
         return self.computers.end
+
+    def set_hovered_color(self):
+        self.color = CONNECTIONS.SELECTED_COLOR
+
+    def set_normal_color(self):
+        self.color = self.regular_color
 
     def move_packets(self, main_loop: MainLoop) -> None:
         """
@@ -214,9 +221,8 @@ class ConnectionGraphics(ViewableGraphicsObject):
         Draws the connection (The line) between its end point and its start point.
         :return: None
         """
-        color = self.color if not self.is_mouse_in() else CONNECTIONS.SELECTED_COLOR
         sx, sy, ex, ey = self.get_coordinates()
-        draw_line((sx, sy), (ex, ey), color, self.width)
+        draw_line((sx, sy), (ex, ey), self.color, self.width)
 
     def start_viewing(self,
                       user_interface: UserInterface,

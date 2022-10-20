@@ -7,6 +7,7 @@ import pyglet
 import scapy
 
 from NetSym.consts import PACKET, COLORS, SELECTED_OBJECT, DIRECTORIES
+from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
 from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_circle, draw_rectangle
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
     from NetSym.computing.internals.frequency import Frequency
 
 
-class WirelessPacketGraphics(ViewableGraphicsObject):
+class WirelessPacketGraphics(ViewableGraphicsObject, DifferentColorWhenHovered):
     """
     This class is a `GraphicsObject` subclass which is the graphical representation
     of packets that are sent between computers.
@@ -41,6 +42,7 @@ class WirelessPacketGraphics(ViewableGraphicsObject):
         self.distance = 0
         self.str = str(deepest_layer)
         self.deepest_layer = deepest_layer
+        self.color = COLORS.WHITE
 
         self.image_from_packet = PacketGraphics.image_from_packet
 
@@ -56,9 +58,14 @@ class WirelessPacketGraphics(ViewableGraphicsObject):
     def center_location(self) -> Tuple[float, float]:
         return self.location
 
+    def set_normal_color(self):
+        self.color = COLORS.WHITE
+
+    def set_hovered_color(self):
+        self.color = self.frequency_object.color
+
     def draw(self) -> None:
-        color = COLORS.WHITE if self.is_mouse_in() else self.frequency_object.color
-        draw_circle(*self.location, self.distance, outline_color=color)
+        draw_circle(*self.location, self.distance, outline_color=self.color)
 
     def is_mouse_in(self) -> bool:
         mouse_dist = distance(self.center_location, MainWindow.main_window.get_mouse_location())

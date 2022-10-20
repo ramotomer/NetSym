@@ -3,8 +3,9 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING, Tuple
 
-from NetSym.consts import T_Color, SHAPES, SELECTION_SQUARE, COLORS
+from NetSym.consts import SHAPES, SELECTION_SQUARE, COLORS
 from NetSym.exceptions import ObjectIsNotResizableError
+from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.main_window import MainWindow
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
     from NetSym.gui.abstracts.image_graphics import ImageGraphics
 
 
-class ResizingDot(UserInterfaceGraphicsObject):
+class ResizingDot(UserInterfaceGraphicsObject, DifferentColorWhenHovered):
     """
     The Dot in the side of the selected resizable objects. 
     Enables you to resize the objects. 
@@ -45,20 +46,19 @@ class ResizingDot(UserInterfaceGraphicsObject):
         self.direction = direction
         self.constrain_proportions = constrain_proportions
 
+        self.color = SELECTION_SQUARE.COLOR
+
     def is_mouse_in(self) -> bool:
         return distance(MainWindow.main_window.get_mouse_location(), self.location) <= self.radius
 
     def mark_as_selected(self) -> None:
         pass
 
-    @property
-    def color(self) -> T_Color:
-        """
-        Return what color the dot should be (depends on whether the mouse is in or not)
-        """
-        if not self.is_mouse_in():
-            return SELECTION_SQUARE.COLOR
-        return SHAPES.CIRCLE.RESIZE_DOT.COLOR_WHEN_SELECTED
+    def set_hovered_color(self) -> None:
+        self.color = SHAPES.CIRCLE.RESIZE_DOT.COLOR_WHEN_SELECTED
+
+    def set_normal_color(self):
+        self.color = SELECTION_SQUARE.COLOR
 
     def draw(self) -> None:
         draw_circle(self.x, self.y, self.radius, COLORS.BLACK, self.color)
