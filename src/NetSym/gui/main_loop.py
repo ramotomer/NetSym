@@ -167,6 +167,7 @@ class MainLoop:
             self.call_functions[priority].insert(0, function_with_args)
         else:
             self.call_functions[priority].append(function_with_args)
+        # debugp(f"{priority}: Added {function.__name__} to {[function.function.__name__ for function in self.call_functions[priority]]}")
 
     def insert_to_loop(self, function: Union[Callable, FunctionToCall], *args: Any, **kwargs: Any) -> None:
         """
