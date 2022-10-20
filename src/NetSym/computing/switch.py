@@ -9,7 +9,7 @@ from NetSym.computing.internals.processes.kernelmode_processes.switching_process
 from NetSym.computing.internals.processes.usermode_processes.stp_process import STPProcess, BID
 from NetSym.computing.internals.routing_table import RoutingTable
 from NetSym.computing.internals.wireless_interface import WirelessInterface
-from NetSym.consts import OS, PROTOCOLS, IMAGES, CONNECTIONS, ADDRESSES
+from NetSym.consts import OS, PROTOCOLS, IMAGES, ADDRESSES
 from NetSym.gui.tech.computer_graphics import ComputerGraphics
 from NetSym.packets.all import LLC, STP
 
@@ -137,7 +137,7 @@ class Antenna(Switch):
     def __init__(self, name: Optional[str] = None, *interfaces: Interface) -> None:
         super(Antenna, self).__init__(name)
         self.stp_enabled = False
-        self.interfaces = [WirelessInterface(frequency=CONNECTIONS.WIRELESS.DEFAULT_FREQUENCY)] if not interfaces else list(interfaces)
+        self.interfaces = [WirelessInterface()] if not interfaces else list(interfaces)
 
     def init_graphics(self, x: float, y: float) -> List[GraphicsObject]:
         """

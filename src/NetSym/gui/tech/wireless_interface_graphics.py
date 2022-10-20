@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Dict, Callable
 
 from NetSym.address.mac_address import MACAddress
-from NetSym.consts import INTERFACES
+from NetSym.consts import INTERFACES, COLORS
 from NetSym.exceptions import NoSuchInterfaceError
 from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_circle
@@ -35,8 +35,7 @@ class WirelessInterfaceGraphics(InterfaceGraphics):
         Draw the interface.
         :return:
         """
-        if self.interface.is_connected():
-            self.color = self.interface.frequency_object.color
+        self.color = self.interface.frequency_object.color if self.interface.is_connected() else COLORS.BLACK
 
         draw_circle(
             self.real_x, self.real_y,
@@ -97,7 +96,7 @@ class WirelessInterfaceGraphics(InterfaceGraphics):
                 user_interface.ask_user_for,
                 float,
                 "Insert frequency:",
-                self.interface.connect
+                with_args(user_interface.set_interface_frequency, self.interface),
             )
         }
 

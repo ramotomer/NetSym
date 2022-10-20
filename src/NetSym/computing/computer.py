@@ -34,7 +34,7 @@ from NetSym.computing.internals.sockets.raw_socket import RawSocket
 from NetSym.computing.internals.sockets.tcp_socket import TCPSocket
 from NetSym.computing.internals.sockets.udp_socket import ReturnedUDPPacket, UDPSocket
 from NetSym.computing.internals.wireless_interface import WirelessInterface
-from NetSym.consts import IMAGES, COMPUTER, OPCODES, PACKET, PROTOCOLS, CONNECTIONS, INTERFACES, OS, T_Time, SENDING_GRAT_ARPS, \
+from NetSym.consts import IMAGES, COMPUTER, OPCODES, PACKET, PROTOCOLS, INTERFACES, OS, T_Time, SENDING_GRAT_ARPS, \
     COMPUTER_NAMES_FILE_PATH, T_Port, TTL, PORTS
 from NetSym.exceptions import *
 from NetSym.gui.main_loop import MainLoop
@@ -242,9 +242,8 @@ class Computer:
     @classmethod
     def wireless_with_ip(cls: Type[Computer],
                          ip_address: Union[str, IPAddress],
-                         frequency: float = CONNECTIONS.WIRELESS.DEFAULT_FREQUENCY,
                          name: Optional[str] = None) -> Computer:
-        return cls(name, OS.WINDOWS, None, WirelessInterface(MACAddress.randomac(), IPAddress(ip_address), frequency=frequency))
+        return cls(name, OS.WINDOWS, None, WirelessInterface(MACAddress.randomac(), IPAddress(ip_address)))
 
     @classmethod
     def random_name(cls) -> str:

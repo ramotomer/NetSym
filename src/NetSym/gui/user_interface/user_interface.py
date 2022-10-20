@@ -1785,6 +1785,13 @@ class UserInterface:
         self.main_loop.insert_to_loop_pausable(new_freq.move_packets, supply_function_with_main_loop_object=True)
         return new_freq
 
+    def set_interface_frequency(self, interface: WirelessInterface, frequency: float) -> None:
+        """
+        Take in a WirelessInterface and set its frequency object
+        If the object does not exist - create it :)
+        """
+        interface.connect(self.get_frequency(frequency))
+
     def _handle_resizing_dots(self) -> None:
         """
         Perform all of the actions `ResizingDot`s require doing periodically
