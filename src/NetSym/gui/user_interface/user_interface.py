@@ -10,7 +10,7 @@ import time
 from functools import reduce
 from math import sqrt
 from operator import concat, attrgetter
-from typing import TYPE_CHECKING, Optional, NamedTuple, List, Type, Callable, Dict, TypeVar, Tuple, Union, Any
+from typing import TYPE_CHECKING, Optional, NamedTuple, List, Type, Callable, Dict, TypeVar, Tuple, Union, Any, Iterable
 
 import pyglet
 from pyglet.window import key
@@ -29,6 +29,8 @@ from NetSym.consts import VIEW, TEXT, BUTTONS, IMAGES, DIRECTORIES, T_Color, SEL
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.resizable import is_resizable
+from NetSym.gui.abstracts.selectable import Selectable
+from NetSym.gui.abstracts.uniquely_dragged import UniquelyDragged
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
@@ -220,7 +222,7 @@ class UserInterface:
         self.marked_objects: List[GraphicsObject] = []
         self.dragging_points: Dict[GraphicsObject, Tuple[float, float]] = {}
 
-        self.__selected_object: Optional[GraphicsObject] = None
+        self.__selected_object: Optional[Selectable] = None
         # ^ the object that is currently surrounded by the blue square
         self.selected_object = None  # this sets the `selected_object` attribute
         self.resizing_dots_handler = ResizingDotsHandler()
@@ -273,11 +275,11 @@ class UserInterface:
             self.main_loop.move_to_front(window)
 
     @property
-    def selected_object(self) -> GraphicsObject:
+    def selected_object(self) -> Selectable:
         return self.__selected_object
 
     @selected_object.setter
-    def selected_object(self, graphics_object: GraphicsObject) -> None:
+    def selected_object(self, graphics_object: Selectable) -> None:
         if isinstance(graphics_object, PopupWindow):
             self.active_window = graphics_object
         else:
@@ -337,11 +339,12 @@ class UserInterface:
             color=color,
             width=MODES.COMPUTER_CONNECTING_MODES_LINE_TO_MOUSE_WIDTH,
         )
-        self.source_of_line_drag.mark_as_selected_non_resizable()
+        if isinstance(self.source_of_line_drag, Selectable):
+            self.source_of_line_drag.mark_as_selected()
 
         destination = self.get_object_the_mouse_is_on()
-        if destination is not None:
-            destination.mark_as_selected_non_resizable()
+        if destination is not None and isinstance(destination, Selectable):
+            destination.mark_as_selected()
 
     def _color_hovered_objects_differently(self) -> None:
         """
@@ -350,7 +353,7 @@ class UserInterface:
         """
         for graphics_object in self.main_loop.graphics_objects:
             if isinstance(graphics_object, DifferentColorWhenHovered):
-                if graphics_object.is_mouse_in():
+                if graphics_object.is_in(*self.main_window.get_mouse_location()):
                     graphics_object.set_hovered_color()
                 else:
                     graphics_object.set_normal_color()
@@ -379,17 +382,31 @@ class UserInterface:
         Essentially sets the objects coordinates to be the ones of the mouse.
         :return: None
         """
+        if not self.main_window.mouse_pressed:
+            return
+
         if self.selecting_square is not None:
             return
-        dragging_objects = self.marked_objects + ([self.dragged_object] if self.dragged_object is not None else [])
+
+        mouse_x, mouse_y = self.main_window.get_mouse_location()
+
+        dragging_objects = ([self.dragged_object] if self.dragged_object is not None else []) + self.marked_objects
         for object_ in dragging_objects:
-            if not isinstance(object_, Button):
-                try:
-                    drag_x, drag_y = self.dragging_points[object_]
-                except KeyError:
-                    continue
-                mouse_x, mouse_y = self.main_window.get_mouse_location()
+            if isinstance(object_, Button):
+                continue
+
+            try:
+                drag_x, drag_y = self.dragging_points[object_]
+            except KeyError:
+                continue
+
+            if isinstance(object_, UniquelyDragged):
+                object_.drag(mouse_x, mouse_y, drag_x, drag_y)
+            else:
                 object_.location = mouse_x + drag_x, mouse_y + drag_y
+
+            if not isinstance(object_, Selectable):
+                return  # This can only happen on the first object - the self.dragged_object
 
     @property
     def viewing_image_location(self) -> Tuple[float, float]:
@@ -600,7 +617,7 @@ class UserInterface:
         If the mouse is not hovering over any buttons - return None
         """
         for button in reversed(reduce(concat, list(self.buttons.values()))):
-            if not button.is_hidden and button.is_mouse_in():
+            if not button.is_hidden and button.is_in(*self.main_window.get_mouse_location()):
                 return button
         return None
 
@@ -790,11 +807,18 @@ class UserInterface:
         if self.source_of_line_drag is None or self.is_mouse_in_side_window():
             self.set_mode(MODES.NORMAL)
 
-    def get_object_the_mouse_is_on(self) -> GraphicsObject:
+    def get_object_the_mouse_is_on(self, exclude_types: Optional[Iterable[Type]] = None) -> GraphicsObject:
         """
-        Get the object the mouse is on - but exclude buttons
+        Returns the `GraphicsObject` that should be selected if the mouse is pressed
+        (so the object that the mouse is on right now) or `None` if the mouse is not resting upon any object.
+        :return: a `GraphicsObject` or None.
         """
-        return self.main_loop.get_object_the_mouse_is_on(exclude_types=[Button])
+        exclude_types = exclude_types if exclude_types is not None else [Button]
+        mouse_x, mouse_y = self.main_window.get_mouse_location()
+        return get_the_one(
+            reversed(self.main_loop.graphics_objects),
+            lambda go: go.is_in(mouse_x, mouse_y) and not isinstance(go, tuple(exclude_types))
+        )
 
     def end_device_visual_connecting(self, action: Callable[[GraphicsObject, GraphicsObject], None]) -> None:
         """
@@ -1641,7 +1665,7 @@ class UserInterface:
             self.resizing_dots_handler.deselect()
 
         for marked_object in self.marked_objects:
-            marked_object.mark_as_selected_non_resizable()
+            marked_object.mark_as_selected()
 
     def move_selected_mark(self, direction: int) -> None:
         """

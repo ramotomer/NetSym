@@ -5,7 +5,6 @@ from typing import NamedTuple, Callable, Optional, Tuple
 from NetSym.consts import BUTTONS, T_Color, COLORS, WINDOWS
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
-from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_button
 from NetSym.gui.user_interface.text_graphics import Text
 from NetSym.usefuls.funcs import sum_tuples
@@ -80,11 +79,10 @@ class Button(UserInterfaceGraphicsObject, DifferentColorWhenHovered):
     def set_normal_color(self) -> None:
         self.color = self.regular_color
 
-    def is_mouse_in(self) -> bool:
+    def is_in(self, x: float, y: float) -> bool:
         """Returns whether or not the mouse is located inside of the button."""
-        mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
-        return (self.x < mouse_x < self.x + self.width) and \
-               (self.y < mouse_y < self.y + self.height)
+        return (self.x < x < self.x + self.width) and \
+               (self.y < y < self.y + self.height)
 
     def toggle_showing(self) -> None:
         """

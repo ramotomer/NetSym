@@ -35,7 +35,7 @@ class LoopbackConnectionGraphics(ConnectionGraphics):
     def length(self) -> float:
         return circle_parameter(self.radius)
 
-    def is_mouse_in(self) -> bool:
+    def is_in(self, x: float, y: float) -> bool:
         return False
 
     def get_coordinates(self, direction: str = PACKET.DIRECTION.RIGHT) -> Iterable[Tuple[float, float]]:

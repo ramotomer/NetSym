@@ -10,8 +10,8 @@ from NetSym.consts import CONNECTIONS, PACKET, SELECTED_OBJECT, MESSAGES, DIRECT
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
+from NetSym.gui.abstracts.selectable import Selectable
 from NetSym.gui.main_loop_function_to_call import FunctionToCall
-from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_line
 from NetSym.gui.shape_drawing import draw_rectangle
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
@@ -42,7 +42,7 @@ class Interfaces(NamedTuple):
     end:   Optional[InterfaceGraphics]
 
 
-class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered):
+class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Selectable):
     """
     This is a GraphicsObject subclass which displays a connection.
     It shows the graphics of the connection (a line) between the two endpoints it is connected to.
@@ -133,13 +133,13 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered):
 
         self.width = CONNECTIONS.DEFAULT_WIDTH if not self.connection.latency else CONNECTIONS.LATENCY_WIDTH
 
-    def is_mouse_in(self) -> bool:
+    def is_in(self, x: float, y: float) -> bool:
         """Returns whether or not the mouse is close enough to the connection for it to count as pressed"""
         if any(interface is None for interface in self.interfaces):
             pass
-        mouse_location = MainWindow.main_window.get_mouse_location()
-        a = distance(self.interfaces.start.location, mouse_location)
-        b = distance(self.interfaces.end.location, mouse_location)
+        location = x, y
+        a = distance(self.interfaces.start.location, location)
+        b = distance(self.interfaces.end.location, location)
         c = distance(self.interfaces.start.location, self.interfaces.end.location)
         if b > c or a > c:
             return False

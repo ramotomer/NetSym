@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Dict, Callable
 from NetSym.address.mac_address import MACAddress
 from NetSym.consts import INTERFACES, COLORS
 from NetSym.exceptions import NoSuchInterfaceError
-from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_circle
 from NetSym.gui.tech.interface_graphics import InterfaceGraphics
 from NetSym.usefuls.funcs import with_args, get_the_one, distance
@@ -63,12 +62,12 @@ class WirelessInterfaceGraphics(InterfaceGraphics):
             self.x, self.y = self.real_x, self.real_y
             # ^ keeps the interface in a fixed distance away from the computer despite being dragged.
 
-    def is_mouse_in(self) -> bool:
+    def is_in(self, x: float, y: float) -> bool:
         """
         Returns whether or not the mouse is pressing the interface
         :return:
         """
-        return distance(MainWindow.main_window.get_mouse_location(), (self.real_x, self.real_y)) < self.radius
+        return distance((x, y), (self.real_x, self.real_y)) < self.radius
 
     def _create_button_dict(self, user_interface) -> Dict[str, Callable[[], None]]:
         return {

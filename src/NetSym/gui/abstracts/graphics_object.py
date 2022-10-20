@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Optional, Tuple, Callable, TYPE_CHECKING, Dict, List
+from typing import Optional, Tuple, TYPE_CHECKING, Dict, List
 
 from NetSym.gui.main_loop_function_to_call import FunctionToCall
 
@@ -63,17 +63,13 @@ class GraphicsObject(metaclass=ABCMeta):
         self.x, self.y = new_location
 
     @property
-    def mark_as_selected_non_resizable(self) -> Callable:
-        return self.mark_as_selected
-
-    @property
     def additional_functions_to_register(self) -> List[FunctionToCall]:
         """
         The functions that will be registered to run periodically when the object is registered
         """
         return []
 
-    def is_mouse_in(self) -> bool:
+    def is_in(self, x: float, y: float) -> bool:
         """
         Returns whether or not the mouse is located inside this graphics object.
         :return: None
@@ -102,13 +98,6 @@ class GraphicsObject(metaclass=ABCMeta):
         This method should be overridden in any subclasses.
         It should handle the moving of the object on the screen, it will be called every loop of the program.
         :return: None
-        """
-        pass
-
-    def mark_as_selected(self) -> None:
-        """
-        Marks the graphics object as selected (pressed by the mouse)
-        :return:
         """
         pass
 

@@ -117,7 +117,7 @@ class ProcessGraphics(ImageGraphics):
         self.process_index = process_index
         self.port = port
 
-    def is_mouse_in(self) -> bool:
+    def is_in(self, x: float, y: float) -> bool:
         """Cannot be pressed"""
         return False
 

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import time
-from typing import Type, Iterable, Optional, TYPE_CHECKING, Callable, Any, List, TypeVar, Dict, Union
+from typing import Type, Optional, TYPE_CHECKING, Callable, Any, List, TypeVar, Dict, Union
 
 from NetSym.consts import T_Time, MAIN_LOOP
 from NetSym.exceptions import *
 from NetSym.gui.main_loop_function_to_call import FunctionToCall
-from NetSym.usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
@@ -252,14 +251,6 @@ class MainLoop:
         :return:
         """
         self.is_paused = not self.is_paused
-
-    def get_object_the_mouse_is_on(self, exclude_types: Iterable[Type] = ()) -> GraphicsObject:
-        """
-        Returns the `GraphicsObject` that should be selected if the mouse is pressed
-        (so the object that the mouse is on right now) or `None` if the mouse is not resting upon any object.
-        :return: a `GraphicsObject` or None.
-        """
-        return get_the_one(reversed(self.graphics_objects), lambda go: go.is_mouse_in() and not isinstance(go, tuple(exclude_types)))
 
     def graphics_objects_of_types(self, *types: Type[T]) -> List[T]:
         """

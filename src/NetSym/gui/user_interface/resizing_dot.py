@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING, Tuple
 from NetSym.consts import SHAPES, SELECTION_SQUARE, COLORS
 from NetSym.exceptions import ObjectIsNotResizableError
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
+from NetSym.gui.abstracts.uniquely_dragged import UniquelyDragged
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from NetSym.gui.main_loop import MainLoop
-from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_circle
 from NetSym.usefuls.funcs import distance
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from NetSym.gui.abstracts.image_graphics import ImageGraphics
 
 
-class ResizingDot(UserInterfaceGraphicsObject, DifferentColorWhenHovered):
+class ResizingDot(UserInterfaceGraphicsObject, DifferentColorWhenHovered, UniquelyDragged):
     """
     The Dot in the side of the selected resizable objects. 
     Enables you to resize the objects. 
@@ -48,11 +48,8 @@ class ResizingDot(UserInterfaceGraphicsObject, DifferentColorWhenHovered):
 
         self.color = SELECTION_SQUARE.COLOR
 
-    def is_mouse_in(self) -> bool:
-        return distance(MainWindow.main_window.get_mouse_location(), self.location) <= self.radius
-
-    def mark_as_selected(self) -> None:
-        pass
+    def is_in(self, x: float, y: float) -> bool:
+        return distance((x, y), self.location) <= self.radius
 
     def set_hovered_color(self) -> None:
         self.color = SHAPES.CIRCLE.RESIZE_DOT.COLOR_WHEN_SELECTED
@@ -68,12 +65,14 @@ class ResizingDot(UserInterfaceGraphicsObject, DifferentColorWhenHovered):
         """
         Drag the resizing dot around - and resize the appropriate object
         """
-        if not self.is_mouse_in() or not MainWindow.main_window.mouse_pressed:
-            self.update_by_object_size()
-            self.update_by_object_location()
-            return
+        self.update_by_object_size()
+        self.update_by_object_location()
 
-        self.location = MainWindow.main_window.get_mouse_location()
+    def drag(self, mouse_x: float, mouse_y: float, drag_x: float, drag_y: float) -> None:
+        """
+        Occurs when the point is dragged around
+        """
+        self.location = mouse_x, mouse_y
         x, y = self.location
         current_x_diff, current_y_diff = self.resized_object.x - x, self.resized_object.y - y
 
@@ -85,6 +84,7 @@ class ResizingDot(UserInterfaceGraphicsObject, DifferentColorWhenHovered):
         )
 
         self._x_diff, self._y_diff = self.resized_object.x - x, self.resized_object.y - y
+        self.move()
 
     def update_by_object_location(self) -> None:
         """

@@ -9,7 +9,7 @@ import scapy
 from NetSym.consts import PACKET, COLORS, SELECTED_OBJECT, DIRECTORIES
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
-from NetSym.gui.main_window import MainWindow
+from NetSym.gui.abstracts.selectable import Selectable
 from NetSym.gui.shape_drawing import draw_circle, draw_rectangle
 from NetSym.gui.tech.packet_graphics import PacketGraphics
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from NetSym.computing.internals.frequency import Frequency
 
 
-class WirelessPacketGraphics(ViewableGraphicsObject, DifferentColorWhenHovered):
+class WirelessPacketGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Selectable):
     """
     This class is a `GraphicsObject` subclass which is the graphical representation
     of packets that are sent between computers.
@@ -67,9 +67,9 @@ class WirelessPacketGraphics(ViewableGraphicsObject, DifferentColorWhenHovered):
     def draw(self) -> None:
         draw_circle(*self.location, self.distance, outline_color=self.color)
 
-    def is_mouse_in(self) -> bool:
-        mouse_dist = distance(self.center_location, MainWindow.main_window.get_mouse_location())
-        return abs(mouse_dist - self.distance) < 5
+    def is_in(self, x: float, y: float) -> bool:
+        distance_from_point = distance(self.center_location, (x, y))
+        return abs(distance_from_point - self.distance) < 5
 
     def start_viewing(self,
                       user_interface: UserInterface,

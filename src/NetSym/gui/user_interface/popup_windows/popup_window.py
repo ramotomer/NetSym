@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional, Set, Tuple
 
-from NetSym.consts import WINDOWS, T_Color, COLORS, SHAPES
+from NetSym.consts import WINDOWS, T_Color, COLORS, SHAPES, debugp
 from NetSym.exceptions import WrongUsageError
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from NetSym.gui.main_loop import MainLoop
@@ -105,21 +105,13 @@ class PopupWindow(UserInterfaceGraphicsObject):
     def get_title_text_padding(self) -> Tuple[float, float]:
         return (self.width / 2) + 2, self.height + 22
 
-    def is_mouse_in(self) -> bool:
+    def is_in(self, x: float, y: float) -> bool:
         """
         Returns whether or not the mouse is pressing the upper part of the window (where it can be moved)
         :return: `bool`
         """
-        x, y = MainWindow.main_window.get_mouse_location()
         return self.x < x < self.x + self.width and \
                self.y < y < self.y + self.height + WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT
-
-    def mark_as_selected(self) -> None:
-        """
-        required for the API
-        :return: None
-        """
-        pass
 
     def delete(self, user_interface: Optional[UserInterface] = None) -> None:
         """
@@ -148,6 +140,12 @@ class PopupWindow(UserInterfaceGraphicsObject):
             self.width + self.outline_width, WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT,
             color=outline_color,
         )
+
+    def drag(self, mouse_x: float, mouse_y: float, drag_x: float, drag_y: float) -> None:
+        """
+        Dragging the window around
+        """
+        debugp(f"calling :)")
 
     def activate(self) -> None:
         """

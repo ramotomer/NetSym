@@ -8,7 +8,7 @@ import pyglet
 
 from NetSym.consts import IMAGES, T_Color, SELECTED_OBJECT, DIRECTORIES, VIEW, SHAPES, COLORS
 from NetSym.exceptions import *
-from NetSym.gui.main_window import MainWindow
+from NetSym.gui.abstracts.selectable import Selectable
 from NetSym.gui.shape_drawing import draw_rectangle
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
 from NetSym.usefuls.funcs import scale_tuple, sum_tuples
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
 
 
-class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
+class ImageGraphics(ViewableGraphicsObject, Selectable, metaclass=ABCMeta):
     """
     This class is a superclass of any `GraphicsObject` subclass which uses an image in its `draw` method.
     Put simply, it is a graphics object with a picture.
@@ -159,17 +159,16 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
         else:
             self.make_transparent()
 
-    def is_mouse_in(self) -> bool:
+    def is_in(self, x: float, y: float) -> bool:
         """
         Returns whether or not the mouse is inside the sprite of this object in the screen.
         :return: Whether the mouse is inside the sprite or not.
         """
-        mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
         if not self.centered:
-            return (self.x < mouse_x < self.x + self.sprite.width) and \
-                        (self.y < mouse_y < self.y + self.sprite.height)
-        return (self.x - (self.sprite.width / 2.0) < mouse_x < self.x + (self.sprite.width / 2.0)) and\
-                (self.y - (self.sprite.height / 2.0) < mouse_y < self.y + (self.sprite.height / 2.0))
+            return (self.x < x < self.x + self.sprite.width) and \
+                        (self.y < y < self.y + self.sprite.height)
+        return (self.x - (self.sprite.width / 2.0) < x < self.x + (self.sprite.width / 2.0)) and\
+                (self.y - (self.sprite.height / 2.0) < y < self.y + (self.sprite.height / 2.0))
 
     def get_center(self) -> Tuple[float, float]:
         """
@@ -186,9 +185,10 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
         return self.x - int(self.sprite.width / 2), \
                self.y - int(self.sprite.height / 2)
 
-    def mark_as_selected_non_resizable(self) -> None:
+    def mark_as_selected(self) -> None:
         """
-        Marks the object as selected, but does not show the resizing dots :)
+        Marks a rectangle around a `GraphicsObject` that is selected.
+        Only call this function if the object is selected.
         """
         x, y = self.x, self.y
         if self.centered:
@@ -196,20 +196,13 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
 
         corner = x - SELECTED_OBJECT.PADDING, y - SELECTED_OBJECT.PADDING
         proportions = self.sprite.width + (2 * SELECTED_OBJECT.PADDING), self.sprite.height + (
-                    2 * SELECTED_OBJECT.PADDING)
+                2 * SELECTED_OBJECT.PADDING)
 
         draw_rectangle(
             *corner,
             *proportions,
             outline_color=SELECTED_OBJECT.COLOR,
         )
-
-    def mark_as_selected(self) -> None:
-        """
-        Marks a rectangle around a `GraphicsObject` that is selected.
-        Only call this function if the object is selected.
-        """
-        self.mark_as_selected_non_resizable()
 
     def get_corner_by_direction(self, direction: Tuple[int, int]) -> Tuple[float, float]:
         """
