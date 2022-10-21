@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, Iterable, Dict, List, TYPE_CHECKING
+from typing import Optional, Iterable, Dict, TYPE_CHECKING
 
 from NetSym.computing.computer import Computer
 from NetSym.computing.internals.filesystem.filesystem import Filesystem
@@ -8,12 +8,11 @@ from NetSym.computing.internals.interface import Interface
 from NetSym.computing.internals.processes.kernelmode_processes.route_packet_process import RoutePacket
 from NetSym.computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
 from NetSym.computing.internals.routing_table import RoutingTable
-from NetSym.consts import OS, IMAGES
+from NetSym.consts import OS
 from NetSym.gui.main_loop import MainLoop
-from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 if TYPE_CHECKING:
-    from NetSym.gui.abstracts.graphics_object import GraphicsObject
+    pass
 
 
 class Router(Computer):
@@ -39,17 +38,6 @@ class Router(Computer):
         self.last_route_check = MainLoop.get_time()
 
         self.is_dhcp_server = is_dhcp_server
-
-    def init_graphics(self, x: float, y: float) -> List[GraphicsObject]:
-        """
-        overrides Computer.show and shows the same computer_graphics object only
-        with a router's photo.
-        :param x:
-        :param y:
-        :return: None
-        """
-        self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.ROUTER)
-        return [self.graphics] + self.loopback.connection.connection.init_graphics(self.graphics)
 
     def route_new_packets(self) -> None:
         """

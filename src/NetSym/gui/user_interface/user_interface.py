@@ -25,14 +25,13 @@ from NetSym.computing.internals.wireless_interface import WirelessInterface
 from NetSym.computing.router import Router
 from NetSym.computing.switch import Switch, Hub, Antenna
 from NetSym.consts import VIEW, TEXT, BUTTONS, IMAGES, DIRECTORIES, T_Color, SELECTED_OBJECT, KEYBOARD, MODES, WINDOWS, COLORS, CONNECTIONS, \
-    INTERFACES, ADDRESSES, MESSAGES, MAIN_LOOP
+    INTERFACES, ADDRESSES, MESSAGES, MAIN_LOOP, CONSOLE
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.resizable import is_resizable
 from NetSym.gui.abstracts.selectable import Selectable
 from NetSym.gui.abstracts.uniquely_dragged import UniquelyDragged
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
-from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
 from NetSym.gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from NetSym.gui.tech.computer_graphics import ComputerGraphics
@@ -58,6 +57,7 @@ if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
     from NetSym.computing.connection import Connection
     from NetSym.gui.main_loop import MainLoop
+    from NetSym.gui.main_window import MainWindow
 
 
 T = TypeVar("T")
@@ -135,8 +135,8 @@ class UserInterface:
             (key.ESCAPE, KEYBOARD.MODIFIERS.NONE): self.clear_selected_objects_and_active_window,
             (key.DELETE, KEYBOARD.MODIFIERS.NONE): self.delete_selected_and_marked,
             (key.J, KEYBOARD.MODIFIERS.NONE): self.color_by_subnets,
-            (key.LALT, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.ALT): with_args(self.set_is_ignoring_keyboard_escape_keys, False),
-            (key.G, KEYBOARD.MODIFIERS.CTRL): with_args(self.set_is_ignoring_keyboard_escape_keys, True),
+            (key.LALT, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.ALT): with_args(self.main_window.set_is_ignoring_keyboard_escape_keys, False),
+            (key.G, KEYBOARD.MODIFIERS.CTRL): with_args(self.main_window.set_is_ignoring_keyboard_escape_keys, True),
             (key.TAB, KEYBOARD.MODIFIERS.ALT): self.tab_through_windows,
             (key.TAB, KEYBOARD.MODIFIERS.ALT | KEYBOARD.MODIFIERS.SHIFT): with_args(self.tab_through_windows, True),
             (key.RIGHT, KEYBOARD.MODIFIERS.WINKEY): with_args(self.pin_active_window_to, WINDOWS.POPUP.DIRECTIONS.RIGHT),
@@ -285,14 +285,6 @@ class UserInterface:
         else:
             self.__selected_object = graphics_object
             self.active_window = None
-
-    def set_is_ignoring_keyboard_escape_keys(self, value) -> None:
-        """
-        :param value: Whether or not to swallow special keyboard shortcuts passed (winkey, alt+tab...)
-
-            This must be a separate method because inside this class's __init__ method the `MainWindow.main_window` object is still `None`
-        """
-        self.main_window.set_is_ignoring_keyboard_escape_keys(value)
 
     def register_main_window_event_handlers(self) -> None:
         """
@@ -676,7 +668,7 @@ class UserInterface:
         :return:
         """
         if self.active_window is not None:
-            self.active_window.pin_to(direction)
+            self.active_window.pin_to(direction, self.main_window.width, self.main_window.height)
 
     def _create_selecting_square(self) -> None:
         """
@@ -768,7 +760,7 @@ class UserInterface:
             x, y = WINDOWS.MAIN.WIDTH / 2, WINDOWS.MAIN.HEIGHT / 2
 
         object_ = object_type()
-        self.main_loop.register_graphics_object(object_.init_graphics(x, y))
+        self.main_loop.register_graphics_object(object_.init_graphics(x, y, self.get_computer_output_console_location()))
         self.computers.append(object_)
 
     def two_pressed_objects(self,
@@ -1190,6 +1182,9 @@ class UserInterface:
 
         # self.set_all_connection_speeds(200)
 
+    def get_computer_output_console_location(self) -> Tuple[float, float]:
+        return self.main_window.width - (WINDOWS.SIDE.WIDTH / 2) - (CONSOLE.WIDTH / 2), CONSOLE.Y
+
     def create_computer_with_ip(self, wireless: bool = False) -> Computer:
         """
         Creates a computer with an IP fitting to the computers around it.
@@ -1206,7 +1201,7 @@ class UserInterface:
 
         new_computer = Computer.with_ip(given_ip) if not wireless else Computer.wireless_with_ip(given_ip)
         self.computers.append(new_computer)
-        self.main_loop.register_graphics_object(new_computer.init_graphics(x, y))
+        self.main_loop.register_graphics_object(new_computer.init_graphics(x, y, self.get_computer_output_console_location()))
         return new_computer
 
     def _get_largest_ip_in_nearest_subnet(self, x: float, y: float) -> IPAddress:
@@ -1595,7 +1590,7 @@ class UserInterface:
         for computer_dict in dict_from_file["computers"]:
             class_ = self.saving_file_class_name_to_class[computer_dict["class"]]
             computer = class_.from_dict_load(computer_dict)
-            self.main_loop.register_graphics_object(computer.init_graphics(*computer_dict["location"]))
+            self.main_loop.register_graphics_object(computer.init_graphics(*computer_dict["location"], self.get_computer_output_console_location()))
             self.computers.append(computer)
             for port in computer_dict["open_tcp_ports"]:
                 computer.open_port(port, "TCP")
@@ -1653,9 +1648,10 @@ class UserInterface:
             return
 
         for graphics_object in [go for go in self.main_loop.graphics_objects if isinstance(go, tuple(object_types))]:
-            if graphics_object in self.selecting_square and isinstance(graphics_object, Selectable):
+            if isinstance(graphics_object, Selectable):
                 if graphics_object not in self.marked_objects:
-                    self.marked_objects.append(graphics_object)
+                    if graphics_object in self.selecting_square:
+                        self.marked_objects.append(graphics_object)
                     continue
 
                 if graphics_object not in self.selecting_square:

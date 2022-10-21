@@ -261,15 +261,16 @@ class Computer:
         cls.EXISTING_COMPUTER_NAMES.add(name)
         return name
 
-    def init_graphics(self, x: float, y: float) -> List[GraphicsObject]:
+    def init_graphics(self, x: float, y: float, console_location: Tuple[float, float] = (0, 0)) -> List[GraphicsObject]:
         """
         This is called once to initiate the graphics of the computer.
         Gives it a `GraphicsObject`. (`ComputerGraphics`)
+        :param console_location:
         :param x:
         :param y: Coordinates to initiate the `GraphicsObject` at.
-        :return: None
+        :return: The graphics objects to register in the main loop
         """
-        self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.COMPUTER if not self.get_open_ports() else IMAGES.COMPUTERS.SERVER)
+        self.graphics = ComputerGraphics(x, y, self, console_location=console_location)
         return [self.graphics] + self.loopback.connection.connection.init_graphics(self.graphics)
 
     def print(self, string: str) -> None:

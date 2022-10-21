@@ -34,7 +34,6 @@ class MainWindow(pyglet.window.Window):
         It receives a `UserInterface` object that is in charge of the user input and output of the program.
         """
         super().__init__(*args, **kwargs)
-        MainWindow.main_window = self
 
         self.set_location(*WINDOWS.MAIN.INITIAL_LOCATION)
         # ^ window initial location on the screen

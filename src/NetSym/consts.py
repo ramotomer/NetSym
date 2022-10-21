@@ -537,6 +537,14 @@ class IMAGES:
         ANTENNA = "computers/antenna.png"
         INTERNET = "computers/cloud.png"
 
+        CLASS_NAME_TO_IMAGE = {
+            'Computer': COMPUTER,
+            'Switch':   SWITCH,
+            'Router':   ROUTER,
+            'Antenna':  ANTENNA,
+            'Hub':      HUB,
+        }
+
     class VIEW:
         CONNECTION = "viewing_items/connection_view.png"
         WIRELESS_CONNECTION = "viewing_items/wireless_connection_view.png"

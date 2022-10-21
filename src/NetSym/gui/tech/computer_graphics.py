@@ -12,9 +12,8 @@ from NetSym.computing.internals.processes.usermode_processes.ddos_process import
 from NetSym.computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
 from NetSym.computing.internals.processes.usermode_processes.dns_process.dns_server_process import DNSServerProcess
 from NetSym.computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
-from NetSym.consts import IMAGES, WINDOWS, CONSOLE, MESSAGES, INTERFACES, TEXT, PORTS
+from NetSym.consts import IMAGES, MESSAGES, INTERFACES, TEXT, PORTS
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
-from NetSym.gui.main_window import MainWindow
 from NetSym.gui.tech.interface_graphics_list import InterfaceGraphicsList
 from NetSym.gui.tech.loopback_connection_graphics import LoopbackConnectionGraphics
 from NetSym.gui.tech.output_console import OutputConsole
@@ -58,8 +57,10 @@ class ComputerGraphics(ImageGraphics):
                  x: float,
                  y: float,
                  computer: Computer,
-                 image: str = IMAGES.COMPUTERS.COMPUTER,
-                 scale_factor: float = IMAGES.SCALE_FACTORS.SPRITES) -> None:
+                 image: Optional[str] = None,
+                 scale_factor: float = IMAGES.SCALE_FACTORS.SPRITES,
+                 console_location: Tuple[float, float] = (0, 0),
+                 ) -> None:
         """
         The graphics objects of computers.
         :param x:
@@ -67,21 +68,22 @@ class ComputerGraphics(ImageGraphics):
         :param computer: The computer object itself.
         :param image: the name of the image of the computer. (can be changed for different types of computers)
         """
+        self.original_image = image if image is not None else IMAGES.COMPUTERS.CLASS_NAME_TO_IMAGE[computer.__class__.__name__]
+
         super(ComputerGraphics, self).__init__(
-            image,
+            self.original_image,
             x, y,
-            centered=True,
+            centered=        True,
             is_in_background=True,
-            is_pressable=True,
-            scale_factor=scale_factor,
+            is_pressable=    True,
+            scale_factor=    scale_factor,
         )
         self.computer: Computer = computer
         self.class_name = self.computer.__class__.__name__
-        self.original_image = image
 
         self.child_graphics_objects = ChildGraphicsObjects(
             Text(self.generate_text(), self.x, self.y, self),
-            OutputConsole(*self.console_location),
+            OutputConsole(*console_location),
             ProcessGraphicsList(self),
             InterfaceGraphicsList(self),
         )
@@ -94,12 +96,14 @@ class ComputerGraphics(ImageGraphics):
         self.update_text_location()
 
     @property
-    def console_location(self) -> Tuple[float, float]:
-        return MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2) - (CONSOLE.WIDTH / 2), CONSOLE.Y
-
-    @property
     def should_be_transparent(self) -> bool:
         return not self.computer.is_powered_on
+
+    def get_image_path(self) -> str:
+        """
+        Return the path to the image that should be displayed when the computer is drawn
+        """
+        return IMAGES.COMPUTERS.SERVER if self._is_server() else self.original_image
 
     def draw(self) -> None:
         self.update_image()
@@ -126,7 +130,7 @@ class ComputerGraphics(ImageGraphics):
         """
         Refreshes the image according to the current computer state
         """
-        self.change_image(IMAGES.COMPUTERS.SERVER if self._is_server() else self.original_image)
+        self.change_image(self.get_image_path())
         self.child_graphics_objects.process_list.set_list([port for port in self.computer.get_open_ports() if port in PORTS.SERVER_PORTS])
 
     def _get_per_process_buttons(self, user_interface: UserInterface) -> Dict[str, Callable[[], None]]:
@@ -180,7 +184,7 @@ class ComputerGraphics(ImageGraphics):
         parameter user_interface: the `UserInterface` object we can use the methods of it.
         Returns a tuple <display sprite>, <display text>, <new button count>
         """
-        self.child_graphics_objects.console.location = self.console_location
+        self.child_graphics_objects.console.location = user_interface.get_computer_output_console_location()
         self.child_graphics_objects.console.show()
 
         buttons = {
