@@ -219,7 +219,7 @@ class UserInterface:
 
         self.selecting_square: Optional[SelectingSquare] = None
 
-        self.marked_objects: List[GraphicsObject] = []
+        self.marked_objects: List[Selectable] = []
         self.dragging_points: Dict[GraphicsObject, Tuple[float, float]] = {}
 
         self.__selected_object: Optional[Selectable] = None
@@ -236,7 +236,7 @@ class UserInterface:
         self.initiate_buttons()
 
     @property
-    def all_marked_objects(self) -> List[GraphicsObject]:
+    def all_marked_objects(self) -> List[Selectable]:
         """
         The `marked_objects` list with the selected_object together in one list
         :return:
@@ -578,11 +578,12 @@ class UserInterface:
             self.end_object_view()
             self.mode = new_mode
             self.hide_buttons(BUTTONS.MAIN_MENU.ID)
-            if not isinstance(self.selected_object, ViewableGraphicsObject):
+            if isinstance(self.selected_object, ViewableGraphicsObject):
+                self.start_object_view(self.selected_object)
+            else:
                 raise WrongUsageError(
                     "The new_mode should not be switched to view new_mode when the selected object cannot be viewed"
                 )
-            self.start_object_view(self.selected_object)
 
         else:
             self.source_of_line_drag = None
@@ -686,8 +687,7 @@ class UserInterface:
             mouse_x, mouse_y = self.main_window.get_mouse_location()
             self.selecting_square = SelectingSquare(
                 mouse_x, mouse_y,
-                self.main_loop.graphics_objects_of_types(ComputerGraphics, PacketGraphics),
-                self,
+                mouse_x, mouse_y,
             )
             self.main_loop.register_graphics_object(self.selecting_square)
 
@@ -1636,6 +1636,31 @@ class UserInterface:
             self.load_from_file
         )
 
+    def _update_selecting_square(self) -> None:
+        """
+        Set the SelectingSquare to the appropriate size according to the mouse location
+        """
+        if self.selecting_square is None:
+            return
+
+        self.selecting_square.location2 = self.main_window.get_mouse_location()
+
+    def _mark_object_inside_selecting_square(self, object_types: Iterable[Type[GraphicsObject]] = ()) -> None:
+        """
+        Select the objects that are inside the square - add them to the `self.marked_objects` list
+        """
+        if self.selecting_square is None:
+            return
+
+        for graphics_object in [go for go in self.main_loop.graphics_objects if isinstance(go, tuple(object_types))]:
+            if graphics_object in self.selecting_square and isinstance(graphics_object, Selectable):
+                if graphics_object not in self.marked_objects:
+                    self.marked_objects.append(graphics_object)
+                    continue
+
+                if graphics_object not in self.selecting_square:
+                    self.marked_objects.remove(graphics_object)
+
     def delete_selected_and_marked(self) -> None:
         """
         Deletes the selected and marked objects
@@ -1657,6 +1682,9 @@ class UserInterface:
         The selected object is the object that was last pressed and is surrounded by a white square.
         :return: None
         """
+        self._update_selecting_square()
+        self._mark_object_inside_selecting_square(object_types=(ComputerGraphics, PacketGraphics))
+
         if self.selected_object is not None:
             self.selected_object.mark_as_selected()
             if is_resizable(self.selected_object):
