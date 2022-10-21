@@ -7,7 +7,6 @@ from NetSym.address.mac_address import MACAddress
 from NetSym.computing.internals.interface import Interface
 from NetSym.consts import T_Color, INTERFACES
 from NetSym.exceptions import *
-from NetSym.gui.main_window import MainWindow
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
@@ -25,18 +24,19 @@ class WirelessInterface(Interface):
     """
     def __init__(self,
                  mac:           Optional[MACAddress] = None,
-                 ip:            Optional[IPAddress] = None,
-                 name:          Optional[str] = None,
-                 frequency:     Optional[float] = None,
-                 display_color: T_Color = INTERFACES.COLOR) -> None:
+                 ip:            Optional[IPAddress]  = None,
+                 name:          Optional[str]        = None,
+                 frequency:     Optional[Frequency]  = None,
+                 display_color: T_Color              = INTERFACES.COLOR) -> None:
         """
         Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
         :param mac: a string MAC address ('aa:bb:cc:11:22:76' for example)
         :param ip: a string ip address ('10.3.252.5/24' for example)
         """
         super(WirelessInterface, self).__init__(mac, ip, name, display_color=display_color, type_=INTERFACES.TYPE.WIFI)
-        self.connection = MainWindow.main_window.user_interface.get_frequency(frequency).get_side(self) if frequency is not None else None
-        self.frequency = frequency
+
+        self.connection = frequency.get_side(self) if frequency is not None else None
+        self.frequency = frequency.frequency if frequency is not None else None
 
     @property
     def frequency_object(self) -> Frequency:
@@ -58,7 +58,7 @@ class WirelessInterface(Interface):
     def is_connected(self) -> bool:
         return self.frequency is not None and self.connection is not None
 
-    def connect(self, frequency: float) -> Frequency:
+    def connect(self, frequency: Frequency) -> None:
         """
         Connects this interface to a frequency, return the `Frequency` object.
         :param frequency:
@@ -67,12 +67,9 @@ class WirelessInterface(Interface):
         if self.is_connected():
             self.disconnect()
 
-        freq = MainWindow.main_window.user_interface.get_frequency(frequency)
-        self.connection = freq.get_side(self)
-        self.frequency = frequency
-        self.graphics.color = freq.color
-        return freq
-    
+        self.connection = frequency.get_side(self) if frequency is not None else None
+        self.frequency = frequency.frequency if frequency is not None else None
+
     def disconnect(self) -> None:
         """
         Disconnect an interface from its `Frequency`.
@@ -83,7 +80,6 @@ class WirelessInterface(Interface):
         self.frequency_object.remove_side(self.connection)
         self.connection = None
         self.frequency = None
-        self.graphics.color = INTERFACES.COLOR
 
     def block(self, accept: Optional[Callable[[Packet], bool]] = None) -> None:
         """
@@ -128,8 +124,8 @@ class WirelessInterface(Interface):
             mac=dict_["mac"],
             ip=dict_["ip"],
             name=dict_["name"],
-            frequency=dict_["frequency"],
         )
+        # TODO: make it so configured frequencies are also saved to files
 
         return loaded
 

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Optional, Tuple, Callable, TYPE_CHECKING, Dict
+from typing import Optional, Tuple, TYPE_CHECKING, Dict, List
 
-from NetSym.gui.main_loop import MainLoop
+from NetSym.gui.main_loop_function_to_call import FunctionToCall
 
 if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
@@ -44,8 +44,11 @@ class GraphicsObject(metaclass=ABCMeta):
         self.centered = centered
         self.is_pressable = is_pressable
 
-        if self.do_render:
-            MainLoop.instance.register_graphics_object(self, is_in_background)
+        self.is_requesting_to_be_unregistered_from_main_loop = False
+        self.is_requesting_to_register_children         = False
+
+        # if self.do_render:
+        # MainLoop.instance.register_graphics_object(self, is_in_background)
 
     @property
     def location(self) -> Tuple[float, float]:
@@ -60,10 +63,13 @@ class GraphicsObject(metaclass=ABCMeta):
         self.x, self.y = new_location
 
     @property
-    def mark_as_selected_non_resizable(self) -> Callable:
-        return self.mark_as_selected
+    def additional_functions_to_register(self) -> List[FunctionToCall]:
+        """
+        The functions that will be registered to run periodically when the object is registered
+        """
+        return []
 
-    def is_mouse_in(self) -> bool:
+    def is_in(self, x: float, y: float) -> bool:
         """
         Returns whether or not the mouse is located inside this graphics object.
         :return: None
@@ -95,13 +101,6 @@ class GraphicsObject(metaclass=ABCMeta):
         """
         pass
 
-    def mark_as_selected(self) -> None:
-        """
-        Marks the graphics object as selected (pressed by the mouse)
-        :return:
-        """
-        pass
-
     def __repr__(self) -> str:
         """The string representation of the graphics object"""
         rendered = 'rendered' if self.do_render else 'non-rendered'
@@ -117,8 +116,20 @@ class GraphicsObject(metaclass=ABCMeta):
         """
         pass
 
+    def unregister(self) -> None:
+        """
+        Request from the MainLoop for this object to be unregistered
+        """
+        self.is_requesting_to_be_unregistered_from_main_loop = True
+
+    def register_children(self) -> None:
+        """
+        Request from the MainLoop to go over the 'child_graphics_objects' and register the ones that are not registered
+        """
+        self.is_requesting_to_register_children = True
+
     def delete(self, user_interface: UserInterface) -> None:
         """
         Deletes the graphics object and performs other operations that are necessary for deletion (cleanup)
         """
-        MainLoop.instance.unregister_graphics_object(self)
+        self.unregister()

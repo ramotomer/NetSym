@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable
+from typing import Callable
 
 from pyglet.window import key
 
@@ -9,9 +9,6 @@ from NetSym.gui.user_interface.button import Button
 from NetSym.gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText
 from NetSym.usefuls.funcs import called_in_order
 
-if TYPE_CHECKING:
-    from NetSym.gui.user_interface.user_interface import UserInterface
-
 
 class YesNoPopupWindow(PopupWindowContainingText):
     """
@@ -19,11 +16,9 @@ class YesNoPopupWindow(PopupWindowContainingText):
     """
     def __init__(self,
                  text: str,
-                 user_interface: UserInterface,
                  yes_action: Callable = lambda: None,
                  no_action: Callable = lambda: None) -> None:
         """
-        :param user_interface: the UserInterface object
         :param yes_action: function that is called when the 'yes' button is pressed.
         :param no_action: function that is called when the 'no' button is pressed.
         """
@@ -50,7 +45,6 @@ class YesNoPopupWindow(PopupWindowContainingText):
         super(YesNoPopupWindow, self).__init__(
             textbox_x, textbox_y,
             text=text,
-            user_interface=user_interface,
             buttons=buttons,
             color=COLORS.ORANGE,
             title="yes or no",

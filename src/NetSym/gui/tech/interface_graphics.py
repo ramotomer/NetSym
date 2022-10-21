@@ -9,7 +9,7 @@ from NetSym.address.mac_address import MACAddress
 from NetSym.consts import INTERFACES, SELECTED_OBJECT, DIRECTORIES, IMAGES
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
-from NetSym.gui.main_window import MainWindow
+from NetSym.gui.abstracts.selectable import Selectable
 from NetSym.gui.shape_drawing import draw_rectangle
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
 from NetSym.usefuls.funcs import distance, with_args, get_the_one
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
 
 
-class InterfaceGraphics(ViewableGraphicsObject):
+class InterfaceGraphics(ViewableGraphicsObject, Selectable):
     """
     This is the graphics of a network interface of a computer.
     It is the little square next to computers.
@@ -51,12 +51,11 @@ class InterfaceGraphics(ViewableGraphicsObject):
     def computer_location(self) -> Tuple[float, float]:
         return self.computer_graphics.location
 
-    def is_mouse_in(self) -> bool:
+    def is_in(self, x: float, y: float) -> bool:
         """
         Returns whether or not the mouse is pressing the interface
         :return:
         """
-        x, y = MainWindow.main_window.get_mouse_location()
         return self.real_x - (self.width / 2) < x < self.real_x + (self.width / 2) and \
                self.real_y - (self.height / 2) < y < self.real_y + (self.height / 2)
 

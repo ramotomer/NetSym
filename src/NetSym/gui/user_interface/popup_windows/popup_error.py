@@ -1,15 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from pyglet.window import key
 
 from NetSym.consts import WINDOWS, KEYBOARD, COLORS, T_Color
 from NetSym.gui.user_interface.button import Button
 from NetSym.gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText
-
-if TYPE_CHECKING:
-    from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 class PopupError(PopupWindowContainingText):
@@ -18,7 +13,6 @@ class PopupError(PopupWindowContainingText):
     """
     def __init__(self,
                  text: str,
-                 user_interface: UserInterface,
                  color: T_Color = COLORS.RED) -> None:
         """
         Initiates the window
@@ -27,7 +21,6 @@ class PopupError(PopupWindowContainingText):
         super(PopupError, self).__init__(
             x, y,
             text=text,
-            user_interface=user_interface,
             buttons=[
                 Button(
                     *WINDOWS.POPUP.SUBMIT_BUTTON.COORDINATES,
@@ -42,4 +35,4 @@ class PopupError(PopupWindowContainingText):
         )
 
     def __repr__(self) -> str:
-        return "Popup Error window"
+        return f"<< PopupError(text={self.information_text.text!r}) >>"

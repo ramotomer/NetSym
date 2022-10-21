@@ -2,26 +2,23 @@ from __future__ import annotations
 
 import os
 from abc import ABCMeta
-from itertools import product
 from typing import Set, Optional, Dict, TYPE_CHECKING, Callable, Tuple
 
 import pyglet
 
 from NetSym.consts import IMAGES, T_Color, SELECTED_OBJECT, DIRECTORIES, VIEW, SHAPES, COLORS
 from NetSym.exceptions import *
-from NetSym.gui.main_loop import MainLoop
-from NetSym.gui.main_window import MainWindow
+from NetSym.gui.abstracts.selectable import Selectable
 from NetSym.gui.shape_drawing import draw_rectangle
-from NetSym.gui.user_interface.resizing_dot import ResizingDot
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
-from NetSym.usefuls.funcs import get_the_one, scale_tuple, sum_tuples
+from NetSym.usefuls.funcs import scale_tuple, sum_tuples
 from NetSym.usefuls.paths import add_path_basename_if_needed, are_paths_equal
 
 if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
 
 
-class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
+class ImageGraphics(ViewableGraphicsObject, Selectable, metaclass=ABCMeta):
     """
     This class is a superclass of any `GraphicsObject` subclass which uses an image in its `draw` method.
     Put simply, it is a graphics object with a picture.
@@ -39,15 +36,14 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
                  is_in_background: bool = False,
                  scale_factor: float = IMAGES.SCALE_FACTORS.SPRITES,
                  is_pressable: bool = False) -> None:
-        super(ImageGraphics, self).__init__(x, y, False, centered, is_in_background, is_pressable=is_pressable)
+        super(ImageGraphics, self).__init__(x, y, do_render=False, centered=centered, is_in_background=is_in_background, is_pressable=is_pressable)
         self.image_name = add_path_basename_if_needed(self.PARENT_DIRECTORY, image_name or IMAGES.IMAGE_NOT_FOUND)
 
         self.scale_factor = scale_factor
         self._sprite: Optional[pyglet.sprite.Sprite] = None
 
-        self.resizing_dots = []
-
-        MainLoop.instance.register_graphics_object(self, is_in_background)
+        # MainLoop.instance.register_graphics_object(self, is_in_background)
+        self.load()
 
     @property
     def location(self) -> Tuple[float, float]:
@@ -56,9 +52,6 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
     @location.setter
     def location(self, value: Tuple[float, float]) -> None:
         self.x, self.y = value
-
-        for dot in self.resizing_dots:
-            dot.update_object_location()
 
     @property
     def width(self) -> float:
@@ -166,17 +159,16 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
         else:
             self.make_transparent()
 
-    def is_mouse_in(self) -> bool:
+    def is_in(self, x: float, y: float) -> bool:
         """
         Returns whether or not the mouse is inside the sprite of this object in the screen.
         :return: Whether the mouse is inside the sprite or not.
         """
-        mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
         if not self.centered:
-            return (self.x < mouse_x < self.x + self.sprite.width) and \
-                        (self.y < mouse_y < self.y + self.sprite.height)
-        return (self.x - (self.sprite.width / 2.0) < mouse_x < self.x + (self.sprite.width / 2.0)) and\
-                (self.y - (self.sprite.height / 2.0) < mouse_y < self.y + (self.sprite.height / 2.0))
+            return (self.x < x < self.x + self.sprite.width) and \
+                        (self.y < y < self.y + self.sprite.height)
+        return (self.x - (self.sprite.width / 2.0) < x < self.x + (self.sprite.width / 2.0)) and\
+                (self.y - (self.sprite.height / 2.0) < y < self.y + (self.sprite.height / 2.0))
 
     def get_center(self) -> Tuple[float, float]:
         """
@@ -193,10 +185,10 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
         return self.x - int(self.sprite.width / 2), \
                self.y - int(self.sprite.height / 2)
 
-    def mark_as_selected_non_resizable(self) -> None:
+    def mark_as_selected(self) -> None:
         """
-        Marks the object as selected, but does not show the resizing dots :)
-        :return:
+        Marks a rectangle around a `GraphicsObject` that is selected.
+        Only call this function if the object is selected.
         """
         x, y = self.x, self.y
         if self.centered:
@@ -204,25 +196,13 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
 
         corner = x - SELECTED_OBJECT.PADDING, y - SELECTED_OBJECT.PADDING
         proportions = self.sprite.width + (2 * SELECTED_OBJECT.PADDING), self.sprite.height + (
-                    2 * SELECTED_OBJECT.PADDING)
+                2 * SELECTED_OBJECT.PADDING)
 
         draw_rectangle(
             *corner,
             *proportions,
             outline_color=SELECTED_OBJECT.COLOR,
         )
-
-    def mark_as_selected(self) -> None:
-        """
-        Marks a rectangle around a `GraphicsObject` that is selected.
-        Only call this function if the object is selected.
-        :return: None
-        """
-        self.mark_as_selected_non_resizable()
-
-        directions = map(tuple, set(product((-1, 0, 1), repeat=2)) - {(0, 0)})
-        for direction in directions:
-            self.show_resizing_dot(direction, constrain_proportions=(0 not in direction))
 
     def get_corner_by_direction(self, direction: Tuple[int, int]) -> Tuple[float, float]:
         """
@@ -241,21 +221,6 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
 
         dx, dy = direction
         return (bottom_left_x + width / 2) + ((width / 2) * dx), (bottom_left_y + height / 2) + ((height / 2) * dy)
-
-    def show_resizing_dot(self, direction: Tuple[int, int], constrain_proportions: bool = False) -> None:
-        """
-        Displays and enables the little dot that allows resizing of objects.
-        """
-        if get_the_one(self.resizing_dots, lambda d: d.direction == direction) is None:
-            corner_x, corner_y = self.get_corner_by_direction(direction)
-            dot = ResizingDot(corner_x, corner_y, self, direction, constrain_proportions)
-            self.resizing_dots.append(dot)
-            MainLoop.instance.graphics_objects.append(dot)
-            MainLoop.instance.insert_to_loop(dot.self_destruct_if_not_showing)
-
-        dot = get_the_one(self.resizing_dots, lambda d: d.direction == direction, NoSuchGraphicsObjectError)
-        dot.draw()
-        dot.move()
 
     def start_viewing(self,
                       user_interface: UserInterface,
@@ -363,9 +328,6 @@ class ImageGraphics(ViewableGraphicsObject, metaclass=ABCMeta):
             scale_y = current_proportions * scale_x
 
         self.sprite.update(scale_x=scale_x, scale_y=scale_y)
-
-        for dot in self.resizing_dots:
-            dot.update_object_size()
 
     def add_hue(self, hue: T_Color) -> None:
         """

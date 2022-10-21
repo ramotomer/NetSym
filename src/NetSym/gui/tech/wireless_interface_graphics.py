@@ -3,9 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Dict, Callable
 
 from NetSym.address.mac_address import MACAddress
-from NetSym.consts import INTERFACES
+from NetSym.consts import INTERFACES, COLORS
 from NetSym.exceptions import NoSuchInterfaceError
-from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_circle
 from NetSym.gui.tech.interface_graphics import InterfaceGraphics
 from NetSym.usefuls.funcs import with_args, get_the_one, distance
@@ -35,8 +34,7 @@ class WirelessInterfaceGraphics(InterfaceGraphics):
         Draw the interface.
         :return:
         """
-        if self.interface.is_connected():
-            self.color = self.interface.frequency_object.color
+        self.color = self.interface.frequency_object.color if self.interface.is_connected() else COLORS.BLACK
 
         draw_circle(
             self.real_x, self.real_y,
@@ -64,12 +62,12 @@ class WirelessInterfaceGraphics(InterfaceGraphics):
             self.x, self.y = self.real_x, self.real_y
             # ^ keeps the interface in a fixed distance away from the computer despite being dragged.
 
-    def is_mouse_in(self) -> bool:
+    def is_in(self, x: float, y: float) -> bool:
         """
         Returns whether or not the mouse is pressing the interface
         :return:
         """
-        return distance(MainWindow.main_window.get_mouse_location(), (self.real_x, self.real_y)) < self.radius
+        return distance((x, y), (self.real_x, self.real_y)) < self.radius
 
     def _create_button_dict(self, user_interface) -> Dict[str, Callable[[], None]]:
         return {
@@ -97,7 +95,7 @@ class WirelessInterfaceGraphics(InterfaceGraphics):
                 user_interface.ask_user_for,
                 float,
                 "Insert frequency:",
-                self.interface.connect
+                with_args(user_interface.set_interface_frequency, self.interface),
             )
         }
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 # this cannot import from anything!!! (almost)
 import os
+from enum import Enum
 from math import sqrt
 from typing import Tuple, Union, Any
 
@@ -13,7 +14,7 @@ from NetSym.exceptions import TCPDoneReceiving
 def debugp(*strings: str) -> None:
     """
     A print i use for debugging so i know where to delete it afterwards.
-    :param string:
+    :param strings:
     :return:
     """
     print(f"DEBUG:", *strings)
@@ -385,6 +386,24 @@ class WINDOWS:
         FRAME_RATE = 1 / 60.0
         BACKGROUND = COLORS.VERY_LIGHT_GRAY  # if not __debug__ else COLORS.WHITE
 
+        class KEY_HOOKS:
+            BLOCK_KEY = False
+            PASS_KEY_TO_OTHER_HANDLERS = True
+
+        class Event(Enum):
+            RESIZE =        'on_resize'
+            MOUSE_MOTION =  'on_mouse_motion'
+            MOUSE_DRAG =    'on_mouse_drag'
+            MOUSE_ENTER =   'on_mouse_enter'
+            MOUSE_SCROLL =  'on_mouse_scroll'
+            MOUSE_PRESS =   'on_mouse_press'
+            MOUSE_RELEASE = 'on_mouse_release'
+            KEY_PRESS =     'on_key_press'
+            KEY_RELEASE =   'on_key_release'
+            DRAW =          'on_draw'
+            ACTIVATE =      'on_activate'
+            DEACTIVATE =    'on_deactivate'
+
     class SIDE:
         WIDTH = 230
         COLOR = COLORS.LIGHT_GRAY
@@ -436,6 +455,13 @@ class WINDOWS:
             COORDINATES = 90, 40
             PADDING = 200 + (WIDTH / 2), 8
             OK_BUTTON_COORDINATES = tuple(map(sum, zip((90, 40), PADDING)))
+
+
+class MAIN_LOOP:
+    class FunctionPriority(Enum):
+        HIGH =   "high"
+        MEDIUM = "medium"
+        # LOW =    "low"
 
 
 class IMAGES:
@@ -510,6 +536,14 @@ class IMAGES:
         NAT = "computers/NAT.png"
         ANTENNA = "computers/antenna.png"
         INTERNET = "computers/cloud.png"
+
+        CLASS_NAME_TO_IMAGE = {
+            'Computer': COMPUTER,
+            'Switch':   SWITCH,
+            'Router':   ROUTER,
+            'Antenna':  ANTENNA,
+            'Hub':      HUB,
+        }
 
     class VIEW:
         CONNECTION = "viewing_items/connection_view.png"

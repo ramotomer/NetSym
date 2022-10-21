@@ -7,7 +7,6 @@ import pyglet
 
 from NetSym.consts import ANIMATIONS, DIRECTORIES
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
-from NetSym.gui.main_loop import MainLoop
 
 
 class AnimationGraphics(ImageGraphics):
@@ -95,7 +94,7 @@ class AnimationGraphics(ImageGraphics):
         super(AnimationGraphics, self).move()
 
         if self.is_done:
-            MainLoop.instance.unregister_graphics_object(self)
+            self.unregister()
 
     def dict_save(self) -> None:
         pass

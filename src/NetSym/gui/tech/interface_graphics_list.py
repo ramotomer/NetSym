@@ -80,8 +80,11 @@ class InterfaceGraphicsList(GraphicsObject):
                 break
         self.child_graphics_objects.remove(interface_graphics)
 
+    def __str__(self):
+        return f"InterfaceGraphicsList with {len(self.child_graphics_objects)} interfaces"
+
     def __repr__(self) -> str:
-        return f"Interface Graphics list ({len(self.child_graphics_objects)})"
+        return f"<< InterfaceGraphicsList {self.child_graphics_objects!r} >>"
 
     def dict_save(self) -> None:
         pass

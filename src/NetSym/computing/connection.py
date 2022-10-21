@@ -7,11 +7,13 @@ from typing import TYPE_CHECKING, List, Tuple
 from NetSym.consts import CONNECTIONS, PACKET, T_Time
 from NetSym.exceptions import ConnectionsError
 from NetSym.exceptions import WrongUsageError, NoSuchConnectionSideError, SomethingWentTerriblyWrongError
+from NetSym.gui.abstracts.animation_graphics import AnimationGraphics
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.tech.connection_graphics import ConnectionGraphics
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
+    from NetSym.gui.tech.packet_graphics import PacketGraphics
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
@@ -63,7 +65,7 @@ class Connection:
 
         self.right_side, self.left_side = ConnectionSide(self), ConnectionSide(self)
 
-        self.last_packet_motion = self.main_loop.time()
+        self.last_packet_motion = MainLoop.instance.time()
 
         self.graphics = None
 
@@ -71,12 +73,6 @@ class Connection:
 
         self.packet_loss = packet_loss
         self.latency = latency
-
-        self.main_loop.insert_to_loop_pausable(self.move_packets)
-
-    @property
-    def main_loop(self):
-        return MainLoop.instance
 
     @property
     def length(self) -> float:
@@ -90,7 +86,7 @@ class Connection:
         """The time in seconds a packet takes to go through the connection"""
         return self.length / self.speed
 
-    def show(self, start_computer: ComputerGraphics, end_computer: ComputerGraphics) -> None:
+    def init_graphics(self, start_computer: ComputerGraphics, end_computer: ComputerGraphics) -> List[ConnectionGraphics]:
         """
         Adds the `GraphicObject` of this class and gives it the parameters it requires.
 
@@ -99,6 +95,7 @@ class Connection:
         :return: None
         """
         self.graphics = ConnectionGraphics(self, start_computer, end_computer, self.packet_loss)
+        return [self.graphics]
 
     def get_sides(self) -> Tuple[ConnectionSide, ConnectionSide]:
         """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""
@@ -158,13 +155,12 @@ class Connection:
         self.sent_packets.append(
             SentPacket(
                 packet,
-                self.main_loop.time(),
+                MainLoop.instance.time(),
                 direction,
                 will_be_dropped=(random.random() < self.packet_loss),
                 will_be_delayed=(random.random() < self.latency),
             )
         )
-        packet.show(self.graphics, direction)  # initiate the `GraphicsObject` of the packet.
 
     def reach_destination(self, sent_packet: SentPacket) -> None:
         """
@@ -173,7 +169,7 @@ class Connection:
         connected `Interface`.
         """
         packet, direction = sent_packet.packet, sent_packet.direction
-        self.main_loop.unregister_graphics_object(packet.graphics)
+        packet.graphics.unregister()
 
         if direction == PACKET.DIRECTION.RIGHT:
             self.right_side.packets_to_receive.append(packet)
@@ -184,7 +180,7 @@ class Connection:
 
         self.sent_packets.remove(sent_packet)
 
-    def _send_packets_from_side(self, side: ConnectionSide) -> None:
+    def _send_packets_from_side(self, side: ConnectionSide) -> List[PacketGraphics]:
         """
         Takes all of the packets that are waiting to be sent on one ConnectionSide and sends them down the main connection.
         :param side: a `ConnectionSide` object.
@@ -193,11 +189,14 @@ class Connection:
         if side not in self.get_sides():
             raise NoSuchConnectionSideError()
 
+        new_graphics_to_register = []
         direction = PACKET.DIRECTION.LEFT if side is self.right_side else PACKET.DIRECTION.RIGHT
         if side.is_sending():
             for packet in side.packets_to_send:
                 self.add_packet(packet, direction)
+                new_graphics_to_register.extend(packet.init_graphics(self.graphics, direction))
             side.packets_to_send.clear()
+        return new_graphics_to_register
 
     def _update_packet(self, sent_packet: SentPacket) -> None:
         """
@@ -207,50 +206,55 @@ class Connection:
         :return: None
         """
         sent_packet.packet.graphics.progress += \
-            (self.main_loop.time_since(sent_packet.last_update_time) / self.deliver_time) * sent_packet.packet.graphics.speed
-        sent_packet.last_update_time = self.main_loop.time()
+            (MainLoop.instance.time_since(sent_packet.last_update_time) / self.deliver_time) * sent_packet.packet.graphics.speed
+        sent_packet.last_update_time = MainLoop.instance.time()
 
         if sent_packet.packet.graphics.progress >= 1:
             self.reach_destination(sent_packet)
 
-    def move_packets(self) -> None:
+    def move_packets(self, main_loop: MainLoop) -> None:
         """
         This method is inserted into the main loop of the simulation when this `Connection` object is initiated.
         The packets in the connection should always be moving. (unless paused)
         This method sends new packets from the `ConnectionSide` object, updates the time they have been in the cable, and
             removes them if they reached the end.
-        :return: None
         """
         for side in self.get_sides():
-            self._send_packets_from_side(side)
+            new_packet_graphics_objects = self._send_packets_from_side(side)
+            main_loop.register_graphics_object(new_packet_graphics_objects)
 
         for sent_packet in self.sent_packets[:]:  # we copy the list because we alter it during the run
             self._update_packet(sent_packet)
 
-        self._drop_predetermined_dropped_packets()  # drops the packets that were chosen by the random PL (packet loss)
-        self._delay_predetermined_delayed_packets()
+        main_loop.register_graphics_object(self._drop_predetermined_dropped_packets())
+        main_loop.register_graphics_object(self._delay_predetermined_delayed_packets())
 
-    def _drop_predetermined_dropped_packets(self) -> None:
+    def _drop_predetermined_dropped_packets(self) -> List[AnimationGraphics]:
         """
         Goes through the packets that are being sent, When they reach the middle of the connection, check if they need
         to be dropped (by PL) if so, remove them from the list, and do the animation.
-        :return: None
         """
+        animations_to_register = []
         for sent_packet in self.sent_packets[:]:
             if sent_packet.will_be_dropped and sent_packet.packet.graphics.progress >= (random.random() + 0.3):
                 self.sent_packets.remove(sent_packet)
-                sent_packet.packet.graphics.drop()
+                sent_packet.packet.graphics.unregister()
+                animations_to_register.append(sent_packet.packet.graphics.get_drop_animation())
+        return animations_to_register
 
-    def _delay_predetermined_delayed_packets(self) -> None:
+    def _delay_predetermined_delayed_packets(self) -> List[AnimationGraphics]:
         """
         Goes through the packets that are being sent, When they reach the middle of the connection, check if they need
         to be dropped (by PL) if so, remove them from the list, and do the animation.
         :return: None
         """
+        animations_to_register = []
         for sent_packet in self.sent_packets:
             if sent_packet.will_be_delayed and sent_packet.packet.graphics.progress >= (random.random() + 0.3):
-                sent_packet.packet.graphics.decrease_speed()
                 sent_packet.will_be_delayed = False
+                sent_packet.packet.graphics.decrease_speed()
+                animations_to_register.append(sent_packet.packet.graphics.get_decrease_speed_animation())
+        return animations_to_register
 
     def stop_packets(self) -> None:
         """
@@ -258,7 +262,7 @@ class Connection:
         Kills all of the packets in the connection and unregisters their `GraphicsObject`-s
         """
         for sent_packet in self.sent_packets:
-            self.main_loop.unregister_graphics_object(sent_packet.packet.graphics)
+            sent_packet.packet.graphics.unregister()
         self.sent_packets.clear()
 
     def __repr__(self) -> str:

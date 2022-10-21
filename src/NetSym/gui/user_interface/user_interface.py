@@ -7,11 +7,10 @@ import os
 import pprint
 import random
 import time
-from collections import defaultdict
 from functools import reduce
 from math import sqrt
 from operator import concat, attrgetter
-from typing import TYPE_CHECKING, Optional, NamedTuple, List, Type, Callable, Dict, TypeVar, Tuple, Union
+from typing import TYPE_CHECKING, Optional, NamedTuple, List, Type, Callable, Dict, TypeVar, Tuple, Union, Any, Iterable
 
 import pyglet
 from pyglet.window import key
@@ -26,11 +25,13 @@ from NetSym.computing.internals.wireless_interface import WirelessInterface
 from NetSym.computing.router import Router
 from NetSym.computing.switch import Switch, Hub, Antenna
 from NetSym.consts import VIEW, TEXT, BUTTONS, IMAGES, DIRECTORIES, T_Color, SELECTED_OBJECT, KEYBOARD, MODES, WINDOWS, COLORS, CONNECTIONS, \
-    INTERFACES, ADDRESSES, MESSAGES
+    INTERFACES, ADDRESSES, MESSAGES, MAIN_LOOP, CONSOLE
 from NetSym.exceptions import *
+from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
+from NetSym.gui.abstracts.resizable import is_resizable
+from NetSym.gui.abstracts.selectable import Selectable
+from NetSym.gui.abstracts.uniquely_dragged import UniquelyDragged
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
-from NetSym.gui.main_loop import MainLoop
-from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
 from NetSym.gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from NetSym.gui.tech.computer_graphics import ComputerGraphics
@@ -44,6 +45,7 @@ from NetSym.gui.user_interface.popup_windows.popup_help import PopupHelp
 from NetSym.gui.user_interface.popup_windows.popup_text_box import PopupTextBox
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 from NetSym.gui.user_interface.popup_windows.yes_no_popup_window import YesNoPopupWindow
+from NetSym.gui.user_interface.resizing_dots_handler import ResizingDotsHandler
 from NetSym.gui.user_interface.selecting_square import SelectingSquare
 from NetSym.gui.user_interface.text_graphics import Text
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
@@ -54,6 +56,8 @@ if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.packets.packet import Packet
     from NetSym.computing.connection import Connection
+    from NetSym.gui.main_loop import MainLoop
+    from NetSym.gui.main_window import MainWindow
 
 
 T = TypeVar("T")
@@ -102,7 +106,7 @@ class UserInterface:
     """
     WIDTH = WINDOWS.SIDE.WIDTH  # pixels
 
-    def __init__(self) -> None:
+    def __init__(self, main_loop: MainLoop, main_window: MainWindow) -> None:
         """
         Initiates the UserInterface class!
         `key_to_action` is a dictionary from keys and their modifiers to actions to perform when that key is pressed.
@@ -110,6 +114,9 @@ class UserInterface:
         the `MainWindow` is initiated.
 
         """
+        self.main_loop = main_loop
+        self.main_window = main_window
+
         self.key_to_action = {
             (key.N, KEYBOARD.MODIFIERS.CTRL): self.create_computer_with_ip,
             (key.N, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT): with_args(self.create_computer_with_ip, True),
@@ -122,14 +129,14 @@ class UserInterface:
             (key.W, KEYBOARD.MODIFIERS.NONE): self.add_tcp_test,
             (key.Q, KEYBOARD.MODIFIERS.CTRL): self.exit,
             (key.A, KEYBOARD.MODIFIERS.CTRL): self.select_all,
-            (key.SPACE, KEYBOARD.MODIFIERS.NONE): self.toggle_pause,
+            (key.SPACE, KEYBOARD.MODIFIERS.NONE): self.main_loop.toggle_pause,
             (key.TAB, KEYBOARD.MODIFIERS.NONE): self.tab_through_selected,
             (key.TAB, KEYBOARD.MODIFIERS.SHIFT): with_args(self.tab_through_selected, True),
             (key.ESCAPE, KEYBOARD.MODIFIERS.NONE): self.clear_selected_objects_and_active_window,
             (key.DELETE, KEYBOARD.MODIFIERS.NONE): self.delete_selected_and_marked,
             (key.J, KEYBOARD.MODIFIERS.NONE): self.color_by_subnets,
-            (key.LALT, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.ALT): with_args(self.set_is_ignoring_keyboard_escape_keys, False),
-            (key.G, KEYBOARD.MODIFIERS.CTRL): with_args(self.set_is_ignoring_keyboard_escape_keys, True),
+            (key.LALT, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.ALT): with_args(self.main_window.set_is_ignoring_keyboard_escape_keys, False),
+            (key.G, KEYBOARD.MODIFIERS.CTRL): with_args(self.main_window.set_is_ignoring_keyboard_escape_keys, True),
             (key.TAB, KEYBOARD.MODIFIERS.ALT): self.tab_through_windows,
             (key.TAB, KEYBOARD.MODIFIERS.ALT | KEYBOARD.MODIFIERS.SHIFT): with_args(self.tab_through_windows, True),
             (key.RIGHT, KEYBOARD.MODIFIERS.WINKEY): with_args(self.pin_active_window_to, WINDOWS.POPUP.DIRECTIONS.RIGHT),
@@ -190,7 +197,7 @@ class UserInterface:
         self.__active_window: Optional[PopupWindow] = None
 
         self.button_arguments = [
-            ((with_args(DeviceCreationWindow, self), "create device (e)"), {"key": (key.E, KEYBOARD.MODIFIERS.NONE)}),
+            ((self.open_device_creation_window, "create device (e)"), {"key": (key.E, KEYBOARD.MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.CONNECTING), "connect (c / ^c / Shift+c)"), {"key": (key.C, KEYBOARD.MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.PINGING), "ping (p / ^p / Shift+p)"), {"key": (key.P, KEYBOARD.MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.FILE_DOWNLOADING),
@@ -212,15 +219,24 @@ class UserInterface:
 
         self.selecting_square: Optional[SelectingSquare] = None
 
-        self.marked_objects: List[GraphicsObject] = []
-        self.dragging_points = defaultdict(lambda: (None, None))
+        self.marked_objects: List[Selectable] = []
+        self.dragging_points: Dict[GraphicsObject, Tuple[float, float]] = {}
 
-        self.__selected_object: Optional[GraphicsObject] = None
+        self.__selected_object: Optional[Selectable] = None
         # ^ the object that is currently surrounded by the blue square
         self.selected_object = None  # this sets the `selected_object` attribute
+        self.resizing_dots_handler = ResizingDotsHandler()
+
+        self.main_loop.insert_to_loop(self.select_selected_and_marked_objects)
+        self.main_loop.insert_to_loop(self.show)
+
+        self.register_main_window_event_handlers()
+
+        self.main_loop.insert_to_loop_prioritized(self.main_window.clear, MAIN_LOOP.FunctionPriority.HIGH)
+        self.initiate_buttons()
 
     @property
-    def all_marked_objects(self) -> List[GraphicsObject]:
+    def all_marked_objects(self) -> List[Selectable]:
         """
         The `marked_objects` list with the selected_object together in one list
         :return:
@@ -244,7 +260,7 @@ class UserInterface:
         new_window_name = WINDOWS.MAIN.NAME
         if self.__saving_file is not None:
             new_window_name += ": " + self.__saving_file
-        MainWindow.main_window.set_caption(new_window_name)
+        self.main_window.set_caption(new_window_name)
 
     @active_window.setter
     def active_window(self, window: PopupWindow) -> None:
@@ -255,29 +271,31 @@ class UserInterface:
             window.activate()
         self.__active_window = window
 
-        if MainLoop.instance is not None and window is not None:
-            MainLoop.instance.move_to_front(window)
+        if window is not None:
+            self.main_loop.move_to_front(window)
 
     @property
-    def selected_object(self) -> GraphicsObject:
+    def selected_object(self) -> Selectable:
         return self.__selected_object
 
     @selected_object.setter
-    def selected_object(self, graphics_object: GraphicsObject) -> None:
+    def selected_object(self, graphics_object: Selectable) -> None:
         if isinstance(graphics_object, PopupWindow):
             self.active_window = graphics_object
         else:
             self.__selected_object = graphics_object
             self.active_window = None
 
-    @staticmethod
-    def set_is_ignoring_keyboard_escape_keys(value) -> None:
+    def register_main_window_event_handlers(self) -> None:
         """
-        :param value: Whether or not to swallow special keyboard shortcuts passed (winkey, alt+tab...)
-
-            This must be a separate method because inside this class's __init__ method the `MainWindow.main_window` object is still `None`
+        Register all functions of the `UserInterface` that should be called every time an event occurs
         """
-        MainWindow.main_window.set_is_ignoring_keyboard_escape_keys(value)
+        self.main_window.set_handler('on_draw',          self.main_loop.main_loop)  # < The single most important line of the code
+        self.main_window.set_handler('on_resize',        self.on_resize)
+        self.main_window.set_handler('on_key_press',     self.on_key_press)
+        self.main_window.set_handler('on_mouse_press',   self.on_mouse_press)
+        self.main_window.set_handler('on_mouse_scroll',  self.on_mouse_scroll)
+        self.main_window.set_handler('on_mouse_release', self.on_mouse_release)
 
     def show(self) -> None:
         """
@@ -285,13 +303,16 @@ class UserInterface:
         :return: None
         """
         self._draw_side_window()
-        if MainLoop.instance.is_paused:
+        if self.main_loop.is_paused:
             draw_pause_rectangles()
-        if MainWindow.main_window.is_ignoring_keyboard_escape_keys:
+        if self.main_window.is_ignoring_keyboard_escape_keys:
             draw_tiny_corner_windows_icon()
         self.drag_objects()
         self._stop_viewing_dead_packets()
         self._showcase_running_stp()
+        self._unregister_requesting_popup_windows()
+        self._handle_resizing_dots()
+        self._color_hovered_objects_differently()
 
         if self.mode in MODES.COMPUTER_CONNECTING_MODES:
             self._draw_connection_to_mouse(MODES.TO_COLORS[self.mode])
@@ -306,15 +327,28 @@ class UserInterface:
             return
 
         draw_line(
-            self.source_of_line_drag.location, MainWindow.main_window.get_mouse_location(),
+            self.source_of_line_drag.location, self.main_window.get_mouse_location(),
             color=color,
             width=MODES.COMPUTER_CONNECTING_MODES_LINE_TO_MOUSE_WIDTH,
         )
-        self.source_of_line_drag.mark_as_selected_non_resizable()
+        if isinstance(self.source_of_line_drag, Selectable):
+            self.source_of_line_drag.mark_as_selected()
 
         destination = self.get_object_the_mouse_is_on()
-        if destination is not None:
-            destination.mark_as_selected_non_resizable()
+        if destination is not None and isinstance(destination, Selectable):
+            destination.mark_as_selected()
+
+    def _color_hovered_objects_differently(self) -> None:
+        """
+        Some objects need to be colored a different color once the mouse is hovering over them!
+        This function is in charge to find that out and changing the color if necessary
+        """
+        for graphics_object in self.main_loop.graphics_objects:
+            if isinstance(graphics_object, DifferentColorWhenHovered):
+                if graphics_object.is_in(*self.main_window.get_mouse_location()):
+                    graphics_object.set_hovered_color()
+                else:
+                    graphics_object.set_normal_color()
 
     def _stop_viewing_dead_packets(self) -> None:
         """
@@ -322,8 +356,7 @@ class UserInterface:
         stops viewing it.
         :return:
         """
-        if self.selected_object is not None and \
-                isinstance(self.selected_object, PacketGraphics) and \
+        if isinstance(self.selected_object, PacketGraphics) and \
                 self.packet_from_graphics_object(self.selected_object) is None:
             self.set_mode(MODES.NORMAL)
 
@@ -332,7 +365,7 @@ class UserInterface:
         Draws the side window
         :return:
         """
-        draw_rectangle(MainWindow.main_window.width - self.WIDTH, 0, self.WIDTH, MainWindow.main_window.height,
+        draw_rectangle(self.main_window.width - self.WIDTH, 0, self.WIDTH, self.main_window.height,
                        color=MODES.TO_COLORS[self.mode])
 
     def drag_objects(self) -> None:
@@ -341,26 +374,41 @@ class UserInterface:
         Essentially sets the objects coordinates to be the ones of the mouse.
         :return: None
         """
+        if not self.main_window.mouse_pressed:
+            return
+
         if self.selecting_square is not None:
             return
-        dragging_objects = self.marked_objects + ([self.dragged_object] if self.dragged_object is not None else [])
+
+        mouse_x, mouse_y = self.main_window.get_mouse_location()
+
+        dragging_objects = ([self.dragged_object] if self.dragged_object is not None else []) + self.marked_objects
         for object_ in dragging_objects:
-            if not isinstance(object_, Button):
+            if isinstance(object_, Button):
+                continue
+
+            try:
                 drag_x, drag_y = self.dragging_points[object_]
-                if drag_x is None:
-                    continue
-                mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
+            except KeyError:
+                continue
+
+            if isinstance(object_, UniquelyDragged):
+                object_.drag(mouse_x, mouse_y, drag_x, drag_y)
+            else:
                 object_.location = mouse_x + drag_x, mouse_y + drag_y
+
+            if not isinstance(object_, Selectable):
+                return  # This can only happen on the first object - the self.dragged_object
 
     @property
     def viewing_image_location(self) -> Tuple[float, float]:
-        x = (MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2)) - (IMAGES.SIZE * IMAGES.SCALE_FACTORS.VIEWING_OBJECTS / 2)
-        y = MainWindow.main_window.height - ((IMAGES.SIZE * IMAGES.SCALE_FACTORS.VIEWING_OBJECTS) + 15)
+        x = (self.main_window.width - (WINDOWS.SIDE.WIDTH / 2)) - (IMAGES.SIZE * IMAGES.SCALE_FACTORS.VIEWING_OBJECTS / 2)
+        y = self.main_window.height - ((IMAGES.SIZE * IMAGES.SCALE_FACTORS.VIEWING_OBJECTS) + 15)
         return x, y
 
     @property
     def viewing_text_location(self) -> Tuple[float, float]:
-        return (MainWindow.main_window.width - (WINDOWS.SIDE.WIDTH / 2)), \
+        return (self.main_window.width - (WINDOWS.SIDE.WIDTH / 2)), \
                self.viewing_image_location[1] + VIEW.TEXT_PADDING
 
     def start_object_view(self, graphics_object: ViewableGraphicsObject) -> None:
@@ -376,22 +424,21 @@ class UserInterface:
             sprite.update(*self.viewing_image_location,
                           scale_x=VIEW.IMAGE_SIZE / sprite.image.width,
                           scale_y=VIEW.IMAGE_SIZE / sprite.image.height)
-            MainLoop.instance.insert_to_loop(sprite.draw)
+            self.main_loop.insert_to_loop(sprite.draw)
 
             if isinstance(graphics_object, PacketGraphics):
                 text = self.packet_from_graphics_object(graphics_object).multiline_repr()
 
         x, y = self.viewing_text_location
-        self.object_view = ObjectView(
-            sprite,
-            Text(
-                text, x, y,
-                max_width=(WINDOWS.SIDE.WIDTH - WINDOWS.SIDE.VIEWING_OBJECT.TEXT.PADDING[0]),
-                align=TEXT.ALIGN.LEFT,
-                padding=WINDOWS.SIDE.VIEWING_OBJECT.TEXT.PADDING
-            ),
-            graphics_object,
+        text = Text(
+            text, x, y,
+            max_width=(WINDOWS.SIDE.WIDTH - WINDOWS.SIDE.VIEWING_OBJECT.TEXT.PADDING[0]),
+            align=TEXT.ALIGN.LEFT,
+            padding=WINDOWS.SIDE.VIEWING_OBJECT.TEXT.PADDING
         )
+        self.main_loop.register_graphics_object(text)
+        self.object_view = ObjectView(sprite, text, graphics_object)
+
         self.adjust_viewed_text_to_buttons(buttons_id + 1)
 
     def adjust_viewed_text_to_buttons(self, buttons_id: int) -> None:
@@ -417,9 +464,9 @@ class UserInterface:
         """
         if self.object_view is not None:
             self.object_view.viewed_object.end_viewing(self)
-            MainLoop.instance.unregister_graphics_object(self.object_view.text)
+            self.main_loop.unregister_graphics_object(self.object_view.text)
             if self.object_view.sprite is not None:  # if the viewed graphics object is an image graphics object.
-                MainLoop.instance.remove_from_loop(self.object_view.sprite.draw)
+                self.main_loop.remove_from_loop(self.object_view.sprite.draw)
 
             if isinstance(self.object_view.viewed_object, ComputerGraphics):
                 self.object_view.viewed_object.child_graphics_objects.console.hide()
@@ -452,23 +499,21 @@ class UserInterface:
 
     def initiate_buttons(self) -> None:
         """
-        Initiates the buttons in the window.
-        This does not happen in init because when init is called here
-        `MainWindow.main_window` is still uninitiated so it cannot register the graphics objects of the buttons.
-        :return: None
+        Create all buttons of the main menu in their currect locations
         """
         self.buttons[BUTTONS.MAIN_MENU.ID] = [
             Button(
-                *MainWindow.main_window.button_location_by_index(i - 1),
+                *self.main_window.button_location_by_index(i - 1),
                 *args,
                 **kwargs,
             ) for i, (args, kwargs) in enumerate(self.button_arguments)
         ]
 
         for i, button in enumerate(self.buttons[BUTTONS.MAIN_MENU.ID]):
-            x, y = MainWindow.main_window.button_location_by_index(i - 1)
+            x, y = self.main_window.button_location_by_index(i - 1)
             padding = x - WINDOWS.MAIN.WIDTH, y - WINDOWS.MAIN.HEIGHT
-            button.set_parent_graphics(MainWindow.main_window, padding)
+            button.set_parent_graphics(self.main_window, padding)
+            self.main_loop.register_graphics_object(button)
 
     def tab_through_windows(self, reverse: bool = False) -> None:
         """
@@ -476,7 +521,7 @@ class UserInterface:
         :param reverse:
         :return:
         """
-        available_windows = sorted(list(filter(lambda o: isinstance(o, PopupWindow), MainLoop.instance.graphics_objects)),
+        available_windows = sorted(list(filter(lambda o: isinstance(o, PopupWindow), self.main_loop.graphics_objects)),
                                    key=lambda w: w.creation_time)
         if not available_windows:
             return
@@ -496,7 +541,7 @@ class UserInterface:
         Allows working without the mouse when there are not a lot of objects on the screen
         :return:
         """
-        available_graphics_objects = [object_ for object_ in MainLoop.instance.graphics_objects
+        available_graphics_objects = [object_ for object_ in self.main_loop.graphics_objects
                                       if object_.is_pressable and isinstance(object_, ViewableGraphicsObject)]
         if not available_graphics_objects:
             return
@@ -525,11 +570,12 @@ class UserInterface:
             self.end_object_view()
             self.mode = new_mode
             self.hide_buttons(BUTTONS.MAIN_MENU.ID)
-            if not isinstance(self.selected_object, ViewableGraphicsObject):
+            if isinstance(self.selected_object, ViewableGraphicsObject):
+                self.start_object_view(self.selected_object)
+            else:
                 raise WrongUsageError(
                     "The new_mode should not be switched to view new_mode when the selected object cannot be viewed"
                 )
-            self.start_object_view(self.selected_object)
 
         else:
             self.source_of_line_drag = None
@@ -558,37 +604,62 @@ class UserInterface:
         else:
             self.set_mode(mode)
 
-    @staticmethod
-    def toggle_pause() -> None:
+    def _get_pressed_button(self) -> Optional[Button]:
         """
-        Toggling from pause back and fourth.
-        This is done because when the keys are paired in the __init__ method `MainLoop.instance` is not yet initiated
-        :return: None
+        Get the button the mouse is on.
+        If the mouse is not hovering over any buttons - return None
         """
-        MainLoop.instance.toggle_pause()
+        for button in reversed(reduce(concat, list(self.buttons.values()))):
+            if not button.is_hidden and button.is_in(*self.main_window.get_mouse_location()):
+                return button
+        return None
 
-    def on_mouse_press(self) -> None:
+    def _get_on_mouse_pressed_action_by_mode(self) -> Callable[[], None]:
+        """
+        Decide what happens when the mouse is pressed - only with the things that regard the current MODE of the simulation
+        If the mode has no action related to it - raise UnknownModeError
+        """
+        action = self.action_at_press_by_mode.get(self.mode)
+        if action is None:
+            if self.mode not in MODES.COMPUTER_CONNECTING_MODES:
+                raise UnknownModeError("No handler was set for this mode! What to do when the mouse is pressed?")
+
+            action = self.start_device_visual_connecting
+        return action
+
+    def on_mouse_press(self, x: float, y: float, mouse_button: int, modifiers: int) -> None:
         """
         Happens when the mouse is pressed.
         Decides what to do according to the mode we are now in.
         The choosing of a selected and dragged objects should be performed BEFORE this is called!
-        :return: None
         """
-        for button in reversed(reduce(concat, list(self.buttons.values()))):
-            if not button.is_hidden and button.is_mouse_in():
-                button.action()
-                break
-        else:  # If not pressing on any buttons :)
-            action = self.action_at_press_by_mode.get(self.mode)
-            if action is None:
-                if self.mode not in MODES.COMPUTER_CONNECTING_MODES:
-                    raise UnknownModeError("No handler was set for this mode! What to do when the mouse is pressed?")
+        button = self._get_pressed_button()
+        if button is not None:
+            button.action()
+            return
 
-                action = self.start_device_visual_connecting
-            action()
+        action_by_mode = self._get_on_mouse_pressed_action_by_mode()
+        action_by_mode()
 
         if self.active_window is None:
             self._create_selecting_square()
+
+    def on_mouse_scroll(self, x: float, y: float, scroll_x: Union[int, float], scroll_y: Union[int, float]) -> None:
+        """
+        Defines what happens when the mouse is scrolled
+        """
+        if self.is_mouse_in_side_window() and self.mode == MODES.VIEW:
+            self.scroll_view(scroll_y)
+        else:
+            for obj in self.all_marked_objects:
+                if obj is not None and hasattr(obj, "resize"):
+                    obj.resize(10 * scroll_y, 10 * scroll_y, constrain_proportions=True)
+
+    def on_resize(self, *args: Any, **kwargs: Any) -> None:
+        """
+
+        """
+        self.set_mode(MODES.NORMAL)
 
     def pin_active_window_to(self, direction) -> None:
         """
@@ -597,7 +668,7 @@ class UserInterface:
         :return:
         """
         if self.active_window is not None:
-            self.active_window.pin_to(direction)
+            self.active_window.pin_to(direction, self.main_window.width, self.main_window.height)
 
     def _create_selecting_square(self) -> None:
         """
@@ -605,21 +676,21 @@ class UserInterface:
         :return:
         """
         if self.mode == MODES.NORMAL:
-            mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
+            mouse_x, mouse_y = self.main_window.get_mouse_location()
             self.selecting_square = SelectingSquare(
                 mouse_x, mouse_y,
-                MainLoop.instance.graphics_objects_of_types(ComputerGraphics, PacketGraphics),
-                self,
+                mouse_x, mouse_y,
             )
+            self.main_loop.register_graphics_object(self.selecting_square)
 
-    def on_mouse_release(self) -> None:
+    def on_mouse_release(self, x: float, y: float, button: int, modifiers: int) -> None:
         """
         this is called when the mouse is released
         :return:
         """
         self.dragging_points.clear()
         if self.selecting_square is not None:
-            MainLoop.instance.unregister_graphics_object(self.selecting_square)
+            self.main_loop.unregister_graphics_object(self.selecting_square)
             self.selecting_square = None
             return
 
@@ -630,11 +701,13 @@ class UserInterface:
                 MODES.FILE_DOWNLOADING: self.start_file_download,
             }[self.mode])
 
-    def on_key_pressed(self, symbol: int, modifiers: int) -> None:
+        self.dragged_object = None
+
+    def on_key_press(self, symbol: int, modifiers: int) -> None:
         """
         Called when a key is pressed
         """
-        modifiers = modifiers & (~KEYBOARD.MODIFIERS.NUMLOCK)
+        modifiers = self.main_window.normalize_keyboard_modifiers(modifiers)
 
         # if (not modifiers & KEYBOARD.MODIFIERS.WINKEY) and (symbol != key.ESCAPE):
         if isinstance(self.active_window, PopupTextBox):
@@ -665,27 +738,29 @@ class UserInterface:
 
         if self.selected_object is not None and isinstance(self.selected_object, ViewableGraphicsObject):
             self.set_mode(MODES.VIEW)
-        elif self.selected_object is None:
+            return
+
+        if self.selected_object is None:
             self.set_mode(MODES.NORMAL)
 
         # we only get here if an an object that cannot be viewed is pressed - do nothing
 
     def is_mouse_in_side_window(self) -> bool:
         """Return whether or not the mouse is currently in the side window."""
-        mouse_x, _ = MainWindow.main_window.get_mouse_location()
-        return mouse_x > (MainWindow.main_window.width - self.WIDTH)
+        mouse_x, _ = self.main_window.get_mouse_location()
+        return mouse_x > (self.main_window.width - self.WIDTH)
 
     def create_device(self, object_type: Type[Computer]) -> None:
         """
         Creates an object from a given type.
         :param object_type: an object type that will be created (Computer, Switch, Hub, etc...)
         """
-        x, y = MainWindow.main_window.get_mouse_location()
+        x, y = self.main_window.get_mouse_location()
         if self.is_mouse_in_side_window():
             x, y = WINDOWS.MAIN.WIDTH / 2, WINDOWS.MAIN.HEIGHT / 2
 
         object_ = object_type()
-        object_.show(x, y)
+        self.main_loop.register_graphics_object(object_.init_graphics(x, y, self.get_computer_output_console_location()))
         self.computers.append(object_)
 
     def two_pressed_objects(self,
@@ -724,12 +799,18 @@ class UserInterface:
         if self.source_of_line_drag is None or self.is_mouse_in_side_window():
             self.set_mode(MODES.NORMAL)
 
-    @staticmethod
-    def get_object_the_mouse_is_on() -> GraphicsObject:
+    def get_object_the_mouse_is_on(self, exclude_types: Optional[Iterable[Type]] = None) -> GraphicsObject:
         """
-        Get the object the mouse is on - but exclude buttons
+        Returns the `GraphicsObject` that should be selected if the mouse is pressed
+        (so the object that the mouse is on right now) or `None` if the mouse is not resting upon any object.
+        :return: a `GraphicsObject` or None.
         """
-        return MainLoop.instance.get_object_the_mouse_is_on(exclude_types=[Button])
+        exclude_types = exclude_types if exclude_types is not None else [Button]
+        mouse_x, mouse_y = self.main_window.get_mouse_location()
+        return get_the_one(
+            reversed(self.main_loop.graphics_objects),
+            lambda go: go.is_in(mouse_x, mouse_y) and not isinstance(go, tuple(exclude_types))
+        )
 
     def end_device_visual_connecting(self, action: Callable[[GraphicsObject, GraphicsObject], None]) -> None:
         """
@@ -782,19 +863,18 @@ class UserInterface:
             return
 
         if any(isinstance(interface, WirelessInterface) for interface in interfaces):
-            PopupError(
+            self.register_window(PopupError(
                 "Wireless interfaces do not connect peer-to-peer! They just need to be on the same frequency and then they can communicate :)",
-                self
-            )
+            ))
             return
 
         try:
             connection = interfaces[0].connect(interfaces[1])
         except DeviceAlreadyConnectedError:
-            PopupError("That interface is already connected :(", self)
+            self.register_window(PopupError("That interface is already connected :("))
             return
         self.connection_data.append(ConnectionData(connection, *computers))
-        connection.show(computers[0].graphics, computers[1].graphics)
+        self.main_loop.register_graphics_object(connection.init_graphics(computers[0].graphics, computers[1].graphics))
         return connection
 
     @staticmethod
@@ -842,18 +922,18 @@ class UserInterface:
         """
         for object_ in list(filter(
                 lambda go: not isinstance(go, Button) and not (isinstance(go, Text) and go.is_button),
-                MainLoop.instance.graphics_objects)):
-            MainLoop.instance.unregister_graphics_object(object_)
+                self.main_loop.graphics_objects)):
+            self.main_loop.unregister_graphics_object(object_)
 
         self.selected_object = None
         self.dragged_object = None
         self.active_window = None
 
         for connection_data in self.connection_data:
-            MainLoop.instance.remove_from_loop(connection_data.connection.move_packets)
+            self.main_loop.remove_from_loop(connection_data.connection.move_packets)
 
         for computer in self.computers:
-            MainLoop.instance.remove_from_loop(computer.logic)
+            self.main_loop.remove_from_loop(computer.logic)
 
         self.computers.clear()
         self.connection_data.clear()
@@ -899,7 +979,7 @@ class UserInterface:
         if interface.is_connected:
             connection = interface.connection.connection
             self.delete(connection.graphics)
-        computer.add_remove_interface(interface.name)
+        computer.remove_interface(interface.name)
 
     def delete(self, graphics_object: GraphicsObject) -> None:
         """
@@ -924,7 +1004,7 @@ class UserInterface:
                 computer.disconnect(connection)
                 (computer1 if computer is computer2 else computer2).disconnect(connection)  # disconnect other computer
 
-                MainLoop.instance.unregister_graphics_object(connection.graphics)
+                self.main_loop.unregister_graphics_object(connection.graphics)
                 connection.stop_packets()
                 self.connection_data.remove(connection_data)
 
@@ -943,7 +1023,9 @@ class UserInterface:
         computer = computer_graphics.computer
         interface = get_the_one(computer.interfaces, lambda i: i.name == interface_name)
         try:
-            computer.add_interface(interface_name, type_=interface_type)
+            interface = computer.add_interface(interface_name, type_=interface_type)
+            self.main_loop.register_graphics_object(interface.graphics)
+
         except DeviceNameAlreadyExists:
             if interface.is_connected():
                 self.delete(interface.connection.connection.graphics)
@@ -1002,9 +1084,17 @@ class UserInterface:
                     self.selected_object = None
                     self.set_mode(MODES.NORMAL)
                     connection.sent_packets.remove(sent_packet)
-                    packet_graphics.drop()
+                    packet_graphics.unregister()
+                    self.main_loop.register_graphics_object(packet_graphics.get_drop_animation())
                     return
         raise NoSuchPacketError("That packet cannot be found!")
+
+    def decrease_packet_speed(self, packet_graphics: PacketGraphics) -> None:
+        """
+        Decrease the speed of the supplied packet and play the appropriate animation
+        """
+        packet_graphics.decrease_speed()
+        self.main_loop.register_graphics_object(packet_graphics.get_decrease_speed_animation())
 
     def ask_user_for_ip(self) -> None:
         """
@@ -1069,17 +1159,17 @@ class UserInterface:
         """
         self.learn_all_macs()
         print(f"\n{' debugging info ':-^100}")
-        print(f"time: {int(time.time())}, program time: {int(MainLoop.get_time())}")
+        print(f"time: {int(time.time())}, program time: {int(self.main_loop.time())}")
 
         def gos() -> List[GraphicsObject]:
-            return [go for go in MainLoop.instance.graphics_objects if not isinstance(go, (Button, Text))]
+            return [go for go in self.main_loop.graphics_objects if not isinstance(go, (Button, Text))]
 
-        print(f"Mouse location: {MainWindow.main_window.get_mouse_location()}\n")
+        print(f"Mouse location: {self.main_window.get_mouse_location()}\n")
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
         pprint.pprint(f"graphicsObject-s (no buttons or texts): ")
         pprint.pprint(gos())
         print(f"\ncomputers, {len(self.computers)}, connections, {len(self.connection_data)}, "
-              f"packets: {len(list(filter(lambda go: isinstance(go, PacketGraphics), MainLoop.instance.graphics_objects)))}")
+              f"packets: {len(list(filter(lambda go: isinstance(go, PacketGraphics), self.main_loop.graphics_objects)))}")
 
         print()
         if self.selected_object is not None and isinstance(self.selected_object, ComputerGraphics):
@@ -1092,6 +1182,9 @@ class UserInterface:
 
         # self.set_all_connection_speeds(200)
 
+    def get_computer_output_console_location(self) -> Tuple[float, float]:
+        return self.main_window.width - (WINDOWS.SIDE.WIDTH / 2) - (CONSOLE.WIDTH / 2), CONSOLE.Y
+
     def create_computer_with_ip(self, wireless: bool = False) -> Computer:
         """
         Creates a computer with an IP fitting to the computers around it.
@@ -1099,7 +1192,7 @@ class UserInterface:
         If there no other computers, takes the default IP (DEFAULT_COMPUTER_IP)
         :return: the Computer object.
         """
-        x, y = MainWindow.main_window.get_mouse_location()
+        x, y = self.main_window.get_mouse_location()
 
         try:
             given_ip = self._get_largest_ip_in_nearest_subnet(x, y)
@@ -1108,7 +1201,7 @@ class UserInterface:
 
         new_computer = Computer.with_ip(given_ip) if not wireless else Computer.wireless_with_ip(given_ip)
         self.computers.append(new_computer)
-        new_computer.show(x, y)
+        self.main_loop.register_graphics_object(new_computer.init_graphics(x, y, self.get_computer_output_console_location()))
         return new_computer
 
     def _get_largest_ip_in_nearest_subnet(self, x: float, y: float) -> IPAddress:
@@ -1214,16 +1307,16 @@ class UserInterface:
             try:
                 user_input_object = type_(string)
             except (ValueError, InvalidAddressError):
-                PopupError(error_msg, self)
+                self.register_window(PopupError(error_msg))
                 return
 
             try:
                 action(user_input_object)
             except PopupWindowWithThisError as err:
-                PopupError(str(err), self)
+                self.register_window(PopupError(str(err)))
                 return
 
-        PopupTextBox(window_text, self, try_casting_with_action)
+        self.register_window(PopupTextBox(window_text, try_casting_with_action))
 
     @staticmethod
     def key_from_string(string: str) -> Optional[Tuple[int, int]]:
@@ -1261,8 +1354,8 @@ class UserInterface:
         buttons_id = 0 if not self.buttons else max(self.buttons.keys()) + 1
         self.buttons[buttons_id] = [
             Button(
-                MainWindow.main_window.button_location_by_index(len(dictionary) + 1)[0],
-                MainWindow.main_window.button_location_by_index(len(dictionary) + 1)[1],
+                self.main_window.button_location_by_index(len(dictionary) + 1)[0],
+                self.main_window.button_location_by_index(len(dictionary) + 1)[1],
                 called_in_order(
                     with_args(self.hide_buttons, buttons_id),
                     with_args(self.show_buttons, buttons_id + 1),
@@ -1275,7 +1368,7 @@ class UserInterface:
 
             *[
                 Button(
-                    *MainWindow.main_window.button_location_by_index(i + 1),
+                    *self.main_window.button_location_by_index(i + 1),
                     action,
                     string,
                     key=self.key_from_string(string),
@@ -1284,11 +1377,10 @@ class UserInterface:
                 for i, (string, action) in enumerate(dictionary.items())
             ],
         ]
-
         self.buttons[buttons_id + 1] = [
             Button(
-                MainWindow.main_window.button_location_by_index(1)[0],
-                MainWindow.main_window.button_location_by_index(1)[1],
+                self.main_window.button_location_by_index(1)[0],
+                self.main_window.button_location_by_index(1)[1],
                 called_in_order(
                     with_args(self.hide_buttons, buttons_id + 1),
                     with_args(self.show_buttons, buttons_id),
@@ -1299,6 +1391,7 @@ class UserInterface:
             ),
         ]
         self.showing_buttons_id = buttons_id + 1
+        self.main_loop.register_graphics_object(self.buttons[buttons_id] + self.buttons[buttons_id + 1])
         return buttons_id
 
     def remove_buttons(self, buttons_id: int) -> None:
@@ -1308,7 +1401,7 @@ class UserInterface:
         :return: None
         """
         for button in self.buttons[buttons_id] + self.buttons[buttons_id + 1]:
-            MainLoop.instance.unregister_graphics_object(button)
+            self.main_loop.unregister_graphics_object(button)
         del self.buttons[buttons_id]
         del self.buttons[buttons_id + 1]
 
@@ -1344,7 +1437,7 @@ class UserInterface:
         server.open_port(1000, "UDP")
         server.add_remove_dns_zone(DEFAULT_DOMAIN)
 
-        for computer, location in zip(new_computers, circular_coordinates(MainWindow.main_window.get_mouse_location(), 150, len(new_computers))):
+        for computer, location in zip(new_computers, circular_coordinates(self.main_window.get_mouse_location(), 150, len(new_computers))):
             computer.graphics.location = location
             computer.domain = DEFAULT_DOMAIN
             computer.dns_server = server.get_ip()
@@ -1352,28 +1445,21 @@ class UserInterface:
 
         self.learn_all_macs()
 
-    def register_window(self, window: PopupWindow, *buttons: Button) -> None:
+    def register_window(self, window: PopupWindow) -> None:
         """
         Receives a window and adds it to the window list and make it known to the user interface
         object.
         :param window: a PopupWindow object
-        :param buttons: the buttons that the
-        window contains
-        :return:
         """
+        self.main_loop.register_graphics_object(window)
+
         if self.popup_windows:
             window.x, window.y = map(sum, zip(self.popup_windows[-1].location, WINDOWS.POPUP.STACKING_PADDING))
 
         self.popup_windows.append(window)
         self.selected_object = window
-        self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID] = self.buttons.get(BUTTONS.ON_POPUP_WINDOWS.ID, []) + list(buttons)
 
-        def remove_buttons() -> None:
-            for button_ in buttons:
-                self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID].remove(button_)
-                MainLoop.instance.unregister_graphics_object(button_)
-
-        window.remove_buttons = remove_buttons
+        self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID] = self.buttons.get(BUTTONS.ON_POPUP_WINDOWS.ID, []) + list(window.buttons)
 
     def unregister_window(self, window: PopupWindow) -> None:
         """
@@ -1381,6 +1467,10 @@ class UserInterface:
         :param window: a `PopupWindow` object
         :return: None
         """
+        for button_ in window.buttons:
+            self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID].remove(button_)
+            self.main_loop.unregister_graphics_object(button_)
+
         try:
             self.popup_windows.remove(window)
         except ValueError:
@@ -1394,12 +1484,20 @@ class UserInterface:
         if self.popup_windows:
             self.active_window = self.popup_windows[0]
 
+    def _unregister_requesting_popup_windows(self) -> None:
+        """
+        Call the `unregister_window` upon every window that has the `unregister_this_window_from_user_interface` flag set
+        """
+        for window in self.popup_windows[:]:
+            if window.unregister_this_window_from_user_interface:
+                self.unregister_window(window)
+
     def open_device_creation_window(self) -> None:
         """
         Creates the device creation window
         :return:
         """
-        DeviceCreationWindow(self)
+        self.register_window(DeviceCreationWindow(self))
 
     def _connect_interfaces_by_name(self,
                                     start_computer_name: str,
@@ -1445,7 +1543,7 @@ class UserInterface:
         :return: None
         """
         if os.path.isfile(os.path.join(DIRECTORIES.SAVES, f"{filename}.json")):
-            YesNoPopupWindow("file exists! override?", self, yes_action=with_args(self.save_to_file, filename))
+            self.register_window(YesNoPopupWindow("file exists! override?", yes_action=with_args(self.save_to_file, filename)))
         else:
             self.save_to_file(filename)
 
@@ -1492,7 +1590,7 @@ class UserInterface:
         for computer_dict in dict_from_file["computers"]:
             class_ = self.saving_file_class_name_to_class[computer_dict["class"]]
             computer = class_.from_dict_load(computer_dict)
-            computer.show(*computer_dict["location"])
+            self.main_loop.register_graphics_object(computer.init_graphics(*computer_dict["location"], self.get_computer_output_console_location()))
             self.computers.append(computer)
             for port in computer_dict["open_tcp_ports"]:
                 computer.open_port(port, "TCP")
@@ -1515,6 +1613,9 @@ class UserInterface:
         Returns a string of all of the files that are saved already
         :return:
         """
+        if not os.path.isdir(DIRECTORIES.SAVES):
+            return ""
+
         file_list = os.listdir(DIRECTORIES.SAVES)
         return ", ".join(map(lambda f: f.split('.')[0], file_list))
 
@@ -1529,6 +1630,32 @@ class UserInterface:
             f"insert file name to open:" + (f"[options: {saved_files}]" if saved_files else ""),
             self.load_from_file
         )
+
+    def _update_selecting_square(self) -> None:
+        """
+        Set the SelectingSquare to the appropriate size according to the mouse location
+        """
+        if self.selecting_square is None:
+            return
+
+        self.selecting_square.location2 = self.main_window.get_mouse_location()
+
+    def _mark_object_inside_selecting_square(self, object_types: Iterable[Type[GraphicsObject]] = ()) -> None:
+        """
+        Select the objects that are inside the square - add them to the `self.marked_objects` list
+        """
+        if self.selecting_square is None:
+            return
+
+        for graphics_object in [go for go in self.main_loop.graphics_objects if isinstance(go, tuple(object_types))]:
+            if isinstance(graphics_object, Selectable):
+                if graphics_object not in self.marked_objects:
+                    if graphics_object in self.selecting_square:
+                        self.marked_objects.append(graphics_object)
+                    continue
+
+                if graphics_object not in self.selecting_square:
+                    self.marked_objects.remove(graphics_object)
 
     def delete_selected_and_marked(self) -> None:
         """
@@ -1545,6 +1672,25 @@ class UserInterface:
             self.delete(object_)
         self.marked_objects.clear()
 
+    def select_selected_and_marked_objects(self) -> None:
+        """
+        Draws a rectangle around the selected object.
+        The selected object is the object that was last pressed and is surrounded by a white square.
+        :return: None
+        """
+        self._update_selecting_square()
+        self._mark_object_inside_selecting_square(object_types=(ComputerGraphics, PacketGraphics))
+
+        if self.selected_object is not None:
+            self.selected_object.mark_as_selected()
+            if is_resizable(self.selected_object):
+                self.resizing_dots_handler.select(self.selected_object)
+        else:
+            self.resizing_dots_handler.deselect()
+
+        for marked_object in self.marked_objects:
+            marked_object.mark_as_selected()
+
     def move_selected_mark(self, direction: int) -> None:
         """
         Moves the square that marks the selected computer to a given direction.
@@ -1559,9 +1705,9 @@ class UserInterface:
         try:
             computer_distance_in_direction = {
                 key.RIGHT: (lambda c: c.graphics.x - self.selected_object.x),
-                key.LEFT: (lambda c: self.selected_object.x - c.graphics.x),
-                key.UP: (lambda c: c.graphics.y - self.selected_object.y),
-                key.DOWN: (lambda c: self.selected_object.y - c.graphics.y),
+                key.LEFT:  (lambda c: self.selected_object.x - c.graphics.x),
+                key.UP:    (lambda c: c.graphics.y - self.selected_object.y),
+                key.DOWN:  (lambda c: self.selected_object.y - c.graphics.y),
             }[direction]
         except KeyError:
             raise WrongUsageError("direction must be one of {key.UP, key.DOWN, key.RIGHT, key.LEFT}")
@@ -1608,7 +1754,7 @@ class UserInterface:
         Closes the simulation
         :return:
         """
-        YesNoPopupWindow("Are you sure you want to exit?", self, yes_action=pyglet.app.exit)
+        self.register_window(YesNoPopupWindow("Are you sure you want to exit?", yes_action=pyglet.app.exit))
 
     def select_all(self) -> None:
         """
@@ -1624,7 +1770,7 @@ class UserInterface:
         Opens the help window.
         :return:
         """
-        PopupHelp(self)
+        self.register_window(PopupHelp())
 
     def set_mouse_pressed_objects(self) -> None:
         """
@@ -1645,7 +1791,7 @@ class UserInterface:
             return
 
         # vv this block is in charge of dragging the marked objects vv
-        mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
+        mouse_x, mouse_y = self.main_window.get_mouse_location()
         for object_ in self.marked_objects + [object_the_mouse_is_on]:
             object_x, object_y = object_.location
             self.dragging_points[object_] = object_x - mouse_x, object_y - mouse_y
@@ -1695,6 +1841,24 @@ class UserInterface:
             if freq.frequency == frequency:
                 return freq
 
-        new_freq = Frequency(frequency)
-        self.frequencies.append(new_freq)
-        return new_freq
+        new_frequency = Frequency(frequency, longest_line_in_screen=sqrt((self.main_window.width ** 2) + (self.main_window.height ** 2)))
+        self.frequencies.append(new_frequency)
+        self.main_loop.insert_to_loop_pausable(new_frequency.move_packets, supply_function_with_main_loop_object=True)
+        return new_frequency
+
+    def set_interface_frequency(self, interface: WirelessInterface, frequency: float) -> None:
+        """
+        Take in a WirelessInterface and set its frequency object
+        If the object does not exist - create it :)
+        """
+        interface.connect(self.get_frequency(frequency))
+
+    def _handle_resizing_dots(self) -> None:
+        """
+        Perform all of the actions `ResizingDot`s require doing periodically
+        Register the new dots that are created as `GraphicsObject`s in the main loop.
+        """
+        has_new_dots = self.resizing_dots_handler.update_dot_state()
+
+        if has_new_dots:
+            self.main_loop.register_graphics_object(self.resizing_dots_handler.dots)

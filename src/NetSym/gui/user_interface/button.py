@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import NamedTuple, Callable, Optional, Tuple
 
 from NetSym.consts import BUTTONS, T_Color, COLORS, WINDOWS
+from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
-from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_button
 from NetSym.gui.user_interface.text_graphics import Text
 from NetSym.usefuls.funcs import sum_tuples
@@ -14,7 +14,7 @@ class ChildGraphicsObjects(NamedTuple):
     text: Text
 
 
-class Button(UserInterfaceGraphicsObject):
+class Button(UserInterfaceGraphicsObject, DifferentColorWhenHovered):
     """
     A class of a button which you can press and assign text and an action to.
     """
@@ -59,23 +59,30 @@ class Button(UserInterfaceGraphicsObject):
         )
         self.key = key
 
-        self.color = color
+        self.regular_color = color
+        self.color = self.regular_color
+
         self.is_outlined = is_outlined
         self.__custom_active_color = custom_active_color
 
     @property
     def light_color(self) -> T_Color:
-        return tuple(int(rgb + COLORS.COLOR_DIFF) for rgb in self.color)
+        return tuple(int(rgb + COLORS.COLOR_DIFF) for rgb in self.regular_color)
     
     @property
     def active_color(self) -> T_Color:
         return self.__custom_active_color if self.__custom_active_color is not None else self.light_color
 
-    def is_mouse_in(self) -> bool:
+    def set_hovered_color(self) -> None:
+        self.color = self.active_color
+
+    def set_normal_color(self) -> None:
+        self.color = self.regular_color
+
+    def is_in(self, x: float, y: float) -> bool:
         """Returns whether or not the mouse is located inside of the button."""
-        mouse_x, mouse_y = MainWindow.main_window.get_mouse_location()
-        return (self.x < mouse_x < self.x + self.width) and \
-               (self.y < mouse_y < self.y + self.height)
+        return (self.x < x < self.x + self.width) and \
+               (self.y < y < self.y + self.height)
 
     def toggle_showing(self) -> None:
         """
@@ -106,7 +113,7 @@ class Button(UserInterfaceGraphicsObject):
         """
         if not self.is_hidden:
             draw_button(self.x, self.y, self.width, self.height,
-                        color=(self.active_color if self.is_mouse_in() else self.color),
+                        color=self.color,
                         outline_width=(BUTTONS.OUTLINE_WIDTH if self.is_outlined else 0))
 
     def move(self) -> None:

@@ -34,7 +34,7 @@ from NetSym.computing.internals.sockets.raw_socket import RawSocket
 from NetSym.computing.internals.sockets.tcp_socket import TCPSocket
 from NetSym.computing.internals.sockets.udp_socket import ReturnedUDPPacket, UDPSocket
 from NetSym.computing.internals.wireless_interface import WirelessInterface
-from NetSym.consts import IMAGES, COMPUTER, OPCODES, PACKET, PROTOCOLS, CONNECTIONS, INTERFACES, OS, T_Time, SENDING_GRAT_ARPS, \
+from NetSym.consts import IMAGES, COMPUTER, OPCODES, PACKET, PROTOCOLS, INTERFACES, OS, T_Time, SENDING_GRAT_ARPS, \
     COMPUTER_NAMES_FILE_PATH, T_Port, TTL, PORTS
 from NetSym.exceptions import *
 from NetSym.gui.main_loop import MainLoop
@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     from NetSym.computing.internals.sockets.socket import Socket
     from NetSym.computing.connection import Connection
     from NetSym.packets.packet import Packet
+    from NetSym.gui.abstracts.graphics_object import GraphicsObject
 
 
 @dataclass
@@ -241,9 +242,8 @@ class Computer:
     @classmethod
     def wireless_with_ip(cls: Type[Computer],
                          ip_address: Union[str, IPAddress],
-                         frequency: float = CONNECTIONS.WIRELESS.DEFAULT_FREQUENCY,
                          name: Optional[str] = None) -> Computer:
-        return cls(name, OS.WINDOWS, None, WirelessInterface(MACAddress.randomac(), IPAddress(ip_address), frequency=frequency))
+        return cls(name, OS.WINDOWS, None, WirelessInterface(MACAddress.randomac(), IPAddress(ip_address)))
 
     @classmethod
     def random_name(cls) -> str:
@@ -261,16 +261,17 @@ class Computer:
         cls.EXISTING_COMPUTER_NAMES.add(name)
         return name
 
-    def show(self, x: float, y: float) -> None:
+    def init_graphics(self, x: float, y: float, console_location: Tuple[float, float] = (0, 0)) -> List[GraphicsObject]:
         """
         This is called once to initiate the graphics of the computer.
         Gives it a `GraphicsObject`. (`ComputerGraphics`)
+        :param console_location:
         :param x:
         :param y: Coordinates to initiate the `GraphicsObject` at.
-        :return: None
+        :return: The graphics objects to register in the main loop
         """
-        self.graphics = ComputerGraphics(x, y, self, IMAGES.COMPUTERS.COMPUTER if not self.get_open_ports() else IMAGES.COMPUTERS.SERVER)
-        self.loopback.connection.connection.show(self.graphics)
+        self.graphics = ComputerGraphics(x, y, self, console_location=console_location)
+        return [self.graphics] + self.loopback.connection.connection.init_graphics(self.graphics)
 
     def print(self, string: str) -> None:
         """
@@ -462,17 +463,6 @@ class Computer:
         self.main_loop.unregister_graphics_object(interface.graphics)
         self.graphics.update_text()
 
-    def add_remove_interface(self, name: str) -> None:
-        """
-        Adds a new interface to this computer with a given name
-        :param name: a string or None, if None, chooses random name.
-        :return: None
-        """
-        try:
-            self.add_interface(name)
-        except DeviceNameAlreadyExists:
-            self.remove_interface(name)
-
     def available_interface(self) -> Interface:
         """
         Returns an interface of the computer that is disconnected and
@@ -482,7 +472,9 @@ class Computer:
         try:
             return get_the_one(self.interfaces, lambda i: not i.is_connected(), NoSuchInterfaceError)
         except NoSuchInterfaceError:
-            return self.add_interface()
+            interface = self.add_interface()
+            self.main_loop.register_graphics_object(interface.graphics)
+            return interface
 
     def disconnect(self, connection: Connection) -> None:
         """
@@ -1339,7 +1331,7 @@ class Computer:
         process = self.PORTS_TO_PROCESSES[protocol][port_number]
         if process is not None:
             if port_number in self.get_open_ports(protocol):
-                self.process_scheduler.kill_all_usermode_processes_by_type(process)
+                self.process_scheduler.kill_all_usermode_processes_by_type(process, force=True)
             else:
                 self.process_scheduler.start_usermode_process(self.PORTS_TO_PROCESSES[protocol][port_number])
 

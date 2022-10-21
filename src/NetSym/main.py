@@ -6,9 +6,10 @@ from NetSym.gui.main_window import MainWindow
 from NetSym.gui.user_interface.user_interface import UserInterface
 
 if __name__ == '__main__':
-    user_interface = UserInterface()
-    main_window = MainWindow(user_interface, WINDOWS.MAIN.WIDTH, WINDOWS.MAIN.HEIGHT, WINDOWS.MAIN.NAME, resizable=True)
-    main_loop = MainLoop(main_window)
+    main_loop = MainLoop()
+    main_window = MainWindow(WINDOWS.MAIN.WIDTH, WINDOWS.MAIN.HEIGHT, WINDOWS.MAIN.NAME, resizable=True)
+    user_interface = UserInterface(main_loop, main_window)
+
     pyglet.clock.schedule_interval(main_window.update, WINDOWS.MAIN.FRAME_RATE)
     pyglet.app.run()
 

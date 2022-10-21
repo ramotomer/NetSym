@@ -8,7 +8,6 @@ import scapy
 from NetSym.consts import CONNECTIONS, IMAGES, ANIMATIONS, PACKET
 from NetSym.gui.abstracts.animation_graphics import AnimationGraphics
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
-from NetSym.gui.main_loop import MainLoop
 from NetSym.packets.usefuls.type_to_opcode_function import TYPE_TO_OPCODE_FUNCTION
 from NetSym.packets.usefuls.usefuls import get_original_layer_name_by_instance
 from NetSym.usefuls.funcs import with_args, rangom
@@ -80,15 +79,18 @@ class PacketGraphics(ImageGraphics):
         Decreases the speed of the packet by a half
         """
         self.speed *= rangom(0.9) * CONNECTIONS.PACKETS.DECREASE_SPEED_BY
-        AnimationGraphics(ANIMATIONS.LATENCY, self.x, self.y, scale=CONNECTIONS.LATENCY_ANIMATION_SIZE)
 
-    def drop(self) -> None:
+    def get_decrease_speed_animation(self) -> AnimationGraphics:
         """
-        Displays the animation of the packet when it is dropped by PL in a connection.
-        :return: None
+        Returns the animation object that should be shown when decreasing the speed of a packet
         """
-        MainLoop.instance.unregister_graphics_object(self)
-        AnimationGraphics(ANIMATIONS.EXPLOSION, self.x, self.y)
+        return AnimationGraphics(ANIMATIONS.LATENCY, self.x, self.y, scale=CONNECTIONS.LATENCY_ANIMATION_SIZE)
+
+    def get_drop_animation(self) -> AnimationGraphics:
+        """
+        Returns the animation object that should be shown when dropping a packet
+        """
+        return AnimationGraphics(ANIMATIONS.EXPLOSION, self.x, self.y)
 
     @staticmethod
     def image_from_packet(layer: scapy.packet.Packet) -> str:
@@ -114,8 +116,8 @@ class PacketGraphics(ImageGraphics):
         :return: a tuple <display sprite>, <display text>, <new button id>
         """
         buttons = {
-            "Drop (alt+d)": with_args(user_interface.drop_packet, self),
-            "Slow down (alt+s)": self.decrease_speed,
+            "Drop (alt+d)":      with_args(user_interface.drop_packet,           self),
+            "Slow down (alt+s)": with_args(user_interface.decrease_packet_speed, self),
         }
         buttons.update(additional_buttons or {})
         self.buttons_id = user_interface.add_buttons(buttons)

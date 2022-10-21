@@ -274,6 +274,12 @@ class NoSuchGraphicsObjectError(GraphicsError):
     """
 
 
+class GraphicsObjectAlreadyRegistered(GraphicsError):
+    """
+    Trying to register a `GraphicsObject` which is already registered
+    """
+
+
 class PopupWindowWithThisError(GraphicsError):
     """
     This is raised inside an action of a popup window and it is caught inside the popup and a popup error window
@@ -297,6 +303,18 @@ class MainLoopInstanceNotYetInitiated(MainLoopError):
     """
     Some code was trying to use the `MainLoop.instance` before it was initiated
     Probably somewhere in the `UserInterface` class because it is initiated before the main loop
+    """
+
+
+class MainWindowError(GraphicsError):
+    """
+    An error related to the MainWindow object
+    """
+
+
+class UnknownEventType(MainWindowError):
+    """
+    Trying to register a function to handle an event which is unknown
     """
 
 

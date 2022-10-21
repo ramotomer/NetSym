@@ -2,15 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional, Set, Tuple
 
-from NetSym.consts import WINDOWS, T_Color, COLORS, SHAPES
+from NetSym.consts import WINDOWS, T_Color, COLORS, SHAPES, debugp
 from NetSym.exceptions import WrongUsageError
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from NetSym.gui.main_loop import MainLoop
-from NetSym.gui.main_window import MainWindow
 from NetSym.gui.shape_drawing import draw_rectangle
 from NetSym.gui.user_interface.button import Button
 from NetSym.gui.user_interface.text_graphics import Text
-from NetSym.usefuls.funcs import with_args
 
 if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
@@ -25,7 +23,6 @@ class PopupWindow(UserInterfaceGraphicsObject):
     def __init__(self,
                  x: float,
                  y: float,
-                 user_interface: UserInterface,
                  buttons: Optional[List[Button]] = None,
                  width: float = WINDOWS.POPUP.TEXTBOX.WIDTH,
                  height: float = WINDOWS.POPUP.TEXTBOX.HEIGHT,
@@ -35,7 +32,6 @@ class PopupWindow(UserInterfaceGraphicsObject):
         """
         Initiates the `PopupWindow` object.
         :param x, y: the location of the bottom left corner of the window
-        :param user_interface: the UserInterface object that holds all of the windows
         :param buttons: a list of buttons that will be displayed on this window. The `X` button is not included.
         """
         super(PopupWindow, self).__init__(x, y)
@@ -73,17 +69,18 @@ class PopupWindow(UserInterfaceGraphicsObject):
         )
         self.exit_button.set_parent_graphics(self, self.get_exit_button_padding())
 
-        self.remove_buttons = None
         self.child_graphics_objects = [
             self.title_text,
             self.exit_button,
         ] + buttons
-        user_interface.register_window(self, self.exit_button, *buttons)
-        self.unregister_from_user_interface = with_args(user_interface.unregister_window, self)
+
+        self.buttons = [self.exit_button] + buttons
 
         self._x_before_pinning, self._y_before_pinning = None, None
         self._size_before_pinning = self.width, self.height
         self._pinned_directions = set()
+
+        self.unregister_this_window_from_user_interface = False
 
     @property
     def location(self) -> Tuple[float, float]:
@@ -107,21 +104,13 @@ class PopupWindow(UserInterfaceGraphicsObject):
     def get_title_text_padding(self) -> Tuple[float, float]:
         return (self.width / 2) + 2, self.height + 22
 
-    def is_mouse_in(self) -> bool:
+    def is_in(self, x: float, y: float) -> bool:
         """
         Returns whether or not the mouse is pressing the upper part of the window (where it can be moved)
         :return: `bool`
         """
-        x, y = MainWindow.main_window.get_mouse_location()
         return self.x < x < self.x + self.width and \
                self.y < y < self.y + self.height + WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT
-
-    def mark_as_selected(self) -> None:
-        """
-        required for the API
-        :return: None
-        """
-        pass
 
     def delete(self, user_interface: Optional[UserInterface] = None) -> None:
         """
@@ -129,8 +118,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         :return: None
         """
         super(PopupWindow, self).delete(user_interface)
-        self.remove_buttons()
-        self.unregister_from_user_interface()
+        self.unregister_this_window_from_user_interface = True
 
     def draw(self) -> None:
         """
@@ -151,6 +139,12 @@ class PopupWindow(UserInterfaceGraphicsObject):
             self.width + self.outline_width, WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT,
             color=outline_color,
         )
+
+    def drag(self, mouse_x: float, mouse_y: float, drag_x: float, drag_y: float) -> None:
+        """
+        Dragging the window around
+        """
+        debugp(f"calling :)")
 
     def activate(self) -> None:
         """
@@ -173,9 +167,11 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.exit_button.padding = self.get_exit_button_padding()
         self.title_text.resize(self.get_title_text_padding(), width)
 
-    def pin_to(self, direction: str) -> None:
+    def pin_to(self, direction: str, screen_width: float, screen_height: float) -> None:
         """
         Pin the window to one side like the effect windows has when you press Winkey+arrow
+        :param screen_height:
+        :param screen_width:
         :param direction: one of `WINDOWS.POPUP.DIRECTIONS`
         """
         if not self.is_pinned:
@@ -187,79 +183,84 @@ class PopupWindow(UserInterfaceGraphicsObject):
 
         if direction == up:
             if not self.is_pinned or up in pinned_directions:
-                self.maximize()
+                self.maximize(screen_width, screen_height)
             elif {left, right} & pinned_directions:
                 sideways_direction, = {left, right} & pinned_directions
                 if down in pinned_directions:
-                    self.make_split_screen(sideways_direction)
+                    self.make_split_screen(sideways_direction, screen_width, screen_height)
                 else:
-                    self.make_quarter_screen({up, sideways_direction})
+                    self.make_quarter_screen({up, sideways_direction}, screen_width, screen_height)
 
         elif direction == down:
             if {left, right} & pinned_directions:
                 sideways_direction, = {left, right} & pinned_directions
                 if up in pinned_directions:
-                    self.make_split_screen(sideways_direction)
+                    self.make_split_screen(sideways_direction, screen_width, screen_height)
                 else:
-                    self.make_quarter_screen({down, sideways_direction})
+                    self.make_quarter_screen({down, sideways_direction}, screen_width, screen_height)
             elif up in pinned_directions:
                 self.make_like_before_pinned()
 
         elif direction in [left, right]:
             if not self.is_pinned or pinned_directions == {up}:
-                self.make_split_screen(direction)
+                self.make_split_screen(direction, screen_width, screen_height)
             elif ({left, right} & pinned_directions) and (direction not in pinned_directions):
                 if {up, down} & pinned_directions:
                     sideways_direction, = {left, right} & pinned_directions
                     rightways_direction, = {up, down} & pinned_directions
-                    self.make_quarter_screen({WINDOWS.POPUP.DIRECTIONS.OPPOSITE[sideways_direction], rightways_direction})
+                    self.make_quarter_screen({WINDOWS.POPUP.DIRECTIONS.OPPOSITE[sideways_direction], rightways_direction},
+                                             screen_width, screen_height)
                 else:
                     self.make_like_before_pinned()
 
-    def maximize(self) -> None:
+    def maximize(self, screen_width: float, screen_height: float) -> None:
         """
         Make the window the size of the whole screen
         """
         self.x, self.y = 0, 0
-        self.resize((MainWindow.main_window.width - WINDOWS.SIDE.WIDTH), MainWindow.main_window.height - WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT)
+        self.resize((screen_width - WINDOWS.SIDE.WIDTH), screen_height - WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT)
         self._pinned_directions = {WINDOWS.POPUP.DIRECTIONS.UP}
 
-    def make_split_screen(self, direction: str) -> None:
+    def make_split_screen(self, direction: str, screen_width: float, screen_height: float) -> None:
         """
         Set the size and location of the window to be exactly half of the screen
+        :param screen_width:
+        :param screen_height:
         :param direction: What half of the screen should that be 'right' or 'left'
         """
         if direction not in [WINDOWS.POPUP.DIRECTIONS.RIGHT, WINDOWS.POPUP.DIRECTIONS.LEFT]:
             raise WrongUsageError(f"direction must be either right or left not '{direction}'!")
 
-        self.resize((MainWindow.main_window.width - WINDOWS.SIDE.WIDTH) / 2,
-                    MainWindow.main_window.height - WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT)
+        self.resize((screen_width - WINDOWS.SIDE.WIDTH) / 2,
+                     screen_height - WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT)
 
         if direction == WINDOWS.POPUP.DIRECTIONS.RIGHT:
-            self.x, self.y = (MainWindow.main_window.width - WINDOWS.SIDE.WIDTH) / 2, 0
+            self.x, self.y = (screen_width - WINDOWS.SIDE.WIDTH) / 2, 0
         elif direction == WINDOWS.POPUP.DIRECTIONS.LEFT:
             self.x, self.y = 0, 0
 
         self._pinned_directions = {direction}
 
-    def make_quarter_screen(self, directions: Set[str]) -> None:
+    def make_quarter_screen(self, directions: Set[str], screen_width: float, screen_height: float) -> None:
         """
         Set the size and location of the window to be exactly a quarter of the screen
+        :param screen_width:
+        :param screen_height:
         :param directions: What quarter of the screen should that be. A `set` of two directions. Like: {'right', 'up'}
         """
         if len(directions) != 2:
             raise WrongUsageError(f"must supply at exactly two directions in order to make quarter screen! supplied directions: {directions}")
 
-        self.resize((MainWindow.main_window.width - WINDOWS.SIDE.WIDTH) / 2,
-                    (MainWindow.main_window.height / 2) - WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT)
+        self.resize((screen_width - WINDOWS.SIDE.WIDTH) / 2,
+                    (screen_height / 2) - WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT)
 
         if WINDOWS.POPUP.DIRECTIONS.RIGHT in directions:
-            self.x = (MainWindow.main_window.width - WINDOWS.SIDE.WIDTH) / 2
+            self.x = (screen_width - WINDOWS.SIDE.WIDTH) / 2
         elif WINDOWS.POPUP.DIRECTIONS.LEFT in directions:
             self.x = 0
 
         if WINDOWS.POPUP.DIRECTIONS.UP in directions:
-            self.y = MainWindow.main_window.height / 2
+            self.y = screen_height / 2
         elif WINDOWS.POPUP.DIRECTIONS.DOWN in directions:
             self.y = 0
 

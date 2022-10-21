@@ -2,14 +2,16 @@ from __future__ import annotations
 
 import os
 from math import acos, sin
-from typing import TYPE_CHECKING, NamedTuple, Optional, Dict, Callable, Tuple
+from typing import TYPE_CHECKING, NamedTuple, Optional, Dict, Callable, Tuple, List
 
 import pyglet
 
 from NetSym.consts import CONNECTIONS, PACKET, SELECTED_OBJECT, MESSAGES, DIRECTORIES, IMAGES
 from NetSym.exceptions import *
+from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
-from NetSym.gui.main_window import MainWindow
+from NetSym.gui.abstracts.selectable import Selectable
+from NetSym.gui.main_loop_function_to_call import FunctionToCall
 from NetSym.gui.shape_drawing import draw_line
 from NetSym.gui.shape_drawing import draw_rectangle
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
@@ -21,6 +23,7 @@ if TYPE_CHECKING:
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
     from NetSym.gui.tech.interface_graphics import InterfaceGraphics
     from NetSym.gui.user_interface.user_interface import UserInterface
+    from NetSym.gui.main_loop import MainLoop
 
 
 class Computers(NamedTuple):
@@ -39,7 +42,7 @@ class Interfaces(NamedTuple):
     end:   Optional[InterfaceGraphics]
 
 
-class ConnectionGraphics(ViewableGraphicsObject):
+class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Selectable):
     """
     This is a GraphicsObject subclass which displays a connection.
     It shows the graphics of the connection (a line) between the two endpoints it is connected to.
@@ -107,6 +110,22 @@ class ConnectionGraphics(ViewableGraphicsObject):
 
         return self.computers.end
 
+    def set_hovered_color(self):
+        self.color = CONNECTIONS.SELECTED_COLOR
+
+    def set_normal_color(self):
+        self.color = self.regular_color
+
+    def move_packets(self, main_loop: MainLoop) -> None:
+        """
+        This is temporary i promise
+        """
+        self.connection.move_packets(main_loop)
+
+    @property
+    def additional_functions_to_register(self) -> List[FunctionToCall]:
+        return [FunctionToCall(self.move_packets, can_be_paused=True, supply_main_loop_object=True)]
+
     def update_appearance(self) -> None:
         """Updates the color of the connection according to the PL and latency of the connection"""
         self.regular_color = CONNECTIONS.COLOR if not self.connection.packet_loss else CONNECTIONS.PL_COLOR
@@ -114,13 +133,13 @@ class ConnectionGraphics(ViewableGraphicsObject):
 
         self.width = CONNECTIONS.DEFAULT_WIDTH if not self.connection.latency else CONNECTIONS.LATENCY_WIDTH
 
-    def is_mouse_in(self) -> bool:
+    def is_in(self, x: float, y: float) -> bool:
         """Returns whether or not the mouse is close enough to the connection for it to count as pressed"""
         if any(interface is None for interface in self.interfaces):
             pass
-        mouse_location = MainWindow.main_window.get_mouse_location()
-        a = distance(self.interfaces.start.location, mouse_location)
-        b = distance(self.interfaces.end.location, mouse_location)
+        location = x, y
+        a = distance(self.interfaces.start.location, location)
+        b = distance(self.interfaces.end.location, location)
         c = distance(self.interfaces.start.location, self.interfaces.end.location)
         if b > c or a > c:
             return False
@@ -202,9 +221,8 @@ class ConnectionGraphics(ViewableGraphicsObject):
         Draws the connection (The line) between its end point and its start point.
         :return: None
         """
-        color = self.color if not self.is_mouse_in() else CONNECTIONS.SELECTED_COLOR
         sx, sy, ex, ey = self.get_coordinates()
-        draw_line((sx, sy), (ex, ey), color, self.width)
+        draw_line((sx, sy), (ex, ey), self.color, self.width)
 
     def start_viewing(self,
                       user_interface: UserInterface,

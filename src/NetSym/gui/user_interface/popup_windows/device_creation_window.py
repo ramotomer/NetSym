@@ -20,12 +20,10 @@ class DeviceCreationWindow(PopupWindowContainingText):
     """
     DEVICE_TO_IMAGE = {
         Computer: (IMAGES.COMPUTERS.COMPUTER, "(n)"),
-        Switch: (IMAGES.COMPUTERS.SWITCH, "(s)"),
-        Router: (IMAGES.COMPUTERS.ROUTER, "(r)"),
-        Hub: (IMAGES.COMPUTERS.HUB, "(h)"),
-        Antenna: (IMAGES.COMPUTERS.ANTENNA, "(a)"),
-        # NAT: (IMAGES.COMPUTERS.NAT, "(alt+n)"),
-        # Internet: (IMAGES.COMPUTERS.INTERNET, "(alt+i)"),
+        Switch:   (IMAGES.COMPUTERS.SWITCH,   "(s)"),
+        Router:   (IMAGES.COMPUTERS.ROUTER,   "(r)"),
+        Hub:      (IMAGES.COMPUTERS.HUB,      "(h)"),
+        Antenna:  (IMAGES.COMPUTERS.ANTENNA,  "(a)"),
     }
 
     def __init__(self, user_interface: UserInterface) -> None:
@@ -56,7 +54,6 @@ class DeviceCreationWindow(PopupWindowContainingText):
         super(DeviceCreationWindow, self).__init__(
             x, y,
             "Pick a device to create:",
-            user_interface,
             buttons,
             width, height,
             color=COLORS.PINK,
