@@ -35,7 +35,7 @@ from NetSym.computing.internals.sockets.tcp_socket import TCPSocket
 from NetSym.computing.internals.sockets.udp_socket import ReturnedUDPPacket, UDPSocket
 from NetSym.computing.internals.wireless_interface import WirelessInterface
 from NetSym.consts import IMAGES, COMPUTER, OPCODES, PACKET, PROTOCOLS, INTERFACES, OS, T_Time, SENDING_GRAT_ARPS, \
-    COMPUTER_NAMES_FILE_PATH, T_Port, TTL, PORTS
+    FILE_PATHS, T_Port, TTL, PORTS
 from NetSym.exceptions import *
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.tech.computer_graphics import ComputerGraphics
@@ -253,7 +253,7 @@ class Computer:
         :return: a random string that is the name.
         """
         if cls.POSSIBLE_COMPUTER_NAMES is None:
-            cls.POSSIBLE_COMPUTER_NAMES = [line.strip() for line in open(COMPUTER_NAMES_FILE_PATH).readlines()]
+            cls.POSSIBLE_COMPUTER_NAMES = [line.strip() for line in open(FILE_PATHS.COMPUTER_NAMES_FILE_PATH).readlines()]
 
         name = ''.join([random.choice(cls.POSSIBLE_COMPUTER_NAMES), str(random.randint(0, 100))])
         if name in cls.EXISTING_COMPUTER_NAMES:
@@ -272,6 +272,7 @@ class Computer:
         """
         self.graphics = ComputerGraphics(x, y, self, console_location=console_location)
         return [self.graphics] + self.loopback.connection.connection.init_graphics(self.graphics)
+        # TODO:   NOTE!          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ This is a-lot of coupling! Maybe change?
 
     def print(self, string: str) -> None:
         """

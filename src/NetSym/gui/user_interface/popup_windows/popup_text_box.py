@@ -5,7 +5,7 @@ from typing import Callable, NamedTuple
 
 from pyglet.window import key
 
-from NetSym.consts import WINDOWS, KEYBOARD, WINDOW_INPUT_LIST_FILE
+from NetSym.consts import WINDOWS, KEYBOARD, FILE_PATHS
 from NetSym.gui.user_interface.button import Button
 from NetSym.gui.user_interface.key_writer import KeyWriter
 from NetSym.gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText
@@ -74,9 +74,9 @@ class PopupTextBox(PopupWindowContainingText):
         self.is_done = False  # whether or not the window is done and completed the action of the submit button.
 
         self.old_inputs = ['']
-        if os.path.isfile(WINDOW_INPUT_LIST_FILE):
+        if os.path.isfile(FILE_PATHS.WINDOW_INPUT_LIST_FILE):
             self.old_inputs = [''] + list(map(lambda line: line.strip(),
-                                              reversed(open(WINDOW_INPUT_LIST_FILE, 'r').readlines())))
+                                              reversed(open(FILE_PATHS.WINDOW_INPUT_LIST_FILE, 'r').readlines())))
         self.old_inputs_index = 0
 
         self.key_writer = KeyWriter(self.write, self.delete_one_char, self.submit, self.delete)
@@ -135,10 +135,10 @@ class PopupTextBox(PopupWindowContainingText):
         """
         new_file_content = input_
 
-        if os.path.isfile(WINDOW_INPUT_LIST_FILE):
-            new_file_content = "{}\n{}".format(open(WINDOW_INPUT_LIST_FILE, 'r').read(), input_)
+        if os.path.isfile(FILE_PATHS.WINDOW_INPUT_LIST_FILE):
+            new_file_content = "{}\n{}".format(open(FILE_PATHS.WINDOW_INPUT_LIST_FILE, 'r').read(), input_)
 
-        open(WINDOW_INPUT_LIST_FILE, 'w').write(new_file_content)
+        open(FILE_PATHS.WINDOW_INPUT_LIST_FILE, 'w').write(new_file_content)
 
     def __str__(self) -> str:
         return "PopupTextBox Graphics"

@@ -874,7 +874,7 @@ class UserInterface:
             self.register_window(PopupError("That interface is already connected :("))
             return
         self.connection_data.append(ConnectionData(connection, *computers))
-        self.main_loop.register_graphics_object(connection.init_graphics(computers[0].graphics, computers[1].graphics))
+        self.main_loop.register_graphics_object(connection.init_graphics(computers[0].graphics, computers[1].graphics), is_in_background=True)
         return connection
 
     @staticmethod

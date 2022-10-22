@@ -342,10 +342,11 @@ class DIRECTORIES:
     SAVES =      "./res/files/saves"
 
 
-INTERFACE_NAMES_FILE_PATH = os.path.join(DIRECTORIES.FILES, "interface_names.txt")
-COMPUTER_NAMES_FILE_PATH =  os.path.join(DIRECTORIES.FILES, "computer_names.txt")
-WINDOW_INPUT_LIST_FILE =    os.path.join(DIRECTORIES.FILES, "window_inputs.txt")
-TRANSFER_FILE =             "transfer_me.txt"
+class FILE_PATHS:
+    INTERFACE_NAMES_FILE_PATH = os.path.join(DIRECTORIES.FILES, "interface_names.txt")
+    COMPUTER_NAMES_FILE_PATH =  os.path.join(DIRECTORIES.FILES, "computer_names.txt")
+    WINDOW_INPUT_LIST_FILE =    os.path.join(DIRECTORIES.FILES, "window_inputs.txt")
+    TRANSFER_FILE =             "transfer_me.txt"
 
 
 class COLORS:

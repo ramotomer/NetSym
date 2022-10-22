@@ -6,7 +6,7 @@ from typing import Optional, Dict, List, Union, Generator, Tuple
 
 from NetSym.computing.internals.filesystem.directory import Directory, T_ContainedItem
 from NetSym.computing.internals.filesystem.file import File, PipingFile
-from NetSym.consts import FILESYSTEM, DIRECTORIES, TRANSFER_FILE
+from NetSym.consts import FILESYSTEM, DIRECTORIES, FILE_PATHS
 from NetSym.exceptions import PathError, NoSuchItemError, CannotBeUsedWithPiping, WrongUsageError
 
 
@@ -28,6 +28,11 @@ class Filesystem:
         Creates it with some random directories in the root directory.
         :return:
         """
+        try:
+            transfer_file_content = open(os.path.join(DIRECTORIES.FILES, FILE_PATHS.TRANSFER_FILE)).read()
+        except FileNotFoundError:
+            transfer_file_content = "data"
+
         filesystem = cls()
         filesystem.make_dir('/dev')
         filesystem.make_dir('/usr')
@@ -38,7 +43,7 @@ class Filesystem:
         filesystem.make_dir('/etc')
         filesystem.make_dir('/tmp', mount=FILESYSTEM.TYPE.TMPFS)
         filesystem.make_dir(FILESYSTEM.HOME_DIR)
-        filesystem.at_absolute_path('/bin').add_item(File("cat", open(os.path.join(DIRECTORIES.FILES, TRANSFER_FILE)).read()))
+        filesystem.at_absolute_path('/bin').add_item(File("cat", transfer_file_content))
         return filesystem
 
     @classmethod

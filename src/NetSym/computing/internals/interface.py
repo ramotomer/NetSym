@@ -9,7 +9,7 @@ from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.connection import Connection
 from NetSym.computing.loopback_connection import LoopbackConnection
-from NetSym.consts import T_Time, INTERFACE_NAMES_FILE_PATH, INTERFACES, PROTOCOLS, T_Color
+from NetSym.consts import T_Time, FILE_PATHS, INTERFACES, PROTOCOLS, T_Color
 from NetSym.exceptions import *
 from NetSym.packets.all import Ether
 from NetSym.packets.packet import Packet
@@ -85,7 +85,7 @@ class Interface:
     def random_name(cls) -> str:
         """Returns a random Interface name"""
         if cls.POSSIBLE_INTERFACE_NAMES is None:
-            cls.POSSIBLE_INTERFACE_NAMES = [line.strip() for line in open(INTERFACE_NAMES_FILE_PATH).readlines()]
+            cls.POSSIBLE_INTERFACE_NAMES = [line.strip() for line in open(FILE_PATHS.INTERFACE_NAMES_FILE_PATH).readlines()]
 
         name = random.choice(cls.POSSIBLE_INTERFACE_NAMES) + str(random.randint(0, 10))
         if name in cls.EXISTING_INTERFACE_NAMES:
