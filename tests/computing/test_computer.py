@@ -9,9 +9,10 @@ from NetSym.address.mac_address import MACAddress
 from NetSym.computing.computer import Computer
 from NetSym.computing.internals.interface import Interface
 from NetSym.computing.internals.wireless_interface import WirelessInterface
-from NetSym.consts import OS, FILE_PATHS, DIRECTORIES
+from NetSym.consts import OS, FILE_PATHS, DIRECTORIES, COMPUTER
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.main_loop import MainLoop
+from NetSym.usefuls.dotdict import DotDict
 
 MACS = [
     "00:11:22:33:44:55",
@@ -183,19 +184,31 @@ def test_init_graphics(x, y, console_location, example_computers):
             assert computer.graphics.child_graphics_objects.console.location == console_location
 
 
-# def test_print(self, string: str):
-#     """
-#     Prints out a string to the computer output.
-#     :param string: The string to print.
-#     :return: None
-#     """
-#     {
-#         COMPUTER.OUTPUT_METHOD.CONSOLE: self.graphics.child_graphics_objects.console.write,
-#         COMPUTER.OUTPUT_METHOD.SHELL: self._print_on_all_shells,
-#         COMPUTER.OUTPUT_METHOD.STDOUT: print,
-#         COMPUTER.OUTPUT_METHOD.NONE: lambda s: None
-#     }[self.output_method](string)
-#
+def test_print(example_computers, capsys):
+    string = "Hello World!!! hi"
+    for computer in example_computers:
+        with MonkeyPatch.context() as m:
+            mock_for_computer_generation(m)
+            computer.init_graphics(1, 2, (3, 4))
+        computer.output_method = COMPUTER.OUTPUT_METHOD.CONSOLE
+        computer.print(string)
+        assert computer.graphics.child_graphics_objects.console._text.splitlines()[-1] == string
+
+        computer.create_shell(0, 0, DotDict(width=10, height=10))
+        computer.create_shell(1, 1, DotDict(width=30, height=100))
+        computer.output_method = COMPUTER.OUTPUT_METHOD.SHELL
+        computer.print(string)
+        for shell in computer.active_shells:
+            assert shell._text.splitlines()[-1] == string
+
+        computer.output_method = COMPUTER.OUTPUT_METHOD.STDOUT
+        capsys.readouterr()
+        computer.print(string)
+        assert capsys.readouterr().out.rstrip('\n') == string
+
+        computer.output_method = COMPUTER.OUTPUT_METHOD.NONE
+        computer.print(string)  # validates no errors are thrown :)
+
 # def test__print_on_all_shells(self, string: str):
 #     """
 #     print a string on all of the active shells that the computer has

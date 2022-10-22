@@ -37,25 +37,13 @@ class PopupConsole(PopupWindow):
 
         self.computer = computer
         self.computer.output_method = COMPUTER.OUTPUT_METHOD.SHELL
-        shell = self._generate_computer_shell()
+        shell = self.computer.create_shell(self.x, self.y, self)
 
         self.child_graphics_objects = ChildrenGraphicsObjects(
             title_text,
             exit_button,
             shell,
         )
-
-    def _generate_computer_shell(self) -> ShellGraphics:
-        """
-        Creates the shell (graphics)object that rides the window object - And performs all of the required logic upon it
-        That object contains the actual `Shell` object that holds all the actual logic of the shell
-        """
-        shell = ShellGraphics(self.x, self.y, f"Shell on {self.computer.name}\n", self.computer, self)
-        shell.width, shell.height = self.width, self.height
-        shell.set_parent_graphics(self)
-        shell.show()
-        self.computer.active_shells.append(shell)
-        return shell
 
     @property
     def shell(self) -> ShellGraphics:

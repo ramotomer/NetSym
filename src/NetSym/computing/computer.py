@@ -39,6 +39,7 @@ from NetSym.consts import IMAGES, COMPUTER, OPCODES, PACKET, PROTOCOLS, INTERFAC
 from NetSym.exceptions import *
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.tech.computer_graphics import ComputerGraphics
+from NetSym.gui.tech.shell_graphics import ShellGraphics
 from NetSym.packets.all import ICMP, IP, TCP, UDP, ARP
 from NetSym.packets.usefuls.dns import T_Hostname, validate_domain_hostname, canonize_domain_hostname
 from NetSym.packets.usefuls.ip import needs_fragmentation, fragment_packet, needs_reassembly, reassemble_fragmented_packet, allows_fragmentation, \
@@ -48,11 +49,12 @@ from NetSym.packets.usefuls.usefuls import get_dst_ip
 from NetSym.usefuls.funcs import get_the_one
 
 if TYPE_CHECKING:
+    from NetSym.packets.packet import Packet
     from NetSym.computing.internals.processes.abstracts.process import Process
     from NetSym.computing.internals.sockets.socket import Socket
     from NetSym.computing.connection import Connection
-    from NetSym.packets.packet import Packet
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
+    from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 
 
 @dataclass
@@ -148,7 +150,7 @@ class Computer:
         self.sockets = {}
 
         self.output_method = COMPUTER.OUTPUT_METHOD.CONSOLE
-        self.active_shells = []
+        self.active_shells: List[ShellGraphics] = []
 
         self.initial_size = IMAGES.SCALE_FACTORS.SPRITES, IMAGES.SCALE_FACTORS.SPRITES
         self._packet_sending_queues:   List[PacketSendingQueue] = []
@@ -286,6 +288,17 @@ class Computer:
             COMPUTER.OUTPUT_METHOD.STDOUT: print,
             COMPUTER.OUTPUT_METHOD.NONE: lambda s: None
         }[self.output_method](string)
+
+    def create_shell(self, x: float, y: float, holding_window: PopupWindow) -> ShellGraphics:
+        """
+        Create and register a shell for this computer
+        """
+        shell = ShellGraphics(x, y, f"Shell on {self.name}\n", self, holding_window)
+        shell.width, shell.height = holding_window.width, holding_window.height
+        shell.set_parent_graphics(holding_window)
+        shell.show()
+        self.active_shells.append(shell)
+        return shell
 
     def _print_on_all_shells(self, string: str) -> None:
         """
