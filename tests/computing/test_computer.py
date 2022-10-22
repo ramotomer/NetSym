@@ -10,8 +10,10 @@ from NetSym.computing.computer import Computer
 from NetSym.computing.internals.interface import Interface
 from NetSym.computing.internals.wireless_interface import WirelessInterface
 from NetSym.consts import OS, FILE_PATHS, DIRECTORIES, COMPUTER
+from NetSym.exceptions import NoSuchInterfaceError
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.main_loop import MainLoop
+from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 from NetSym.usefuls.dotdict import DotDict
 
 MACS = [
@@ -42,8 +44,7 @@ def mock_for_computer_generation(patcher):
     patcher.setattr(MainLoop, "instance", MockingMainLoop())
 
 
-@pytest.fixture
-def example_computers():
+def get_example_computers():
     with MonkeyPatch.context() as m:
         mock_for_computer_generation(m)
 
@@ -55,6 +56,34 @@ def example_computers():
                 *[Interface(mac, ip, f"c1i{i}") for i, (mac, ip) in enumerate(zip(MACS, IPS))],
             ),
         ]
+
+
+@pytest.fixture
+def example_computers():
+    print("running fixture!")
+    return get_example_computers()
+
+
+@pytest.fixture
+def example_computers_with_graphics():
+    with MonkeyPatch.context() as m:
+        mock_for_computer_generation(m)
+        computers = get_example_computers()
+        for computer in computers:
+            computer.init_graphics(0, 0, (0, 0))
+        return computers
+
+
+@pytest.fixture
+def example_computers_with_shells():
+    with MonkeyPatch.context() as m:
+        mock_for_computer_generation(m)
+        computers = get_example_computers()
+        for computer in computers:
+            computer.create_shell(0, 0, PopupWindow(10, 10))
+            computer.create_shell(1, 1, PopupWindow(20, 20))
+            computer.create_shell(2, 2, PopupWindow(30, 30))
+        return computers
 
 
 def test_macs(example_computers):
@@ -184,62 +213,71 @@ def test_init_graphics(x, y, console_location, example_computers):
             assert computer.graphics.child_graphics_objects.console.location == console_location
 
 
-def test_print(example_computers, capsys):
+def test_print_CONSOLE(example_computers_with_graphics):
     string = "Hello World!!! hi"
-    for computer in example_computers:
-        with MonkeyPatch.context() as m:
-            mock_for_computer_generation(m)
-            computer.init_graphics(1, 2, (3, 4))
+    for computer in example_computers_with_graphics:
         computer.output_method = COMPUTER.OUTPUT_METHOD.CONSOLE
         computer.print(string)
         assert computer.graphics.child_graphics_objects.console._text.splitlines()[-1] == string
 
-        computer.create_shell(0, 0, DotDict(width=10, height=10))
-        computer.create_shell(1, 1, DotDict(width=30, height=100))
-        computer.output_method = COMPUTER.OUTPUT_METHOD.SHELL
-        computer.print(string)
-        for shell in computer.active_shells:
-            assert shell._text.splitlines()[-1] == string
 
+def test_print_SHELL(example_computers_with_graphics):
+    string = "Hello World!!! hi"
+    for computer in example_computers_with_graphics:
+        computer.output_method = COMPUTER.OUTPUT_METHOD.SHELL
+        flag = DotDict(is_set=False)
+        with MonkeyPatch.context() as m:
+            m.setattr(Computer, '_print_on_all_shells', lambda *args: flag.set('is_set', True))
+            computer.print(string)
+        assert flag.is_set
+
+
+def test_print_STDOUT(example_computers_with_graphics, capsys):
+    string = "Hello-MyGoodFriend World!!#@$@#$@ hi"
+    for computer in example_computers_with_graphics:
         computer.output_method = COMPUTER.OUTPUT_METHOD.STDOUT
         capsys.readouterr()
         computer.print(string)
-        assert capsys.readouterr().out.rstrip('\n') == string
+        assert capsys.readouterr().out.rstrip() == string
 
-        computer.output_method = COMPUTER.OUTPUT_METHOD.NONE
-        computer.print(string)  # validates no errors are thrown :)
 
-# def test__print_on_all_shells(self, string: str):
-#     """
-#     print a string on all of the active shells that the computer has
-#     :param string:
-#     :return:
-#     """
-#     for shell in self.active_shells:
-#         shell.write(string)
-#
-# def test__close_all_shells(self):
-#     """
-#     Close all shells of the computer.
-#     Occurs on shutdown
-#     """
-#     deleted_any_shells = False
-#     for shell in self.active_shells[:]:
-#         deleted_any_shells = True
-#         shell.exit()
-#
-#     if deleted_any_shells:
-#         message = f"{self.name} was shutdown! Relevant shells were closed"
-#         # PopupError(message, user_interface)  # Impossible - you need the UserInterface object
-#         print(message)
-#         # TODO: change all prints to use the logging module! be high-tech please
-#
-# def test_get_mac(self):
-#     """Returns one of the computer's `MACAddresses`"""
-#     if not self.macs:
-#         raise NoSuchInterfaceError("The computer has no MAC address since it has no network interfaces!!!")
-#     return self.macs[0]
-#
+def test_print_on_all_shells(example_computers_with_shells):
+    string = "Hello World!!!! HiHi"
+    for computer in example_computers_with_shells:
+        computer._print_on_all_shells(string)
+        for shell in computer.active_shells:
+            assert shell._text.splitlines()[-1] == string
+
+
+def test_close_all_shells_NO_SHELLS(example_computers, capsys):
+    for computer in example_computers:
+        capsys.readouterr()
+        computer._close_all_shells()
+        assert not computer.active_shells
+        assert capsys.readouterr().out.strip() == ""  # no message was printed
+
+
+def test_close_all_shells(example_computers_with_shells, capsys):
+    for computer in example_computers_with_shells:
+        shells = computer.active_shells[:]
+        capsys.readouterr()
+        computer._close_all_shells()
+        assert len(capsys.readouterr().out) > 0  # a message was printed
+
+        for shell in shells:
+            assert shell.carrying_window.unregister_this_window_from_user_interface
+
+
+def test_get_mac(example_computers):
+    for computer in example_computers:
+        assert isinstance(computer.get_mac(), MACAddress)
+        assert computer.get_mac() in computer.macs
+
+        computer.interfaces.clear()
+        with pytest.raises(NoSuchInterfaceError):
+            computer.get_mac()
+
+
 # def test_set_name(self, name: str):
 #     """
 #     Sets the name of the computer and updates the text under it.

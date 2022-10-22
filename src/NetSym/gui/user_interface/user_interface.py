@@ -1461,36 +1461,37 @@ class UserInterface:
 
         self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID] = self.buttons.get(BUTTONS.ON_POPUP_WINDOWS.ID, []) + list(window.buttons)
 
-    def unregister_window(self, window: PopupWindow) -> None:
+    def unregister_window(self, window: Union[PopupWindow, List[PopupWindow]]) -> None:
         """
         receives a window that is registered in the UI object and removes it, it will be ready to be deleted afterwards
         :param window: a `PopupWindow` object
         :return: None
         """
-        for button_ in window.buttons:
-            self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID].remove(button_)
-            self.main_loop.unregister_graphics_object(button_)
+        window_list = window if isinstance(window, list) else [window]
 
-        try:
-            self.popup_windows.remove(window)
-        except ValueError:
-            raise WrongUsageError("The window is not registered in the UserInterface!!!")  # TODO: change exception type to be more specific
+        for window_ in window_list:
+            for button_ in window_.buttons:
+                self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID].remove(button_)
+                self.main_loop.unregister_graphics_object(button_)
 
-        if self.active_window is window:
-            self.active_window = None
-        if self.selected_object is window:
-            self.selected_object = None
+            try:
+                self.popup_windows.remove(window_)
+            except ValueError:
+                raise WrongUsageError("The window is not registered in the UserInterface!!!")  # TODO: change exception type to be more specific
 
-        if self.popup_windows:
+            if self.active_window is window_:
+                self.active_window = None
+            if self.selected_object is window_:
+                self.selected_object = None
+
+        if window_list and self.popup_windows:
             self.active_window = self.popup_windows[0]
 
     def _unregister_requesting_popup_windows(self) -> None:
         """
         Call the `unregister_window` upon every window that has the `unregister_this_window_from_user_interface` flag set
         """
-        for window in self.popup_windows[:]:
-            if window.unregister_this_window_from_user_interface:
-                self.unregister_window(window)
+        self.unregister_window([window for window in self.popup_windows if window.unregister_this_window_from_user_interface])
 
     def open_device_creation_window(self) -> None:
         """
