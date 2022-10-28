@@ -8,13 +8,16 @@ from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.computer import Computer
 from NetSym.computing.internals.interface import Interface
+from NetSym.computing.internals.processes.abstracts.process import ReturnedPacket, PacketMetadata
 from NetSym.computing.internals.processes.usermode_processes.sniffing_process import SniffingProcess
 from NetSym.computing.internals.wireless_interface import WirelessInterface
-from NetSym.consts import OS, FILE_PATHS, DIRECTORIES, COMPUTER, INTERFACES
+from NetSym.consts import OS, FILE_PATHS, DIRECTORIES, COMPUTER, INTERFACES, PACKET, OPCODES
 from NetSym.exceptions import NoSuchInterfaceError, PopupWindowWithThisError
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
+from NetSym.packets.all import Ether, IP, ARP
+from NetSym.packets.packet import Packet
 from NetSym.usefuls.dotdict import DotDict
 
 MACS = [
@@ -33,6 +36,10 @@ class MockingMainLoop(MainLoop):
         return 1
 
 
+def mock_mainloop_time(patcher):
+    patcher.setattr(MainLoop, "instance", MockingMainLoop())
+
+
 def mock_for_computer_generation(patcher):
     """
     Mock all things to allow the instantiation of a new computer inside a test
@@ -42,7 +49,7 @@ def mock_for_computer_generation(patcher):
     patcher.setattr(FILE_PATHS,  'WINDOW_INPUT_LIST_FILE',    os.path.join("./src/NetSym/res/files", "window_inputs.txt"))
     patcher.setattr(DIRECTORIES, 'IMAGES',                    "./src/NetSym/res/sprites")
 
-    patcher.setattr(MainLoop, "instance", MockingMainLoop())
+    mock_mainloop_time(patcher)
 
 
 def get_example_computers():
@@ -85,6 +92,31 @@ def example_computers_with_shells():
             computer.create_shell(1, 1, PopupWindow(20, 20))
             computer.create_shell(2, 2, PopupWindow(30, 30))
         return computers
+
+
+def example_ethernet():
+    return Ether(
+        src_mac=MACS[0],
+        dst_mac="1a:bb:cc:43:5f:6e",
+    )
+
+
+def example_ip():
+    return IP(
+        src_ip="4.7.23.10",
+        dst_ip=IPS[0],
+        ttl=62,
+    )
+
+
+def example_arp():
+    return ARP(
+        opcode=OPCODES.ARP.REQUEST,
+        dst_mac=MACS[0],
+        src_mac="1a:bb:cc:43:5f:6e",
+        dst_ip=IPS[0],
+        src_ip="4.7.23.10",
+    )
 
 
 def test_macs(example_computers):
@@ -596,25 +628,22 @@ def test_start_sniffing_ANY(example_computers_with_graphics):
 #     interface.ip = None
 #
 # # --------------------------------------- v  Specific protocol handling  v -------------------------------------------
-#
-# def test__handle_arp(self, returned_packet: ReturnedPacket):
-#     """
-#     Receives a `Packet` object and if it contains an ARP request layer, sends back
-#     an ARP reply. If the packet contains no ARP layer raises `NoArpLayerError`.
-#     Anyway learns the IP and MAC from the ARP (even if it is a reply or a grat-arp).
-#     :param returned_packet: the `ReturnedPacket` that contains the ARP we handle and its metadata
-#     """
-#     packet, packet_metadata = returned_packet.packet_and_metadata
-#     try:
-#         arp = packet["ARP"]
-#     except KeyError:
-#         raise NoARPLayerError("This function should only be called with an ARP packet!!!")
-#
-#     self.arp_cache.add_dynamic(arp.src_ip, arp.src_mac)
-#
-#     if arp.opcode == OPCODES.ARP.REQUEST and packet_metadata.interface.has_this_ip(IPAddress(arp.dst_ip)):
-#         self.send_arp_reply(packet)  # Answer if request
-#
+
+def test_handle_arp(example_computers):
+    with MonkeyPatch.context() as m:
+        mock_mainloop_time(m)
+
+        for computer in example_computers:
+            computer.interfaces[0].connect(Interface())
+            packet = Packet(example_ethernet() / example_arp())
+            computer._handle_arp(ReturnedPacket(packet, PacketMetadata(computer.interfaces[0], 1.0, PACKET.DIRECTION.INCOMING)))
+            reply, = computer.interfaces[0].connection.packets_to_send
+
+            assert packet["ARP"].src_ip in computer.arp_cache
+            assert computer.arp_cache[packet["ARP"].src_ip].mac == packet["ARP"].src_mac
+            assert "ARP" in reply
+            assert reply["ARP"].dst_ip == packet["ARP"].src_ip
+
 # def test__handle_icmp(self, returned_packet: ReturnedPacket):
 #     """
 #     Receives a `Packet` object which contains an ICMP layer with ICMP request
