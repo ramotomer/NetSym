@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from dataclasses import dataclass
-from operator import attrgetter
+from functools import reduce
+from operator import attrgetter, concat
 from typing import NamedTuple, Optional, TYPE_CHECKING, List, Type, Tuple, Generator, Any, TypeVar
 
 from NetSym.computing.internals.processes.abstracts.process import Process, WaitingFor, ReturnedPacket
@@ -139,12 +140,15 @@ class ProcessScheduler:
     def get_process_count(self, mode: str) -> int:
         return len(self.__details_by_mode[mode].waiting_processes) + int(self.is_running_a_process_in_this_mode(mode))
 
-    def get_all_processes(self, mode: str = COMPUTER.PROCESSES.MODES.USERMODE) -> List[Process]:
+    def get_all_processes(self, mode: Optional[str] = None) -> List[Process]:
         """
         Returns all of the processes in the specified mode running on the computer
         :param mode: one of COMPUTER.PROCESSES.MODES.ALL_MODES
         :return: `list` of `Process` objects
         """
+        if mode is None:
+            return reduce(concat, [self.get_all_processes(mode_) for mode_ in COMPUTER.PROCESSES.MODES.ALL_MODES])
+
         return [waiting_process.process for waiting_process in self.__details_by_mode[mode].waiting_processes] + \
                ([self.get_currently_running_process(mode)] if self.is_running_a_process_in_this_mode(mode) else []) + \
                self.__details_by_mode[mode].ready_processes_instances
@@ -300,13 +304,13 @@ class ProcessScheduler:
         """
         return get_the_one(self.get_all_processes(mode), lambda process: process.pid == pid, NoSuchProcessError if raises else None)
 
-    def get_process_by_type(self, process_type: Type[T], mode: str, raises: bool = True) -> T:
+    def get_process_by_type(self, process_type: Type[T], mode: Optional[str] = None, raises: bool = True) -> T:
         """
         Receives a type of a `Process` subclass and returns the process object of the `Process` that is currently
         running in the computer.
         If no such process is running in the computer, raise NoSuchProcessError
         :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClientProcess`)
-        :param mode: the mode of the process (one of COMPUTER.PROCESS.MODES.ALL_MODES)
+        :param mode: the mode of the process (one of COMPUTER.PROCESS.MODES.ALL_MODES or None - for all of them)
         :param raises: whether or not to raise an exception if no such process exists
         :return: `WaitingProcess` namedtuple
         """

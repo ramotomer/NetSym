@@ -32,7 +32,7 @@ class RawSocket(Socket):
         self.is_connected = True
 
         self.filter = None
-        self.interface = INTERFACES.NO_INTERFACE
+        self.interface: Optional[Interface] = INTERFACES.NO_INTERFACE
         self.is_promisc = False
 
     def send(self, packet: Packet) -> None:

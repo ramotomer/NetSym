@@ -8,9 +8,10 @@ from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.computer import Computer
 from NetSym.computing.internals.interface import Interface
+from NetSym.computing.internals.processes.usermode_processes.sniffing_process import SniffingProcess
 from NetSym.computing.internals.wireless_interface import WirelessInterface
-from NetSym.consts import OS, FILE_PATHS, DIRECTORIES, COMPUTER
-from NetSym.exceptions import NoSuchInterfaceError
+from NetSym.consts import OS, FILE_PATHS, DIRECTORIES, COMPUTER, INTERFACES
+from NetSym.exceptions import NoSuchInterfaceError, PopupWindowWithThisError
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
@@ -278,39 +279,59 @@ def test_get_mac(example_computers):
             computer.get_mac()
 
 
-# def test_set_name(self, name: str):
-#     """
-#     Sets the name of the computer and updates the text under it.
-#     :param name: the new name for the computer
-#     """
-#     if name == self.name:
-#         raise PopupWindowWithThisError("new computer name is the same as the previous one!!!")
-#     if len(name) < 2:
-#         raise PopupWindowWithThisError("name too short!!!")
-#     if not any(char.isalpha() for char in name):
-#         raise PopupWindowWithThisError("name must contain letters!!!")
-#     self.EXISTING_COMPUTER_NAMES.remove(self.name)
-#     self.name = name
-#     self.EXISTING_COMPUTER_NAMES.add(self.name)
-#     self.graphics.update_text()
-#
-# def test_start_sniffing(self, interface_name: Optional[str] = INTERFACES.ANY_INTERFACE, is_promisc: bool = False):
-#     """
-#     Starts a sniffing process on a supplied interface
-#     """
-#     self.process_scheduler.start_usermode_process(
-#         SniffingProcess,
-#         lambda packet: True,
-#         self.interface_by_name(interface_name) if interface_name != INTERFACES.ANY_INTERFACE else INTERFACES.ANY_INTERFACE,
-#         is_promisc
-#     )
-#
+@pytest.mark.parametrize(
+    "valid_name, invalid_name",
+    [
+        ("HelloWorld", ""),
+        ("my_good_name", "h"),
+        ("Computer Name 1234_3", "123213123"),
+    ]
+)
+def test_set_name(example_computers_with_graphics, valid_name, invalid_name):
+    for computer in example_computers_with_graphics:
+
+        computer.set_name(valid_name)
+        assert computer.name == valid_name
+
+        with pytest.raises(PopupWindowWithThisError):
+            computer.set_name(valid_name)
+
+        with pytest.raises(PopupWindowWithThisError):
+            computer.set_name(invalid_name)
+
+
+@pytest.mark.parametrize(
+    "interface_name, is_promisc",
+    [
+        ("c1i1", True),
+        ("c1i0", False),
+    ]
+)
+def test_start_sniffing_REGULAR(example_computers_with_graphics, interface_name, is_promisc):
+    for computer in example_computers_with_graphics:
+        computer.start_sniffing(interface_name, is_promisc)
+
+        process = computer.process_scheduler.get_process_by_type(SniffingProcess, raises=False)
+
+        assert process is not None
+        assert process.socket.interface.name == interface_name
+        if is_promisc:
+            assert process.socket.interface.is_promisc
+
+
+def test_start_sniffing_ANY(example_computers_with_graphics):
+    for computer in example_computers_with_graphics:
+        computer.start_sniffing(INTERFACES.ANY_INTERFACE, False)
+
+        process = computer.process_scheduler.get_process_by_type(SniffingProcess, raises=False)
+
+        assert process is not None
+        assert process.socket.interface is INTERFACES.ANY_INTERFACE
+
+
 # def test_stop_all_sniffing(self):
-#     """
-#     Kill all tcpdump processes currently running on the computer
-#     """
 #     self.process_scheduler.kill_all_usermode_processes_by_type(SniffingProcess)
-#
+
 # def test_toggle_sniff(self, interface_name: Optional[str] = INTERFACES.ANY_INTERFACE, is_promisc: bool = False):
 #     """
 #     Toggles sniffing.
