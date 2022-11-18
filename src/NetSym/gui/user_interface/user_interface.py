@@ -799,7 +799,7 @@ class UserInterface:
         if self.source_of_line_drag is None or self.is_mouse_in_side_window():
             self.set_mode(MODES.NORMAL)
 
-    def get_object_the_mouse_is_on(self, exclude_types: Optional[Iterable[Type]] = None) -> GraphicsObject:
+    def get_object_the_mouse_is_on(self, exclude_types: Optional[Iterable[Type]] = None) -> Optional[GraphicsObject]:
         """
         Returns the `GraphicsObject` that should be selected if the mouse is pressed
         (so the object that the mouse is on right now) or `None` if the mouse is not resting upon any object.
@@ -1811,25 +1811,19 @@ class UserInterface:
         randomly colors the computers on the screen based on their subnet
         :return:
         """
-        subnets = {}
+        subnets_to_colors: Dict[IPAddress, T_Color] = {}
         for computer in self.computers:
             if not computer.has_ip():
                 continue
 
             for ip in computer.ips:
-                subnet = get_the_one(subnets, lambda net: net.is_same_subnet(ip))
-                if subnet is None:
-                    subnets[ip.subnet()] = [computer]
-                else:
-                    subnets[subnet].append(computer)
+                subnets_to_colors[ip.subnet()] = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
-        for subnet in subnets:
-            color = (random.randint(0, 255),
-                     random.randint(0, 255),
-                     random.randint(0, 255))
-            for computer in subnets[subnet]:
-                computer.graphics.flush_colors()
-                computer.graphics.add_hue(color)
+        for computer_graphics in self.main_loop.graphics_objects_of_types(ComputerGraphics):
+            computer_graphics.flush_colors()
+            for subnet, color in subnets_to_colors.items():
+                if any(ip.is_same_subnet(subnet) for ip in computer_graphics.computer.ips):
+                    computer_graphics.add_hue(color)
 
     def get_frequency(self, frequency: float) -> Frequency:
         """
