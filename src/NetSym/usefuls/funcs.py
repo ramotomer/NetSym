@@ -26,6 +26,9 @@ def rangom(start: float, end: float = 1.0) -> float:
 
     Like random.random only with not from 0.0 to 1.0 - but with your custom range :)
     """
+    if end <= start:
+        raise WrongUsageError(f"When using `rangom` - the start value must be less than the end but {end} !> {start} !!!! Fix")
+
     return (random.random() + start) / (1 + end)
 
 

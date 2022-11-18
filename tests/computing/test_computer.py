@@ -364,6 +364,7 @@ def test_start_sniffing_ANY(example_computers_with_graphics):
 # def test_stop_all_sniffing(self):
 #     self.process_scheduler.kill_all_usermode_processes_by_type(SniffingProcess)
 
+
 # def test_toggle_sniff(self, interface_name: Optional[str] = INTERFACES.ANY_INTERFACE, is_promisc: bool = False):
 #     """
 #     Toggles sniffing.
@@ -637,7 +638,10 @@ def test_handle_arp(example_computers):
             computer.interfaces[0].connect(Interface())
             packet = Packet(example_ethernet() / example_arp())
             computer._handle_arp(ReturnedPacket(packet, PacketMetadata(computer.interfaces[0], 1.0, PACKET.DIRECTION.INCOMING)))
-            reply, = computer.interfaces[0].connection.packets_to_send
+            to_send = computer.interfaces[0].connection.packets_to_send
+
+            assert len(to_send) == 1
+            reply, = to_send
 
             assert packet["ARP"].src_ip in computer.arp_cache
             assert computer.arp_cache[packet["ARP"].src_ip].mac == packet["ARP"].src_mac
