@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 from typing import TYPE_CHECKING, Optional, Dict, Callable, Tuple
 
 import pyglet
@@ -10,7 +11,7 @@ from NetSym.gui.abstracts.animation_graphics import AnimationGraphics
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
 from NetSym.packets.usefuls.type_to_opcode_function import TYPE_TO_OPCODE_FUNCTION
 from NetSym.packets.usefuls.usefuls import get_original_layer_name_by_instance
-from NetSym.usefuls.funcs import with_args, rangom
+from NetSym.usefuls.funcs import with_args
 
 if TYPE_CHECKING:
     from NetSym.gui.tech.connection_graphics import ConnectionGraphics
@@ -78,7 +79,7 @@ class PacketGraphics(ImageGraphics):
         """
         Decreases the speed of the packet by a half
         """
-        self.speed *= rangom(0.9) * CONNECTIONS.PACKETS.DECREASE_SPEED_BY
+        self.speed *= random.uniform(0.9, 1) * CONNECTIONS.PACKETS.DECREASE_SPEED_BY
 
     def get_decrease_speed_animation(self) -> AnimationGraphics:
         """

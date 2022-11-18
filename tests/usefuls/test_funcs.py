@@ -1,27 +1,6 @@
 import pytest
 
-from NetSym.exceptions import *
-from NetSym.usefuls.funcs import rangom, get_the_one
-
-
-@pytest.mark.parametrize(
-    "start, end, raises",
-    [
-        (0,   1,   False),
-        (10,  100, False),
-        (0.1, 0.2, False),
-        (3,   1,   True),
-        (0,   0,   True),
-    ]
-)
-def test_rangom(start, end, raises):
-    if raises:
-        with pytest.raises(WrongUsageError):
-            rangom(start, end)
-        return
-
-    for _ in range(0, 1000):
-        assert start <= rangom(start, end) <= end
+from NetSym.usefuls.funcs import get_the_one, is_matching, is_hex, with_args, distance, split_by_size, called_in_order, insort
 
 
 @pytest.mark.parametrize(
@@ -42,103 +21,107 @@ def test_get_the_one(iterable, condition, raises, default, should_raise, should_
         return
 
     assert get_the_one(iterable, condition, raises, default) == should_return
-#
-#
-# def test_is_matching(pattern: str, string: str):
-#     """
-#     Takes in a regex pattern and a string.
-#     Returns whether or not the string fits in the pattern
-#     """
-#     match = re.match(pattern, string)
-#     return (match is not None) and (match.group(0) == string)
-#
-#
-# def test_is_hex(string: str):
-#     """
-#     returns if a ip_layer is a hexadecimal digit or not
-#     """
-#     string = string[2:] if string.startswith('0x') else string
-#     hex_digits = set('0123456789abcdefABCDEF')
-#     return set(string) <= hex_digits
-#
-#
-# def test_with_args(function: Callable[[...], T], *args: Any, **kwargs: Any) -> Callable[[], T]:
-#     """
-#     Receives a function and its arguments.
-#     returns a function which when called without arguments performs `function(*args, **kwargs)`.
-#     :param function: a function
-#     :param args: the arguments that the function will be called with
-#     :param kwargs: the key word arguments that the function will be called with.
-#     :return: a function that takes no arguments.
-#     """
-#     def test_returned(*more_args: Any, **more_kwargs: Any):
-#         return function(*args, *more_args, **kwargs, **more_kwargs)
-#     return returned
-#
-#
-# def test_distance(p1: Tuple[float, float], p2: Tuple[float, float]):
-#     """
-#     Returns the distance between two points.
-#     :param p1:
-#     :param p2: 2 tuples of numbers.
-#     :return: a number
-#     """
-#     x1, y1 = p1
-#     x2, y2 = p2
-#     return sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
-#
-#
-# def test_split_by_size(string: str, size: int) -> List[str]:
-#     """
-#     Takes the string and splits it up to `size` sized pieces (or less - for the last one).
-#     :return: list of strings each of size `size` at most
-#     """
-#     return [string[i:i + size] for i in range(0, len(string), size)]
-#
-#
-# def test_called_in_order(*functions: Callable[[], Any]) -> Callable[[], None]:
-#     """
-#     Receives functions and returns a function performs them one after the other in the order they were received in.
-#     calls them without arguments.
-#     :param functions: callable objects.
-#     :return: a function
-#     """
-#     def test_in_order():
-#         for function in functions:
-#             function()
-#     return in_order
-#
-#
-# def test_get_first(iterable: Iterable[T]):
-#     """
-#     Returns one of the iterable's items. Usually the first one.
-#     :param iterable: an iterable
-#     :return:
-#     """
-#     for item in iterable:
-#         return item
-#
-#
-# def test_insort(list_: List[T], item: T, key: Callable[[T], Any] = lambda t: t):
-#     """
-#     Insert an item into a sorted list by a given key while keeping it sorted.
-#     :param list_: the list (assumed to be sorted)
-#     :param item: an item to insert into the list while keeping it sorted.
-#     :param key: a function to check the values of the list by.
-#     :return: None
-#     """
-#     low_index = 0
-#     high_index = len(list_)
-#
-#     while low_index < high_index:
-#         middle_index = (low_index + high_index) // 2
-#         if key(item) < key(list_[middle_index]):
-#             high_index = middle_index
-#         else:
-#             low_index = middle_index + 1
-#     list_.insert(low_index, item)
-#
-#
+
+
+def test_is_matching():
+    assert is_matching(r".*", "hello") is True
+    assert is_matching(r"hi", "hello") is False
+
+
+@pytest.mark.parametrize(
+    "string, result",
+    [
+        ("",         True),
+        ("1",        True),
+        ("not hex",  False),
+        ("0xhex",    False),
+        ("0xAB",     True),
+        ("0xab",     True),
+        ("12FcAb3D", True),
+    ]
+)
+def test_is_hex(string, result):
+    assert is_hex(string) is result
+
+
+@pytest.mark.parametrize(
+    "args, kwargs",
+    [
+        ((1, 2, 3), {}),
+        ((),        {"a": 2, "b": 4, "c": 6}),
+        ((1, 2, 3), {"a": 2, "b": 4, "c": 6}),
+    ]
+)
+def test_with_args(args, kwargs):
+    def function(*inner_args, **inner_kwargs):
+        return len(inner_args), len(inner_kwargs)
+    function_with_args = with_args(function, *args, **kwargs)
+
+    assert function_with_args()            == (len(args),     len(kwargs))
+    assert function_with_args(3, 4, 5)     == (len(args) + 3, len(kwargs))
+    assert function_with_args(d=3, e=4)    == (len(args),     len(kwargs) + 2)
+    assert function_with_args(6, d=3, e=4) == (len(args) + 1, len(kwargs) + 2)
+
+
+@pytest.mark.parametrize(
+    "p1, p2, result",
+    [
+        ((0, 0),    (0, 0),   0.0),
+        ((0, 0),    (0, 0.1), 0.1),
+        ((0, 3),    (4, 0),   5.0),
+        ((100, 12), (160, 1), 61.0),
+    ]
+)
+def test_distance(p1, p2, result):
+    assert distance(p1, p2) == result
+
+
+@pytest.mark.parametrize(
+    "string, size, result",
+    [
+        ("aabbcc",   2,  ['aa', 'bb', 'cc']),
+        ("wordword", 3,  ['wor', 'dwo', 'rd']),
+        ("hi",       10, ['hi']),
+        ("",         4,  []),
+    ]
+)
+def test_split_by_size(string, size, result):
+    assert split_by_size(string, size) == result
+
+
+def test_called_in_order():
+    no_functions = called_in_order()
+    test_list1 = [1, 2, 3]
+    test_list2 = [1, 2, 3]
+    change_list1 = called_in_order(test_list1.pop, test_list1.pop, with_args(test_list1.append, 4))
+    clear_list2  = called_in_order(with_args(test_list2.extend, [4, 5, 6]), test_list2.clear)
+
+    no_functions()  # does nothing
+    change_list1()
+    clear_list2()
+
+    assert test_list1 == [1, 4]
+    assert test_list2 == []
+
+
+@pytest.mark.parametrize(
+    "args, result",
+    [
+        (([],                  3),                  [3]),
+        (([1, 2, 4],           3),                  [1, 2, 3, 4]),
+        (([4, 5, 6],           3),                  [3, 4, 5, 6]),
+        (([0, 1, 2],           3),                  [0, 1, 2, 3]),
+        ((["a", "b", "d"],     "c"),                ["a", "b", "c", "d"]),
+        ((["a", "aa", "aaaa"], "aaa", len),         ["a", "aa", "aaa", "aaaa"]),
+        (([1, 2, 3],           0,     lambda t: 1), [1, 2, 3, 0]),
+    ]
+)
+def test_insort(args, result):
+    list_ = args[0]
+    insort(*args)
+    assert list_ == result
+
+
 # def test_circular_coordinates(center_location: Tuple[float, float], radius: float, count: int, add_gl_coordinate: bool = False):
 #     """
 #     a generator of coordinates in a circular fashion around a given point.

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import cmath
 import datetime
-import random
 import re
 from contextlib import contextmanager
 from functools import reduce
@@ -18,18 +17,6 @@ T = TypeVar("T")
 K = TypeVar("K")
 K2 = TypeVar("K2")
 V = TypeVar("V")
-
-
-def rangom(start: float, end: float = 1.0) -> float:
-    """
-    random range - rangom (shit name but too good to not use it)
-
-    Like random.random only with not from 0.0 to 1.0 - but with your custom range :)
-    """
-    if end <= start:
-        raise WrongUsageError(f"When using `rangom` - the start value must be less than the end but {end} !> {start} !!!! Fix")
-
-    return (random.random() + start) / (1 + end)
 
 
 def get_the_one(iterable: Iterable[T],
@@ -73,7 +60,7 @@ def is_hex(string: str) -> bool:
     return set(string) <= hex_digits
 
 
-def with_args(function: Callable[[...], T], *args: Any, **kwargs: Any) -> Callable[[], T]:
+def with_args(function: Callable[..., T], *args: Any, **kwargs: Any) -> Callable[..., T]:
     """
     Receives a function and its arguments.
     returns a function which when called without arguments performs `function(*args, **kwargs)`.
@@ -118,16 +105,6 @@ def called_in_order(*functions: Callable[[], Any]) -> Callable[[], None]:
         for function in functions:
             function()
     return in_order
-
-
-def get_first(iterable: Iterable[T]) -> T:
-    """
-    Returns one of the iterable's items. Usually the first one.
-    :param iterable: an iterable
-    :return:
-    """
-    for item in iterable:
-        return item
 
 
 def insort(list_: List[T], item: T, key: Callable[[T], Any] = lambda t: t) -> None:
