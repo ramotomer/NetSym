@@ -11,24 +11,14 @@ from NetSym.computing.internals.interface import Interface
 from NetSym.computing.internals.processes.abstracts.process import ReturnedPacket, PacketMetadata
 from NetSym.computing.internals.processes.usermode_processes.sniffing_process import SniffingProcess
 from NetSym.computing.internals.wireless_interface import WirelessInterface
-from NetSym.consts import OS, FILE_PATHS, DIRECTORIES, COMPUTER, INTERFACES, PACKET, OPCODES
+from NetSym.consts import OS, FILE_PATHS, DIRECTORIES, COMPUTER, INTERFACES, PACKET
 from NetSym.exceptions import NoSuchInterfaceError, PopupWindowWithThisError
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
-from NetSym.packets.all import Ether, IP, ARP
 from NetSym.packets.packet import Packet
 from NetSym.usefuls.dotdict import DotDict
-
-MACS = [
-    "00:11:22:33:44:55",
-    "77:ab:cd:ef:11:22",
-]
-
-IPS = [
-    "1.2.3.4",
-    "4.3.2.1",
-]
+from tests.usefuls import MACS, IPS, example_ethernet, example_arp
 
 
 class MockingMainLoop(MainLoop):
@@ -92,31 +82,6 @@ def example_computers_with_shells():
             computer.create_shell(1, 1, PopupWindow(20, 20))
             computer.create_shell(2, 2, PopupWindow(30, 30))
         return computers
-
-
-def example_ethernet():
-    return Ether(
-        src_mac=MACS[0],
-        dst_mac="1a:bb:cc:43:5f:6e",
-    )
-
-
-def example_ip():
-    return IP(
-        src_ip="4.7.23.10",
-        dst_ip=IPS[0],
-        ttl=62,
-    )
-
-
-def example_arp():
-    return ARP(
-        opcode=OPCODES.ARP.REQUEST,
-        dst_mac=MACS[0],
-        src_mac="1a:bb:cc:43:5f:6e",
-        dst_ip=IPS[0],
-        src_ip="4.7.23.10",
-    )
 
 
 def test_macs(example_computers):

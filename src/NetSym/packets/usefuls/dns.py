@@ -91,7 +91,7 @@ def decanonize_domain_hostname(hostname: T_Hostname) -> T_Hostname:
 
 def domain_hostname_split(hostname: T_Hostname) -> List[T_Hostname]:
     """
-    'tomer.noyman.fun.' -> ['noyman', 'fun']
+    'tomer.noyman.fun.' -> ['tomer', 'noyman', 'fun']
     'hi'                -> []
     """
     decanonized = decanonize_domain_hostname(hostname)
