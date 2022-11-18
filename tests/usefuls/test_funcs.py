@@ -1,6 +1,11 @@
+import datetime
+
 import pytest
 
-from NetSym.usefuls.funcs import get_the_one, is_matching, is_hex, with_args, distance, split_by_size, called_in_order, insort
+from NetSym.usefuls.dotdict import DotDict
+from NetSym.usefuls.funcs import get_the_one, is_matching, is_hex, with_args, distance, split_by_size, called_in_order, insort, sum_tuples, \
+    scale_tuple, normal_color_to_weird_gl_color, lighten_color, darken_color, bindigits, datetime_from_string, all_indexes, my_range, \
+    split_with_escaping, temporary_attribute_values, reverse_dict, change_dict_key_names
 
 
 @pytest.mark.parametrize(
@@ -122,7 +127,7 @@ def test_insort(args, result):
     assert list_ == result
 
 
-# def test_circular_coordinates(center_location: Tuple[float, float], radius: float, count: int, add_gl_coordinate: bool = False):
+# def test_circular_coordinates(center_location, radius, count, add_gl_coordinate= False):
 #     """
 #     a generator of coordinates in a circular fashion around a given point.
 #     :param add_gl_coordinate:
@@ -139,8 +144,8 @@ def test_insort(args, result):
 #     for i in range(count):
 #         coords = x + (radius * cos((i * d_theta) + initial_theta)), y + (radius * sin((i * d_theta) + initial_theta))
 #         yield (coords + (0,)) if add_gl_coordinate else coords
-#
-#
+
+
 # def test_sine_wave_coordinates(
 #         start_coordinates: Tuple[float, float],
 #         end_coordinates: Tuple[float, float],
@@ -176,194 +181,216 @@ def test_insort(args, result):
 #     x, y = (x - cx), (y - cy)
 #     rotated = (x + y*1j) * cmath.rect(1, angle)
 #     return rotated.real + cx, rotated.imag + cy
-#
-#
-# def test_sum_tuples(*tuples: Tuple):
-#     """
-#     sums each item of the tuples. returns the new tuple.
-#     :param tuples: many arguments of tuples.
-#     :return:
-#     """
-#     try:
-#         return tuple(map(sum, zip(*tuples)))
-#     except TypeError:
-#         raise WrongUsageError(f"problem with the arguments {list(tuples)}")
-#
-#
-# def test_scale_tuple(scalar: float, tuple_: Tuple, round_to_integers: bool = False):
-#     """
-#     Multiplies every item of the tuple with a number.
-#     """
-#     returned = tuple(map(lambda t: reduce(mul, t), zip(([scalar] * len(tuple_)), tuple_)))
-#     if round_to_integers:
-#         returned = tuple(map(int, returned))
-#     return returned
-#
-#
-# def test_normal_color_to_weird_gl_color(color: T_Color, add_alpha: bool = True) -> Union[T_Color, Tuple[float, ...]]:
-#     """
-#     Some open GL functions require some different weird format of colors
-#     """
-#     r, g, b = color
-#     returned = r / 255, g / 255, b / 255
-#     return returned + ((1.0,) if add_alpha else ())
-#
-#
-# def test_lighten_color(color: T_Color, diff: float = COLORS.COLOR_DIFF):
-#     r, g, b = color
-#     return max(min(r + diff, 255), 0), max(min(g + diff, 255), 0), max(min(b + diff, 255), 0)
-#
-#
-# def test_darken_color(color: T_Color, diff: float = COLORS.COLOR_DIFF):
-#     return lighten_color(color, -diff)
-#
-#
-# def test_bindigits(number: int, bit_count: int):
-#     """
-#     Receives a number (even a negative one!!!), returns a string
-#     os the binary form of that number. the string will be `bits` bits long.
-#     :param number: the number
-#     :param bit_count: the amount of bits to give the binary form
-#     :return: `str`
-#     """
-#     return f"{(bin(number & int('1' * bit_count, 2))[2:]) :0>{bit_count}}"
-#
-#
-# def test_datetime_from_string(string: str) -> datetime.datetime:
-#     """
-#     receives the output of a `repr(datetime.datetime)` for some datetime.datetime object,
-#     returns the datetime object itself.
-#     """
-#     args = string[string.index('(') + 1: string.index(')')].split(', ')
-#     return datetime.datetime(*map(int, args))
-#
-#
-# def test_all_indexes(string: str, substring: str) -> Generator[int]:
-#     """
-#     generator that yields indexes of all of the occurrences of the substring in the string
-#     """
-#     last_index = -1
-#     while True:
-#         try:
-#             last_index = string.index(substring, last_index + 1)
-#             yield last_index
-#         except ValueError:
-#             return
-#
-#
-# def test_my_range(start: float, end: Optional[float] = None, step: float = 1) -> Generator[float]:
-#     """
-#     Just like `range`, but supports non-whole `step`s
-#     :param start:
-#     :param end:
-#     :param step:
-#     :return:
-#     """
-#     if end is None:
-#         end = start
-#         start = 0
-#
-#     current = start
-#     while current < end:
-#         yield current
-#         current += step
-#
-#
-# def test_bool_(o: Any):
-#     """
-#     The typing module is having a hard time with the `filter` function
-#     Especially with the fact that the `bool` function takes in an `str`
-#
-#     The `filter` function is typed like this:
-#
-#         filter(function: Callable[[T], bool], iterable: Iterable[T]) -> Iterable[T]
-#
-#         and `bool` takes in an `object`
-#
-#     This means that `filter` allegedly returns a `Iterable[object]`
-#     That fucks up my typing - because usually it returns something with more functionality (like strings) which the type checker sadly does not like
-#
-#     This function is just like `bool` but it takes in `Any` and not `object`
-#     """
-#     return bool(o)
-#
-#
-# def test_split_with_escaping(string: str, separator: str = ' ', escaping_char: str = '"', remove_empty_spaces: bool = True) -> List[str]:
-#     """
-#     Just like the builtin `split` - but can handle escaping characters like "-s and not split in between them
-#
-#         example:
-#                         >>> split_with_escaping('and i said "hello w o r l d" ! !')
-#                         >>> ['and', 'i', 'said', '"hello w o r l d"', '!', '!']
-#     :param remove_empty_spaces:
-#     :param string: the `str` to split
-#     :param separator: the substring to split by
-#     :param escaping_char: the character which in between you should not split
-#     :return:
-#     """
-#     splitted = []
-#     last_splitted = 0
-#     is_escaped = False
-#
-#     if not string:
-#         return []
-#
-#     if separator == escaping_char:
-#         raise WrongUsageError(f"separator and escaping char must be different! not both '{separator}'")
-#
-#     for i, char in enumerate(string):
-#         if char == escaping_char:
-#             is_escaped = not is_escaped
-#             continue
-#         if char == separator and not is_escaped:
-#             splitted.append(string[last_splitted:i])
-#             last_splitted = i + 1
-#     splitted.append(string[last_splitted:])
-#     if remove_empty_spaces:
-#         splitted = [string for string in splitted if len(string) > 0]
-#     return splitted
-#
-#
-# @contextmanager
-# def test_temporary_attribute_values(object_: Any, attribute_value_mapping: Dict[str, Any]) -> Generator[Any]:
-#     """
-#     A `contextmanager` that takes in an instance of an object.
-#     The function allows us to temporarily change the values of
-#         the object's attributes - perform some logic - and set them back. Example:
-#
-#         >>> object_.attribute_name     # == 1
-#         >>> with temporary_attribute_values(object_, {'attribute_name': 34}):
-#         >>>    object_.attribute_name # ==  34
-#         >>> object_.attribute_name     # ==  1
-#     """
-#     old_mapping = {attr: getattr(object_, attr) for attr in attribute_value_mapping}
-#     try:
-#         for attr, new_value in attribute_value_mapping.items():
-#             setattr(object_, attr, new_value)
-#         yield object_
-#     finally:
-#         for attr, new_value in old_mapping.items():
-#             setattr(object_, attr, new_value)
-#
-#
-# def test_reverse_dict(dict_: Dict[K, V]) -> Dict[V, K]:
-#     """
-#     Take in a dict and reverse the keys and the values.
-#     If some values are duplicate - raise
-#     """
-#     reversed_dict_ = {value: [] for value in dict_.values()}
-#     for key, value in dict_.items():
-#         reversed_dict_[value].append(key)
-#
-#     if any(len(key_list) != 1 for key_list in reversed_dict_.values()):
-#         raise KeyError(f"Cannot reverse dict {dict_}! Duplicate values found. Conflict: {reversed_dict_}")
-#
-#     return {value: key_list[0] for value, key_list in reversed_dict_.items()}
-#
-#
-# def test_change_dict_key_names(dict_: Dict[K, V], key_name_mapping: Dict[K, K2]) -> Dict[Union[K, K2], V]:
-#     """
-#     Receive a dict and a mapping between old and new names
-#     change the keys of the dict to their new names (if they appear in the mapping)
-#     """
-#     return {key_name_mapping.get(key, key): value for key, value in dict_.items()}
+
+
+@pytest.mark.parametrize(
+    "tuples, result",
+    [
+        ([(1, 1)],                       (1, 1)),
+        ([(1, 1),       (2, 2)],         (3, 3)),
+        ([(1, 1),       (2, 2), (3, 3)], (6, 6)),
+        ([(1, 1, 1, 1), (2, 2)],         (3, 3)),
+        ([(),           (2, 2)],         ()),
+        ([],                             ()),
+    ]
+)
+def test_sum_tuples(tuples, result):
+    assert sum_tuples(*tuples) == result
+
+
+@pytest.mark.parametrize(
+    "scalar, tuple_, round_to_integers, result",
+    [
+        (1,   (),     False, ()),
+        (1,   (2, 3), False, (2, 3)),
+        (2,   (2, 3), False, (4, 6)),
+        (0.5, (3, 5), False, (1.5, 2.5)),
+        (0.5, (3, 5), True,  (1, 2)),
+    ]
+)
+def test_scale_tuple(scalar, tuple_, round_to_integers, result):
+    assert scale_tuple(scalar, tuple_, round_to_integers,) == result
+
+
+@pytest.mark.parametrize(
+    "color, add_alpha, result",
+    [
+        ((0, 0, 0),       False,  (0, 0, 0)),
+        ((0, 0, 0),       True,   (0, 0, 0, 1)),
+        ((255, 255, 255), False,  (1, 1, 1)),
+        ((127.5, 255, 0), True,   (0.5, 1, 0, 1.0)),
+        ((100, 200, 300), True,   (0.39215686274509803, 0.7843137254901961, 1.1764705882352942, 1.0)),
+    ]
+)
+def test_normal_color_to_weird_gl_color(color, add_alpha, result):
+    assert normal_color_to_weird_gl_color(color, add_alpha) == result
+
+
+@pytest.mark.parametrize(
+    "color, diff, result",
+    [
+        ((0, 0, 0),       10,  (10, 10, 10)),
+        ((200, 200, 200), 100, (255, 255, 255)),
+    ]
+)
+def test_lighten_color(color, diff, result):
+    assert lighten_color(color, diff) == result
+
+
+@pytest.mark.parametrize(
+    "color, diff, result",
+    [
+        ((200, 100, 255), 100, (100, 0, 155)),
+        ((0, 0, 0),       10,  (0, 0, 0)),
+    ]
+)
+def test_darken_color(color, diff, result):
+    assert darken_color(color, diff) == result
+
+
+@pytest.mark.parametrize(
+    "number, bit_count, result",
+    [
+        (0,      8,  '00000000'),
+        (0xff,   8,  '11111111'),
+        (0xff,   3,  '111'),
+        (0x0a,   9,  '000001010'),
+        (-3,     8,  '11111101'),
+        (-255,   16, '1111111100000001'),
+    ]
+)
+def test_bindigits(number, bit_count, result):
+    assert bindigits(number, bit_count) == result
+
+
+@pytest.mark.parametrize(
+    "datetime_",
+    [
+        datetime.datetime(2022, 11, 18, 3, 17, 10, 100),
+        datetime.datetime(1970, 1,  1,  0, 0,  0,  0),
+    ]
+)
+def test_datetime_from_string(datetime_):
+    assert datetime_from_string(repr(datetime_)) == datetime_
+
+
+@pytest.mark.parametrize(
+    "string, substring, result",
+    [
+        ("test test test", " ",    [4, 9]),
+        ("test test test", "test", [0, 5, 10]),
+        ("aaaaa",          "aaa",  [0, 1, 2]),
+        ("",               "",     [0]),
+        ("hello",          "test", []),
+        ("hello",          "",     [0, 1, 2, 3, 4, 5]),
+    ]
+)
+def test_all_indexes(string, substring, result):
+    assert list(all_indexes(string, substring)) == result
+
+
+@pytest.mark.parametrize(
+    "args, result",
+    [
+        ([3],                 [0, 1, 2]),
+        ([0],                 []),
+        ([1,    4],           [1, 2, 3]),
+        ([1,    1],           []),
+        ([0.3,  0.6,  0.1],   [0.3, 0.4, 0.5]),
+        ([0,    3,    0.5],   [0, 0.5, 1, 1.5, 2, 2.5]),
+        ([-0.6, -0.3, 0.1],   [-0.6, -0.5, -0.4]),
+        ([0.2,  0,    -0.05], [0.2, 0.15, 0.1, 0.05]),
+    ]
+)
+def test_my_range(args, result):
+    assert list(map(lambda n: round(n, 7), my_range(*args))) == result
+
+
+@pytest.mark.parametrize(
+    "string, separator, escaping_char, remove_empty_spaces, result",
+    [
+        ('',                                 'J', 'H', True,   []),
+        ('hi  hi',                           ' ', '"', True,   ['hi', 'hi']),
+        ('hi  hi',                           ' ', '"', False,  ['hi', '', 'hi']),
+        ('hi "ai bi " ci  ',                 ' ', '"', True,   ['hi', '"ai bi "', 'ci']),
+        ('h "a b" c"w h"',                   ' ', '"', True,   ['h', '"a b"', 'c"w h"']),
+        ('^hi hi hi^',                       ' ', '^', True,   ['^hi hi hi^']),
+        ('^hi&hi&hi^&&k',                    '&', '^', False,  ['^hi&hi&hi^', '', 'k']),
+        ('and i said "hello w o r l d" ! !', ' ', '"', True,   ['and', 'i', 'said', '"hello w o r l d"', '!', '!']),
+    ]
+)
+def test_split_with_escaping(string, separator, escaping_char, remove_empty_spaces, result):
+    assert split_with_escaping(string, separator, escaping_char, remove_empty_spaces) == result
+
+
+def test_temporary_attribute_values():
+    object_ = DotDict(a=55)
+
+    initial_value = object_.a
+    with temporary_attribute_values(object_, {'a': 101010101}):
+       temporary_value  = object_.a
+    final_value = object_.a
+
+    assert initial_value == final_value == 55
+    assert temporary_value == 101010101
+
+
+@pytest.mark.parametrize(
+    "dict_, result",
+    [
+        ({}, {}),
+        ({1: 2}, {2: 1}),
+        ({1: 2, 'a': 'b'}, {2: 1, 'b': 'a'}),
+    ]
+)
+def test_reverse_dict(dict_, result):
+    assert reverse_dict(dict_) == result
+
+
+@pytest.mark.parametrize(
+    "dict_",
+    [
+        {1: 2, 5: 2, 3: 4, 7: 6},
+        {'a': 'A', 'A': 'A'},
+    ]
+)
+def test_reverse_dict(dict_):
+    with pytest.raises(KeyError):
+        reverse_dict(dict_)
+
+
+@pytest.mark.parametrize(
+    "dict_, key_name_mapping, result",
+    [
+        ({},                       {},                 {}),
+        ({},                       {1: 2, 2: 3, 3: 4}, {}),
+        ({1: 2},                   {},                 {1: 2}),
+        ({1: 2, 3: 4},             {1: 3},             {3: 4}),
+        ({1: 'a', 2: 'b', 3: 'c'}, {1: 'A', 2: 'B'},   {'A': 'a', 'B': 'b', 3: 'c'}),
+        ({1: 10, 2: 20, 3: 30},    {1: 2, 2: 3, 3: 4}, {2: 10, 3: 20, 4: 30}),
+    ]
+)
+def test_change_dict_key_names(dict_, key_name_mapping, result):
+    """
+    Receive a dict and a mapping between old and new names
+    change the keys of the dict to their new names (if they appear in the mapping)
+    """
+    assert change_dict_key_names(dict_, key_name_mapping) == result
+
+
+@pytest.mark.parametrize(
+    "dict_, key_name_mapping",
+    [
+        ({1: 2, 3: 4},               {1: 3}),
+        ({'hi': 2, 'bye': 3, '': 0}, {'hi': 'bye', '': '3'}),
+        ({1: None, 2: None},         {3: 3}),
+        ({1: None, 2: None},         {1: 2, 2: 2}),
+    ]
+)
+def test_change_dict_key_names(dict_, key_name_mapping):
+    """
+    Receive a dict and a mapping between old and new names
+    change the keys of the dict to their new names (if they appear in the mapping)
+    """
+    with pytest.raises(KeyError):
+        change_dict_key_names(dict_, key_name_mapping)

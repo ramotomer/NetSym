@@ -231,6 +231,9 @@ def bindigits(number: int, bit_count: int) -> str:
     :param bit_count: the amount of bits to give the binary form
     :return: `str`
     """
+    if bit_count <= 0:
+        raise ValueError(f"Output must contain at least one bit! {bit_count} is not enough")
+
     return f"{(bin(number & int('1' * bit_count, 2))[2:]) :0>{bit_count}}"
 
 
@@ -264,33 +267,23 @@ def my_range(start: float, end: Optional[float] = None, step: float = 1) -> Gene
     :param step:
     :return:
     """
+    MAX_ALLOWED_FLOAT_DIGIT_COUNT = 10
     if end is None:
         end = start
         start = 0
 
+    if step == 0:
+        raise ValueError(f"The `step` of a `range` cannot be 0!")
+
+    if (round(step, MAX_ALLOWED_FLOAT_DIGIT_COUNT) != step) or \
+            (round(start, MAX_ALLOWED_FLOAT_DIGIT_COUNT) != start) or \
+            (round(end, MAX_ALLOWED_FLOAT_DIGIT_COUNT) != end):
+        raise ValueError(f"`my_range` does not support such small number diffs: {start, end, step}")
+
     current = start
-    while current < end:
+    while (current < end) if step > 0 else (current > end):
         yield current
-        current += step
-
-
-def bool_(o: Any) -> bool:
-    """
-    The typing module is having a hard time with the `filter` function
-    Especially with the fact that the `bool` function takes in an `str`
-
-    The `filter` function is typed like this:
-
-        filter(function: Callable[[T], bool], iterable: Iterable[T]) -> Iterable[T]
-
-        and `bool` takes in an `object`
-
-    This means that `filter` allegedly returns a `Iterable[object]`
-    That fucks up my typing - because usually it returns something with more functionality (like strings) which the type checker sadly does not like
-
-    This function is just like `bool` but it takes in `Any` and not `object`
-    """
-    return bool(o)
+        current = round(step + current, MAX_ALLOWED_FLOAT_DIGIT_COUNT)
 
 
 def split_with_escaping(string: str, separator: str = ' ', escaping_char: str = '"', remove_empty_spaces: bool = True) -> List[str]:
@@ -371,4 +364,12 @@ def change_dict_key_names(dict_: Dict[K, V], key_name_mapping: Dict[K, K2]) -> D
     Receive a dict and a mapping between old and new names
     change the keys of the dict to their new names (if they appear in the mapping)
     """
+    for key, value in key_name_mapping.items():
+        if key == value:
+            raise KeyError(f"No need to map a key to itself! ({key})")
+
+        if value in dict_.keys() and value not in key_name_mapping.keys():
+            raise KeyError(f"Your new mapping is overriding old values! {key} becomes {value}, "
+                           f"while {value} is a key in the old dict, and is not changed!")
+
     return {key_name_mapping.get(key, key): value for key, value in dict_.items()}
