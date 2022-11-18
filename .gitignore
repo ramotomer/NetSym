@@ -34,5 +34,5 @@ pip-delete-this-directory.txt
 nosetests.xml
 coverage.xml
 
-# prject related
+# project related
 /res/files/window_inputs.txt

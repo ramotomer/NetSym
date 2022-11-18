@@ -5,13 +5,6 @@ routers, switches, hubs, servers and clients with a simple yet highly-functional
 interface. Users can watch the packets get sent back and fourth with a **very** slowed 
 down version of real life network protocols.
 
-## Requirements ##
-In order to run this program, one needs to have python 3.8 or higher.
-And install these following packages:
- 
-    `pip install pyglet`
-    `pip install pyWinhook`
-
 ## Using the Program ##
 When the program is started, no objects are drawn to screen.
 There is a user interface interactive side-window that contains the buttons and actions
