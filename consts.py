@@ -469,6 +469,8 @@ class INTERFACES:
 
     MAX_MTU = 1500
 
+    MAX_MTU = 1500
+
     class TYPE:
         ETHERNET = "Ethernet"
         WIFI = "Wifi"
