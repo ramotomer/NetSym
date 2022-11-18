@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from os import linesep
-from typing import TYPE_CHECKING, Optional, Dict, Callable, Iterable, Tuple
+from typing import TYPE_CHECKING, Optional, Dict, Callable, Iterable, Tuple, List
 
 import pyglet
 
@@ -14,7 +14,6 @@ from NetSym.computing.internals.processes.usermode_processes.dns_process.dns_ser
 from NetSym.computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
 from NetSym.consts import IMAGES, MESSAGES, INTERFACES, TEXT, PORTS
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
-from NetSym.gui.tech.interface_graphics_list import InterfaceGraphicsList
 from NetSym.gui.tech.loopback_connection_graphics import LoopbackConnectionGraphics
 from NetSym.gui.tech.output_console import OutputConsole
 from NetSym.gui.tech.process_graphics import ProcessGraphicsList
@@ -24,7 +23,7 @@ from NetSym.gui.user_interface.text_graphics import Text
 from NetSym.usefuls.funcs import with_args
 
 if TYPE_CHECKING:
-    from NetSym.computing.internals.interface import Interface
+    from NetSym.gui.tech.interface_graphics import InterfaceGraphics
     from NetSym.computing.computer import Computer
     from NetSym.gui.user_interface.user_interface import UserInterface
 
@@ -34,7 +33,7 @@ class ChildGraphicsObjects:
     text: Text
     console: OutputConsole
     process_list: ProcessGraphicsList
-    interface_list: InterfaceGraphicsList
+    interface_list: List[InterfaceGraphics]
     loopback: Optional[LoopbackConnectionGraphics] = None
 
     def __iter__(self) -> Iterable:
@@ -81,11 +80,13 @@ class ComputerGraphics(ImageGraphics):
         self.computer: Computer = computer
         self.class_name = self.computer.__class__.__name__
 
+        interface_list = [interface.init_graphics(self) for interface in self.computer.interfaces]
+
         self.child_graphics_objects = ChildGraphicsObjects(
             Text(self.generate_text(), self.x, self.y, self),
             OutputConsole(*console_location),
             ProcessGraphicsList(self),
-            InterfaceGraphicsList(self),
+            interface_list,
         )
 
         # debugp(f"Creating computer: {computer.name + ',':<15}scale: {self.scale_factor}")
@@ -107,6 +108,7 @@ class ComputerGraphics(ImageGraphics):
 
     def draw(self) -> None:
         self.update_image()
+        self.update_text()
         super(ComputerGraphics, self).draw()
 
     def generate_text(self) -> str:
@@ -292,12 +294,6 @@ class ComputerGraphics(ImageGraphics):
 {f'DNS server: {self.computer.dns_server}' if self.computer.dns_server is not None else ""}
 {f'IP Addresses: {linesep + addresses}' if addresses else ""}
 """
-
-    def add_interface(self, interface: Interface) -> None:
-        """
-        Adds an interface to the viewed interfaces.
-        """
-        self.child_graphics_objects.interface_list.add(interface)
 
     def interface_distance(self) -> float:
         """

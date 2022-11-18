@@ -113,7 +113,6 @@ class Connection:
             raise ConnectionsError(f"A connection cannot have this PL amount!!! {new_pl}")
 
         self.packet_loss = new_pl
-        self.graphics.update_appearance()
 
     def set_latency(self, new_latency: float) -> None:
         """
@@ -123,7 +122,6 @@ class Connection:
             raise ConnectionsError(f"A connection cannot have this PL amount!!! {new_latency}")
 
         self.latency = new_latency
-        self.graphics.update_appearance()
 
     def mark_as_blocked(self) -> None:
         """
@@ -132,7 +130,6 @@ class Connection:
         :return: None
         """
         if any(side.is_blocked for side in self.get_sides()):
-            self.graphics.color = CONNECTIONS.BLOCKED_COLOR
             self.is_blocked = True
 
     def mark_as_unblocked(self) -> None:
@@ -142,7 +139,6 @@ class Connection:
         :return: None
         """
         if all(not side.is_blocked for side in self.get_sides()):
-            self.graphics.color = self.graphics.regular_color
             self.is_blocked = False
 
     def add_packet(self, packet: Packet, direction: str) -> None:

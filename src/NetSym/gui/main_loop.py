@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import time
-from typing import Type, Optional, TYPE_CHECKING, Callable, Any, List, TypeVar, Dict, Union
+from typing import Type, Optional, TYPE_CHECKING, Callable, Any, List, TypeVar, Dict, Union, Iterable
 
 from NetSym.consts import T_Time, MAIN_LOOP
 from NetSym.exceptions import *
+from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.main_loop_function_to_call import FunctionToCall
 
 if TYPE_CHECKING:
-    from NetSym.gui.abstracts.graphics_object import GraphicsObject
+    pass
 
 
 T = TypeVar("T")
@@ -112,14 +113,19 @@ class MainLoop:
             self.graphics_objects.remove(graphics_object)
         except ValueError:
             # object is not registered
-            pass
+            print("A graphics object was unregistered - but never registered!!!")
 
         self.remove_from_loop(graphics_object.draw)
         self.remove_from_loop(graphics_object.move)
 
         if hasattr(graphics_object, "child_graphics_objects"):
             for child in graphics_object.child_graphics_objects:
-                self.unregister_graphics_object(child)
+                if isinstance(child, GraphicsObject):
+                    self.unregister_graphics_object(child)
+
+                elif isinstance(child, Iterable):
+                    for item in child:
+                        self.unregister_graphics_object(item)
 
     def _unregister_requesting_graphics_object(self) -> None:
         """

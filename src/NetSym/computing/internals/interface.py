@@ -11,11 +11,13 @@ from NetSym.computing.connection import Connection
 from NetSym.computing.loopback_connection import LoopbackConnection
 from NetSym.consts import T_Time, FILE_PATHS, INTERFACES, PROTOCOLS, T_Color
 from NetSym.exceptions import *
+from NetSym.gui.tech.interface_graphics import InterfaceGraphics
 from NetSym.packets.all import Ether
 from NetSym.packets.packet import Packet
 
 if TYPE_CHECKING:
     from NetSym.computing.connection import ConnectionSide
+    from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
 class Interface:
@@ -30,6 +32,8 @@ class Interface:
 
     POSSIBLE_INTERFACE_NAMES = None
     EXISTING_INTERFACE_NAMES = set()
+
+    GRAPHICS_CLASS = InterfaceGraphics
 
     def __init__(self,
                  mac: Optional[Union[str, MACAddress]] = None,
@@ -103,6 +107,16 @@ class Interface:
         """Constructor for a loopback interface"""
         connection = LoopbackConnection()
         return cls(MACAddress.no_mac(), IPAddress.loopback(), "loopback", connection.get_side())
+
+    def init_graphics(self, parent_computer: ComputerGraphics, x: Optional[float] = None, y: Optional[float] = None) -> InterfaceGraphics:
+        """
+        Initiates the InterfaceGraphics object of this interface
+        """
+        if x is None and y is None:
+            x, y = (parent_computer.x + parent_computer.interface_distance()), parent_computer.y
+
+        self.graphics = self.GRAPHICS_CLASS(x, y, self, parent_computer)
+        return self.graphics
 
     def is_directly_for_me(self, packet: Packet) -> bool:
         """
@@ -207,8 +221,6 @@ class Interface:
         if self.connection is not None:
             self.connection.mark_as_blocked()
 
-        self.graphics.color = INTERFACES.BLOCKED_COLOR
-
     def unblock(self) -> None:
         """
         Releases the blocking of the connection and allows it to receive packets again.
@@ -219,7 +231,6 @@ class Interface:
         self.accepting = None
         if self.connection is not None:
             self.connection.mark_as_unblocked()
-        self.graphics.color = INTERFACES.COLOR
 
     def toggle_block(self, accept: Optional[str] = None) -> None:
         """

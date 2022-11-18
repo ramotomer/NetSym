@@ -53,6 +53,7 @@ if TYPE_CHECKING:
     from NetSym.computing.internals.processes.abstracts.process import Process
     from NetSym.computing.internals.sockets.socket import Socket
     from NetSym.computing.connection import Connection
+    from NetSym.gui.tech.interface_graphics import InterfaceGraphics
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 
@@ -345,7 +346,6 @@ class Computer:
         self.EXISTING_COMPUTER_NAMES.remove(self.name)
         self.name = name
         self.EXISTING_COMPUTER_NAMES.add(self.name)
-        self.graphics.update_text()
 
     def start_sniffing(self, interface_name: Optional[str] = INTERFACES.ANY_INTERFACE, is_promisc: bool = False) -> None:
         """
@@ -443,7 +443,7 @@ class Computer:
     def add_interface(self,
                       name: Optional[str] = None,
                       mac: Optional[Union[str, MACAddress]] = None,
-                      type_: str = INTERFACES.TYPE.ETHERNET) -> Interface:
+                      type_: str = INTERFACES.TYPE.ETHERNET) -> Tuple[Interface, InterfaceGraphics]:
         """
         Adds an interface to the computer with a given name.
         If the name already exists, raise a DeviceNameAlreadyExists.
@@ -461,8 +461,11 @@ class Computer:
 
         new_interface = interface_class((MACAddress.randomac() if mac is not None else mac), name=name)
         self.interfaces.append(new_interface)
-        self.graphics.add_interface(new_interface)
-        return new_interface
+
+        graphics = new_interface.init_graphics(parent_computer=self.graphics)
+        self.graphics.child_graphics_objects.interface_list.append(graphics)
+
+        return new_interface, graphics
 
     def remove_interface(self, name: str) -> None:
         """
@@ -475,7 +478,6 @@ class Computer:
             self.routing_table.delete_interface(interface)
         self.interfaces.remove(interface)
         self.main_loop.unregister_graphics_object(interface.graphics)
-        self.graphics.update_text()
 
     def available_interface(self) -> Interface:
         """
@@ -486,8 +488,8 @@ class Computer:
         try:
             return get_the_one(self.interfaces, lambda i: not i.is_connected(), NoSuchInterfaceError)
         except NoSuchInterfaceError:
-            interface = self.add_interface()
-            self.main_loop.register_graphics_object(interface.graphics)
+            interface, graphics = self.add_interface()
+            self.main_loop.register_graphics_object(graphics)
             return interface
 
     def disconnect(self, connection: Connection) -> None:
@@ -615,7 +617,6 @@ class Computer:
             dhcp_server_process.update_server_data()
 
         self.routing_table.add_interface(interface.ip)
-        self.graphics.update_text()
 
     def remove_ip(self, interface: Interface) -> None:
         """

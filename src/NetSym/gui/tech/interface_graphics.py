@@ -82,6 +82,7 @@ class InterfaceGraphics(ViewableGraphicsObject, Selectable):
         Draw the interface.
         :return:
         """
+        self.color = INTERFACES.BLOCKED_COLOR if self.interface.is_blocked else INTERFACES.COLOR
         draw_rectangle(
             self.real_x - (self.width/2), self.real_y - (self.height / 2),
             self.width, self.height,

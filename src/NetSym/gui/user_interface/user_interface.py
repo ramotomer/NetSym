@@ -1023,8 +1023,8 @@ class UserInterface:
         computer = computer_graphics.computer
         interface = get_the_one(computer.interfaces, lambda i: i.name == interface_name)
         try:
-            interface = computer.add_interface(interface_name, type_=interface_type)
-            self.main_loop.register_graphics_object(interface.graphics)
+            interface, graphics = computer.add_interface(interface_name, type_=interface_type)
+            self.main_loop.register_graphics_object(graphics)
 
         except DeviceNameAlreadyExists:
             if interface.is_connected():

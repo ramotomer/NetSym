@@ -7,6 +7,7 @@ from NetSym.address.mac_address import MACAddress
 from NetSym.computing.internals.interface import Interface
 from NetSym.consts import T_Color, INTERFACES
 from NetSym.exceptions import *
+from NetSym.gui.tech.wireless_interface_graphics import WirelessInterfaceGraphics
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
@@ -22,6 +23,8 @@ class WirelessInterface(Interface):
     An interface can be either connected or disconnected to a `ConnectionSide` object, which enables it to move its packets
     down the connection further.
     """
+    GRAPHICS_CLASS = WirelessInterfaceGraphics
+
     def __init__(self,
                  mac:           Optional[MACAddress] = None,
                  ip:            Optional[IPAddress]  = None,
