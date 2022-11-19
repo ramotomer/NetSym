@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from typing import Optional, Dict, Callable, TYPE_CHECKING, Tuple, Any
 
 import pyglet
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
 
 
-class ViewableGraphicsObject(GraphicsObject, metaclass=ABCMeta):
+class ViewableGraphicsObject(GraphicsObject):
     """
     This is a graphics object that can viewed on the side-window of the simulation
     """

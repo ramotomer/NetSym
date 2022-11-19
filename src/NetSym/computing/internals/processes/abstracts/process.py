@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import inspect
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod, ABC
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Iterator, Union, Callable, TYPE_CHECKING, Optional, Tuple, Type, Generator
@@ -116,7 +116,7 @@ class WaitingFor(IterableDataclass):
 T_ProcessCode = Generator[WaitingFor, ReturnedPacket, None]
 
 
-class Process(metaclass=ABCMeta):
+class Process(ABC):
     """
     This class is a process in the computer class.
     It holds a state of the process and can run and perform code, then stop, wait for a condition and

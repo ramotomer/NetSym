@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import argparse
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod, ABC
 from typing import Union, NamedTuple, TYPE_CHECKING
 
 from NetSym.usefuls.funcs import split_with_escaping
@@ -25,7 +25,7 @@ class ParsedCommand(NamedTuple):
 SyntaxArgumentMessage = str
 
 
-class Command(metaclass=ABCMeta):
+class Command(ABC):
     """
     A command in the shell
     """

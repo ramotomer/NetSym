@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from collections import deque
 from dataclasses import dataclass
 from functools import reduce
@@ -65,7 +65,7 @@ def is_number_acking_packet(ack_number: int, packet: Packet) -> bool:
     return packet["TCP"].sequence_number + get_tcp_packet_data_length(packet) <= ack_number
 
 
-class TCPProcess(Process, metaclass=ABCMeta):
+class TCPProcess(Process):
     """
     The TCP process abstract class which represents any TCP based process (HTTP, SSH whatever)
     It creates an abstraction for all of the methods for sending and receiving data without the child process class

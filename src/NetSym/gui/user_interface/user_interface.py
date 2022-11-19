@@ -28,6 +28,7 @@ from NetSym.consts import VIEW, TEXT, BUTTONS, IMAGES, DIRECTORIES, T_Color, SEL
     INTERFACES, ADDRESSES, MESSAGES, MAIN_LOOP, CONSOLE
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
+from NetSym.gui.abstracts.resizable import Resizable
 from NetSym.gui.abstracts.selectable import Selectable
 from NetSym.gui.abstracts.uniquely_dragged import UniquelyDragged
 from NetSym.gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
@@ -44,7 +45,6 @@ from NetSym.gui.user_interface.popup_windows.popup_help import PopupHelp
 from NetSym.gui.user_interface.popup_windows.popup_text_box import PopupTextBox
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 from NetSym.gui.user_interface.popup_windows.yes_no_popup_window import YesNoPopupWindow
-from NetSym.gui.user_interface.resizing_dots_handler import Resizable, is_resizable
 from NetSym.gui.user_interface.resizing_dots_handler import ResizingDotsHandler
 from NetSym.gui.user_interface.selecting_square import SelectingSquare
 from NetSym.gui.user_interface.text_graphics import Text
@@ -274,15 +274,11 @@ class UserInterface:
         self.main_window.set_caption(new_window_name)
 
     @property
-    def selected_object(self) -> Union[Selectable, PopupWindow, None]:
+    def selected_object(self) -> Union[Selectable, None]:
         return self.__selected_object
 
     @selected_object.setter
-    def selected_object(self, graphics_object: Union[Selectable, PopupWindow, None]) -> None:
-        if isinstance(graphics_object, PopupWindow):
-            self.active_window = graphics_object
-            return
-
+    def selected_object(self, graphics_object: Union[Selectable, None]) -> None:
         self.__selected_object = graphics_object
         self.active_window = None
 
@@ -1122,21 +1118,15 @@ class UserInterface:
         Does that using popup window in the `PopupTextBox` class.
         :return: None
         """
-        computer, interface = None, None
-        if self.selected_object is not None:
-            if isinstance(self.selected_object, InterfaceGraphics):
-                interface = self.selected_object.interface
-                computer = get_the_one(self.computers, lambda c: interface in c.interfaces, NoSuchInterfaceError)
+        if not isinstance(self.selected_object, (InterfaceGraphics, ComputerGraphics)):
+            return
 
-            elif isinstance(self.selected_object, ComputerGraphics):
-                computer = self.selected_object.computer
-                if computer.interfaces:
-                    interface = computer.interfaces[0]
-
-            self.ask_user_for(IPAddress,
-                              MESSAGES.INSERT.IP,
-                              with_args(computer.set_ip, interface),
-                              "Invalid IP Address!!!")
+        computer, interface = self._get_computer_and_interface(self.selected_object.logic_object)
+        # TODO: if the computer has one connected interface without an IP address - a new one will be created - not the desired behaviour probably
+        self.ask_user_for(IPAddress,
+                          MESSAGES.INSERT.IP,
+                          with_args(computer.set_ip, interface),
+                          "Invalid IP Address!!!")
 
     def smart_connect(self) -> None:
         """
@@ -1144,22 +1134,22 @@ class UserInterface:
         If there is no such one, to the nearest router, else to connects all of the computers to all others
         :return: None
         """
-        switches = list(filter(lambda c: isinstance(c, Switch), self.computers))
-        routers = list(filter(lambda c: isinstance(c, Router), self.computers))
-        if switches:
+        switches_graphics = list(filter(lambda c: isinstance(c.computer, Switch), self.main_loop.graphics_objects_of_types(ComputerGraphics)))
+        routers_graphics = list(filter(lambda c:  isinstance(c.computer, Router), self.main_loop.graphics_objects_of_types(ComputerGraphics)))
+        if switches_graphics:
             for computer in self.computers:
                 if isinstance(computer, Switch):
                     continue
-                nearest_switch = min(switches, key=lambda s: distance(s.graphics.location, computer.graphics.location))
+                nearest_switch = min(switches_graphics, key=lambda s: distance(s.location, computer.graphics.location))
                 if not computer.interfaces or not computer.interfaces[0].is_connected():
-                    self.connect_computers(computer, nearest_switch)
-        elif routers:
+                    self.connect_computers(computer, nearest_switch.computer)
+        elif routers_graphics:
             for computer in self.computers:
                 if isinstance(computer, Router):
                     continue
-                nearest_router = min(routers, key=lambda s: distance(s.graphics.location, computer.graphics.location))
+                nearest_router = min(routers_graphics, key=lambda r: distance(r.location, computer.graphics.location))
                 if not computer.interfaces or not computer.interfaces[0].is_connected():
-                    self.connect_computers(computer, nearest_router)
+                    self.connect_computers(computer, nearest_router.computer)
         else:
             self.connect_all_to_all()
 
@@ -1306,11 +1296,12 @@ class UserInterface:
         Displays the roots of all STP processes that are running. (circles the roots with a yellow circle)
         :return: None
         """
-        stp_runners = [computer for computer in self.computers if computer.process_scheduler.is_usermode_process_running_by_type(STPProcess)]
-        roots = [computer.process_scheduler.get_usermode_process_by_type(STPProcess).root_bid for computer in stp_runners]
-        for computer in stp_runners:
-            if computer.process_scheduler.get_usermode_process_by_type(STPProcess).my_bid in roots:
-                draw_circle(*computer.graphics.location, 60, COLORS.YELLOW)
+        stp_runners = [computer_graphics for computer_graphics in self.main_loop.graphics_objects_of_types(ComputerGraphics)
+                       if computer_graphics.computer.process_scheduler.is_usermode_process_running_by_type(STPProcess)]
+        roots = [computer.computer.process_scheduler.get_usermode_process_by_type(STPProcess).root_bid for computer in stp_runners]
+        for computer_graphics in stp_runners:
+            if computer_graphics.computer.process_scheduler.get_usermode_process_by_type(STPProcess).my_bid in roots:
+                draw_circle(*computer_graphics.location, 60, COLORS.YELLOW)
 
     def ask_user_for(self,
                      type_: Callable[[str], T],
@@ -1440,7 +1431,7 @@ class UserInterface:
                     continue
 
                 for interface in other_computer.interfaces:
-                    if interface.ip is not None:
+                    if interface.ip is None:
                         continue
 
                     computer.arp_cache.add_dynamic(interface.ip, interface.mac)
@@ -1482,7 +1473,7 @@ class UserInterface:
             window.x, window.y = map(sum, zip(self.popup_windows[-1].location, WINDOWS.POPUP.STACKING_PADDING))
 
         self.popup_windows.append(window)
-        self.selected_object = window
+        self.active_window = window
 
         self.buttons[BUTTONS.ON_POPUP_WINDOWS.ID] = self.buttons.get(BUTTONS.ON_POPUP_WINDOWS.ID, []) + list(window.buttons)
 
@@ -1712,9 +1703,8 @@ class UserInterface:
 
         if self.selected_object is not None:
             self.selected_object.mark_as_selected()
-            if is_resizable(self.selected_object):
-                resized: Resizable = self.selected_object
-                self.resizing_dots_handler.select(resized)
+            if isinstance(self.selected_object, Resizable):
+                self.resizing_dots_handler.select(self.selected_object)
         else:
             self.resizing_dots_handler.deselect()
 
@@ -1820,8 +1810,10 @@ class UserInterface:
             self.marked_objects.clear()
             return
 
-        if isinstance(object_the_mouse_is_on, Selectable) or isinstance(object_the_mouse_is_on, PopupWindow):
+        if isinstance(object_the_mouse_is_on, Selectable):
             self.selected_object = object_the_mouse_is_on
+        elif isinstance(object_the_mouse_is_on, PopupWindow):
+            self.active_window = object_the_mouse_is_on
 
         # vv this block is in charge of dragging the marked objects vv
         mouse_x, mouse_y = self.main_window.get_mouse_location()

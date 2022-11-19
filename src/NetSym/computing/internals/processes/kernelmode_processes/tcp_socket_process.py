@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from abc import ABCMeta
 from typing import Tuple, TYPE_CHECKING, Optional
 
 from NetSym.address.ip_address import IPAddress
@@ -13,7 +12,7 @@ if TYPE_CHECKING:
     from NetSym.computing.computer import Computer
 
 
-class TCPSocketProcess(TCPProcess, metaclass=ABCMeta):
+class TCPSocketProcess(TCPProcess):
     """
     A process to handle the actions of a socket of kind SOCK_STREAM
     """

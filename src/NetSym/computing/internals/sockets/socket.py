@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod, ABC
 from typing import Tuple, TYPE_CHECKING, Optional, Any, List
 
 from NetSym.address.ip_address import IPAddress
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from NetSym.computing.computer import Computer
 
 
-class Socket(metaclass=ABCMeta):
+class Socket(ABC):
     """
     A socket is an operation-system object that allows for an abstraction of network access
     and sessions

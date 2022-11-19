@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from abc import ABCMeta
 from typing import Type, TYPE_CHECKING
 
 from NetSym.computing.internals.processes.abstracts.process import Process, T_ProcessCode
@@ -10,7 +9,7 @@ if TYPE_CHECKING:
     from NetSym.computing.computer import Computer
 
 
-class TCPServerProcess(Process, metaclass=ABCMeta):
+class TCPServerProcess(Process):
     """
     A process that waits for TCP connections.
     For each connection it starts a child process with the connection's `Socket` object

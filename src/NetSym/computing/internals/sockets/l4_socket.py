@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from typing import Tuple, Optional, TYPE_CHECKING
 
 from NetSym.address.ip_address import IPAddress
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from NetSym.computing.computer import Computer
 
 
-class L4Socket(Socket, metaclass=ABCMeta):
+class L4Socket(Socket):
     """
     UDP/TCP sockets have many functions in common :)
     """

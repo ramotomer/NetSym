@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import os
-from abc import ABCMeta
 from typing import Set, Optional, Dict, TYPE_CHECKING, Callable, Tuple
 
 import pyglet
 
 from NetSym.consts import IMAGES, T_Color, SELECTED_OBJECT, DIRECTORIES, VIEW, SHAPES, COLORS
 from NetSym.exceptions import *
-from NetSym.gui.abstracts.selectable import Selectable
+from NetSym.gui.abstracts.resizable import Resizable
 from NetSym.gui.shape_drawing import draw_rectangle
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
 from NetSym.usefuls.funcs import scale_tuple, sum_tuples
@@ -18,7 +17,7 @@ if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
 
 
-class ImageGraphics(ViewableGraphicsObject, Selectable, metaclass=ABCMeta):
+class ImageGraphics(ViewableGraphicsObject, Resizable):
     """
     This class is a superclass of any `GraphicsObject` subclass which uses an image in its `draw` method.
     Put simply, it is a graphics object with a picture.

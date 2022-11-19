@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-from abc import ABCMeta
 from typing import Type, Iterable, Any, Dict, TYPE_CHECKING
 
 from NetSym.computing.internals.processes.abstracts.process import Process
@@ -12,7 +11,7 @@ if TYPE_CHECKING:
     from NetSym.computing.internals.shell.shell import Shell
 
 
-class ProcessCreatingCommand(Command, metaclass=ABCMeta):
+class ProcessCreatingCommand(Command):
     """
     This is an easier way to write commands that all they do is run a single process :)
     """
