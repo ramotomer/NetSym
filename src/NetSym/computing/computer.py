@@ -486,7 +486,7 @@ class Computer:
         If the computer has no available interfaces, creates one and returns it.
         """
         try:
-            return get_the_one(self.interfaces, lambda i: not i.is_connected(), NoSuchInterfaceError)
+            return get_the_one(self.interfaces, (lambda i: (not i.is_connected() and not isinstance(i, WirelessInterface))), NoSuchInterfaceError)
         except NoSuchInterfaceError:
             interface, graphics = self.add_interface()
             self.main_loop.register_graphics_object(graphics)

@@ -33,9 +33,9 @@ from NetSym.gui.abstracts.uniquely_dragged import UniquelyDragged
 from NetSym.gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
 from NetSym.gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from NetSym.gui.tech.computer_graphics import ComputerGraphics
-from NetSym.gui.tech.connection_graphics import ConnectionGraphics
 from NetSym.gui.tech.interface_graphics import InterfaceGraphics
 from NetSym.gui.tech.packet_graphics import PacketGraphics
+from NetSym.gui.tech.wireless_interface_graphics import WirelessInterfaceGraphics
 from NetSym.gui.user_interface.button import Button
 from NetSym.gui.user_interface.popup_windows.device_creation_window import DeviceCreationWindow
 from NetSym.gui.user_interface.popup_windows.popup_console import PopupConsole
@@ -346,7 +346,6 @@ class UserInterface:
         for graphics_object in self.main_loop.graphics_objects:
             if isinstance(graphics_object, DifferentColorWhenHovered):
                 if graphics_object.is_in(*self.main_window.get_mouse_location()):
-                    print(f"coloring {graphics_object}...")
                     graphics_object.set_hovered_color()
                 else:
                     graphics_object.set_normal_color()
@@ -697,7 +696,7 @@ class UserInterface:
 
         if self.mode in MODES.COMPUTER_CONNECTING_MODES:
             self.end_device_visual_connecting({
-                MODES.CONNECTING:       self.connect_devices,
+                MODES.CONNECTING:       self.connect_devices_by_graphics,
                 MODES.PINGING:          self.send_direct_ping,
                 MODES.FILE_DOWNLOADING: self.start_file_download,
             }[self.mode])
@@ -831,17 +830,16 @@ class UserInterface:
         self.set_mode(MODES.NORMAL)
 
     def _connect_interfaces(self,
-                            computer1: ComputerGraphics, interface1: InterfaceGraphics,
-                            computer2: ComputerGraphics, interface2: InterfaceGraphics) -> Connection:
+                            computer1: Computer, interface1: Interface,
+                            computer2: Computer, interface2: Interface) -> Connection:
         """
         Take in the graphics-objects of two computers, and their interfaces.
         Create and register a connection between the two.
         Return it :)
         """
-        connection = interface1.interface.connect(interface2.interface)
-        connection_graphics, = connection.init_graphics(computer1, computer2)
-        self.connection_data.append(ConnectionData(connection_graphics, computer1, computer2))
-        self.main_loop.register_graphics_object(connection_graphics, is_in_background=True)
+        connection = interface1.connect(interface2)
+        self.connection_data.append(ConnectionData(connection, computer1, computer2))
+        self.main_loop.register_graphics_object(connection.init_graphics(computer1.graphics, computer2.graphics), is_in_background=True)
         return connection
 
     def _get_computer_and_interface(self, interface_or_computer: Union[Interface, Computer]) -> Tuple[Computer, Interface]:
@@ -864,15 +862,18 @@ class UserInterface:
 
         raise ThisCodeShouldNotBeReached(f"Only supply this function with an `Interface` or `Computer` not {type(interface_or_computer)}!!!")
 
-    def connect_computers(self, computer1: Computer, computer2: Computer) -> None:
+    def connect_computers(self, computer1: Computer, computer2: Computer) -> Connection:
         """
         Create and register a connection between two `Computer`s
         """
-        self._connect_interfaces()
+        return self._connect_interfaces(
+            *self._get_computer_and_interface(computer1),
+            *self._get_computer_and_interface(computer2),
+        )
 
-    def connect_devices(self,
-                        device1: Union[Computer, ComputerGraphics, Interface, InterfaceGraphics],
-                        device2: Union[Computer, ComputerGraphics, Interface, InterfaceGraphics]) -> Optional[Connection]:
+    def connect_devices_by_graphics(self,
+                                    device1: Union[ComputerGraphics, InterfaceGraphics],
+                                    device2: Union[ComputerGraphics, InterfaceGraphics]) -> None:
         """
         Connect two devices to each other, show the connection and everything....
         The devices can be computers or interfaces. Works either way
@@ -880,43 +881,21 @@ class UserInterface:
         :param device2: the two `Computer` object or `Interface` objects. Could also be their graphics objects.
         :return: None
         """
-        devices = device1, device2
-        computers = [device1, device2]  # `Computer`-s
-        interfaces = [device1, device2]  # `Interface`-s
-
-        for i, device in enumerate(devices):
-            if isinstance(device, InterfaceGraphics):
-                device = device.interface
-            elif isinstance(device, ComputerGraphics):
-                device = device.computer
-
-            if isinstance(device, Interface):
-                computers[i] = get_the_one(self.computers, lambda c: device in c.interfaces, NoSuchInterfaceError)
-                interfaces[i] = device
-            elif isinstance(device, Computer):
-                computers[i] = device
-                interfaces[i] = device.available_interface()
-            else:
-                # raise WrongUsageError(f"Only give this function computers or interfaces!!! ({device1, device2})")
-                return
-
-        if len(set(computers)) == 1:
+        if any(not isinstance(device, (ComputerGraphics, InterfaceGraphics)) for device in [device1, device2]) or \
+                (isinstance(device1, WirelessInterfaceGraphics) or isinstance(device2, WirelessInterfaceGraphics)):
+            self.register_window(PopupError("Unconnectable type!!!"))
             return
 
-        if any(isinstance(interface, WirelessInterface) for interface in interfaces):
-            self.register_window(PopupError(
-                "Wireless interfaces do not connect peer-to-peer! They just need to be on the same frequency and then they can communicate :)",
-            ))
+        computer1, interface1 = self._get_computer_and_interface(device1.logic_object)
+        computer2, interface2 = self._get_computer_and_interface(device2.logic_object)
+
+        if computer1 is computer2:
             return
 
         try:
-            connection = interfaces[0].connect(interfaces[1])
+            self._connect_interfaces(computer1, interface1, computer2, interface2)
         except DeviceAlreadyConnectedError:
             self.register_window(PopupError("That interface is already connected :("))
-            return
-        self.connection_data.append(ConnectionData(connection, *computers))
-        self.main_loop.register_graphics_object(connection.init_graphics(computers[0].graphics, computers[1].graphics), is_in_background=True)
-        return connection
 
     @staticmethod
     def send_direct_ping(computer_graphics1: ComputerGraphics, computer_graphics2: ComputerGraphics) -> None:
@@ -1173,14 +1152,14 @@ class UserInterface:
                     continue
                 nearest_switch = min(switches, key=lambda s: distance(s.graphics.location, computer.graphics.location))
                 if not computer.interfaces or not computer.interfaces[0].is_connected():
-                    self.connect_devices(computer, nearest_switch)
+                    self.connect_computers(computer, nearest_switch)
         elif routers:
             for computer in self.computers:
                 if isinstance(computer, Router):
                     continue
                 nearest_router = min(routers, key=lambda s: distance(s.graphics.location, computer.graphics.location))
                 if not computer.interfaces or not computer.interfaces[0].is_connected():
-                    self.connect_devices(computer, nearest_router)
+                    self.connect_computers(computer, nearest_router)
         else:
             self.connect_all_to_all()
 
@@ -1306,7 +1285,7 @@ class UserInterface:
         for computer in self.computers:
             for other_computer in self.computers:
                 if computer is not other_computer and not self.are_connected(computer, other_computer):
-                    self.connect_devices(computer, other_computer)
+                    self.connect_computers(computer, other_computer)
 
     def send_ping_to_self(self) -> None:
         """
@@ -1570,7 +1549,7 @@ class UserInterface:
                 NoSuchInterfaceError,
             ) for computer, name in zip(computers, (start_interface_name, end_interface_name))
         ]
-        connection = self.connect_devices(*interfaces)
+        connection = self._connect_interfaces(computers[0], interfaces[0], computers[1], interfaces[1])
         if connection is None:
             raise ConnectionError(f"Failed connecting {interfaces}")
 
