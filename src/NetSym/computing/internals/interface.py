@@ -52,11 +52,7 @@ class Interface:
         self.connection = connection
         self.name = name if name is not None else Interface.random_name()
 
-        self.mac = mac
-        if mac is None:
-            self.mac = MACAddress(MACAddress.randomac())
-        elif isinstance(mac, str):
-            self.mac = MACAddress(mac)
+        self.mac: MACAddress = MACAddress(MACAddress.randomac()) if mac is None else MACAddress(mac)
 
         self.ip = IPAddress(ip) if ip is not None else None
 

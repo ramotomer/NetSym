@@ -247,6 +247,18 @@ class UserInterface:
     def active_window(self) -> Optional[PopupWindow]:
         return self.__active_window
 
+    @active_window.setter
+    def active_window(self, window: PopupWindow) -> None:
+        if self.active_window is not None:
+            self.active_window.deactivate()
+
+        if window is not None:
+            window.activate()
+        self.__active_window = window
+
+        if window is not None:
+            self.main_loop.move_to_front(window)
+
     @property
     def saving_file(self) -> Optional[str]:
         return self.__saving_file
@@ -259,18 +271,6 @@ class UserInterface:
         if self.__saving_file is not None:
             new_window_name += ": " + self.__saving_file
         self.main_window.set_caption(new_window_name)
-
-    @active_window.setter
-    def active_window(self, window: PopupWindow) -> None:
-        if self.active_window is not None:
-            self.active_window.deactivate()
-
-        if window is not None:
-            window.activate()
-        self.__active_window = window
-
-        if window is not None:
-            self.main_loop.move_to_front(window)
 
     @property
     def selected_object(self) -> Union[Selectable, PopupWindow, None]:
@@ -1241,10 +1241,12 @@ class UserInterface:
         Starts the STP process on all of the switches that enable it. (Only if not already started)
         :return: None
         """
-        for switch in filter(lambda computer: isinstance(computer, Switch), self.computers):
-            switch: Switch
-            if switch.stp_enabled:
-                switch.start_stp()
+        for computer in self.computers:
+            if not isinstance(computer, Switch):
+                continue
+
+            if computer.stp_enabled:
+                computer.start_stp()
 
     def are_connected(self, computer1: Computer, computer2: Computer) -> bool:
         """Receives two computers and returns if they are connected"""
@@ -1291,7 +1293,7 @@ class UserInterface:
                 draw_circle(*computer.graphics.location, 60, COLORS.YELLOW)
 
     def ask_user_for(self,
-                     type_: Type[T],
+                     type_: Callable[[str], T],
                      window_text: str,
                      action: Callable[[T], None],
                      error_msg: str = "invalid input!!!") -> None:
@@ -1418,7 +1420,7 @@ class UserInterface:
                     continue
 
                 for interface in other_computer.interfaces:
-                    if not interface.has_ip():
+                    if interface.ip is not None:
                         continue
 
                     computer.arp_cache.add_dynamic(interface.ip, interface.mac)
@@ -1528,6 +1530,9 @@ class UserInterface:
             ) for computer, name in zip(computers, (start_interface_name, end_interface_name))
         ]
         connection = self.connect_devices(*interfaces)
+        if connection is None:
+            raise ConnectionError(f"Failed connecting {interfaces}")
+
         connection.set_pl(connection_packet_loss)
         connection.set_speed(connection_speed)
 
