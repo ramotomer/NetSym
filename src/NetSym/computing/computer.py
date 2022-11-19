@@ -133,7 +133,7 @@ class Computer:
         self.routing_table = RoutingTable.create_default(self)
         self.dns_cache = DNSCache()
 
-        self.filesystem = Filesystem.with_default_dirs()
+        self.filesystem: Filesystem = Filesystem.with_default_dirs()
         self.process_scheduler = ProcessScheduler(self)
 
         self.graphics = None

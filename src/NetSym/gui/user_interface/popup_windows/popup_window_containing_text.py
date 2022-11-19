@@ -24,7 +24,7 @@ class PopupWindowContainingText(PopupWindow):
                  height: float = WINDOWS.POPUP.TEXTBOX.HEIGHT,
                  color: T_Color = WINDOWS.POPUP.TEXTBOX.OUTLINE_COLOR,
                  title: str = "window!",
-                 outline_width: int = SHAPES.RECT.DEFAULT_OUTLINE_WIDTH) -> None:
+                 outline_width: float = SHAPES.RECT.DEFAULT_OUTLINE_WIDTH) -> None:
         """
         Initiate the window
         """

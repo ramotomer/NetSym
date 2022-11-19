@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING, Tuple, List
 
+from NetSym.computing.internals.filesystem.directory import Directory
 from NetSym.computing.internals.shell.commands.command import SyntaxArgumentMessage, CommandOutput
 from NetSym.computing.internals.shell.commands.filesystem.cat import Cat
 from NetSym.computing.internals.shell.commands.filesystem.cd import Cd
@@ -95,7 +96,7 @@ class Shell:
         for extra_command, translation in command_translations.items():
             self.string_to_command[extra_command] = translation
 
-        self.cwd = self.computer.filesystem.root
+        self.cwd: Directory = self.computer.filesystem.root
 
         self.history = []
         self.history_index = None
