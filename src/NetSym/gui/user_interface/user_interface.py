@@ -33,6 +33,7 @@ from NetSym.gui.abstracts.uniquely_dragged import UniquelyDragged
 from NetSym.gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
 from NetSym.gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from NetSym.gui.tech.computer_graphics import ComputerGraphics
+from NetSym.gui.tech.connection_graphics import ConnectionGraphics
 from NetSym.gui.tech.interface_graphics import InterfaceGraphics
 from NetSym.gui.tech.packet_graphics import PacketGraphics
 from NetSym.gui.user_interface.button import Button
@@ -828,6 +829,46 @@ class UserInterface:
 
         action(self.source_of_line_drag, connected)
         self.set_mode(MODES.NORMAL)
+
+    def _connect_interfaces(self,
+                            computer1: ComputerGraphics, interface1: InterfaceGraphics,
+                            computer2: ComputerGraphics, interface2: InterfaceGraphics) -> Connection:
+        """
+        Take in the graphics-objects of two computers, and their interfaces.
+        Create and register a connection between the two.
+        Return it :)
+        """
+        connection = interface1.interface.connect(interface2.interface)
+        connection_graphics, = connection.init_graphics(computer1, computer2)
+        self.connection_data.append(ConnectionData(connection_graphics, computer1, computer2))
+        self.main_loop.register_graphics_object(connection_graphics, is_in_background=True)
+        return connection
+
+    def _get_computer_and_interface(self, interface_or_computer: Union[Interface, Computer]) -> Tuple[Computer, Interface]:
+        """
+        Take in interface or computer:
+            If interface:
+                Get the computer that has this interface on it
+
+            If computer:
+                Get a disconnected interface (create one if necessary)
+        return (computer, interface)
+        """
+        if isinstance(interface_or_computer, Interface):
+            interface = interface_or_computer
+            return get_the_one(self.computers, lambda c: interface in c.interfaces, NoSuchInterfaceError), interface
+
+        if isinstance(interface_or_computer, Computer):
+            computer = interface_or_computer
+            return computer, computer.available_interface()
+
+        raise ThisCodeShouldNotBeReached(f"Only supply this function with an `Interface` or `Computer` not {type(interface_or_computer)}!!!")
+
+    def connect_computers(self, computer1: Computer, computer2: Computer) -> None:
+        """
+        Create and register a connection between two `Computer`s
+        """
+        self._connect_interfaces()
 
     def connect_devices(self,
                         device1: Union[Computer, ComputerGraphics, Interface, InterfaceGraphics],

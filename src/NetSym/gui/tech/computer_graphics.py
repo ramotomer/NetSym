@@ -97,6 +97,10 @@ class ComputerGraphics(ImageGraphics):
         self.update_text_location()
 
     @property
+    def logic_object(self):
+        return self.computer
+
+    @property
     def should_be_transparent(self) -> bool:
         return not self.computer.is_powered_on
 

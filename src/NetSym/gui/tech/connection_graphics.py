@@ -90,6 +90,10 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
             )
 
     @property
+    def logic_object(self):
+        return self.connection
+
+    @property
     def length(self) -> float:  # the length of the connection.
         return distance(self.interfaces.start.location, self.interfaces.end.location)
 

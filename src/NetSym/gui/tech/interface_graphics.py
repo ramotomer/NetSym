@@ -48,6 +48,10 @@ class InterfaceGraphics(ViewableGraphicsObject, Selectable):
         interface.graphics = self
 
     @property
+    def logic_object(self):
+        return self.interface
+
+    @property
     def computer_location(self) -> Tuple[float, float]:
         return self.computer_graphics.location
 
