@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Optional, Tuple, TYPE_CHECKING, Dict, List
+from typing import Tuple, TYPE_CHECKING, Dict, List
 
 from NetSym.gui.main_loop_function_to_call import FunctionToCall
 
@@ -23,8 +23,8 @@ class GraphicsObject(metaclass=ABCMeta):
     GraphicsObjects in that iterable are unregistered as well.
     """
     def __init__(self,
-                 x: Optional[float] = None,
-                 y: Optional[float] = None,
+                 x: float,
+                 y: float,
                  do_render: bool = True,
                  centered: bool = False,
                  is_in_background: bool = False,

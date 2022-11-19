@@ -8,6 +8,8 @@ from NetSym.usefuls.funcs import sum_tuples
 class UserInterfaceGraphicsObject(GraphicsObject, metaclass=ABCMeta):
     """
     A GraphicsObject which is used only for the user interface (popup windows, buttons, etc...)
+
+    TODO: get rid of this stupid class that means nothing ASAP - or at least change the name
     """
     def __init__(self,
                  x: Optional[float] = None,

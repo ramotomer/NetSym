@@ -64,13 +64,12 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
         :param computer_graphics_end: The computer graphics at the end of the connection.
         :param packet_loss: the PL percent of the connection (defaults to 0)
         """
-        super(ConnectionGraphics, self).__init__(is_in_background=True, is_pressable=True)
+        super(ConnectionGraphics, self).__init__(0, 0, is_in_background=True, is_pressable=True)
         self.computers = Computers(computer_graphics_start, computer_graphics_end)
         self.regular_color = CONNECTIONS.COLOR if not packet_loss else CONNECTIONS.PL_COLOR
         self.color = self.regular_color
         self.width = width
         self.marked_as_blocked = False
-        self.x, self.y = 0, 0  # isn't used, just to avoid errors!
 
         self.connection = connection  # the `Connection` object.
 

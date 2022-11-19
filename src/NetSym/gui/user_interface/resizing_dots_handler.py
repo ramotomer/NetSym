@@ -14,6 +14,10 @@ class Resizable(Protocol):
         ...
 
 
+def is_resizable(o):
+    return hasattr(o, 'mark_as_selected') and hasattr(o, 'get_corner_by_direction') and hasattr(o, 'resize')
+
+
 class ResizingDotsHandler:
     """
     This class is responsible for all code that deals with the small ResizingDots that objects have around them

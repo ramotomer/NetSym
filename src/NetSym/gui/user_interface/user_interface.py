@@ -28,10 +28,8 @@ from NetSym.consts import VIEW, TEXT, BUTTONS, IMAGES, DIRECTORIES, T_Color, SEL
     INTERFACES, ADDRESSES, MESSAGES, MAIN_LOOP, CONSOLE
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
-from NetSym.gui.abstracts.resizable import is_resizable
 from NetSym.gui.abstracts.selectable import Selectable
 from NetSym.gui.abstracts.uniquely_dragged import UniquelyDragged
-from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from NetSym.gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
 from NetSym.gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from NetSym.gui.tech.computer_graphics import ComputerGraphics
@@ -45,12 +43,12 @@ from NetSym.gui.user_interface.popup_windows.popup_help import PopupHelp
 from NetSym.gui.user_interface.popup_windows.popup_text_box import PopupTextBox
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 from NetSym.gui.user_interface.popup_windows.yes_no_popup_window import YesNoPopupWindow
+from NetSym.gui.user_interface.resizing_dots_handler import Resizable, is_resizable
 from NetSym.gui.user_interface.resizing_dots_handler import ResizingDotsHandler
 from NetSym.gui.user_interface.selecting_square import SelectingSquare
 from NetSym.gui.user_interface.text_graphics import Text
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
-from NetSym.usefuls.funcs import get_the_one, distance, with_args, called_in_order, circular_coordinates, sum_tuples, \
-    scale_tuple
+from NetSym.usefuls.funcs import get_the_one, distance, with_args, called_in_order, circular_coordinates, scale_tuple
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
@@ -187,9 +185,6 @@ class UserInterface:
         self.source_of_line_drag: Optional[GraphicsObject] = None
         # ^ used if two items are selected one after the other for some purpose (connecting mode, pinging mode etc)
 
-        self.dragged_object: Optional[GraphicsObject] = None
-        # ^ the object that is currently being dragged (by the courser)
-
         self.object_view: Optional[ObjectView] = None
         # ^ the `ObjectView` object that is currently is_showing in the side window.
 
@@ -219,12 +214,15 @@ class UserInterface:
 
         self.selecting_square: Optional[SelectingSquare] = None
 
+        self.dragged_object: Optional[GraphicsObject] = None
+        # ^ the object that is currently being dragged (by the courser)
         self.marked_objects: List[Selectable] = []
         self.dragging_points: Dict[GraphicsObject, Tuple[float, float]] = {}
-
         self.__selected_object: Optional[Selectable] = None
         # ^ the object that is currently surrounded by the blue square
         self.selected_object = None  # this sets the `selected_object` attribute
+        # TODO: there are too many of these variables! selected_object, marked_objects, dragged_object, dragging_points - these are all the same...
+
         self.resizing_dots_handler = ResizingDotsHandler()
 
         self.main_loop.insert_to_loop(self.select_selected_and_marked_objects)
@@ -246,7 +244,7 @@ class UserInterface:
         return self.marked_objects + ([self.selected_object] if self.selected_object is not None else [])
 
     @property
-    def active_window(self) -> PopupWindow:
+    def active_window(self) -> Optional[PopupWindow]:
         return self.__active_window
 
     @property
@@ -275,16 +273,17 @@ class UserInterface:
             self.main_loop.move_to_front(window)
 
     @property
-    def selected_object(self) -> Selectable:
+    def selected_object(self) -> Union[Selectable, PopupWindow, None]:
         return self.__selected_object
 
     @selected_object.setter
-    def selected_object(self, graphics_object: Selectable) -> None:
+    def selected_object(self, graphics_object: Union[Selectable, PopupWindow, None]) -> None:
         if isinstance(graphics_object, PopupWindow):
             self.active_window = graphics_object
-        else:
-            self.__selected_object = graphics_object
-            self.active_window = None
+            return
+
+        self.__selected_object = graphics_object
+        self.active_window = None
 
     def register_main_window_event_handlers(self) -> None:
         """
@@ -346,6 +345,7 @@ class UserInterface:
         for graphics_object in self.main_loop.graphics_objects:
             if isinstance(graphics_object, DifferentColorWhenHovered):
                 if graphics_object.is_in(*self.main_window.get_mouse_location()):
+                    print(f"coloring {graphics_object}...")
                     graphics_object.set_hovered_color()
                 else:
                     graphics_object.set_normal_color()
@@ -1161,24 +1161,27 @@ class UserInterface:
         print(f"\n{' debugging info ':-^100}")
         print(f"time: {int(time.time())}, program time: {int(self.main_loop.time())}")
 
+        print(f"active window: {self.active_window}")
+        print(f"selected object: {self.selected_object}")
+
         def gos() -> List[GraphicsObject]:
             return [go for go in self.main_loop.graphics_objects if not isinstance(go, (Button, Text))]
 
         print(f"Mouse location: {self.main_window.get_mouse_location()}\n")
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
         pprint.pprint(f"graphicsObject-s (no buttons or texts): ")
-        pprint.pprint(gos())
+        # pprint.pprint(gos())
         print(f"\ncomputers, {len(self.computers)}, connections, {len(self.connection_data)}, "
               f"packets: {len(list(filter(lambda go: isinstance(go, PacketGraphics), self.main_loop.graphics_objects)))}")
 
         print()
-        if self.selected_object is not None and isinstance(self.selected_object, ComputerGraphics):
-            computer = self.selected_object.computer
-            computer.print(f"{'DEBUG':^20}{self.debug_counter}")
-            if not isinstance(computer, Switch):
-                print(repr(computer.routing_table))
-            elif computer.stp_enabled and computer.process_scheduler.is_usermode_process_running_by_type(STPProcess):  # computer is a Switch
-                print(computer.process_scheduler.get_usermode_process_by_type(STPProcess).get_info())
+        # if self.selected_object is not None and isinstance(self.selected_object, ComputerGraphics):
+        #     computer = self.selected_object.computer
+        #     computer.print(f"{'DEBUG':^20}{self.debug_counter}")
+        #     if not isinstance(computer, Switch):
+        #         print(repr(computer.routing_table))
+        #     elif computer.stp_enabled and computer.process_scheduler.is_usermode_process_running_by_type(STPProcess):  # computer is a Switch
+        #         print(computer.process_scheduler.get_usermode_process_by_type(STPProcess).get_info())
 
         # self.set_all_connection_speeds(200)
 
@@ -1685,7 +1688,8 @@ class UserInterface:
         if self.selected_object is not None:
             self.selected_object.mark_as_selected()
             if is_resizable(self.selected_object):
-                self.resizing_dots_handler.select(self.selected_object)
+                resized: Resizable = self.selected_object
+                self.resizing_dots_handler.select(resized)
         else:
             self.resizing_dots_handler.deselect()
 
@@ -1703,30 +1707,28 @@ class UserInterface:
             self.tab_through_selected()
             return
 
+        selected_object: Union[Selectable, PopupWindow] = self.selected_object
+
         try:
-            computer_distance_in_direction = {
-                key.RIGHT: (lambda c: c.graphics.x - self.selected_object.x),
-                key.LEFT:  (lambda c: self.selected_object.x - c.graphics.x),
-                key.UP:    (lambda c: c.graphics.y - self.selected_object.y),
-                key.DOWN:  (lambda c: self.selected_object.y - c.graphics.y),
+            distance_by_direction = {
+                key.RIGHT: (lambda cg: cg.x - selected_object.x),
+                key.LEFT:  (lambda cg: selected_object.x - cg.x),
+                key.UP:    (lambda cg: cg.y - selected_object.y),
+                key.DOWN:  (lambda cg: selected_object.y - cg.y),
             }[direction]
         except KeyError:
             raise WrongUsageError("direction must be one of {key.UP, key.DOWN, key.RIGHT, key.LEFT}")
 
-        optional_computers = list(filter(lambda c: computer_distance_in_direction(c) > 0, self.computers))
+        optional_computers = list(filter(lambda cg: distance_by_direction(cg) > 0, self.main_loop.graphics_objects_of_types(ComputerGraphics)))
         if not optional_computers:
             return
 
-        def weighted_distance(computer: Computer) -> float:
-            x, y = computer.graphics.location
-            sx, sy = self.selected_object.location
+        def distance(computer_graphics: ComputerGraphics) -> float:
+            x, y = computer_graphics.location
+            sx, sy = selected_object.location
+            return sqrt((x - sx) ** 2 + (y - sy) ** 2)
 
-            if direction in {key.UP, key.DOWN}:
-                return sqrt((x - sx) ** 50 + (y - sy) ** 2)
-            return sqrt((x - sx) ** 2 + (y - sy) ** 50)
-
-        new_selected = min(optional_computers, key=weighted_distance)
-        self.selected_object = new_selected.graphics
+        self.selected_object = min(optional_computers, key=distance)
         self.set_mode(MODES.VIEW)
 
     def move_selected_object(self, direction: int, step_size: float = SELECTED_OBJECT.STEP_SIZE) -> None:
@@ -1746,9 +1748,12 @@ class UserInterface:
         except KeyError:
             raise WrongUsageError("direction must be one of {key.UP, key.DOWN, key.RIGHT, key.LEFT}")
 
-        moved_objects = self.marked_objects + ([] if self.selected_object is None else [self.selected_object])
-        for object_ in moved_objects:
-            object_.location = sum_tuples(object_.location, step)
+        step_x, step_y = step
+        for object_ in self.marked_objects:
+            object_.location = object_.x + step_x, object_.y + step_y
+
+        if self.selected_object is not None:
+            self.selected_object.location = self.selected_object.x + step_x, self.selected_object.y + step_y
 
     def exit(self) -> None:
         """
@@ -1784,18 +1789,22 @@ class UserInterface:
         object_the_mouse_is_on = self.get_object_the_mouse_is_on()
 
         self.dragged_object = object_the_mouse_is_on
-        if (not isinstance(object_the_mouse_is_on, UserInterfaceGraphicsObject)) or isinstance(object_the_mouse_is_on, PopupWindow):
-            self.selected_object = object_the_mouse_is_on
 
         if object_the_mouse_is_on is None:
+            self.selected_object = None
             self.marked_objects.clear()
             return
 
+        if isinstance(object_the_mouse_is_on, Selectable) or isinstance(object_the_mouse_is_on, PopupWindow):
+            self.selected_object = object_the_mouse_is_on
+
         # vv this block is in charge of dragging the marked objects vv
         mouse_x, mouse_y = self.main_window.get_mouse_location()
-        for object_ in self.marked_objects + [object_the_mouse_is_on]:
+        for object_ in self.marked_objects:
             object_x, object_y = object_.location
             self.dragging_points[object_] = object_x - mouse_x, object_y - mouse_y
+
+        self.dragging_points[object_the_mouse_is_on] = (object_the_mouse_is_on.x - mouse_x), (object_the_mouse_is_on.y - mouse_y)
 
     def set_all_connection_speeds(self, new_speed) -> None:
         """
