@@ -128,7 +128,7 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
     def update_appearance(self) -> None:
         """Updates the color of the connection according to the PL and latency of the connection"""
         self.regular_color = CONNECTIONS.COLOR if not self.connection.packet_loss else CONNECTIONS.PL_COLOR
-        self.color = self.regular_color if all(not side.is_blocked for side in self.connection.get_sides()) else CONNECTIONS.BLOCKED_COLOR
+        self.color = self.color if all(not side.is_blocked for side in self.connection.get_sides()) else CONNECTIONS.BLOCKED_COLOR
 
         self.width = CONNECTIONS.DEFAULT_WIDTH if not self.connection.latency else CONNECTIONS.LATENCY_WIDTH
 
