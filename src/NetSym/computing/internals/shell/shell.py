@@ -43,6 +43,7 @@ from NetSym.computing.internals.shell.commands.net.traceroute import Traceroute
 from NetSym.computing.internals.shell.commands.processes.kill import Kill
 from NetSym.computing.internals.shell.commands.processes.ps import Ps
 from NetSym.consts import CONSOLE, FILESYSTEM
+from NetSym.exceptions import *
 from NetSym.usefuls.funcs import called_in_order, all_indexes
 
 if TYPE_CHECKING:
@@ -286,7 +287,12 @@ class Shell:
         if isinstance(parsed_command, SyntaxArgumentMessage):
             self.shell_graphics.write(parsed_command)
             return CommandOutput('', '')
-        return parsed_command.command_class.action(parsed_command.parsed_args)
+
+        try:
+            return parsed_command.command_class.action(parsed_command.parsed_args)
+
+        except ErrorForCommandOutput as e:
+            return CommandOutput('', e.args[0])
 
     @staticmethod
     def _handle_piping(string: str) -> List[str]:

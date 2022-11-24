@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from NetSym.computing.internals.filesystem.directory import Directory
 from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
-from NetSym.exceptions import NoSuchFileError, NoSuchDirectoryError
+from NetSym.exceptions import NoSuchFileError
 
 if TYPE_CHECKING:
     import argparse
@@ -31,12 +30,8 @@ class Cp(Command):
         :return:
         """
         try:
-            if isinstance(self.computer.filesystem.at_path(self.shell.cwd, parsed_args.src), Directory):
-                return CommandOutput('', "Cannot copy directory!")
-            self.computer.filesystem.move_file(parsed_args.src, parsed_args.dst, self.shell.cwd, True)
+            self.computer.filesystem.copy_file(parsed_args.src, parsed_args.dst, self.shell.cwd)
         except NoSuchFileError:
             return CommandOutput('', "The source file does not exist! :(")
-        except NoSuchDirectoryError:
-            return CommandOutput('', "The path does not exist! :(")
 
         return CommandOutput(f"File copied to '{parsed_args.dst}' successfully", '')

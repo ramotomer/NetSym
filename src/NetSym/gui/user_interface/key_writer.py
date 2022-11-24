@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, Union, Callable, Tuple, Dict
 
-from pyglet.window import key
+from pyglet.window.key import BACKSPACE, ENTER, NUM_ADD, NUM_DECIMAL, NUM_DIVIDE, NUM_MULTIPLY, NUM_SUBTRACT, NUM_0, NUM_9
 
 from NetSym.consts import KEYBOARD, T_PressedKeyModifier, T_PressedKey
 from NetSym.exceptions import KeyActionAlreadyExistsError
@@ -18,13 +18,13 @@ class KeyWriter:
         '1': '!', '`': '~', '/': '?', ',': '<', '.': '>', '[': '{', ']': '}', ';': ':', '\'': '"', '\\': '|'
     }
 
-    NUMPAD_KEYS = {**{numpad_key: str(i) for i, numpad_key in enumerate(range(key.NUM_0, key.NUM_9 + 1))},
+    NUMPAD_KEYS = {**{numpad_key: str(i) for i, numpad_key in enumerate(range(NUM_0, NUM_9 + 1))},
                    **{
-                       key.NUM_ADD: '+',
-                       key.NUM_DECIMAL: '.',
-                       key.NUM_DIVIDE: '/',
-                       key.NUM_MULTIPLY: '*',
-                       key.NUM_SUBTRACT: '-',
+                       NUM_ADD: '+',
+                       NUM_DECIMAL: '.',
+                       NUM_DIVIDE: '/',
+                       NUM_MULTIPLY: '*',
+                       NUM_SUBTRACT: '-',
                    }}
 
     def __init__(self,
@@ -44,9 +44,9 @@ class KeyWriter:
         self.submit = submit_action
         self.exit = exit_action
 
-        self.key_combination_dict: Dict[Tuple[T_PressedKey, T_PressedKeyModifier], Callable[[...], None]] = {
-            (key.ENTER,     KEYBOARD.MODIFIERS.NONE): self.submit,
-            (key.BACKSPACE, KEYBOARD.MODIFIERS.NONE): self.delete,
+        self.key_combination_dict: Dict[Tuple[T_PressedKey, T_PressedKeyModifier], Callable] = {
+            (ENTER,     KEYBOARD.MODIFIERS.NONE): self.submit,
+            (BACKSPACE, KEYBOARD.MODIFIERS.NONE): self.delete,
         }
 
     def add_key_mapping(self, symbol: int, action: Callable[[], None]) -> None:

@@ -468,6 +468,20 @@ class CommandError(ShellError):
     """
 
 
+class ErrorForCommandOutput(CommandError):
+    """
+    This is an exception that is caught if it is raised inside of a shell command.
+    The message of this exception will be printed to the screen of the shell! nice
+    """
+
+
+class NoSuchFileError__ErrorForCommandOutput(NoSuchFileError, ErrorForCommandOutput):
+    """
+    This error will be raised when a file is accessed but no such file exists.
+    In addition this exception is caught and printed to the shell if it is raised inside of a shell command.
+    """
+
+
 class CommandParsingError(CommandError):
     """
     Error in parsing a command in the shell

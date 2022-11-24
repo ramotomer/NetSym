@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Union, Optional
+from typing import Union
 
 from NetSym.consts import ADDRESSES, MESSAGES
 from NetSym.exceptions import InvalidAddressError, AddressTooLargeError, WrongUsageError
@@ -227,7 +227,7 @@ class IPAddress:
         """
         return cls(other.string_ip + ADDRESSES.IP.SUBNET_SEPARATOR + str(other.subnet_mask))
 
-    def __eq__(self, other: Optional[Union[str, IPAddress]]) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Test whether two ip addresses are equal or not (does no include subnet mask)"""
         if other is None:
             return False
@@ -236,7 +236,7 @@ class IPAddress:
             raise TypeError(f"Cannot compare IPAddress object to {type(other)} - {other}")
 
         other = IPAddress(other)
-        return self.string_ip == other.string_ip
+        return bool(self.string_ip == other.string_ip)
         # ^ maybe i broke something when i did not also check the subnet mask, take into consideration....
 
     def __hash__(self) -> int:

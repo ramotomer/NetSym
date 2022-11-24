@@ -7,7 +7,7 @@ from typing import Optional, Dict, List, Union, Generator, Tuple
 from NetSym.computing.internals.filesystem.directory import Directory, T_ContainedItem
 from NetSym.computing.internals.filesystem.file import File, PipingFile
 from NetSym.consts import FILESYSTEM, DIRECTORIES, FILE_PATHS
-from NetSym.exceptions import PathError, NoSuchItemError, CannotBeUsedWithPiping, WrongUsageError
+from NetSym.exceptions import *
 
 
 class Filesystem:
@@ -39,11 +39,12 @@ class Filesystem:
         filesystem.make_dir('/usr/bin')
         filesystem.make_dir('/var')
         filesystem.make_dir('/boot')
-        filesystem.make_dir('/bin')
         filesystem.make_dir('/etc')
         filesystem.make_dir('/tmp', mount=FILESYSTEM.TYPE.TMPFS)
         filesystem.make_dir(FILESYSTEM.HOME_DIR)
-        filesystem.at_absolute_path('/bin').add_item(File("cat", transfer_file_content))
+
+        filesystem.make_dir('/bin').add_item(File("cat", transfer_file_content))
+
         return filesystem
 
     @classmethod
@@ -56,7 +57,7 @@ class Filesystem:
         return (path != FILESYSTEM.PIPING_FILE) and (path.startswith(FILESYSTEM.ROOT))
 
     @classmethod
-    def absolute_from_relative(cls, parent: Directory, path: str) -> str:
+    def absolute_from_relative(cls, parent: Optional[Directory], path: str) -> str:
         """
         receives relative path and parent dir and return absolute path.
         If already absolute, returns the path.
@@ -66,6 +67,9 @@ class Filesystem:
         """
         if cls.is_absolute_path(path):
             return path
+
+        if parent is None:
+            raise PathError(f"when using relative paths, cwd must not be None!")
 
         returned = parent.full_path
         for name in path.split(FILESYSTEM.SEPARATOR):
@@ -91,7 +95,7 @@ class Filesystem:
 
         return self.root.at_relative_path(FILESYSTEM.CWD + path)
 
-    def at_path(self, cwd: Directory, path: str) -> T_ContainedItem:
+    def at_path(self, cwd: Optional[Directory], path: str) -> T_ContainedItem:
         """
         Returns what is at a given path, it can be relative or absolute!!!
         :param cwd:
@@ -100,7 +104,51 @@ class Filesystem:
         """
         if self.is_absolute_path(path):
             return self.at_absolute_path(path)
+
+        if cwd is None:
+            raise PathError(f"Cannot use `at_path` with a relative path and `cwd` set to None!!!")
+
         return cwd.at_relative_path(path)
+
+    def directory_at_path(self, cwd: Optional[Directory], path: str) -> Directory:
+        """
+        Just like `at_path` but when you know that you want a directory specifically
+        """
+        item = self.at_path(cwd, path)
+        if not isinstance(item, Directory):
+            raise TypeError(f"Expected to find a directory at {path!r} but found a {type(item)}")
+
+        return item
+
+    def file_at_path(self, cwd: Optional[Directory], path: str) -> File:
+        """
+        Just like `at_path` but when you know that you want a directory specifically
+        """
+        item = self.at_path(cwd, path)
+        if not isinstance(item, File):
+            raise TypeError(f"Expected to find a directory at {path!r} but found a {type(item)}")
+
+        return item
+
+    def directory_at_absolute_path(self, path: str) -> Directory:
+        """
+        Just like `at_path` but when you know that you want a directory specifically
+        """
+        item = self.at_absolute_path(path)
+        if not isinstance(item, Directory):
+            raise TypeError(f"Expected to find a directory at {path!r} but found a {type(item)}")
+
+        return item
+
+    def file_at_absolute_path(self, cwd: Optional[Directory], path: str) -> File:
+        """
+        Just like `at_path` but when you know that you want a directory specifically
+        """
+        item = self.at_absolute_path(path)
+        if not isinstance(item, File):
+            raise TypeError(f"Expected to find a directory at {path!r} but found a {type(item)}")
+
+        return item
 
     def exists(self, path: str, cwd: Optional[Directory] = None) -> bool:
         """
@@ -109,7 +157,7 @@ class Filesystem:
         :param cwd: if the path is not absolute, must supply the current directory.
         :return:
         """
-        if cwd is None and not self.is_absolute_path(path):
+        if (cwd is None) and (not self.is_absolute_path(path)):
             raise PathError("path must be absolute if no cwd was specified!")
 
         try:
@@ -145,19 +193,18 @@ class Filesystem:
             base_dir_path = self.root_path
         return base_dir_path, filename
 
-    def filename_and_dir_from_path(self, cwd: Directory, path: str) -> Tuple[T_ContainedItem, str]:
+    def filename_and_dir_from_path(self, cwd: Optional[Directory], path: str) -> Tuple[Directory, str]:
         """
         Receives the CWD and a path (absolute or relative)
         Returns a tuple, of the containing `Directory` object of the destination file, and its filename.
         """
         if path == FILESYSTEM.PIPING_FILE:
-            raise CannotBeUsedWithPiping(
-                "This command cannot be used with piping, since it requires a file's parent dir!")
+            raise CannotBeUsedWithPiping("This command cannot be used with piping, since it requires a file's parent dir!")
         abs_path = self.absolute_from_relative(cwd, path)
         base_dir_path, filename = self.separate_base(abs_path)
-        return self.at_absolute_path(base_dir_path), filename
+        return self.directory_at_absolute_path(base_dir_path), filename
 
-    def make_dir(self, absolute_path: str, mount: str = FILESYSTEM.TYPE.EXT4) -> None:
+    def make_dir(self, absolute_path: str, mount: str = FILESYSTEM.TYPE.EXT4) -> Directory:
         """
         Creates a directory in a given path.
         :param absolute_path: absolute path to the new directory.
@@ -165,8 +212,8 @@ class Filesystem:
         :return:
         """
         parent_path, dirname = self.separate_base(absolute_path)
-        parent_dir = self.at_absolute_path(parent_path)
-        parent_dir.make_sub_dir(dirname, mount=mount)
+        parent_dir = self.directory_at_absolute_path(parent_path)
+        return parent_dir.make_sub_dir(dirname, mount=mount)
 
     def wipe_temporary_directories(self, root_dir: Optional[Directory] = None) -> None:
         """
@@ -191,11 +238,11 @@ class Filesystem:
         :return:
         """
         if path == FILESYSTEM.PIPING_FILE:
-            file = PipingFile.instance()
+            file: File = PipingFile.instance()
 
         else:
             base_dir_path, filename = self.separate_base(path)
-            base_dir = self.at_path(cwd, base_dir_path)
+            base_dir = self.directory_at_path(cwd, base_dir_path)
 
             if not self.is_file(path, cwd):
                 base_dir.make_empty_file(filename)
@@ -208,27 +255,45 @@ class Filesystem:
             else:
                 file.write(data)
 
-    def move_file(self, src_path: str, dst_path: str, cwd: Optional[Directory] = None, keep_origin: bool = False) -> None:
+    def _parse_new_and_old_paths(self, src_path: str, dst_path: str, cwd: Optional[Directory] = None) -> Tuple[Directory, str, Directory, str]:
         """
-        Move a file. The paths can be relative if a cwd is specified.
-        :param src_path:
-        :param dst_path:
-        :param keep_origin: whether or not to keep
-        :param cwd:
-        :return:
+        Take in two paths, that indicate the source and destination paths of a file that will be moved or copied.
+        Parse these paths and return the directories and name of the file that will be moved or copied.
+        :return: (src dir, current filename, dst dir, new filename)
         """
-        if cwd is None and not (self.is_absolute_path(src_path) and self.is_absolute_path(dst_path)):
-            raise WrongUsageError("If cwd is not specified, paths must be absolute")
+        if (cwd is None) and (not (self.is_absolute_path(src_path) and self.is_absolute_path(dst_path))):
+            raise PathError("If cwd is not specified, paths must be absolute")
 
         src_dir, filename = self.filename_and_dir_from_path(cwd, src_path)
         dst_dir, new_name = self.filename_and_dir_from_path(cwd, dst_path)
-        item = (src_dir.items[filename].copy if keep_origin else dst_dir.pop_item)(filename)
-        item.name = new_name
+        return src_dir, filename, dst_dir, new_name
 
+    def _set_new_item_name_and_location(self, item: T_ContainedItem, new_name: str, dst_directory: Directory) -> None:
+        """
+        Move a supplied item to a new location
+        """
+        item.name = new_name
         if isinstance(item, Directory):
-            dst_dir.directories[new_name] = item
+            dst_directory.directories[new_name] = item
         elif isinstance(item, File):
-            dst_dir.files[new_name] = item
+            dst_directory.files[new_name] = item
+
+    def move_file(self, src_path: str, dst_path: str, cwd: Optional[Directory] = None) -> None:
+        """
+        Change the location and name of a file
+        """
+        src_dir, filename, dst_dir, new_name = self._parse_new_and_old_paths(src_path, dst_path, cwd)
+        self._set_new_item_name_and_location(src_dir.pop_item(filename), new_name, dst_dir)
+
+    def copy_file(self, src_path: str, dst_path: str, cwd: Optional[Directory] = None) -> None:
+        """
+        Copy a file while keeping the original file where it is now. The paths can be relative if a cwd is specified.
+        """
+        src_dir, filename, dst_dir, new_name = self._parse_new_and_old_paths(src_path, dst_path, cwd)
+        if filename not in src_dir.files:
+            raise NoSuchFileError__ErrorForCommandOutput(f"Only files can be copied! while {src_path!r} is not a file!")
+
+        self._set_new_item_name_and_location(src_dir.files[filename].copy(), new_name, dst_dir)
 
     def parse_conf_file_format(self, absolute_path: str, raise_if_does_not_exist: bool = True) -> Dict[str, List[str]]:
         """
