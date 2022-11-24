@@ -140,7 +140,7 @@ class Filesystem:
 
         return item
 
-    def file_at_absolute_path(self, cwd: Optional[Directory], path: str) -> File:
+    def file_at_absolute_path(self, path: str) -> File:
         """
         Just like `at_path` but when you know that you want a directory specifically
         """
@@ -320,9 +320,10 @@ class Filesystem:
                 raise FileNotFoundError
             return {}
 
-        with self.at_absolute_path(absolute_path) as f:
+        with self.file_at_absolute_path(absolute_path) as f:
             content = map(str, filter(bool, f.readlines()))
-            parsed = {}
+
+            parsed: Dict[str, List[str]] = {}
             for line in content:
                 key, value = line.strip().split()
                 parsed[key] = parsed.get(key, []) + [value]
@@ -332,11 +333,11 @@ class Filesystem:
         """
         Does exactly the reverse of `parse_conf_file_format`
         """
-        parent_directory = self.at_absolute_path(os.path.dirname(absolute_path))
+        parent_directory = self.directory_at_absolute_path(os.path.dirname(absolute_path))
         parent_directory.make_empty_file(os.path.basename(absolute_path),
                                          raise_on_exists=False)
 
-        with self.at_absolute_path(absolute_path) as f:
+        with self.file_at_absolute_path(absolute_path) as f:
             f.write('')
             for key, values in parsed_conf_file.items():
                 for value in values:
@@ -361,7 +362,7 @@ class Filesystem:
         """
         parent_folder_name, subfolder_name = os.path.split(path)
         if self.exists(path):
-            return self.at_absolute_path(path)
+            return self.directory_at_absolute_path(path)
         parent_folder = self.create_directory_tree(parent_folder_name)  # Nice.
         subfolder = Directory(subfolder_name, parent_folder)
         parent_folder.add_item(subfolder)
@@ -381,7 +382,7 @@ class Filesystem:
         directory_path, filename = os.path.split(path)
         if not filename:
             raise FileNotFoundError("Cannot delete the root directory!")
-        del self.at_absolute_path(directory_path).files[filename]
+        del self.directory_at_absolute_path(directory_path).files[filename]
 
     def dict_save(self) -> Dict:
         """
