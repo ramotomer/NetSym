@@ -34,6 +34,7 @@ from NetSym.computing.internals.sockets.raw_socket import RawSocket
 from NetSym.computing.internals.sockets.tcp_socket import TCPSocket
 from NetSym.computing.internals.sockets.udp_socket import ReturnedUDPPacket, UDPSocket
 from NetSym.computing.internals.wireless_interface import WirelessInterface
+from NetSym.computing.logic_object import LogicObject
 from NetSym.consts import IMAGES, COMPUTER, OPCODES, PACKET, PROTOCOLS, INTERFACES, OS, T_Time, SENDING_GRAT_ARPS, \
     FILE_PATHS, T_Port, TTL, PORTS
 from NetSym.exceptions import *
@@ -69,7 +70,7 @@ class SocketData:
     pid:               int
 
 
-class Computer:
+class Computer(LogicObject):
     """
     This is a base class for all of the machines that will operate on the screen
     in our little simulation.

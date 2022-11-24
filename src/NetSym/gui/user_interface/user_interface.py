@@ -173,7 +173,7 @@ class UserInterface:
         }
         # ^ maps what to do when the screen is pressed in each `mode`.  (No need to put here modes that are one of MODES.COMPUTER_CONNECTING_MODES)
 
-        self.saving_file_class_name_to_class = {
+        self.saving_file_class_name_to_class: Dict[str, Type[Computer]] = {
             class_.__name__: class_ for class_ in (Computer, Switch, Router, Hub, Antenna)
         }
         self.__saving_file: Optional[str] = None
@@ -264,14 +264,21 @@ class UserInterface:
     def saving_file(self) -> Optional[str]:
         return self.__saving_file
 
-    @saving_file.setter
-    def saving_file(self, value: Optional[str]) -> None:
-        self.__saving_file = value
+    def set_saving_file(self, new_file_name: str) -> None:
+        """
+        When pressing ctrl+s the simulation state is saved to a file.
+        This function sets what is the path of that file.
+        """
+        self.__saving_file = new_file_name
+        self.main_window.set_caption(WINDOWS.MAIN.NAME + ": " + self.__saving_file)
 
-        new_window_name = WINDOWS.MAIN.NAME
-        if self.__saving_file is not None:
-            new_window_name += ": " + self.__saving_file
-        self.main_window.set_caption(new_window_name)
+    def reset_saving_file(self) -> None:
+        """
+        When pressing ctrl+s the simulation state is saved to a file.
+        This function makes the simulation forget the path of the last file that we saved to
+        """
+        self.__saving_file = None
+        self.main_window.set_caption(WINDOWS.MAIN.NAME)
 
     @property
     def selected_object(self) -> Union[Selectable, None]:
@@ -958,7 +965,7 @@ class UserInterface:
         self.set_mode(MODES.NORMAL)
 
         if reset_saving_file:
-            self.saving_file = None
+            self.reset_saving_file()
 
     def delete_all_packets(self) -> None:
         """
@@ -1140,14 +1147,14 @@ class UserInterface:
             for computer in self.computers:
                 if isinstance(computer, Switch):
                     continue
-                nearest_switch = min(switches_graphics, key=lambda s: distance(s.location, computer.graphics.location))
+                nearest_switch = min(switches_graphics, key=lambda s: distance(s.location, computer.get_graphics().location))
                 if not computer.interfaces or not computer.interfaces[0].is_connected():
                     self.connect_computers(computer, nearest_switch.computer)
         elif routers_graphics:
             for computer in self.computers:
                 if isinstance(computer, Router):
                     continue
-                nearest_router = min(routers_graphics, key=lambda r: distance(r.location, computer.graphics.location))
+                nearest_router = min(routers_graphics, key=lambda r: distance(r.location, computer.get_graphics().location))
                 if not computer.interfaces or not computer.interfaces[0].is_connected():
                     self.connect_computers(computer, nearest_router.computer)
         else:
@@ -1180,7 +1187,7 @@ class UserInterface:
         print(f"Mouse location: {self.main_window.get_mouse_location()}\n")
         self.debug_counter = self.debug_counter + 1 if hasattr(self, "debug_counter") else 0
         pprint.pprint(f"graphicsObject-s (no buttons or texts): ")
-        # pprint.pprint(gos())
+        pprint.pprint(gos())
         print(f"\ncomputers, {len(self.computers)}, connections, {len(self.connection_data)}, "
               f"packets: {len(list(filter(lambda go: isinstance(go, PacketGraphics), self.main_loop.graphics_objects)))}")
 
@@ -1225,7 +1232,7 @@ class UserInterface:
         :param y: the coordinates.
         :return: an `IPAddress` object.
         """
-        nearest_computers = sorted(self.computers, key=lambda c: distance((x, y), c.graphics.location))
+        nearest_computers = sorted(self.computers, key=lambda c: distance((x, y), c.get_graphics().location))
         nearest_computers_with_ip = list(filter(lambda c: c.has_ip(), nearest_computers))
 
         try:
@@ -1454,7 +1461,7 @@ class UserInterface:
         server.add_remove_dns_zone(DEFAULT_DOMAIN)
 
         for computer, location in zip(new_computers, circular_coordinates(self.main_window.get_mouse_location(), 150, len(new_computers))):
-            computer.graphics.location = location
+            computer.get_graphics().location = location
             computer.domain = DEFAULT_DOMAIN
             computer.dns_server = server.get_ip()
             server.add_dns_entry(f"{computer.name}.{DEFAULT_DOMAIN} {computer.get_ip().string_ip}")
@@ -1497,8 +1504,6 @@ class UserInterface:
 
             if self.active_window is window_:
                 self.active_window = None
-            if self.selected_object is window_:
-                self.selected_object = None
 
         if window_list and self.popup_windows:
             self.active_window = self.popup_windows[0]
@@ -1575,16 +1580,16 @@ class UserInterface:
         """
         dict_to_file = {
             "computers": [
-                computer.graphics.dict_save() for computer in self.computers
+                computer.get_graphics().dict_save() for computer in self.computers
             ],
             "connections": [
-                connection_data.connection.graphics.dict_save() for connection_data in self.connection_data
+                connection_data.connection.get_graphics().dict_save() for connection_data in self.connection_data
             ],
         }
 
         os.makedirs(DIRECTORIES.SAVES, exist_ok=True)
         json.dump(dict_to_file, open(os.path.join(DIRECTORIES.SAVES, f"{filename}.json"), "w"), indent=4)
-        self.saving_file = filename
+        self.set_saving_file(filename)
 
     def load_from_file(self, filename) -> None:
         """
@@ -1596,7 +1601,7 @@ class UserInterface:
         except FileNotFoundError:
             raise PopupWindowWithThisError("There is not such file!!!")
 
-        self.saving_file = filename
+        self.set_saving_file(filename)
         self._create_map_from_file_dict(dict_from_file)
 
     def _create_map_from_file_dict(self, dict_from_file: Dict) -> None:
@@ -1610,7 +1615,8 @@ class UserInterface:
         for computer_dict in dict_from_file["computers"]:
             class_ = self.saving_file_class_name_to_class[computer_dict["class"]]
             computer = class_.from_dict_load(computer_dict)
-            self.main_loop.register_graphics_object(computer.init_graphics(*computer_dict["location"], self.get_computer_output_console_location()))
+            x, y = computer_dict["location"]
+            self.main_loop.register_graphics_object(computer.init_graphics(x, y, self.get_computer_output_console_location()))
             self.computers.append(computer)
             for port in computer_dict["open_tcp_ports"]:
                 computer.open_port(port, "TCP")

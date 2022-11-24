@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, List, Tuple, Optional
 
+from NetSym.computing.logic_object import LogicObject
 from NetSym.consts import CONNECTIONS, PACKET, T_Time
-from NetSym.exceptions import ConnectionsError
-from NetSym.exceptions import WrongUsageError, NoSuchConnectionSideError, SomethingWentTerriblyWrongError
+from NetSym.exceptions import *
 from NetSym.gui.abstracts.animation_graphics import AnimationGraphics
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.tech.connection_graphics import ConnectionGraphics
@@ -31,7 +31,7 @@ class SentPacket:
     last_update_time: T_Time = field(default_factory=MainLoop.get_time)
 
 
-class Connection:
+class Connection(LogicObject):
     """
     This class represents a cable or any connection between two `Interface` objects.
     It allows for packets to move in both sides, To be sent and received.
@@ -67,7 +67,7 @@ class Connection:
 
         self.last_packet_motion = MainLoop.instance.time()
 
-        self.graphics = None
+        self.graphics: Optional[ConnectionGraphics] = None
 
         self.is_blocked = False
 
@@ -94,8 +94,9 @@ class Connection:
         :param end_computer: The `GraphicsObject` of the computer which is the end of the connection
         :return: None
         """
-        self.graphics = ConnectionGraphics(self, start_computer, end_computer, self.packet_loss)
-        return [self.graphics]
+        graphics = ConnectionGraphics(self, start_computer, end_computer, self.packet_loss)
+        self.graphics = graphics
+        return [graphics]
 
     def get_sides(self) -> Tuple[ConnectionSide, ConnectionSide]:
         """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""

@@ -280,6 +280,12 @@ class GraphicsObjectAlreadyRegistered(GraphicsError):
     """
 
 
+class GraphicsObjectNotYetInitialized(GraphicsError):
+    """
+    Trying to get the value of the graphics object before the `init_graphics` method was called
+    """
+
+
 class PopupWindowWithThisError(GraphicsError):
     """
     This is raised inside an action of a popup window and it is caught inside the popup and a popup error window
