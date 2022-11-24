@@ -26,6 +26,8 @@ SENDING_GRAT_ARPS = False
 T_Time = float
 T_Color = Tuple[float, ...]
 T_Port = int
+T_PressedKey = int
+T_PressedKeyModifier = int
 
 
 class ADDRESSES:
@@ -90,7 +92,7 @@ class TCPFlag(object):
         return int(self.value)
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, (TCPFlag, int)):
+        if not isinstance(other, SupportsInt):
             raise NotImplementedError(f"Cannot compare {self.__class__} and {other} of type {type(other)}")
         return self.value == self.absolute_value(other)
 

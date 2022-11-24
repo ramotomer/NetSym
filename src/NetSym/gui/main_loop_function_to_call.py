@@ -16,7 +16,7 @@ class FunctionToCall:
     supply_main_loop_object: Whether or not the first parameter that will be given to the function is the MainLoop object itself
     """
     function:                Callable
-    args:                    Tuple[Any]     = field(default_factory=tuple)
-    kwargs:                  Dict[str, Any] = field(default_factory=dict)
-    can_be_paused:           bool           = False
-    supply_main_loop_object: bool           = False
+    args:                    Tuple[Any, ...] = ()
+    kwargs:                  Dict[str, Any]  = field(default_factory=dict)
+    can_be_paused:           bool            = False
+    supply_main_loop_object: bool            = False

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from functools import reduce
 from operator import ior as binary_or
-from typing import TYPE_CHECKING, Tuple, Any
+from typing import TYPE_CHECKING, Tuple, Any, Set
 
 import pyWinhook
 import pyglet
 
-from NetSym.consts import KEYBOARD, WINDOWS, IMAGES, DIRECTORIES, BUTTONS, T_Time
+from NetSym.consts import KEYBOARD, WINDOWS, IMAGES, DIRECTORIES, BUTTONS, T_Time, T_PressedKey
 from NetSym.usefuls.funcs import normal_color_to_weird_gl_color
 from NetSym.usefuls.paths import add_path_basename_if_needed
 
@@ -40,7 +40,7 @@ class MainWindow(pyglet.window.Window):
 
         self.mouse_x, self.mouse_y = WINDOWS.MAIN.WIDTH / 2, WINDOWS.MAIN.HEIGHT / 2
         self.mouse_pressed = False
-        self.pressed_keys = set()
+        self.pressed_keys: Set[T_PressedKey] = set()
 
         try:
             self.set_icon(pyglet.image.load(add_path_basename_if_needed(DIRECTORIES.IMAGES, IMAGES.PACKETS.ICMP.REQUEST)))
@@ -92,7 +92,7 @@ class MainWindow(pyglet.window.Window):
 
     @property
     def is_ignoring_keyboard_escape_keys(self) -> bool:
-        return self._keyboard_hook_manager.keyboard_hook
+        return bool(self._keyboard_hook_manager.keyboard_hook)
 
     @property
     def location(self) -> Tuple[float, float]:

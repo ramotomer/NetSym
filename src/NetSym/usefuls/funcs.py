@@ -356,7 +356,8 @@ def reverse_dict(dict_: Dict[K, V]) -> Dict[V, K]:
             raise KeyError(f"Cannot reverse dict {dict_}! Duplicate values found. conflict in key: {key}, value: {value}, dict: {reversed_dict_}")
         reversed_dict_[value] = key
 
-    return {old_value: old_key for old_value, old_key in reversed_dict_.items()}
+    return reversed_dict_  # type: ignore
+    # ^ we know that if any of the values of this dict are None - it is OK and the type of them is not Optional[K] - just K
 
 
 def change_dict_key_names(dict_: Dict[K, V], key_name_mapping: Dict[K, K2]) -> Dict[Union[K, K2], V]:

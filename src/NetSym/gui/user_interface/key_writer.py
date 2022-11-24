@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import List, Union, Callable
+from typing import List, Union, Callable, Tuple, Dict
 
 from pyglet.window import key
 
-from NetSym.consts import KEYBOARD
+from NetSym.consts import KEYBOARD, T_PressedKeyModifier, T_PressedKey
 from NetSym.exceptions import KeyActionAlreadyExistsError
 
 
@@ -29,7 +29,7 @@ class KeyWriter:
 
     def __init__(self,
                  append_function: Callable[[str], None],
-                 delete_function: Callable[[str], None],
+                 delete_function: Callable[[], None],
                  submit_action:   Callable[[], None] = lambda: None,
                  exit_action:     Callable[[], None] = lambda: None) -> None:
         """
@@ -44,7 +44,7 @@ class KeyWriter:
         self.submit = submit_action
         self.exit = exit_action
 
-        self.key_combination_dict = {
+        self.key_combination_dict: Dict[Tuple[T_PressedKey, T_PressedKeyModifier], Callable[[...], None]] = {
             (key.ENTER,     KEYBOARD.MODIFIERS.NONE): self.submit,
             (key.BACKSPACE, KEYBOARD.MODIFIERS.NONE): self.delete,
         }
