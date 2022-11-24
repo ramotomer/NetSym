@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 from enum import Enum
 from math import sqrt
-from typing import Tuple, Union, Any
+from typing import Tuple, Any, SupportsInt
 
 import pyglet
 
@@ -69,13 +69,15 @@ class TCPFlag(object):
         self.value = value
 
     @classmethod
-    def absolute_value(cls, other: Union[int, TCPFlag]) -> int:
+    def absolute_value(cls, other: SupportsInt) -> int:
         if isinstance(other, cls):
             return other.value
         return int(other)
         # raise TypeError(f"Type '{type(other)}' has no absolute value! only `TCPFlag` and `int` have!!")
 
-    def __or__(self, other: Union[int, TCPFlag]) -> int:
+    def __or__(self, other: object) -> int:
+        if not isinstance(other, (TCPFlag, int)):
+            raise NotImplementedError(f"Cannot call `or` on {self.__class__} and {other} of type {type(other)}")
         return self.value | self.absolute_value(other)
 
     def __repr__(self) -> str:
@@ -87,7 +89,9 @@ class TCPFlag(object):
     def __int__(self) -> int:
         return int(self.value)
 
-    def __eq__(self, other: Union[int, TCPFlag]) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, (TCPFlag, int)):
+            raise NotImplementedError(f"Cannot compare {self.__class__} and {other} of type {type(other)}")
         return self.value == self.absolute_value(other)
 
     def __hash__(self) -> int:
@@ -441,10 +445,10 @@ class WINDOWS:
         class SUBMIT_BUTTON:
             WIDTH = 100
             PADDING = 200 - (WIDTH / 2), 8
-            COORDINATES = tuple(map(sum, zip((437.5, 215.0), PADDING)))
+            COORDINATES = (PADDING[0] + 437.5), (PADDING[1] + 215.0)
 
-        YES_BUTTON_COORDINATES = tuple(map(sum, zip(SUBMIT_BUTTON.COORDINATES, (-SUBMIT_BUTTON.WIDTH, 0))))
-        NO_BUTTON_COORDINATES = tuple(map(sum, zip(SUBMIT_BUTTON.COORDINATES, (SUBMIT_BUTTON.WIDTH, 0))))
+        YES_BUTTON_COORDINATES = (SUBMIT_BUTTON.COORDINATES[0] - SUBMIT_BUTTON.WIDTH), SUBMIT_BUTTON.COORDINATES[1]
+        NO_BUTTON_COORDINATES  = (SUBMIT_BUTTON.COORDINATES[0] + SUBMIT_BUTTON.WIDTH), SUBMIT_BUTTON.COORDINATES[1]
 
         class DEVICE_CREATION:
             BUTTON_SIZE = 80
@@ -455,7 +459,7 @@ class WINDOWS:
             HEIGHT = 500
             COORDINATES = 90, 40
             PADDING = 200 + (WIDTH / 2), 8
-            OK_BUTTON_COORDINATES = tuple(map(sum, zip((90, 40), PADDING)))
+            OK_BUTTON_COORDINATES = (PADDING[0] + 90), (PADDING[1] + 40)
 
 
 class MAIN_LOOP:

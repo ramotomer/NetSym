@@ -1,6 +1,6 @@
 import sys
 
-from NetSym.usefuls.my_string_io import MyStringIO
+from io import StringIO
 
 
 class PrintStealer:
@@ -14,7 +14,7 @@ class PrintStealer:
     def __enter__(self) -> None:
         self._original_stdout = sys.stdout
         self._original_stderr = sys.stderr
-        sys.stdout = MyStringIO()
+        sys.stdout = StringIO()
         sys.stderr = sys.stdout
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:

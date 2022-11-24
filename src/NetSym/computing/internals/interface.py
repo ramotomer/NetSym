@@ -48,7 +48,7 @@ class Interface:
         :param mac: a string MAC address ('aa:bb:cc:11:22:76' for example)
         :param ip: a string ip address ('10.3.252.5/24' for example)
         """
-        self.connection: Optional[Connection] = None
+        self.__connection: Optional[Connection] = None
         self.__connection_side = None
         self.connection_side = connection_side
 
@@ -68,16 +68,22 @@ class Interface:
         self.display_color = display_color
 
     @property
+    def connection(self) -> Connection:
+        if self.__connection is None:
+            raise NoSuchConnectionError(f"self: {self}, self.__connection: {self.__connection}")
+        return self.__connection
+
+    @property
     def connection_side(self) -> Optional[ConnectionSide]:
         return self.__connection_side
 
     @connection_side.setter
     def connection_side(self, value: Optional[ConnectionSide]) -> None:
-        self.connection = None
+        self.__connection = None
         self.__connection_side = value
 
         if value is not None:
-            self.connection = value.connection
+            self.__connection = value.connection
 
     @property
     def connection_length(self) -> Optional[T_Time]:
@@ -159,7 +165,7 @@ class Interface:
 
     def is_connected(self) -> bool:
         """Returns whether the interface is connected or not"""
-        return (self.connection_side is not None) and (self.connection is not None)
+        return (self.__connection_side is not None) and (self.__connection is not None)
 
     def set_mac(self, new_mac: MACAddress) -> None:
         """

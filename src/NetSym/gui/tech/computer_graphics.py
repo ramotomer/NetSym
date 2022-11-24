@@ -193,7 +193,7 @@ class ComputerGraphics(ImageGraphics):
         self.child_graphics_objects.console.location = user_interface.get_computer_output_console_location()
         self.child_graphics_objects.console.show()
 
-        buttons = {
+        buttons: Dict[str,  Callable[[], None]] = {
             "set ip (i)": user_interface.ask_user_for_ip,
             "change name (shift+n)": with_args(
                 user_interface.ask_user_for,

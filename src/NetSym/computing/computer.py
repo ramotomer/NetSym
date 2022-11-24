@@ -102,6 +102,13 @@ class Computer(LogicObject):
     POSSIBLE_COMPUTER_NAMES = None
     EXISTING_COMPUTER_NAMES = set()
 
+    os:                str
+    is_powered_on:     bool
+    interfaces:        List[Interface]
+    filesystem:        Filesystem
+    routing_table:     RoutingTable
+    process_scheduler: ProcessScheduler
+
     def __init__(self, name: Optional[str] = None, os: str = OS.WINDOWS, gateway: Optional[IPAddress] = None, *interfaces: Interface) -> None:
         """
         Initiates a Computer object.
@@ -121,7 +128,7 @@ class Computer(LogicObject):
 
         self.interfaces = list(interfaces)
         if not interfaces:
-            self.interfaces: List[Interface] = []  # a list of all of the interfaces without the loopback
+            self.interfaces = []  # a list of all of the interfaces without the loopback
         self.loopback = Interface.loopback()
         self.boot_time = self.main_loop.time()
 
@@ -134,7 +141,7 @@ class Computer(LogicObject):
         self.routing_table = RoutingTable.create_default(self)
         self.dns_cache = DNSCache()
 
-        self.filesystem: Filesystem = Filesystem.with_default_dirs()
+        self.filesystem = Filesystem.with_default_dirs()
         self.process_scheduler = ProcessScheduler(self)
 
         self.graphics = None

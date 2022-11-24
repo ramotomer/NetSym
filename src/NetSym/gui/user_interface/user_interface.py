@@ -999,7 +999,7 @@ class UserInterface:
         Remove an interface and disconnect everything it is connected to
         """
         computer = get_the_one(self.computers, (lambda c: interface in c.interfaces), NoSuchInterfaceError)
-        if interface.is_connected:
+        if interface.is_connected():
             connection = interface.connection
             self.delete(connection.graphics)
         computer.remove_interface(interface.name)
@@ -1104,6 +1104,7 @@ class UserInterface:
         """
         all_connections = [connection_data[0] for connection_data in self.connection_data] + \
                           [computer.loopback.connection for computer in self.computers]
+        # TODO: can wireless packets be dropped? why not? is this desired? what whould the animation look like? <3
 
         for connection in all_connections:
             for sent_packet in connection.sent_packets[:]:

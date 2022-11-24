@@ -19,10 +19,10 @@ K2 = TypeVar("K2")
 V = TypeVar("V")
 
 
-def get_the_one(iterable: Iterable[T],
+def get_the_one(iterable:  Iterable[T],
                 condition: Callable[[T], bool],
-                raises: Callable = None,
-                default: Optional[T] = None) -> T:
+                raises:    Optional[Callable] = None,
+                default:   Optional[T] = None) -> Optional[T]:
     """
     Receives an iterable and a condition and returns the first item in the
     iterable that the condition is true for.
@@ -150,7 +150,7 @@ def sine_wave_coordinates(
         start_coordinates: Tuple[float, float],
         end_coordinates: Tuple[float, float],
         amplitude: float = 10,
-        frequency: float = 1) -> Generator[Tuple[float, float]]:
+        frequency: float = 1) -> Generator[Tuple[float, float], None, None]:
     """
     A generator that yields tuples that are coordinates for a sine wave.
     :return:
@@ -243,10 +243,11 @@ def datetime_from_string(string: str) -> datetime.datetime:
     returns the datetime object itself.
     """
     args = string[string.index('(') + 1: string.index(')')].split(', ')
-    return datetime.datetime(*map(int, args))
+    year, month, day, hour, minute, second, millisecond = list(map(int, args)) + ([0] * (7 - len(args)))
+    return datetime.datetime(year, month, day, hour, minute, second, millisecond)
 
 
-def all_indexes(string: str, substring: str) -> Generator[int]:
+def all_indexes(string: str, substring: str) -> Generator[int, None, None]:
     """
     generator that yields indexes of all of the occurrences of the substring in the string
     """
@@ -259,7 +260,7 @@ def all_indexes(string: str, substring: str) -> Generator[int]:
             return
 
 
-def my_range(start: float, end: Optional[float] = None, step: float = 1) -> Generator[float]:
+def my_range(start: float, end: Optional[float] = None, step: float = 1) -> Generator[float, None, None]:
     """
     Just like `range`, but supports non-whole `step`s
     :param start:
@@ -323,7 +324,7 @@ def split_with_escaping(string: str, separator: str = ' ', escaping_char: str = 
 
 
 @contextmanager
-def temporary_attribute_values(object_: Any, attribute_value_mapping: Dict[str, Any]) -> Generator[Any]:
+def temporary_attribute_values(object_: Any, attribute_value_mapping: Dict[str, Any]) -> Generator[Any, None, None]:
     """
     A `contextmanager` that takes in an instance of an object.
     The function allows us to temporarily change the values of
@@ -349,14 +350,13 @@ def reverse_dict(dict_: Dict[K, V]) -> Dict[V, K]:
     Take in a dict and reverse the keys and the values.
     If some values are duplicate - raise
     """
-    reversed_dict_ = {value: [] for value in dict_.values()}
+    reversed_dict_: Dict[V, Optional[K]] = {value: None for value in dict_.values()}
     for key, value in dict_.items():
-        reversed_dict_[value].append(key)
+        if reversed_dict_[value] is not None:
+            raise KeyError(f"Cannot reverse dict {dict_}! Duplicate values found. conflict in key: {key}, value: {value}, dict: {reversed_dict_}")
+        reversed_dict_[value] = key
 
-    if any(len(key_list) != 1 for key_list in reversed_dict_.values()):
-        raise KeyError(f"Cannot reverse dict {dict_}! Duplicate values found. Conflict: {reversed_dict_}")
-
-    return {value: key_list[0] for value, key_list in reversed_dict_.items()}
+    return {old_value: old_key for old_value, old_key in reversed_dict_.items()}
 
 
 def change_dict_key_names(dict_: Dict[K, V], key_name_mapping: Dict[K, K2]) -> Dict[Union[K, K2], V]:
