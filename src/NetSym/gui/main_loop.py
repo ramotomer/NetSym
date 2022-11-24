@@ -61,6 +61,13 @@ class MainLoop:
 
         return cls.instance.time()
 
+    @classmethod
+    def get_time_since(cls, other_time: T_Time) -> T_Time:
+        """
+
+        """
+        return cls.get_time() - other_time
+
     def is_registered(self, graphics_object: GraphicsObject) -> bool:
         """
         Return whether or not the supplied `GraphicsObject` is alredy registered in the main loop.

@@ -5,7 +5,7 @@ from collections import deque
 from dataclasses import dataclass
 from functools import reduce
 from operator import concat
-from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator, Iterable, Union, Tuple, Any
+from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator, Iterable, Union, Tuple, Any, Set
 
 import scapy
 
@@ -99,13 +99,14 @@ class Computer(LogicObject):
         },
     }
 
-    POSSIBLE_COMPUTER_NAMES = None
-    EXISTING_COMPUTER_NAMES = set()
+    POSSIBLE_COMPUTER_NAMES: Optional[List[str]] = None
+    EXISTING_COMPUTER_NAMES: Set[str]            = set()
 
     os:                str
     is_powered_on:     bool
     interfaces:        List[Interface]
     filesystem:        Filesystem
+    arp_cache:         ArpCache
     routing_table:     RoutingTable
     process_scheduler: ProcessScheduler
 
@@ -156,7 +157,7 @@ class Computer(LogicObject):
             "UDP": self._handle_udp,
         }
 
-        self.sockets = {}
+        self.sockets: Dict[Socket, SocketData] = {}
 
         self.output_method = COMPUTER.OUTPUT_METHOD.CONSOLE
         self.active_shells: List[ShellGraphics] = []
@@ -194,14 +195,13 @@ class Computer(LogicObject):
         """
         Read the name of the DNS server from the '/etc/resolv.conf'
         """
-        address = self.filesystem.parse_conf_file_format(
-            COMPUTER.FILES.CONFIGURATIONS.DNS_CLIENT_PATH,
-            raise_if_does_not_exist=False
-        ).get('nameserver', [None])[0]  # TODO: what if multiple DNS servers? why only the first?
+        dns_servers = self.filesystem.parse_conf_file_format(COMPUTER.FILES.CONFIGURATIONS.DNS_CLIENT_PATH,
+                                                             raise_if_does_not_exist=False).get('nameserver', [])
 
-        if address is not None:
-            return IPAddress(address)
-        return None
+        if not dns_servers:
+            return None
+
+        return IPAddress(dns_servers[0])  # TODO: what if multiple DNS servers? why only the first?
 
     @dns_server.setter
     def dns_server(self, value: Optional[IPAddress]) -> None:
@@ -219,10 +219,13 @@ class Computer(LogicObject):
         """
         Read the name of the default name of the domain from the '/etc/resolv.conf'
         """
-        return self.filesystem.parse_conf_file_format(
-            COMPUTER.FILES.CONFIGURATIONS.DNS_CLIENT_PATH,
-            raise_if_does_not_exist=False,
-        ).get('domain', [None])[0]
+        domains = self.filesystem.parse_conf_file_format(COMPUTER.FILES.CONFIGURATIONS.DNS_CLIENT_PATH,
+                                                         raise_if_does_not_exist=False).get('domain', [])
+
+        if not domains:
+            return None
+
+        return domains[0]
 
     @domain.setter
     def domain(self, value: Optional[IPAddress]) -> None:
@@ -237,7 +240,7 @@ class Computer(LogicObject):
 
     @property
     def raw_sockets(self) -> List[RawSocket]:
-        return [socket for socket in self.sockets if self.sockets[socket].kind == COMPUTER.SOCKETS.TYPES.SOCK_RAW]
+        return [socket for socket in self.sockets if isinstance(socket, RawSocket)]
 
     @classmethod
     def with_ip(cls: Type[Computer], ip_address: Union[str, IPAddress], name: Optional[str] = None) -> Computer:
@@ -1199,8 +1202,8 @@ class Computer(LogicObject):
         """
         socket = {
             COMPUTER.SOCKETS.TYPES.SOCK_STREAM: TCPSocket,
-            COMPUTER.SOCKETS.TYPES.SOCK_RAW: RawSocket,
-            COMPUTER.SOCKETS.TYPES.SOCK_DGRAM: UDPSocket,
+            COMPUTER.SOCKETS.TYPES.SOCK_RAW:    RawSocket,
+            COMPUTER.SOCKETS.TYPES.SOCK_DGRAM:  UDPSocket,
         }[kind](self, address_family)
 
         self.sockets[socket] = SocketData(

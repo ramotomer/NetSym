@@ -20,8 +20,8 @@ class UserInterfaceGraphicsObject(GraphicsObject):
                  is_in_background: bool = False,
                  is_pressable: bool = False) -> None:
         super(UserInterfaceGraphicsObject, self).__init__(x, y, do_render, centered, is_in_background, is_pressable)
-        self.parent_graphics = None
-        self.padding = None
+        self.parent_graphics: Optional[GraphicsObject] = None
+        self.padding: Optional[Tuple[float, float]] = None
 
     def set_parent_graphics(self, parent_graphics: GraphicsObject, padding: Tuple[float, float] = (0, 0)) -> None:
         """

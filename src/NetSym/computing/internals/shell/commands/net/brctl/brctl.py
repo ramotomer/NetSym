@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from typing import TYPE_CHECKING
 
-from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
+from NetSym.computing.internals.shell.commands.command import Command, CommandOutput, ParsedCommand
 from NetSym.computing.internals.shell.commands.net.brctl.brctl_showbr import BrctlShowbrCommand
 
 if TYPE_CHECKING:
@@ -48,5 +48,10 @@ For now only showbr is implemented - NetSym does not use unix bridges to impleme
             command_class = self.object_to_command[parsed_args.object](self.computer, self.shell)
         except KeyError:
             return CommandOutput('', f"{self._brctl_help()}")
-        _, parsed_additional_args = command_class.parse(' '.join([f'brctl_{parsed_args.object}'] + parsed_args.args))
+
+        parsed_command = command_class.parse(' '.join([f'brctl_{parsed_args.object}'] + parsed_args.args))
+        if not isinstance(parsed_command, ParsedCommand):
+            return CommandOutput('', parsed_command)
+
+        _, parsed_additional_args = parsed_command
         return command_class.action(parsed_additional_args)

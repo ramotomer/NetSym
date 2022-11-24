@@ -31,7 +31,7 @@ class Cd(Command):
         """
         new_dir = parsed_args.new_dir if parsed_args.new_dir else FILESYSTEM.HOME_DIR
         try:
-            self.shell.cwd = self.computer.filesystem.at_path(self.shell.cwd, new_dir)
+            self.shell.cwd = self.computer.filesystem.directory_at_path(self.shell.cwd, new_dir)
         except NoSuchItemError:
             return CommandOutput('', f"Cannot switch to directory '{parsed_args.new_dir}' :(")
 

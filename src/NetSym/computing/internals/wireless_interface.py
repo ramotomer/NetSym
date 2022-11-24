@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Callable, Dict
+from typing import TYPE_CHECKING, Optional, Callable, Dict, Union
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
@@ -29,11 +29,11 @@ class WirelessInterface(Interface):
     connection_side: Optional[FrequencyConnectionSide]
 
     def __init__(self,
-                 mac:           Optional[MACAddress] = None,
-                 ip:            Optional[IPAddress]  = None,
-                 name:          Optional[str]        = None,
-                 frequency:     Optional[Frequency]  = None,
-                 display_color: T_Color              = INTERFACES.COLOR) -> None:
+                 mac:           Optional[Union[MACAddress, str]] = None,
+                 ip:            Optional[IPAddress]              = None,
+                 name:          Optional[str]                    = None,
+                 frequency:     Optional[Frequency]              = None,
+                 display_color: T_Color                          = INTERFACES.COLOR) -> None:
         """
         Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
         :param mac: a string MAC address ('aa:bb:cc:11:22:76' for example)

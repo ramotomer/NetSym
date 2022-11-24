@@ -36,7 +36,7 @@ class BrctlShowbrCommand(Command):
 bridge:
     {'bridge id': <23}{str(stp_process.my_bid): >23}
     {'designated root id': <23}{str(stp_process.root_bid): >23}
-    {'time since seen root': <23}{int(MainLoop.instance.time_since(stp_process.root_declaration_time)): >23}
+    {'time since seen root': <23}{int(MainLoop.get_time_since(stp_process.root_declaration_time)): >23}
     {'max root timeout': <23}{stp_process.root_timeout: >23.2}
     {'root age': <23}{stp_process.root_age: >23}
 """
@@ -48,7 +48,7 @@ bridge:
     {'port id': <23}{id_ + 1: >23}
     {'state': <23}{stp_port.state: >23}
     {'path cost': <23}{float(stp_port.distance_to_root): >23.2}
-    {'time since last packet': <23}{MainLoop.instance.time_since(stp_port.last_time_got_packet): >23.2}
+    {'time since last packet': <23}{MainLoop.get_time_since(stp_port.last_time_got_packet): >23.2}
 """)
 
         return general_bridge_info + '\n' + '\n'.join(interfaces_info)

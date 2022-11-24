@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from typing import Tuple
+from typing import Tuple, Any, Dict
 
 import pyglet
 
@@ -42,7 +42,7 @@ class AnimationGraphics(ImageGraphics):
         self.is_looping = is_looping
         self.x_count = x_count
         self.y_count = y_count
-        self.run_time = None
+        self.run_time = 0.0
         self.start_time = time.time()
         self.frame_rate = frame_rate
         self.scale = scale
@@ -96,5 +96,5 @@ class AnimationGraphics(ImageGraphics):
         if self.is_done:
             self.unregister()
 
-    def dict_save(self) -> None:
-        pass
+    def dict_save(self) -> Dict[Any, Any]:
+        raise NotImplementedError()

@@ -38,7 +38,7 @@ class ArpCache:
         :return: None
         """
         for ip, arp_cache_item in list(self.__cache.items()):
-            if MainLoop.instance.time_since(arp_cache_item.time) > max_lifetime:
+            if MainLoop.get_time_since(arp_cache_item.time) > max_lifetime:
                 del self.__cache[ip]
 
     def add_dynamic(self, ip_address: Union[str, IPAddress], mac_address: Union[str, MACAddress]) -> None:
@@ -59,7 +59,7 @@ class ArpCache:
         :param mac_address: MACAddress or str
         :return:
         """
-        self.__cache[IPAddress(ip_address)] = ARPCacheItem(mac_address,
+        self.__cache[IPAddress(ip_address)] = ARPCacheItem(MACAddress(mac_address),
                                                            MainLoop.get_time(),
                                                            COMPUTER.ARP_CACHE.STATIC)
 
