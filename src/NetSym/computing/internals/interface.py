@@ -27,7 +27,7 @@ class Interface:
     It contains methods that provide abstraction for sending many types of packets.
 
     An interface can be either connected or disconnected to a `ConnectionSide` object, which enables it to move its packets
-    down the connection further.
+    down the connection_side further.
     """
 
     POSSIBLE_INTERFACE_NAMES = None
@@ -46,10 +46,9 @@ class Interface:
         """
         Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
         :param mac: a string MAC address ('aa:bb:cc:11:22:76' for example)
-        :param connection: a `Connection` object
         :param ip: a string ip address ('10.3.252.5/24' for example)
         """
-        self.connection = connection
+        self.connection_side = connection
         self.name = name if name is not None else Interface.random_name()
 
         self.mac: MACAddress = MACAddress(MACAddress.randomac()) if mac is None else MACAddress(mac)
@@ -70,12 +69,12 @@ class Interface:
     @property
     def connection_length(self) -> Optional[T_Time]:
         """
-        The length of the connection this `Interface` is connected to. (The time a packet takes to go through it in seconds)
+        The length of the connection_side this `Interface` is connected to. (The time a packet takes to go through it in seconds)
         :return: a number of seconds.
         """
         if not self.is_connected():
             return None
-        return self.connection.connection.deliver_time
+        return self.connection_side.connection.deliver_time
 
     @property
     def no_carrier(self) -> bool:
@@ -147,7 +146,7 @@ class Interface:
 
     def is_connected(self) -> bool:
         """Returns whether the interface is connected or not"""
-        return self.connection is not None
+        return self.connection_side is not None
 
     def set_mac(self, new_mac: MACAddress) -> None:
         """
@@ -190,7 +189,7 @@ class Interface:
         if self.is_connected() or other.is_connected():
             raise DeviceAlreadyConnectedError("The interface is connected already!!!")
         connection = Connection()
-        self.connection, other.connection = connection.get_sides()
+        self.connection_side, other.connection_side = connection.get_sides()
         return connection
     
     def disconnect(self) -> None:
@@ -199,34 +198,34 @@ class Interface:
 
         Note that the `Connection` object does not know about this disconnection,
         so the other interface should be disconnected as well or this side of
-        connection should be reconnected.
+        connection_side should be reconnected.
         :return: None
         """
         if not self.is_connected():
             raise InterfaceNotConnectedError("Cannot disconnect an interface that is not connected!")
-        self.connection = None
+        self.connection_side = None
 
     def block(self, accept: Optional[str] = None) -> None:
         """
-        Blocks the connection and does not receive packets from it anymore.
+        Blocks the connection_side and does not receive packets from it anymore.
         It only accepts packets that contain the `accept` layer (for example "STP")
         if blocked, does nothing (updates the 'accept')
         """
         self.is_blocked = True
         self.accepting = accept
-        if self.connection is not None:
-            self.connection.mark_as_blocked()
+        if self.connection_side is not None:
+            self.connection_side.mark_as_blocked()
 
     def unblock(self) -> None:
         """
-        Releases the blocking of the connection and allows it to receive packets again.
+        Releases the blocking of the connection_side and allows it to receive packets again.
         if not blocked, does nothing...
         :return: None
         """
         self.is_blocked = False
         self.accepting = None
-        if self.connection is not None:
-            self.connection.mark_as_unblocked()
+        if self.connection_side is not None:
+            self.connection_side.mark_as_unblocked()
 
     def toggle_block(self, accept: Optional[str] = None) -> None:
         """
@@ -256,14 +255,14 @@ class Interface:
             return False
 
         if self.is_connected() and (not self.is_blocked or (self.is_blocked and self.accepting in packet)):
-            self.connection.send(packet)
+            self.connection_side.send(packet)
             return True
 
     def receive(self) -> Optional[List[Packet]]:
         """
         Returns the packet that was received (if one was received) else, returns None.
         If the interface is not in promiscuous, only returns packets that are directed for it (and broadcast).
-        :return: A `Packet` object that was sent from the other side of the connection.
+        :return: A `Packet` object that was sent from the other side of the connection_side.
         """
         if not self.is_powered_on:
             return
@@ -271,7 +270,7 @@ class Interface:
         if not self.is_connected():
             raise InterfaceNotConnectedError("The interface is not connected so it cannot receive packets!!!")
 
-        packets = self.connection.receive()
+        packets = self.connection_side.receive()
         if self.is_blocked:
             return list(filter((lambda packet: self.accepting in packet), packets))
         if self.is_promisc:

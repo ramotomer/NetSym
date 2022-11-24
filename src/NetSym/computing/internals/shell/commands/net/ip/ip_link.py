@@ -45,14 +45,14 @@ class IpLinkCommand(Command):
         if not interface.is_connected():
             return f"""{index}: NIC: {interface.name}(DISCONNECTED)\n"""
 
-        is_blocked = '\n    BLOCKED' if interface.connection.connection.is_blocked else ''
-        is_loopback = '\n    LOOPBACK' if isinstance(interface.connection.connection, LoopbackConnection) else ''
+        is_blocked = '\n    BLOCKED' if interface.connection_side.connection.is_blocked else ''
+        is_loopback = '\n    LOOPBACK' if isinstance(interface.connection_side.connection, LoopbackConnection) else ''
 
         return f"""{index}: NIC: {interface.name}
 link:
-    speed: {interface.connection.connection.speed}
-    PL percent: {interface.connection.connection.packet_loss}
-    length: {interface.connection.connection.length}{is_blocked}{is_loopback}
+    speed: {interface.connection_side.connection.speed}
+    PL percent: {interface.connection_side.connection.packet_loss}
+    length: {interface.connection_side.connection.length}{is_blocked}{is_loopback}
 """
 
     def _list_links(self, args: argparse.Namespace) -> CommandOutput:
@@ -105,7 +105,7 @@ link:
 
     def _set_link(self, args: argparse.Namespace) -> CommandOutput:
         """
-        Sets an attribute of an interface or connection.
+        Sets an attribute of an interface or connection_side.
         :param args:
         :return:
         """
@@ -132,7 +132,7 @@ link:
         if 'macaddr' in args:
             interface.mac = args[args.index('macaddr') + 1]
 
-        if 'connection' in args:
+        if 'connection_side' in args:
             return self._set_link_connection(interface, args)
 
         return CommandOutput("OK!", '')
@@ -140,15 +140,15 @@ link:
     @staticmethod
     def _set_link_connection(interface: Interface, args: argparse.Namespace) -> CommandOutput:
         """
-        Takes care of `ip link set <NIC> connection ...` commands
+        Takes care of `ip link set <NIC> connection_side ...` commands
         """
-        command = args[args.index('connection') + 1]
+        command = args[args.index('connection_side') + 1]
         value = args[args.index(command) + 1]
 
         if command == 'speed':
-            interface.connection.connection.set_speed(int(value))
+            interface.connection_side.connection.set_speed(int(value))
         elif command == 'pl':
-            interface.connection.connection.set_pl(float(value))
+            interface.connection_side.connection.set_pl(float(value))
         else:
             return CommandOutput('', "Connection commands are `pl` or `speed` only!")
         return CommandOutput("OK!", '')
@@ -177,7 +177,7 @@ ip link set NAME [ { up | down } ]
                  [ block { on | off } ]
                  [ macaddr MAC ]
                  [ name NAME ]
-                 [ connection [ speed SPEED ]
+                 [ connection_side [ speed SPEED ]
                               [ pl PL ] ]
 """
         )

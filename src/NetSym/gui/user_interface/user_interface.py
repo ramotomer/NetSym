@@ -36,6 +36,7 @@ from NetSym.gui.tech.computer_graphics import ComputerGraphics
 from NetSym.gui.tech.interface_graphics import InterfaceGraphics
 from NetSym.gui.tech.packet_graphics import PacketGraphics
 from NetSym.gui.tech.wireless_interface_graphics import WirelessInterfaceGraphics
+from NetSym.gui.tech.wireless_packet_graphics import WirelessPacketGraphics
 from NetSym.gui.user_interface.button import Button
 from NetSym.gui.user_interface.popup_windows.device_creation_window import DeviceCreationWindow
 from NetSym.gui.user_interface.popup_windows.popup_console import PopupConsole
@@ -428,7 +429,7 @@ class UserInterface:
                           scale_y=VIEW.IMAGE_SIZE / sprite.image.height)
             self.main_loop.insert_to_loop(sprite.draw)
 
-            if isinstance(graphics_object, PacketGraphics):
+            if isinstance(graphics_object, (PacketGraphics, WirelessPacketGraphics)):
                 text = self.packet_from_graphics_object(graphics_object).multiline_repr()
 
         x, y = self.viewing_text_location
@@ -999,7 +1000,7 @@ class UserInterface:
         """
         computer = get_the_one(self.computers, (lambda c: interface in c.interfaces), NoSuchInterfaceError)
         if interface.is_connected:
-            connection = interface.connection.connection
+            connection = interface.connection_side.connection
             self.delete(connection.graphics)
         computer.remove_interface(interface.name)
 
@@ -1050,7 +1051,7 @@ class UserInterface:
 
         except DeviceNameAlreadyExists:
             if interface.is_connected():
-                self.delete(interface.connection.connection.graphics)
+                self.delete(interface.connection_side.connection.graphics)
             computer.remove_interface(interface_name)
 
     def hide_buttons(self, buttons_id: Optional[int] = None) -> None:
@@ -1085,7 +1086,7 @@ class UserInterface:
         all_connections: Iterable[Connection] = chain(
             self.frequencies,
             [connection_data[0] for connection_data in self.connection_data],
-            [computer.loopback.connection.connection for computer in self.computers],
+            [computer.loopback.connection_side.connection for computer in self.computers],
         )
 
         all_sent_packets: Iterable[SentPacket] = sum([connection.sent_packets for connection in all_connections], start=[])
@@ -1102,7 +1103,7 @@ class UserInterface:
         :return: None
         """
         all_connections = [connection_data[0] for connection_data in self.connection_data] + \
-                          [computer.loopback.connection.connection for computer in self.computers]
+                          [computer.loopback.connection_side.connection for computer in self.computers]
 
         for connection in all_connections:
             for sent_packet in connection.sent_packets[:]:

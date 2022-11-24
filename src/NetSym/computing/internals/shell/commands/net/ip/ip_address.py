@@ -43,7 +43,7 @@ class IpAddressCommand(Command):
         """
         # TODO: add interface MTU-s
         type_ = 'LOOPBACK' \
-            if interface.is_connected() and isinstance(interface.connection.connection, LoopbackConnection) \
+            if interface.is_connected() and isinstance(interface.connection_side.connection, LoopbackConnection) \
             else 'BROADCAST'
         type_2 = 'loopback' if type_ == 'LOOPBACK' else 'ether'
 

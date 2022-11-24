@@ -79,12 +79,12 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
             self.interfaces = Interfaces(
                 get_the_one(
                     self.start_computer.computer.interfaces,
-                    lambda i: i.connection is not None and i.connection.connection is connection,
+                    lambda i: i.connection_side is not None and i.connection_side.connection is connection,
                     NoSuchInterfaceError,
                 ).graphics,
                 get_the_one(
                     self.end_computer.computer.interfaces,
-                    lambda i: i.connection is not None and i.connection.connection is connection,
+                    lambda i: i.connection_side is not None and i.connection_side.connection is connection,
                     NoSuchInterfaceError,
                 ).graphics,
             )
@@ -269,7 +269,7 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
                 "computer": self.start_computer.computer.name,
                 "interface": get_the_one(
                                 self.start_computer.computer.interfaces,
-                                lambda i: i.is_connected() and i.connection.connection is self.connection,
+                                lambda i: i.is_connected() and i.connection_side.connection is self.connection,
                                 ThisCodeShouldNotBeReached,
                             ).name,
             },
@@ -277,7 +277,7 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
                 "computer": self.end_computer.computer.name,
                 "interface": get_the_one(
                                 self.end_computer.computer.interfaces,
-                                lambda i: i.is_connected() and i.connection.connection is self.connection,
+                                lambda i: i.is_connected() and i.connection_side.connection is self.connection,
                                 ThisCodeShouldNotBeReached,
                             ).name,
             },

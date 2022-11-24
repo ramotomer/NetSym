@@ -38,28 +38,28 @@ class WirelessInterface(Interface):
         """
         super(WirelessInterface, self).__init__(mac, ip, name, display_color=display_color, type_=INTERFACES.TYPE.WIFI)
 
-        self.connection = frequency.get_side(self) if frequency is not None else None
+        self.connection_side = frequency.get_side(self) if frequency is not None else None
         self.frequency = frequency.frequency if frequency is not None else None
 
     @property
     def frequency_object(self) -> Frequency:
-        if self.connection is None or self.frequency is None:
+        if self.connection_side is None or self.frequency is None:
             raise InterfaceNotConnectedError("No frequency object to get!")
 
-        return self.connection.connection
+        return self.connection_side.connection
 
     @property
     def connection_length(self) -> Optional[float]:
         """
-        The length of the connection this `Interface` is connected to. (The time a packet takes to go through it in seconds)
+        The length of the connection_side this `Interface` is connected to. (The time a packet takes to go through it in seconds)
         :return: a number of seconds.
         """
         if not self.is_connected():
             return None
-        return self.connection.connection.deliver_time
+        return self.connection_side.connection.deliver_time
 
     def is_connected(self) -> bool:
-        return self.frequency is not None and self.connection is not None
+        return self.frequency is not None and self.connection_side is not None
 
     def connect(self, frequency: Frequency) -> None:
         """
@@ -70,7 +70,7 @@ class WirelessInterface(Interface):
         if self.is_connected():
             self.disconnect()
 
-        self.connection = frequency.get_side(self) if frequency is not None else None
+        self.connection_side = frequency.get_side(self) if frequency is not None else None
         self.frequency = frequency.frequency if frequency is not None else None
 
     def disconnect(self) -> None:
@@ -80,8 +80,8 @@ class WirelessInterface(Interface):
         """
         if not self.is_connected():
             raise InterfaceNotConnectedError("Cannot disconnect an interface that is not connected!")
-        self.frequency_object.remove_side(self.connection)
-        self.connection = None
+        self.frequency_object.remove_side(self.connection_side)
+        self.connection_side = None
         self.frequency = None
 
     def block(self, accept: Optional[Callable[[Packet], bool]] = None) -> None:

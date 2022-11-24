@@ -275,7 +275,7 @@ class Computer(LogicObject):
         :return: The graphics objects to register in the main loop
         """
         self.graphics = ComputerGraphics(x, y, self, console_location=console_location)
-        return [self.graphics] + self.loopback.connection.connection.init_graphics(self.graphics)
+        return [self.graphics] + self.loopback.connection_side.connection.init_graphics(self.graphics)
         # TODO:   NOTE!          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ This is a-lot of coupling! Maybe change?
 
     def print(self, string: str) -> None:
@@ -495,10 +495,10 @@ class Computer(LogicObject):
 
     def disconnect(self, connection: Connection) -> None:
         """
-        Receives a `Connection` object and disconnects the appropriate interface from that connection.
+        Receives a `Connection` object and disconnects the appropriate interface from that connection_side.
         """
         for interface in self.interfaces:
-            if interface.connection is connection.left_side or interface.connection is connection.right_side:
+            if interface.connection_side is connection.left_side or interface.connection_side is connection.right_side:
                 interface.disconnect()
                 return
 
