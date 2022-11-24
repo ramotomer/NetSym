@@ -204,7 +204,7 @@ def test_init_graphics(x, y, console_location, example_computers):
 
             assert isinstance(graphics_list, list)
             assert all(isinstance(object_, GraphicsObject) for object_ in graphics_list)
-            assert computer.loopback.connection_side.connection.graphics in graphics_list
+            assert computer.loopback.connection.graphics in graphics_list
 
             assert computer.graphics in graphics_list
             assert computer.graphics.x == x, computer.graphics.y == y

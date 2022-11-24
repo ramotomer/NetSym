@@ -39,7 +39,7 @@ class Interface:
                  mac: Optional[Union[str, MACAddress]] = None,
                  ip: Optional[Union[str, IPAddress]] = None,
                  name: Optional[str] = None,
-                 connection: Optional[ConnectionSide] = None,
+                 connection_side: Optional[ConnectionSide] = None,
                  display_color: T_Color = INTERFACES.COLOR,
                  type_: str = INTERFACES.TYPE.ETHERNET,
                  mtu: int = PROTOCOLS.ETHERNET.MTU) -> None:
@@ -48,11 +48,12 @@ class Interface:
         :param mac: a string MAC address ('aa:bb:cc:11:22:76' for example)
         :param ip: a string ip address ('10.3.252.5/24' for example)
         """
-        self.connection_side = connection
+        self.connection: Optional[Connection] = None
+        self.__connection_side = None
+        self.connection_side = connection_side
+
         self.name = name if name is not None else Interface.random_name()
-
         self.mac: MACAddress = MACAddress(MACAddress.randomac()) if mac is None else MACAddress(mac)
-
         self.ip = IPAddress(ip) if ip is not None else None
 
         self.is_promisc = True
@@ -67,6 +68,18 @@ class Interface:
         self.display_color = display_color
 
     @property
+    def connection_side(self) -> Optional[ConnectionSide]:
+        return self.__connection_side
+
+    @connection_side.setter
+    def connection_side(self, value: Optional[ConnectionSide]) -> None:
+        self.connection = None
+        self.__connection_side = value
+
+        if value is not None:
+            self.connection = value.connection
+
+    @property
     def connection_length(self) -> Optional[T_Time]:
         """
         The length of the connection_side this `Interface` is connected to. (The time a packet takes to go through it in seconds)
@@ -74,7 +87,7 @@ class Interface:
         """
         if not self.is_connected():
             return None
-        return self.connection_side.connection.deliver_time
+        return self.connection.deliver_time
 
     @property
     def no_carrier(self) -> bool:
@@ -146,7 +159,7 @@ class Interface:
 
     def is_connected(self) -> bool:
         """Returns whether the interface is connected or not"""
-        return self.connection_side is not None
+        return (self.connection_side is not None) and (self.connection is not None)
 
     def set_mac(self, new_mac: MACAddress) -> None:
         """

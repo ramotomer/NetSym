@@ -275,8 +275,7 @@ class Computer(LogicObject):
         :return: The graphics objects to register in the main loop
         """
         self.graphics = ComputerGraphics(x, y, self, console_location=console_location)
-        return [self.graphics] + self.loopback.connection_side.connection.init_graphics(self.graphics)
-        # TODO:   NOTE!          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ This is a-lot of coupling! Maybe change?
+        return [self.graphics] + self.loopback.connection.init_graphics(self.graphics)
 
     def print(self, string: str) -> None:
         """

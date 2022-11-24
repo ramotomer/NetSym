@@ -70,7 +70,7 @@ class InterfaceGraphics(ViewableGraphicsObject, Selectable):
         :return:
         """
         if self.interface.is_connected():
-            start_computer, end_comp = self.interface.connection_side.connection.get_graphics().computers
+            start_computer, end_comp = self.interface.connection.get_graphics().computers
             other_computer = start_computer if self.computer_graphics is end_comp else end_comp
             self.x, self.y = other_computer.location
         computer_x, computer_y = self.computer_location

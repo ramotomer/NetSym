@@ -11,7 +11,7 @@ from NetSym.gui.tech.wireless_interface_graphics import WirelessInterfaceGraphic
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
-    from NetSym.computing.internals.frequency import Frequency
+    from NetSym.computing.internals.frequency import Frequency, FrequencyConnectionSide
 
 
 class WirelessInterface(Interface):
@@ -24,6 +24,9 @@ class WirelessInterface(Interface):
     down the connection further.
     """
     GRAPHICS_CLASS = WirelessInterfaceGraphics
+
+    connection:      Frequency
+    connection_side: Optional[FrequencyConnectionSide]
 
     def __init__(self,
                  mac:           Optional[MACAddress] = None,
@@ -39,14 +42,14 @@ class WirelessInterface(Interface):
         super(WirelessInterface, self).__init__(mac, ip, name, display_color=display_color, type_=INTERFACES.TYPE.WIFI)
 
         self.connection_side = frequency.get_side(self) if frequency is not None else None
-        self.frequency = frequency.frequency if frequency is not None else None
+        self.frequency       = frequency.frequency      if frequency is not None else None
 
     @property
     def frequency_object(self) -> Frequency:
         if self.connection_side is None or self.frequency is None:
             raise InterfaceNotConnectedError("No frequency object to get!")
 
-        return self.connection_side.connection
+        return self.connection
 
     @property
     def connection_length(self) -> Optional[float]:
@@ -56,7 +59,7 @@ class WirelessInterface(Interface):
         """
         if not self.is_connected():
             return None
-        return self.connection_side.connection.deliver_time
+        return self.connection.deliver_time
 
     def is_connected(self) -> bool:
         return self.frequency is not None and self.connection_side is not None
