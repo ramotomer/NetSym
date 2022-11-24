@@ -411,10 +411,10 @@ class WINDOWS:
 
         class VIEWING_OBJECT:
             class TEXT:
-                PADDING = (7, -10)
+                PADDING = (7.0, -10.0)
 
     class POPUP:
-        STACKING_PADDING = 10, -10
+        STACKING_PADDING = 10.0, -10.0
         DEACTIVATED_COLOR = COLORS.LIGHT_GRAY
 
         class DIRECTIONS:

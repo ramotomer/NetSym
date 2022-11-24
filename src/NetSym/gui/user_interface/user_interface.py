@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import functools
 import json
-import operator
 import os
 import pprint
 import random
 import time
 from functools import reduce
+from itertools import chain
 from math import sqrt
 from operator import concat, attrgetter
 from typing import TYPE_CHECKING, Optional, NamedTuple, List, Type, Callable, Dict, TypeVar, Tuple, Union, Any, Iterable
@@ -54,7 +53,7 @@ from NetSym.usefuls.funcs import get_the_one, distance, with_args, called_in_ord
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.packets.packet import Packet
-    from NetSym.computing.connection import Connection
+    from NetSym.computing.connection import Connection, SentPacket
     from NetSym.gui.main_loop import MainLoop
     from NetSym.gui.main_window import MainWindow
 
@@ -1077,15 +1076,19 @@ class UserInterface:
             button.show()
         self.showing_buttons_id = buttons_id
 
-    def packet_from_graphics_object(self, graphics_object: GraphicsObject) -> Optional[Packet]:
+    def packet_from_graphics_object(self, graphics_object: PacketGraphics) -> Optional[Packet]:
         """
         Receive a graphics object of a packet and return the packet object itself.
         :param graphics_object: a `PacketGraphics` object.
         :return:
         """
-        all_connections = [connection_data[0] for connection_data in self.connection_data] + \
-                          [computer.loopback.connection.connection for computer in self.computers] + self.frequencies
-        all_sent_packets = functools.reduce(operator.concat, map(operator.attrgetter("sent_packets"), all_connections))
+        all_connections: Iterable[Connection] = chain(
+            self.frequencies,
+            [connection_data[0] for connection_data in self.connection_data],
+            [computer.loopback.connection.connection for computer in self.computers],
+        )
+
+        all_sent_packets: Iterable[SentPacket] = sum([connection.sent_packets for connection in all_connections], start=[])
 
         for sent_packet in all_sent_packets:
             if sent_packet.packet.graphics is graphics_object:
@@ -1477,7 +1480,9 @@ class UserInterface:
         self.main_loop.register_graphics_object(window)
 
         if self.popup_windows:
-            window.x, window.y = map(sum, zip(self.popup_windows[-1].location, WINDOWS.POPUP.STACKING_PADDING))
+            last_window_x, last_window_y = self.popup_windows[-1].location
+            pad_x,         pad_y         = WINDOWS.POPUP.STACKING_PADDING
+            window.x,      window.y      = last_window_x + pad_x, last_window_y + pad_y
 
         self.popup_windows.append(window)
         self.active_window = window
