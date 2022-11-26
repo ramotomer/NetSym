@@ -5,7 +5,7 @@ from collections import deque
 from dataclasses import dataclass
 from functools import reduce
 from operator import concat
-from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator, Iterable, Union, Tuple, Any, Set
+from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator, Iterable, Union, Tuple, Any, Set, cast
 
 import scapy
 
@@ -247,8 +247,7 @@ class Computer(LogicObject):
         Return the GraphicsObject of the computer.
         If it is not yet initialized - raise
         """
-        returned: ComputerGraphics = super(Computer, self).get_graphics()
-        return returned
+        return cast(ComputerGraphics, super(Computer, self).get_graphics())
 
     @classmethod
     def with_ip(cls: Type[Computer], ip_address: Union[str, IPAddress], name: Optional[str] = None) -> Computer:
@@ -283,7 +282,7 @@ class Computer(LogicObject):
         cls.EXISTING_COMPUTER_NAMES.add(name)
         return name
 
-    def init_graphics(self, x: float, y: float, console_location: Tuple[float, float] = (0, 0)) -> List[GraphicsObject]:
+    def init_graphics(self, x: float, y: float, *args: Any, console_location: Tuple[float, float] = (0, 0), **kwargs: Any) -> List[GraphicsObject]:
         """
         This is called once to initiate the graphics of the computer.
         Gives it a `GraphicsObject`. (`ComputerGraphics`)

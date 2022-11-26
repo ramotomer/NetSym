@@ -49,7 +49,7 @@ class ARPProcess(Process):
 
     def code(self) -> T_ProcessCode:
         """The code of the process"""
-        if self.destination is None:
+        if not self.destination:
             return
 
         dst_ip = yield from self.computer.resolve_domain_name(self, self.destination)

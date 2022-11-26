@@ -3,8 +3,9 @@ from __future__ import annotations
 import argparse
 from typing import TYPE_CHECKING
 
-from NetSym.computing.internals.shell.commands.command import Command, CommandOutput, ParsedCommand
+from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
 from NetSym.computing.internals.shell.commands.net.brctl.brctl_showbr import BrctlShowbrCommand
+from NetSym.exceptions import *
 
 if TYPE_CHECKING:
     from NetSym.computing.computer import Computer
@@ -49,9 +50,11 @@ For now only showbr is implemented - NetSym does not use unix bridges to impleme
         except KeyError:
             return CommandOutput('', f"{self._brctl_help()}")
 
-        parsed_command = command_class.parse(' '.join([f'brctl_{parsed_args.object}'] + parsed_args.args))
-        if not isinstance(parsed_command, ParsedCommand):
-            return CommandOutput('', parsed_command)
+        # TODO: this code should probably be shared with the `ip` command... and all commands that have multiple commands inside them
 
-        _, parsed_additional_args = parsed_command
-        return command_class.action(parsed_additional_args)
+        try:
+            parsed_command = command_class.parse(' '.join([f'brctl_{parsed_args.object}'] + parsed_args.args))
+        except SyntaxArgumentMessageError as e:
+            return CommandOutput('', e.args[0])
+
+        return command_class.action(parsed_command.parsed_args)
