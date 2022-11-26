@@ -488,6 +488,12 @@ class CommandParsingError(CommandError):
     """
 
 
+class SyntaxArgumentMessageError(CommandParsingError):
+    """
+    Raised when the syntax of a shell command is invalid
+    """
+
+
 class WrongArgumentsError(CommandParsingError):
     """
     Arguments that were given to the parsed command were not correct.

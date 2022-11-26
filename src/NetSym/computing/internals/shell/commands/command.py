@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import argparse
 from abc import abstractmethod, ABC
-from typing import Union, NamedTuple, TYPE_CHECKING
+from typing import NamedTuple, TYPE_CHECKING
 
+from NetSym.exceptions import SyntaxArgumentMessageError
 from NetSym.usefuls.funcs import split_with_escaping
 from NetSym.usefuls.print_stealer import PrintStealer
 
@@ -51,7 +52,7 @@ class Command(ABC):
         The action that this command activates when called.
         """
 
-    def parse(self, string: str) -> Union[ParsedCommand, SyntaxArgumentMessage]:
+    def parse(self, string: str) -> ParsedCommand:
         """
         parses the command string!!!
         """
@@ -64,4 +65,4 @@ class Command(ABC):
                 return ParsedCommand(self, parsed_args)
             except SystemExit:
                 pass
-        return SyntaxArgumentMessage(stdout_stealer.printed)
+        raise SyntaxArgumentMessageError(stdout_stealer.printed)

@@ -4,7 +4,7 @@ import os
 from typing import TYPE_CHECKING, Tuple, List
 
 from NetSym.computing.internals.filesystem.directory import Directory
-from NetSym.computing.internals.shell.commands.command import SyntaxArgumentMessage, CommandOutput
+from NetSym.computing.internals.shell.commands.command import CommandOutput
 from NetSym.computing.internals.shell.commands.filesystem.cat import Cat
 from NetSym.computing.internals.shell.commands.filesystem.cd import Cd
 from NetSym.computing.internals.shell.commands.filesystem.cp import Cp
@@ -283,14 +283,14 @@ class Shell:
         :param string:
         :return:
         """
-        parsed_command = self.string_to_command[string.split()[0]].parse(string)
-        if isinstance(parsed_command, SyntaxArgumentMessage):
-            self.shell_graphics.write(parsed_command)
+        try:
+            parsed_command = self.string_to_command[string.split()[0]].parse(string)
+        except SyntaxArgumentMessageError as e:
+            self.shell_graphics.write(e.args[0])
             return CommandOutput('', '')
 
         try:
             return parsed_command.command_class.action(parsed_command.parsed_args)
-
         except ErrorForCommandOutput as e:
             return CommandOutput('', e.args[0])
 

@@ -38,7 +38,7 @@ class UserInterfaceGraphicsObject(GraphicsObject):
         For consoles that have to move relatively to a parent graphics object.
         :return:
         """
-        if self.parent_graphics is not None:
+        if (self.parent_graphics is not None) and (self.padding is not None):
             self.location = sum_tuples(self.parent_graphics.location, self.padding)
 
     def dict_save(self) -> None:

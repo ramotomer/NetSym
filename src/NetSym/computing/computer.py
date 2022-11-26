@@ -242,6 +242,14 @@ class Computer(LogicObject):
     def raw_sockets(self) -> List[RawSocket]:
         return [socket for socket in self.sockets if isinstance(socket, RawSocket)]
 
+    def get_graphics(self) -> ComputerGraphics:
+        """
+        Return the GraphicsObject of the computer.
+        If it is not yet initialized - raise
+        """
+        returned: ComputerGraphics = super(Computer, self).get_graphics()
+        return returned
+
     @classmethod
     def with_ip(cls: Type[Computer], ip_address: Union[str, IPAddress], name: Optional[str] = None) -> Computer:
         """
@@ -294,7 +302,7 @@ class Computer(LogicObject):
         :return: None
         """
         {
-            COMPUTER.OUTPUT_METHOD.CONSOLE: self.graphics.child_graphics_objects.console.write,
+            COMPUTER.OUTPUT_METHOD.CONSOLE: self.get_graphics().child_graphics_objects.console.write,
             COMPUTER.OUTPUT_METHOD.SHELL: self._print_on_all_shells,
             COMPUTER.OUTPUT_METHOD.STDOUT: print,
             COMPUTER.OUTPUT_METHOD.NONE: lambda s: None
