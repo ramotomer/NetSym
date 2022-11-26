@@ -464,11 +464,10 @@ class WINDOWS:
             OK_BUTTON_COORDINATES = (PADDING[0] + 90), (PADDING[1] + 40)
 
 
-class MAIN_LOOP:
-    class FunctionPriority(Enum):
-        HIGH =   "high"
-        MEDIUM = "medium"
-        # LOW =    "low"
+class MainLoopFunctionPriority(Enum):
+    HIGH =   "high"
+    MEDIUM = "medium"
+    # LOW =    "low"
 
 
 class IMAGES:
@@ -840,7 +839,7 @@ class COMPUTER:
         CONSOLE = 'console'
         SHELL = 'shell'
         STDOUT = 'stdout'
-        NONE = None
+        NONE = 'None'
 
     class PROCESSES:
         INIT_PID = 1

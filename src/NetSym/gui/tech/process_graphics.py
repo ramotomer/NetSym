@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, TYPE_CHECKING, Set, Iterable
+from typing import List, TYPE_CHECKING, Set, Iterable, Callable, Dict, Optional
 
 from NetSym.consts import PORTS, IMAGES, T_Port
 from NetSym.exceptions import UnknownPortError
@@ -8,6 +8,7 @@ from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
 
 if TYPE_CHECKING:
+    from NetSym.gui.user_interface.user_interface import UserInterface
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
@@ -130,6 +131,12 @@ class ProcessGraphics(ImageGraphics):
         self.x = self.server_graphics.x + pad_x
         self.y = self.server_graphics.y + pad_y + (self.process_index * IMAGES.PROCESSES.GAP)
         super(ProcessGraphics, self).move()
+
+    def start_viewing(self,
+                      user_interface: UserInterface,
+                      additional_buttons: Optional[Dict[str, Callable[[], None]]] = None):
+        raise NotImplementedError(f"Cannot view process graphics")
+        # TODO: remove this ^, because now from outside it seems that ProcessGraphics is a `ViewableGraphicsObject` when it is not really
 
     def __str__(self) -> str:
         return "ProcessGraphics"

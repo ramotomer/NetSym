@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
@@ -28,13 +28,13 @@ class IpRouteCommand(Command):
         self.parser.add_argument('args', metavar='args', type=str, nargs='*', help='arguments')
 
         self.commands = {
-            'list': self._list_routes,
+            'list':  self._list_routes,
             'print': self._list_routes,
-            'add': self._add_route,
-            'del': self._del_route,
+            'add':   self._add_route,
+            'del':   self._del_route,
         }
 
-    def _add_route(self, args: argparse.Namespace) -> CommandOutput:
+    def _add_route(self, args: List[str]) -> CommandOutput:
         """
         Receives arguments, adds a route and returns a CommandOutput
         :param args:
@@ -57,7 +57,7 @@ class IpRouteCommand(Command):
         self.computer.routing_table.route_add(net, gateway, IPAddress.copy(interface.ip))
         return CommandOutput('OK!', '')
 
-    def _del_route(self, args: argparse.Namespace) -> CommandOutput:
+    def _del_route(self, args: List[str]) -> CommandOutput:
         """
         Receives arguments, deletes a route and returns CommandOutput
         :param args:
@@ -75,7 +75,7 @@ class IpRouteCommand(Command):
         else:
             return CommandOutput("OK!", '')
 
-    def _list_routes(self, args: argparse.Namespace) -> CommandOutput:
+    def _list_routes(self, args: List[str]) -> CommandOutput:
         """
         list the active routes
         :param args:

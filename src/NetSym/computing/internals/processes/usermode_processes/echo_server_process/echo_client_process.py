@@ -8,6 +8,7 @@ from NetSym.consts import PROTOCOLS, T_Port
 from NetSym.packets.usefuls.dns import T_Hostname
 
 if TYPE_CHECKING:
+    from NetSym.computing.internals.sockets.udp_socket import UDPSocket
     from NetSym.computing.computer import Computer
 
 
@@ -23,7 +24,7 @@ class EchoClientProcess(Process):
         self.data = data
         self.count = count
 
-        self.socket = None
+        self.socket: Optional[UDPSocket] = None
         self.server_ip: Optional[IPAddress] = None
 
     def code(self) -> T_ProcessCode:

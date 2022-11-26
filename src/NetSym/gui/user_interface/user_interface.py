@@ -24,7 +24,7 @@ from NetSym.computing.internals.wireless_interface import WirelessInterface
 from NetSym.computing.router import Router
 from NetSym.computing.switch import Switch, Hub, Antenna
 from NetSym.consts import VIEW, TEXT, BUTTONS, IMAGES, DIRECTORIES, T_Color, SELECTED_OBJECT, KEYBOARD, MODES, WINDOWS, COLORS, CONNECTIONS, \
-    INTERFACES, ADDRESSES, MESSAGES, MAIN_LOOP, CONSOLE
+    INTERFACES, ADDRESSES, MESSAGES, CONSOLE, MainLoopFunctionPriority
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.resizable import Resizable
@@ -231,7 +231,7 @@ class UserInterface:
 
         self.register_main_window_event_handlers()
 
-        self.main_loop.insert_to_loop_prioritized(self.main_window.clear, MAIN_LOOP.FunctionPriority.HIGH)
+        self.main_loop.insert_to_loop_prioritized(self.main_window.clear, MainLoopFunctionPriority.HIGH)
         self.initiate_buttons()
 
     @property

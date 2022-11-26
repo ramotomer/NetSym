@@ -20,7 +20,7 @@ class Packet:
     and so on. The Packet class allows us to recursively check if a layer is in
     the packet and to draw the packet on the screen as one complete object.
     """
-    def __init__(self, data: scapy.packet.Packet = None) -> None:
+    def __init__(self, data: scapy.packet.Packet) -> None:
         """
         Initiates the packet object, ip_layer is the out-most layer of the packet (usually Ethernet).
         `self.graphics` is a `PacketGraphics` object.

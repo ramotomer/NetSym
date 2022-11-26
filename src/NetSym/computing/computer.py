@@ -5,7 +5,7 @@ from collections import deque
 from dataclasses import dataclass
 from functools import reduce
 from operator import concat
-from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator, Iterable, Union, Tuple, Any, Set, cast, Callable
+from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator, Iterable, Union, Tuple, Any, Set, cast, Callable, Sequence
 
 import scapy
 
@@ -127,7 +127,7 @@ class Computer(LogicObject):
         self.os = os
         self.default_gateway = gateway  # an IPAddress object of the default gateway of this computer
 
-        self.interfaces = list(interfaces)
+        self.interfaces: List[Interface] = list(interfaces)
         if not interfaces:
             self.interfaces = []  # a list of all of the interfaces without the loopback
         self.loopback = Interface.loopback()
@@ -282,7 +282,8 @@ class Computer(LogicObject):
         cls.EXISTING_COMPUTER_NAMES.add(name)
         return name
 
-    def init_graphics(self, x: float, y: float, *args: Any, console_location: Tuple[float, float] = (0, 0), **kwargs: Any) -> List[GraphicsObject]:
+    def init_graphics(self, x: float, y: float,
+                      console_location: Tuple[float, float] = (0, 0), *args: Any, **kwargs: Any) -> Sequence[GraphicsObject]:
         """
         This is called once to initiate the graphics of the computer.
         Gives it a `GraphicsObject`. (`ComputerGraphics`)
@@ -302,9 +303,9 @@ class Computer(LogicObject):
         """
         output_methods: Dict[str, Callable[[str, ...], None]] = {
             COMPUTER.OUTPUT_METHOD.CONSOLE: self.get_graphics().child_graphics_objects.console.write,
-            COMPUTER.OUTPUT_METHOD.SHELL: self._print_on_all_shells,
-            COMPUTER.OUTPUT_METHOD.STDOUT: print,
-            COMPUTER.OUTPUT_METHOD.NONE: lambda s: None
+            COMPUTER.OUTPUT_METHOD.SHELL:   self._print_on_all_shells,
+            COMPUTER.OUTPUT_METHOD.STDOUT:  print,
+            COMPUTER.OUTPUT_METHOD.NONE:    lambda s: None
         }
 
         output_methods[self.output_method](string)
@@ -530,7 +531,7 @@ class Computer(LogicObject):
         :return: an `Interface` list of the Interface objects in the same subnet.
         """
         return [interface for interface in self.all_interfaces
-                if interface.has_ip() and interface.ip.is_same_subnet(ip_address)]
+                if interface.has_ip() and (interface.ip is not None) and interface.ip.is_same_subnet(ip_address)]
 
     def interface_by_name(self, name: str) -> Interface:
         """
@@ -555,7 +556,7 @@ class Computer(LogicObject):
         """
         if not self.has_ip():
             raise NoIPAddressError("This computer has no IP address!")
-        return get_the_one_with_raise(self.interfaces, lambda i: i.has_ip(), NoSuchInterfaceError).ip
+        return get_the_one_with_raise(self.interfaces, lambda i: i.has_ip(), NoSuchInterfaceError).get_ip()
 
     def has_this_ip(self, ip_address: Optional[Union[str, IPAddress]]) -> bool:
         """Returns whether or not this computer has a given IP address. (so whether or not if it is its address)"""
@@ -566,7 +567,7 @@ class Computer(LogicObject):
         if isinstance(ip_address, str):
             ip_address = IPAddress(ip_address)
 
-        return any(interface.has_ip() and interface.ip.string_ip == ip_address.string_ip
+        return any(interface.has_ip() and interface.get_ip().string_ip == ip_address.string_ip
                    for interface in self.all_interfaces)
 
     def get_interface_with_ip(self, ip_address: Optional[IPAddress] = None) -> Interface:
@@ -578,6 +579,7 @@ class Computer(LogicObject):
         """
         if ip_address is None:
             return get_the_one_with_raise(self.interfaces, lambda i: i.has_ip(), NoSuchInterfaceError)
+
         return get_the_one_with_raise(self.all_interfaces, lambda i: i.has_this_ip(ip_address), NoSuchInterfaceError)
 
     def is_arp_for_me(self, packet: Packet) -> bool:

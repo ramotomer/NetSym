@@ -308,9 +308,8 @@ def test_start_sniffing_REGULAR(example_computers_with_graphics, interface_name,
     for computer in example_computers_with_graphics:
         computer.start_sniffing(interface_name, is_promisc)
 
-        process = computer.process_scheduler.get_process_by_type(SniffingProcess, raises=False)
+        process = computer.process_scheduler.get_process_by_type(SniffingProcess)
 
-        assert process is not None
         assert process.socket.interface.name == interface_name
         if is_promisc:
             assert process.socket.interface.is_promisc
@@ -320,9 +319,8 @@ def test_start_sniffing_ANY(example_computers_with_graphics):
     for computer in example_computers_with_graphics:
         computer.start_sniffing(INTERFACES.ANY_INTERFACE, False)
 
-        process = computer.process_scheduler.get_process_by_type(SniffingProcess, raises=False)
+        process = computer.process_scheduler.get_process_by_type(SniffingProcess)
 
-        assert process is not None
         assert process.socket.interface is INTERFACES.ANY_INTERFACE
 
 

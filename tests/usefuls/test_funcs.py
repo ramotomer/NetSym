@@ -2,30 +2,58 @@ import datetime
 
 import pytest
 
+from NetSym.exceptions import NetworkSimulationError
 from NetSym.usefuls.dotdict import DotDict
 from NetSym.usefuls.funcs import get_the_one, is_matching, is_hex, with_args, distance, split_by_size, called_in_order, insort, sum_tuples, \
     scale_tuple, normal_color_to_weird_gl_color, lighten_color, darken_color, bindigits, datetime_from_string, all_indexes, my_range, \
-    split_with_escaping, temporary_attribute_values, reverse_dict, change_dict_key_names
+    split_with_escaping, temporary_attribute_values, reverse_dict, change_dict_key_names, get_the_one_with_raise, get_the_one_with_default
 
 
 @pytest.mark.parametrize(
-    "iterable, condition, raises, default, should_raise, should_return",
+    "iterable, condition, should_return",
     [
-        ([],            bool,                   None,      None,    None,      None),
-        ([],            bool,                   None,      "hello", None,      "hello"),
-        ([],            bool,                   Exception, None,    Exception, None),
-        ([1, 0],        bool,                   None,      None,    None,      1),
-        (["", 0, 2, 3], bool,                   None,      None,    None,      2),
-        ([2, 3, 4],     (lambda x: x % 2 == 0), None,      None,    None,      2),
+        ([],            bool,                   None),
+        ([1, 0],        bool,                   1),
+        (["", 0, 2, 3], bool,                   2),
+        ([20, 3, 4],    (lambda x: x % 2 == 0), 20),
     ]
 )
-def test_get_the_one(iterable, condition, raises, default, should_raise, should_return):
+def test_get_the_one(iterable, condition, should_return):
+    assert get_the_one(iterable, condition) == should_return
+
+
+@pytest.mark.parametrize(
+    "iterable, condition, raises, should_raise, should_return",
+    [
+        ([],            bool,                   Exception,              Exception,              None),
+        ([1, 0],        bool,                   KeyError,               None,                   1),
+        (["", 0, 2, 3], bool,                   ValueError,             None,                   2),
+        ([21, 3, 41],   (lambda x: x % 2 == 0), NetworkSimulationError, NetworkSimulationError, None),
+        ([2, 3, 4],     (lambda x: x % 2 == 0), NetworkSimulationError, None,                   2),
+    ]
+)
+def test_get_the_one_with_raise(iterable, condition, raises, should_raise, should_return):
     if should_raise:
         with pytest.raises(should_raise):
-            get_the_one(iterable, condition, raises, default)
+            get_the_one_with_raise(iterable, condition, raises)
         return
 
-    assert get_the_one(iterable, condition, raises, default) == should_return
+    assert get_the_one_with_raise(iterable, condition, raises) == should_return
+
+
+@pytest.mark.parametrize(
+    "iterable, condition, default, should_return",
+    [
+        ([],            bool,                   "hello", "hello"),
+        ([],            bool,                   None,    None),
+        ([1, 0],        bool,                   5,       1),
+        (["", 0, 2, 3], bool,                   4003,    2),
+        ([2, 3, 4],     (lambda x: x % 2 == 0), 1002,    2),
+        ([21, 3, 41],   (lambda x: x % 2 == 0), 1002,    1002),
+    ]
+)
+def test_get_the_one_with_default(iterable, condition, default, should_return):
+    assert get_the_one_with_default(iterable, condition, default) == should_return
 
 
 def test_is_matching():

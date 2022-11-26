@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import Optional, List, Dict, Union, Any, TYPE_CHECKING
+from typing import Optional, List, Dict, Union, Any, TYPE_CHECKING, Set, Type
 
 import scapy
 
@@ -16,6 +16,7 @@ from NetSym.packets.all import Ether
 from NetSym.packets.packet import Packet
 
 if TYPE_CHECKING:
+    from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.computing.connection import ConnectionSide
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
@@ -30,10 +31,10 @@ class Interface:
     down the connection_side further.
     """
 
-    POSSIBLE_INTERFACE_NAMES = None
-    EXISTING_INTERFACE_NAMES = set()
+    POSSIBLE_INTERFACE_NAMES: Optional[List[str]] = None
+    EXISTING_INTERFACE_NAMES: Set[str] = set()
 
-    GRAPHICS_CLASS = InterfaceGraphics
+    GRAPHICS_CLASS: Type[GraphicsObject] = InterfaceGraphics
 
     def __init__(self,
                  mac: Optional[Union[str, MACAddress]] = None,
@@ -52,19 +53,19 @@ class Interface:
         self.__connection_side = None
         self.connection_side = connection_side
 
-        self.name = name if name is not None else Interface.random_name()
-        self.mac: MACAddress = MACAddress(MACAddress.randomac()) if mac is None else MACAddress(mac)
-        self.ip = IPAddress(ip) if ip is not None else None
+        self.name: str               = name if name is not None else Interface.random_name()
+        self.mac: MACAddress         = MACAddress(MACAddress.randomac()) if mac is None else MACAddress(mac)
+        self.ip: Optional[IPAddress] = IPAddress(ip) if ip is not None else None
 
         self.is_promisc = True
         self.is_blocked = False
-        self.accepting = None  # This is the only type of packet that is accepted when the interface is blocked.
+        self.accepting: Optional[str] = None  # This is the only type of packet that is accepted when the interface is blocked.
 
         self.is_powered_on = True
         self.type = type_
         self.mtu = mtu
 
-        self.graphics = None
+        self.graphics: Optional[InterfaceGraphics] = None
         self.display_color = display_color
 
     @property
@@ -122,11 +123,23 @@ class Interface:
         connection = LoopbackConnection()
         return cls(MACAddress.no_mac(), IPAddress.loopback(), "loopback", connection.get_side())
 
+    def get_ip(self) -> IPAddress:
+        """
+        Return the IP of the interface.
+        If it does not have one - raises
+        """
+        if self.ip is None:
+            raise NoIPAddressError(f"Cannot get IP address of interface without an ip address (it is None)... interface: {self}")
+
+        return self.ip
+
     def init_graphics(self, parent_computer: ComputerGraphics, x: Optional[float] = None, y: Optional[float] = None) -> InterfaceGraphics:
         """
         Initiates the InterfaceGraphics object of this interface
         """
-        if x is None and y is None:
+        if (x is None) or (y is None):
+            if (x is None and y is not None) or (x is not None and y is None):
+                raise WrongUsageError(f"If one of x or y is None, the other should also be None! x, y: {x, y}")
             x, y = (parent_computer.x + parent_computer.interface_distance()), parent_computer.y
 
         self.graphics = self.GRAPHICS_CLASS(x, y, self, parent_computer)
@@ -139,7 +152,7 @@ class Interface:
         :param packet: a `Packet` object.
         :return: whether the destination MAC address is of this Interface
         """
-        return (self.mac == packet["Ether"].dst_mac) or packet["Ether"].dst_mac.is_no_mac()
+        return bool((self.mac == packet["Ether"].dst_mac) or packet["Ether"].dst_mac.is_no_mac())
 
     def is_for_me(self, packet: Packet) -> bool:
         """
@@ -161,7 +174,7 @@ class Interface:
         :return: boolean
         """
         ip_address = IPAddress(ip_address)
-        return self.has_ip() and self.ip.string_ip == ip_address.string_ip
+        return self.has_ip() and self.ip.string_ip == ip_address.string_ip  # type: ignore
 
     def is_connected(self) -> bool:
         """Returns whether the interface is connected or not"""

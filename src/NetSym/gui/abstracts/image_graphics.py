@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import Set, Optional, Dict, TYPE_CHECKING, Callable, Tuple
+from typing import Set, Optional, TYPE_CHECKING, Tuple
 
 import pyglet
 
@@ -14,7 +14,7 @@ from NetSym.usefuls.funcs import scale_tuple, sum_tuples
 from NetSym.usefuls.paths import add_path_basename_if_needed, are_paths_equal
 
 if TYPE_CHECKING:
-    from NetSym.gui.user_interface.user_interface import UserInterface
+    pass
 
 
 class ImageGraphics(ViewableGraphicsObject, Resizable):
@@ -54,11 +54,11 @@ class ImageGraphics(ViewableGraphicsObject, Resizable):
 
     @property
     def width(self) -> float:
-        return self.sprite.width
+        return float(self.sprite.width)
 
     @property
     def height(self) -> float:
-        return self.sprite.height
+        return float(self.sprite.height)
 
     @property
     def size(self) -> Tuple[float, float]:
@@ -137,7 +137,7 @@ class ImageGraphics(ViewableGraphicsObject, Resizable):
 
     @property
     def is_transparent(self) -> bool:
-        return self.sprite.opacity == IMAGES.TRANSPARENCY.MEDIUM
+        return bool(self.sprite.opacity == IMAGES.TRANSPARENCY.MEDIUM)
 
     @property
     def should_be_transparent(self) -> bool:
@@ -164,10 +164,9 @@ class ImageGraphics(ViewableGraphicsObject, Resizable):
         :return: Whether the mouse is inside the sprite or not.
         """
         if not self.centered:
-            return (self.x < x < self.x + self.sprite.width) and \
-                        (self.y < y < self.y + self.sprite.height)
-        return (self.x - (self.sprite.width / 2.0) < x < self.x + (self.sprite.width / 2.0)) and\
-                (self.y - (self.sprite.height / 2.0) < y < self.y + (self.sprite.height / 2.0))
+            return bool((self.x < x < self.x + self.sprite.width) and (self.y < y < self.y + self.sprite.height))
+        return bool((self.x - (self.sprite.width / 2.0) < x < self.x + (self.sprite.width / 2.0)) and
+                    (self.y - (self.sprite.height / 2.0) < y < self.y + (self.sprite.height / 2.0)))
 
     def get_center(self) -> Tuple[float, float]:
         """
@@ -220,19 +219,6 @@ class ImageGraphics(ViewableGraphicsObject, Resizable):
 
         dx, dy = direction
         return (bottom_left_x + width / 2) + ((width / 2) * dx), (bottom_left_y + height / 2) + ((height / 2) * dy)
-
-    def start_viewing(self,
-                      user_interface: UserInterface,
-                      additional_buttons: Optional[Dict[str, Callable[[], None]]] = None) -> Tuple[pyglet.sprite.Sprite, str, int]:
-        """
-        Returns a tuple a `pyglet.sprite.Sprite` object and a `Text` object that should be shown on the side window
-        when this object is pressed. also returns the added button id in the returned tuple.
-        :return:
-        """
-        button_id = None
-        if additional_buttons:
-            button_id = user_interface.add_buttons(additional_buttons)
-        return self.copy_sprite(self.sprite), self.generate_view_text(), button_id
 
     def generate_view_text(self) -> str:
         """

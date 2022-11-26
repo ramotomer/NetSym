@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from typing import Type, Optional, TYPE_CHECKING, Callable, Any, List, TypeVar, Dict, Union, Iterable, Sequence
 
-from NetSym.consts import T_Time, MAIN_LOOP
+from NetSym.consts import T_Time, MainLoopFunctionPriority
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.main_loop_function_to_call import FunctionToCall
@@ -32,7 +32,7 @@ class MainLoop:
         """
         self.__class__.instance = self
 
-        self.call_functions: Dict[MAIN_LOOP.FunctionPriority, List[FunctionToCall]] = {priority: [] for priority in MAIN_LOOP.FunctionPriority}
+        self.call_functions: Dict[MainLoopFunctionPriority, List[FunctionToCall]] = {priority: [] for priority in MainLoopFunctionPriority}
         # ^ lists of `FunctionToCall` that will all be called in every `update` call
 
         self.graphics_objects: List[GraphicsObject] = []
@@ -48,7 +48,7 @@ class MainLoop:
 
     @property
     def medium_priority_call_functions(self) -> List[FunctionToCall]:
-        return self.call_functions[MAIN_LOOP.FunctionPriority.MEDIUM]
+        return self.call_functions[MainLoopFunctionPriority.MEDIUM]
 
     @classmethod
     def get_time(cls) -> T_Time:
@@ -100,9 +100,8 @@ class MainLoop:
                 for function_to_call in graphics_object_.additional_functions_to_register:
                     self.insert_to_loop(function_to_call)
 
-            if hasattr(graphics_object_, "child_graphics_objects"):
-                for child in graphics_object_.child_graphics_objects:
-                    self.register_graphics_object(child)
+            for child in getattr(graphics_object_, "child_graphics_objects", []):
+                self.register_graphics_object(child)
 
     def unregister_graphics_object(self, graphics_object: GraphicsObject) -> None:
         """
@@ -125,14 +124,13 @@ class MainLoop:
         self.remove_from_loop(graphics_object.draw)
         self.remove_from_loop(graphics_object.move)
 
-        if hasattr(graphics_object, "child_graphics_objects"):
-            for child in graphics_object.child_graphics_objects:
-                if isinstance(child, GraphicsObject):
-                    self.unregister_graphics_object(child)
+        for child in getattr(graphics_object, "child_graphics_objects", []):
+            if isinstance(child, GraphicsObject):
+                self.unregister_graphics_object(child)
 
-                elif isinstance(child, Iterable):
-                    for item in child:
-                        self.unregister_graphics_object(item)
+            elif isinstance(child, Iterable):
+                for item in child:
+                    self.unregister_graphics_object(item)
 
     def _unregister_requesting_graphics_object(self) -> None:
         """
@@ -158,7 +156,7 @@ class MainLoop:
 
     def insert_to_loop_prioritized(self,
                                    function: Union[Callable, FunctionToCall],
-                                   priority: MAIN_LOOP.FunctionPriority,
+                                   priority: MainLoopFunctionPriority,
                                    *args: Any,
                                    function_can_be_paused: bool = False,
                                    function_reverse_insert: bool = False,
@@ -193,7 +191,7 @@ class MainLoop:
         :param kwargs: Key-word arguments to call it with
         :return: None
         """
-        self.insert_to_loop_prioritized(function, MAIN_LOOP.FunctionPriority.MEDIUM, *args, **kwargs)
+        self.insert_to_loop_prioritized(function, MainLoopFunctionPriority.MEDIUM, *args, **kwargs)
 
     def reversed_insert_to_loop(self, function: Callable, *args: Any, **kwargs: Any) -> None:
         """
@@ -207,7 +205,7 @@ class MainLoop:
         :param kwargs:
         :return: None
         """
-        self.insert_to_loop_prioritized(function, MAIN_LOOP.FunctionPriority.MEDIUM, *args, function_reverse_insert=True, **kwargs)
+        self.insert_to_loop_prioritized(function, MainLoopFunctionPriority.MEDIUM, *args, function_reverse_insert=True, **kwargs)
 
     def insert_to_loop_pausable(self, function: Callable, *args: Any, **kwargs: Any) -> None:
         """
@@ -215,9 +213,9 @@ class MainLoop:
 
         It is exactly like it but the function is paused when the program is paused (when space bar is pressed)
         """
-        self.insert_to_loop_prioritized(function, MAIN_LOOP.FunctionPriority.MEDIUM, *args, function_can_be_paused=True, **kwargs)
+        self.insert_to_loop_prioritized(function, MainLoopFunctionPriority.MEDIUM, *args, function_can_be_paused=True, **kwargs)
 
-    def remove_from_loop(self, function: Callable, priority: Optional[MAIN_LOOP.FunctionPriority] = None) -> None:
+    def remove_from_loop(self, function: Callable, priority: Optional[MainLoopFunctionPriority] = None) -> None:
         """
         Does the opposite of `insert_to_loop`. removes a given function off the loop.
         If the function is called a few times in the loop, all of the calls are removed.
@@ -225,7 +223,7 @@ class MainLoop:
         :param function: The function to remove from the loop.
         :return: None
         """
-        priorities = [priority] if priority is not None else MAIN_LOOP.FunctionPriority
+        priorities = [priority] if priority is not None else list(MainLoopFunctionPriority)
 
         for priority_ in priorities:
             to_remove = [function_and_args for function_and_args in self.medium_priority_call_functions if function_and_args.function == function]
@@ -315,7 +313,7 @@ class MainLoop:
         self._register_children_of_requesting_graphics_object()
 
         try:
-            for priority in MAIN_LOOP.FunctionPriority:
+            for priority in MainLoopFunctionPriority:
                 for function in self.call_functions[priority]:
                     if self.is_paused and function.can_be_paused:
                         continue
