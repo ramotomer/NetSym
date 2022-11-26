@@ -9,7 +9,7 @@ from NetSym.consts import OPCODES, PORTS, PROTOCOLS
 from NetSym.exceptions import *
 from NetSym.packets.all import DHCP, BOOTP, IP, UDP
 from NetSym.packets.usefuls.dns import T_Hostname
-from NetSym.usefuls.funcs import get_the_one
+from NetSym.usefuls.funcs import get_the_one_with_raise
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
@@ -129,7 +129,7 @@ class DHCPServerProcess(Process):
         """
         client_mac = request_packet["Ether"].src_mac
 
-        socket = get_the_one(self.sockets, lambda s: s.interface == interface, ThisCodeShouldNotBeReached)
+        socket = get_the_one_with_raise(self.sockets, lambda s: s.interface == interface, ThisCodeShouldNotBeReached)
         socket.send(self.build_dhcp_pack(
             client_mac,
             offered_ip=self.in_session_with[client_mac],
@@ -151,7 +151,7 @@ class DHCPServerProcess(Process):
         offered = self.offer_ip(interface)
 
         self.in_session_with[client_mac] = IPAddress.copy(offered)
-        socket = get_the_one(self.sockets, lambda s: s.interface == interface, ThisCodeShouldNotBeReached)
+        socket = get_the_one_with_raise(self.sockets, lambda s: s.interface == interface, ThisCodeShouldNotBeReached)
         socket.send(self.build_dhcp_offer(client_mac, offered, interface))
 
     def offer_ip(self, interface: Interface) -> IPAddress:

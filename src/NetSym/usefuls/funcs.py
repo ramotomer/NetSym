@@ -20,9 +20,25 @@ V = TypeVar("V")
 
 
 def get_the_one(iterable:  Iterable[T],
-                condition: Callable[[T], bool],
-                raises:    Optional[Callable] = None,
-                default:   Optional[T] = None) -> Optional[T]:
+                condition: Callable[[T], bool]) -> Optional[T]:
+    """
+    Receives an iterable and a condition and returns the first item in the
+    iterable that the condition is true for.
+    If the function does not find one, it returns None, or if raises!=None then
+    it will raise a `raises`.
+    :param iterable: An iterable object.
+    :param condition: A boolean function that takes one argument.
+    :return: The item with that condition or None
+    """
+    for item in iterable:
+        if condition(item):
+            return item
+    return None
+
+
+def get_the_one_with_raise(iterable:  Iterable[T],
+                           condition: Callable[[T], bool],
+                           raises:    Callable) -> T:
     """
     Receives an iterable and a condition and returns the first item in the
     iterable that the condition is true for.
@@ -31,14 +47,30 @@ def get_the_one(iterable:  Iterable[T],
     :param iterable: An iterable object.
     :param condition: A boolean function that takes one argument.
     :param raises: The exception this function will raise if it does not find.
-    :param default: A default value to return if no matching value is found
-    :return: The item with that condition or None
+    :return: The item with that condition
     """
     for item in iterable:
         if condition(item):
             return item
-    if raises is not None:
-        raise raises(f'Failed to "get_the_one" since it does not exist in your iterable: {iterable}')
+    raise raises(f'Failed to "get_the_one" since it does not exist in your iterable: {iterable}')
+
+
+def get_the_one_with_default(iterable:  Iterable[T],
+                             condition: Callable[[T], bool],
+                             default:   T) -> T:
+    """
+    Receives an iterable and a condition and returns the first item in the
+    iterable that the condition is true for.
+    If the function does not find one, it returns None, or if raises!=None then
+    it will raise a `raises`.
+    :param iterable: An iterable object.
+    :param condition: A boolean function that takes one argument.
+    :param default: A default value to return if no matching value is found
+    :return: The item with that condition, or the default - if not found
+    """
+    for item in iterable:
+        if condition(item):
+            return item
     return default
 
 

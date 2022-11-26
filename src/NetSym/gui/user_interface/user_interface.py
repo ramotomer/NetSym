@@ -49,7 +49,7 @@ from NetSym.gui.user_interface.resizing_dots_handler import ResizingDotsHandler
 from NetSym.gui.user_interface.selecting_square import SelectingSquare
 from NetSym.gui.user_interface.text_graphics import Text
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
-from NetSym.usefuls.funcs import get_the_one, distance, with_args, called_in_order, circular_coordinates, scale_tuple
+from NetSym.usefuls.funcs import get_the_one, distance, with_args, called_in_order, circular_coordinates, scale_tuple, get_the_one_with_raise
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
@@ -857,7 +857,7 @@ class UserInterface:
         """
         if isinstance(interface_or_computer, Interface):
             interface = interface_or_computer
-            return get_the_one(self.computers, lambda c: interface in c.interfaces, NoSuchInterfaceError), interface
+            return get_the_one_with_raise(self.computers, lambda c: interface in c.interfaces, NoSuchInterfaceError), interface
 
         if isinstance(interface_or_computer, Computer):
             computer = interface_or_computer
@@ -998,7 +998,7 @@ class UserInterface:
         """
         Remove an interface and disconnect everything it is connected to
         """
-        computer = get_the_one(self.computers, (lambda c: interface in c.interfaces), NoSuchInterfaceError)
+        computer = get_the_one_with_raise(self.computers, (lambda c: interface in c.interfaces), NoSuchInterfaceError)
         if interface.is_connected():
             connection = interface.connection
             self.delete(connection.graphics)
@@ -1044,14 +1044,14 @@ class UserInterface:
         If the interface already exists, remove it.
         """
         computer = computer_graphics.computer
-        interface = get_the_one(computer.interfaces, lambda i: i.name == interface_name)
         try:
             interface, graphics = computer.add_interface(interface_name, type_=interface_type)
             self.main_loop.register_graphics_object(graphics)
 
         except DeviceNameAlreadyExists:
+            interface = get_the_one_with_raise(computer.interfaces, lambda i: i.name == interface_name, NoSuchInterfaceError)
             if interface.is_connected():
-                self.delete(interface.connection.graphics)
+                self.delete(interface.connection.get_graphics())
             computer.remove_interface(interface_name)
 
     def hide_buttons(self, buttons_id: Optional[int] = None) -> None:
@@ -1541,14 +1541,14 @@ class UserInterface:
         Connects two computers' interfaces by names of the computers and the interfaces
         """
         computers = [
-            get_the_one(
+            get_the_one_with_raise(
                 self.computers,
                 lambda c: c.name == name,
                 NoSuchComputerError,
             ) for name in (start_computer_name, end_computer_name)
         ]
         interfaces = [
-            get_the_one(
+            get_the_one_with_raise(
                 computer.interfaces,
                 lambda i: i.name == name,
                 NoSuchInterfaceError,

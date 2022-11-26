@@ -5,7 +5,7 @@ from collections import deque
 from dataclasses import dataclass
 from functools import reduce
 from operator import concat
-from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator, Iterable, Union, Tuple, Any, Set, cast
+from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator, Iterable, Union, Tuple, Any, Set, cast, Callable
 
 import scapy
 
@@ -47,7 +47,7 @@ from NetSym.packets.usefuls.ip import needs_fragmentation, fragment_packet, need
     are_fragments_valid
 from NetSym.packets.usefuls.tcp import get_src_port, get_dst_port
 from NetSym.packets.usefuls.usefuls import get_dst_ip
-from NetSym.usefuls.funcs import get_the_one
+from NetSym.usefuls.funcs import get_the_one, get_the_one_with_raise
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
@@ -300,12 +300,14 @@ class Computer(LogicObject):
         :param string: The string to print.
         :return: None
         """
-        {
+        output_methods: Dict[str, Callable[[str, ...], None]] = {
             COMPUTER.OUTPUT_METHOD.CONSOLE: self.get_graphics().child_graphics_objects.console.write,
             COMPUTER.OUTPUT_METHOD.SHELL: self._print_on_all_shells,
             COMPUTER.OUTPUT_METHOD.STDOUT: print,
             COMPUTER.OUTPUT_METHOD.NONE: lambda s: None
-        }[self.output_method](string)
+        }
+
+        output_methods[self.output_method](string)
 
     def create_shell(self, x: float, y: float, holding_window: PopupWindow) -> ShellGraphics:
         """
@@ -371,7 +373,7 @@ class Computer(LogicObject):
         self.process_scheduler.start_usermode_process(
             SniffingProcess,
             lambda packet: True,
-            self.interface_by_name(interface_name) if interface_name != INTERFACES.ANY_INTERFACE else INTERFACES.ANY_INTERFACE,
+            self.interface_by_name(interface_name) if interface_name != INTERFACES.ANY_INTERFACE else INTERFACES.ANY_INTERFACE,  # type: ignore
             is_promisc
         )
 
@@ -479,8 +481,8 @@ class Computer(LogicObject):
         new_interface = interface_class((MACAddress.randomac() if mac is not None else mac), name=name)
         self.interfaces.append(new_interface)
 
-        graphics = new_interface.init_graphics(parent_computer=self.graphics)
-        self.graphics.child_graphics_objects.interface_list.append(graphics)
+        graphics = new_interface.init_graphics(parent_computer=self.get_graphics())
+        self.get_graphics().child_graphics_objects.interface_list.append(graphics)
 
         return new_interface, graphics
 
@@ -488,7 +490,7 @@ class Computer(LogicObject):
         """
         Removes a computer interface that is named `name`
         """
-        interface = get_the_one(self.interfaces, lambda i: i.name == name)
+        interface = get_the_one_with_raise(self.interfaces, lambda i: i.name == name, NoSuchInterfaceError)
         if interface.is_connected():
             raise DeviceAlreadyConnectedError("Cannot remove a connected interface!!!")
         if interface.has_ip():
@@ -503,7 +505,9 @@ class Computer(LogicObject):
         If the computer has no available interfaces, creates one and returns it.
         """
         try:
-            return get_the_one(self.interfaces, (lambda i: (not i.is_connected() and not isinstance(i, WirelessInterface))), NoSuchInterfaceError)
+            return get_the_one_with_raise(self.interfaces,
+                                          (lambda i: (not i.is_connected() and not isinstance(i, WirelessInterface))),
+                                          NoSuchInterfaceError)
         except NoSuchInterfaceError:
             interface, graphics = self.add_interface()
             self.main_loop.register_graphics_object(graphics)
@@ -532,7 +536,7 @@ class Computer(LogicObject):
         """
         Receives an interface name and returns the `Interface`
         """
-        return get_the_one(
+        return get_the_one_with_raise(
             self.all_interfaces,
             lambda c: c.name == name,
             NoSuchInterfaceError
@@ -551,7 +555,7 @@ class Computer(LogicObject):
         """
         if not self.has_ip():
             raise NoIPAddressError("This computer has no IP address!")
-        return get_the_one(self.interfaces, lambda i: i.has_ip(), NoSuchInterfaceError).ip
+        return get_the_one_with_raise(self.interfaces, lambda i: i.has_ip(), NoSuchInterfaceError).ip
 
     def has_this_ip(self, ip_address: Optional[Union[str, IPAddress]]) -> bool:
         """Returns whether or not this computer has a given IP address. (so whether or not if it is its address)"""
@@ -573,8 +577,8 @@ class Computer(LogicObject):
         If no IP address is given, returns one interface that has any IP address.
         """
         if ip_address is None:
-            return get_the_one(self.interfaces, lambda i: i.has_ip(), NoSuchInterfaceError)
-        return get_the_one(self.all_interfaces, lambda i: i.has_this_ip(ip_address))
+            return get_the_one_with_raise(self.interfaces, lambda i: i.has_ip(), NoSuchInterfaceError)
+        return get_the_one_with_raise(self.all_interfaces, lambda i: i.has_this_ip(ip_address), NoSuchInterfaceError)
 
     def is_arp_for_me(self, packet: Packet) -> bool:
         """Returns whether or not the packet is an ARP request for one of your IP addresses"""
@@ -1192,7 +1196,7 @@ class Computer(LogicObject):
                packet_sending_queue.pid != COMPUTER.PROCESSES.INIT_PID:
                 self._packet_sending_queues.remove(packet_sending_queue)
 
-    def get_packet_sending_queue(self, pid: int, mode: str) -> PacketSendingQueue:
+    def get_packet_sending_queue(self, pid: int, mode: str) -> Optional[PacketSendingQueue]:
         """
         Get the PacketSendingQueue object of the process with the given ID
         """

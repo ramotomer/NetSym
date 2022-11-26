@@ -11,7 +11,7 @@ from NetSym.computing.internals.processes.abstracts.process_internal_errors impo
 from NetSym.consts import COMPUTER, T_Time
 from NetSym.exceptions import NoSuchProcessError
 from NetSym.gui.main_loop import MainLoop
-from NetSym.usefuls.funcs import get_the_one
+from NetSym.usefuls.funcs import get_the_one, get_the_one_with_raise
 
 if TYPE_CHECKING:
     from NetSym.computing.computer import Computer
@@ -294,36 +294,34 @@ class ProcessScheduler:
                     ready_processes.append(ReadyProcess(waiting_process.process, ReturnedPacket()))
                     waiting_processes.remove(waiting_process)
 
-    def get_process(self, pid: int, mode: str, raises: bool = True) -> Process:
+    def get_process(self, pid: int, mode: str) -> Process:
         """
         Returns a process class from its process ID
         :param pid: `int` the process ID
         :param mode: one of COMPUTER.PROCESSES.MODES.ALL_MODES
-        :param raises: whether or not to raise an exception if no such process exists
         :return: `Process` object
         """
-        return get_the_one(self.get_all_processes(mode), lambda process: process.pid == pid, NoSuchProcessError if raises else None)
+        return get_the_one_with_raise(self.get_all_processes(mode), lambda process: process.pid == pid, NoSuchProcessError)
 
-    def get_process_by_type(self, process_type: Type[T], mode: Optional[str] = None, raises: bool = True) -> T:
+    def get_process_by_type(self, process_type: Type[T], mode: Optional[str] = None) -> T:
         """
         Receives a type of a `Process` subclass and returns the process object of the `Process` that is currently
         running in the computer.
         If no such process is running in the computer, raise NoSuchProcessError
         :param process_type: a `Process` subclass (for example `SendPing` or `DHCPClientProcess`)
         :param mode: the mode of the process (one of COMPUTER.PROCESS.MODES.ALL_MODES or None - for all of them)
-        :param raises: whether or not to raise an exception if no such process exists
         :return: `WaitingProcess` namedtuple
         """
-        return get_the_one(self.get_all_processes(mode), lambda process: isinstance(process, process_type), NoSuchProcessError if raises else None)
+        return get_the_one_with_raise(self.get_all_processes(mode), lambda process: isinstance(process, process_type), NoSuchProcessError)
 
-    def get_usermode_process_by_type(self, process_type: Type[T], raises: bool = True) -> T:
-        return self.get_process_by_type(process_type, COMPUTER.PROCESSES.MODES.USERMODE, raises)
+    def get_usermode_process_by_type(self, process_type: Type[T]) -> T:
+        return self.get_process_by_type(process_type, COMPUTER.PROCESSES.MODES.USERMODE)
 
-    def get_usermode_process(self, pid: int, raises: bool = True) -> Process:
+    def get_usermode_process(self, pid: int) -> Process:
         """
         exactly like `get_process` only the for the usermode
         """
-        return self.get_process(pid, COMPUTER.PROCESSES.MODES.USERMODE, raises)
+        return self.get_process(pid, COMPUTER.PROCESSES.MODES.USERMODE)
 
     def terminate_process(self, process: Process, mode: str) -> None:
         """
@@ -344,7 +342,7 @@ class ProcessScheduler:
 
             if process in ready_processes:
                 found_the_process = True
-                ready_processes.remove(get_the_one(ready_processes, lambda rp: rp.process == process, NoSuchProcessError))
+                ready_processes.remove(get_the_one_with_raise(ready_processes, lambda rp: rp.process == process, NoSuchProcessError))
             elif process is self.__details_by_mode[mode].currently_running_process:
                 found_the_process = True
                 process.die()  # only occurs when a process calls `terminate_process` on itself
@@ -362,7 +360,7 @@ class ProcessScheduler:
         :param pid: `int` - the process ID
         :param mode: one of COMPUTER.PROCESSES.MODES.ALL_MODES
         """
-        self.terminate_process(self.get_process(pid, mode, raises=True), mode)
+        self.terminate_process(self.get_process(pid, mode), mode)
 
     def _terminate_all(self) -> None:
         """
@@ -445,7 +443,11 @@ class ProcessScheduler:
         """
         Return whether or not that process is currently running on the computer
         """
-        return self.get_process(pid, mode, raises=False) is not None
+        try:
+            self.get_process(pid, mode)
+        except NoSuchProcessError:
+            return False
+        return True
 
     def is_usermode_process_running(self, pid: int) -> bool:
         """

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple, TYPE_CHECKING, Union
+from typing import Tuple, TYPE_CHECKING, Union, Optional
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.computing.internals.processes.abstracts.process import WaitingFor, T_ProcessCode, Process
@@ -8,7 +8,7 @@ from NetSym.computing.internals.processes.kernelmode_processes.tcp_socket_proces
     ConnectingTCPSocketProcess
 from NetSym.computing.internals.sockets.l4_socket import L4Socket
 from NetSym.consts import COMPUTER, T_Port
-from NetSym.exceptions import TCPSocketConnectionRefused
+from NetSym.exceptions import TCPSocketConnectionRefused, NoSuchProcessError
 
 if TYPE_CHECKING:
     from NetSym.computing.computer import Computer
@@ -34,8 +34,11 @@ class TCPSocket(L4Socket):
         self.socket_handling_kernelmode_pid = None
 
     @property
-    def socket_handling_kernelmode_process(self) -> Process:
-        return self.computer.process_scheduler.get_process(self.socket_handling_kernelmode_pid, COMPUTER.PROCESSES.MODES.KERNELMODE, raises=False)
+    def socket_handling_kernelmode_process(self) -> Optional[Process]:
+        try:
+            return self.computer.process_scheduler.get_process(self.socket_handling_kernelmode_pid, COMPUTER.PROCESSES.MODES.KERNELMODE)
+        except NoSuchProcessError:
+            return None
 
     def send(self, data: Union[str, bytes]) -> None:
         """

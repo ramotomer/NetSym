@@ -14,7 +14,7 @@ from NetSym.consts import PORTS, T_Port
 from NetSym.exceptions import DNSRouteNotFound, WrongUsageError, NoSuchFileError
 from NetSym.packets.all import DNS
 from NetSym.packets.usefuls.dns import *
-from NetSym.usefuls.funcs import get_the_one, with_args
+from NetSym.usefuls.funcs import with_args, get_the_one_with_raise
 
 if TYPE_CHECKING:
     from NetSym.computing.internals.sockets.udp_socket import UDPSocket
@@ -177,7 +177,9 @@ class DNSServerProcess(Process):
             time_to_live, record_data = file_contents["time_to_live"], file_contents["record_data"]
 
             if record_type == OPCODES.DNS.TYPES.HOST_ADDRESS:
-                relevant_domain_name = get_the_one(self.domain_names, with_args(does_domain_hostname_end_with, record_name), DNSRouteNotFound)
+                relevant_domain_name = get_the_one_with_raise(self.domain_names,
+                                                              with_args(does_domain_hostname_end_with, record_name),
+                                                              DNSRouteNotFound)
                 self.computer.dns_cache.add_item(
                     record_name,
                     IPAddress(record_data),
@@ -236,7 +238,7 @@ class DNSServerProcess(Process):
         if name in self.computer.dns_cache:
             return  # name is known - no need to resolve :)
 
-        domain_name = get_the_one(self.domain_names, with_args(does_domain_hostname_end_with, name), DNSRouteNotFound)
+        domain_name = get_the_one_with_raise(self.domain_names, with_args(does_domain_hostname_end_with, name), DNSRouteNotFound)
         zone = self._zone_by_domain_name(domain_name)
 
         exact_host_record = self._get_exact_host_record(name, zone)                  # A and CNAME records

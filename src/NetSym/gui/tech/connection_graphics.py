@@ -15,8 +15,8 @@ from NetSym.gui.main_loop_function_to_call import FunctionToCall
 from NetSym.gui.shape_drawing import draw_line
 from NetSym.gui.shape_drawing import draw_rectangle
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
-from NetSym.usefuls.funcs import distance
-from NetSym.usefuls.funcs import with_args, get_the_one
+from NetSym.usefuls.funcs import distance, get_the_one_with_raise
+from NetSym.usefuls.funcs import with_args
 
 if TYPE_CHECKING:
     from NetSym.computing.connection import Connection
@@ -77,12 +77,12 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
 
         if all(computer is not None for computer in self.computers):
             self.interfaces = Interfaces(
-                get_the_one(
+                get_the_one_with_raise(
                     self.start_computer.computer.interfaces,
                     lambda i: i.is_connected() and i.connection is connection,
                     NoSuchInterfaceError,
                 ).graphics,
-                get_the_one(
+                get_the_one_with_raise(
                     self.end_computer.computer.interfaces,
                     lambda i: i.is_connected() and i.connection is connection,
                     NoSuchInterfaceError,
@@ -267,7 +267,7 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
             "speed": self.connection.speed,
             "start": {
                 "computer": self.start_computer.computer.name,
-                "interface": get_the_one(
+                "interface": get_the_one_with_raise(
                                 self.start_computer.computer.interfaces,
                                 lambda i: i.is_connected() and i.connection is self.connection,
                                 ThisCodeShouldNotBeReached,
@@ -275,7 +275,7 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
             },
             "end": {
                 "computer": self.end_computer.computer.name,
-                "interface": get_the_one(
+                "interface": get_the_one_with_raise(
                                 self.end_computer.computer.interfaces,
                                 lambda i: i.is_connected() and i.connection is self.connection,
                                 ThisCodeShouldNotBeReached,

@@ -12,7 +12,7 @@ from NetSym.gui.abstracts.image_graphics import ImageGraphics
 from NetSym.gui.abstracts.selectable import Selectable
 from NetSym.gui.shape_drawing import draw_rectangle
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
-from NetSym.usefuls.funcs import distance, with_args, get_the_one
+from NetSym.usefuls.funcs import distance, with_args, get_the_one_with_raise
 
 if TYPE_CHECKING:
     from NetSym.computing.internals.interface import Interface
@@ -120,9 +120,9 @@ class InterfaceGraphics(ViewableGraphicsObject, Selectable):
                 self.interface.set_mtu,
             ),
             "sniffing start/stop (f)": with_args(
-                get_the_one(user_interface.computers,
-                            lambda c: self.interface in c.interfaces,
-                            NoSuchInterfaceError).toggle_sniff,
+                get_the_one_with_raise(user_interface.computers,
+                                       lambda c: self.interface in c.interfaces,
+                                       NoSuchInterfaceError).toggle_sniff,
                 self.interface.name,
                 is_promisc=True),
             "block (^b)": with_args(self.interface.toggle_block, "STP"),

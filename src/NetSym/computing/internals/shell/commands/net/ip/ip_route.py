@@ -47,11 +47,14 @@ class IpRouteCommand(Command):
         except IndexError:
             raise WrongIPRouteUsageError()
 
-        interface_ip = get_the_one(self.computer.all_interfaces, lambda c: c.name == interface_name).ip
-        if interface_ip is None:
+        interface = get_the_one(self.computer.all_interfaces, lambda c: c.name == interface_name)
+        if interface is None:
+            return CommandOutput('', f"No device named {interface_name}!")
+
+        if interface.ip is None:
             return CommandOutput('', "The interface does not have an IP address!!!")
 
-        self.computer.routing_table.route_add(net, gateway, IPAddress.copy(interface_ip))
+        self.computer.routing_table.route_add(net, gateway, IPAddress.copy(interface.ip))
         return CommandOutput('OK!', '')
 
     def _del_route(self, args: argparse.Namespace) -> CommandOutput:
