@@ -26,6 +26,8 @@ class PopupTextBox(PopupWindowContainingText):
     The `PopupTextBox` has a field of text that you fill up and a below it a button with a 'submit' on it.
     """
 
+    child_graphics_objects: ChildGraphicsObjects
+
     def __init__(self,
                  text: str,
                  action: Callable = lambda s: None) -> None:

@@ -9,7 +9,7 @@ from typing import NamedTuple, Optional, TYPE_CHECKING, List, Type, Tuple, Gener
 from NetSym.computing.internals.processes.abstracts.process import Process, WaitingFor, ReturnedPacket
 from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError
 from NetSym.consts import COMPUTER, T_Time
-from NetSym.exceptions import NoSuchProcessError
+from NetSym.exceptions import *
 from NetSym.gui.main_loop import MainLoop
 from NetSym.usefuls.funcs import get_the_one, get_the_one_with_raise
 
@@ -266,6 +266,9 @@ class ProcessScheduler:
 
         process, waiting_for = waiting_process
         packet, packet_metadata = received_packet.packet_and_metadata
+
+        if waiting_for is None:
+            raise SomethingWentTerriblyWrongError("The only waiting processes here should be one that ran already!")
 
         if not waiting_for.is_for_a_packet():
             return False

@@ -17,14 +17,17 @@ class IPAddress:
     def __init__(self, string_ip: Union[str, IPAddress]) -> None:
         """
         Initiates a IPAddress object from a ip_layer
-        :param string_ip: The ip ('132.23.245.1/24' for example or '1.1.1.1')
+
+        self.string_ip: a string representation of the address itself (without the mask)
+        self.subnet_mask: The subnet mask of this current IPAddress as an integer
+            (255.255.255.0 would be 24, 255.255.0.0 would be 16 etc...)
         """
         if isinstance(string_ip, self.__class__):
             self.string_ip, self.subnet_mask = string_ip.string_ip, string_ip.subnet_mask
             return
 
         if not isinstance(string_ip, str):
-            raise InvalidAddressError("The argument to this constructor must be a string or an IPAddress object!!!")
+            raise InvalidAddressError(f"IP must be a string or an IPAddress object!!! got: {string_ip!r} of type: {type(string_ip)}")
 
         string_ip = string_ip.replace(' ', '')
 
@@ -235,6 +238,9 @@ class IPAddress:
         if not isinstance(other, (str, IPAddress)):
             raise TypeError(f"Cannot compare IPAddress object to {type(other)} - {other}")
 
+        if isinstance(other, str) and (not IPAddress.is_valid(other)):
+            return False  # The other is a string that does not represents a valid IP address - therefor it is not equal to our IPAddress
+
         other = IPAddress(other)
         return bool(self.string_ip == other.string_ip)
         # ^ maybe i broke something when i did not also check the subnet mask, take into consideration....
@@ -245,7 +251,7 @@ class IPAddress:
 
     def __repr__(self) -> str:
         """The string representation of the IP address"""
-        return f"{self.string_ip} /{self.subnet_mask}"
+        return f"{self.string_ip}/{self.subnet_mask}"
 
     def __str__(self) -> str:
         """The shorter string representation of the IP address"""

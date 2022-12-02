@@ -5,7 +5,7 @@ from collections import deque
 from dataclasses import dataclass
 from functools import reduce
 from operator import concat
-from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterator, Iterable, Union, Tuple, Any, Set, cast, Callable, Sequence
+from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterable, Union, Tuple, Any, Set, cast, Callable, Sequence
 
 import scapy
 
@@ -28,7 +28,7 @@ from NetSym.computing.internals.processes.usermode_processes.echo_server_process
 from NetSym.computing.internals.processes.usermode_processes.ftp_process.ftp_server_process import ServerFTPProcess
 from NetSym.computing.internals.processes.usermode_processes.ping_process import SendPing
 from NetSym.computing.internals.processes.usermode_processes.sniffing_process import SniffingProcess
-from NetSym.computing.internals.routing_table import RoutingTable, RoutingTableItem
+from NetSym.computing.internals.routing_table import RoutingTable
 from NetSym.computing.internals.sockets.l4_socket import L4Socket
 from NetSym.computing.internals.sockets.raw_socket import RawSocket
 from NetSym.computing.internals.sockets.tcp_socket import TCPSocket
@@ -36,7 +36,7 @@ from NetSym.computing.internals.sockets.udp_socket import ReturnedUDPPacket, UDP
 from NetSym.computing.internals.wireless_interface import WirelessInterface
 from NetSym.computing.logic_object import LogicObject
 from NetSym.consts import IMAGES, COMPUTER, OPCODES, PACKET, PROTOCOLS, INTERFACES, OS, T_Time, SENDING_GRAT_ARPS, \
-    FILE_PATHS, T_Port, TTL, PORTS
+    FILE_PATHS, T_Port, TTL, PORTS, debugp
 from NetSym.exceptions import *
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.tech.computer_graphics import ComputerGraphics
@@ -139,7 +139,7 @@ class Computer(LogicObject):
         #       In `received_raw` every fragment is a separate packet, in `received` they get after they are reassembled into one
 
         self.arp_cache = ArpCache()
-        self.routing_table = RoutingTable.create_default(self)
+        self.routing_table = RoutingTable.create_default(self.ips)
         self.dns_cache = DNSCache()
 
         self.filesystem = Filesystem.with_default_dirs()
@@ -183,7 +183,7 @@ class Computer(LogicObject):
     @property
     def ips(self) -> List[IPAddress]:
         """a list of all of the IP addresses this computer has (one for each interface)"""
-        return [interface.ip for interface in self.interfaces if interface.ip is not None]
+        return [interface.get_ip() for interface in self.interfaces if interface.has_ip()]
 
     @property
     def all_interfaces(self) -> List[Interface]:
@@ -495,7 +495,7 @@ class Computer(LogicObject):
         if interface.is_connected():
             raise DeviceAlreadyConnectedError("Cannot remove a connected interface!!!")
         if interface.has_ip():
-            self.routing_table.delete_interface(interface)
+            self.routing_table.delete_interface(interface.get_ip())
         self.interfaces.remove(interface)
         self.main_loop.unregister_graphics_object(interface.graphics)
 
@@ -531,7 +531,7 @@ class Computer(LogicObject):
         :return: an `Interface` list of the Interface objects in the same subnet.
         """
         return [interface for interface in self.all_interfaces
-                if interface.has_ip() and (interface.ip is not None) and interface.ip.is_same_subnet(ip_address)]
+                if interface.has_ip() and interface.get_ip().is_same_subnet(ip_address)]
 
     def interface_by_name(self, name: str) -> Interface:
         """
@@ -570,17 +570,18 @@ class Computer(LogicObject):
         return any(interface.has_ip() and interface.get_ip().string_ip == ip_address.string_ip
                    for interface in self.all_interfaces)
 
-    def get_interface_with_ip(self, ip_address: Optional[IPAddress] = None) -> Interface:
+    def get_sending_interface_by_routing_table(self, dst_ip: IPAddress) -> Interface:
         """
-        Returns the interface that has this ip_address.
-        If there is none that have that address, return None.
-
-        If no IP address is given, returns one interface that has any IP address.
+        Receives an `IPAddress` one wishes to send a packet to
+        Returns the `Interface` that the packet should be sent from (as the routing table specifies)
         """
-        if ip_address is None:
+        try:
+            interface_ip = self.routing_table[dst_ip].interface_ip
+        except RoutingTableCouldNotRouteToIPAddress:
+            debugp(f"Routing table could not resolve IP! {dst_ip!r}... Using shitty default interface method...")
             return get_the_one_with_raise(self.interfaces, lambda i: i.has_ip(), NoSuchInterfaceError)
 
-        return get_the_one_with_raise(self.all_interfaces, lambda i: i.has_this_ip(ip_address), NoSuchInterfaceError)
+        return get_the_one_with_raise(self.all_interfaces, lambda i: i.has_this_ip(interface_ip), NoSuchInterfaceError)
 
     def is_arp_for_me(self, packet: Packet) -> bool:
         """Returns whether or not the packet is an ARP request for one of your IP addresses"""
@@ -605,7 +606,7 @@ class Computer(LogicObject):
 
     def update_routing_table(self) -> None:
         """updates the routing table according to the interfaces at the moment"""
-        self.routing_table = RoutingTable.create_default(self)
+        self.routing_table = RoutingTable.create_default(self.ips)
 
     def set_default_gateway(self, gateway_ip: IPAddress, interface_ip: Optional[IPAddress] = None) -> None:
         """
@@ -617,9 +618,8 @@ class Computer(LogicObject):
         """
         interface_ip_address = interface_ip
         if interface_ip is None:
-            interface_ip_address = self.same_subnet_interfaces(gateway_ip)[0].ip
-        self.routing_table[IPAddress("0.0.0.0/0")] = RoutingTableItem(gateway_ip, interface_ip_address)
-        self.routing_table[IPAddress("255.255.255.255/32")] = RoutingTableItem(gateway_ip, interface_ip_address)
+            interface_ip_address = self.same_subnet_interfaces(gateway_ip)[0].get_ip()
+        self.routing_table.set_default_gateway(gateway_ip, interface_ip_address)
 
     def set_ip(self, interface: Interface, string_ip: str) -> None:
         """
@@ -648,7 +648,7 @@ class Computer(LogicObject):
         if not interface.has_ip():
             return
 
-        self.routing_table.delete_interface(interface)
+        self.routing_table.delete_interface(interface.get_ip())
         interface.ip = None
 
     # --------------------------------------- v  Specific protocol handling  v -------------------------------------------
@@ -668,8 +668,8 @@ class Computer(LogicObject):
 
         self.arp_cache.add_dynamic(arp.src_ip, arp.src_mac)
 
-        if arp.opcode == OPCODES.ARP.REQUEST and packet_metadata.interface.has_this_ip(IPAddress(arp.dst_ip)):
-            self.send_arp_reply(packet)  # Answer if request
+        if arp.opcode == OPCODES.ARP.REQUEST:
+            self.send_arp_reply(returned_packet)  # Answer if request
 
     def _handle_icmp(self, returned_packet: ReturnedPacket) -> None:
         """
@@ -913,7 +913,7 @@ class Computer(LogicObject):
             it should not be sniffed on that same one as outgoing)
         """
         if interface is None:
-            interface = self.get_interface_with_ip(self.routing_table[packet["IP"].dst_ip].interface_ip)
+            interface = self.get_sending_interface_by_routing_table(packet["IP"].dst_ip)
 
         if not packet.is_valid():
             return
@@ -951,7 +951,7 @@ class Computer(LogicObject):
         """
         Just like `send_to` only does not add the IP layer.
         """
-        interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
+        interface = self.get_sending_interface_by_routing_table(dst_ip)
         self.send(
             interface.ethernet_wrap(dst_mac, data),
             interface=interface,
@@ -967,7 +967,7 @@ class Computer(LogicObject):
         """
         Just like `send_packet_stream` only applies `ethernet_wrap` on each of the packets
         """
-        interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
+        interface = self.get_sending_interface_by_routing_table(dst_ip)
         self.send_packet_stream(
             pid, mode,
             (interface.ethernet_wrap(dst_mac, data) for data in datas),
@@ -1011,7 +1011,7 @@ class Computer(LogicObject):
         :param dst_ip:
         :param protocol:  The thing to wrap in IP
         """
-        interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
+        interface = self.get_sending_interface_by_routing_table(dst_ip)
         return interface.ethernet_wrap(dst_mac, IP(
             src_ip=str(interface.ip),
             dst_ip=str(dst_ip),
@@ -1035,7 +1035,7 @@ class Computer(LogicObject):
         :param src_port:
         :param data: The thing to wrap in IP
         """
-        interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
+        interface = self.get_sending_interface_by_routing_table(dst_ip)
         self.process_scheduler.start_kernelmode_process(SendPacketWithARPProcess,
                                                         IP(src=str(interface.ip), dst=str(dst_ip),
                                                            ttl=TTL.BY_OS[self.os]) / UDP(sport=src_port,
@@ -1047,8 +1047,7 @@ class Computer(LogicObject):
         :param ip_address: a ip_layer of the IP address you want to find the MAC for.
         :return: None
         """
-        interface_ip = self.routing_table[ip_address].interface_ip
-        interface = self.get_interface_with_ip(interface_ip)
+        interface = self.get_sending_interface_by_routing_table(ip_address)
         arp = ARP(opcode=OPCODES.ARP.REQUEST,
                   src_ip=str(interface.ip),
                   dst_ip=str(ip_address),
@@ -1057,27 +1056,31 @@ class Computer(LogicObject):
             arp = ARP.create_probe(ip_address, interface.mac)
         self.send(interface.ethernet_wrap(MACAddress.broadcast(), arp), interface)
 
-    def send_arp_reply(self, request: Packet) -> None:
+    def send_arp_reply(self, returned_packet_request: ReturnedPacket) -> None:
         """
         Receives a `Packet` object that is the ARP request you answer for.
         Sends back an appropriate ARP reply.
-        This should only called if the ARP is for this computer (If not raises an exception!)
+        If the ARP.dst_ip is not for the interface that received - do nothing.
         If the packet does not contain an ARP layer, raise NoARPLayerError.
-        :param request: a Packet object that contains an ARP layer.
-        :return: None
+        :param returned_packet_request: a ReturnedPacket object that contains an ARP layer.
         """
+        request, request_metadata = returned_packet_request.packet_and_metadata
         try:
             sender_ip, requested_ip = request["ARP"].src_ip, request["ARP"].dst_ip
         except KeyError:
             raise NoARPLayerError("The packet has no ARP layer!!!")
 
-        if not self.has_this_ip(requested_ip):
-            raise WrongUsageError("Do not call this method if the ARP is not for me!!!")
+        if not request_metadata.interface.has_this_ip(requested_ip):
+            return  # do not send reply if the ARP is requesting a different interface than the one that received the packet
 
-        interface = self.get_interface_with_ip(requested_ip)
-        arp = ARP(op=OPCODES.ARP.REPLY, psrc=str(request["ARP"].dst_ip), pdst=str(sender_ip), hwsrc=str(interface.mac),
-                  hwdst=str(request["ARP"].src_mac))
-        self.send(interface.ethernet_wrap(request["ARP"].src_mac, arp), interface)
+        arp = ARP(
+            opcode =OPCODES.ARP.REPLY,
+            src_ip =str(request["ARP"].dst_ip),
+            dst_mac=str(request["ARP"].src_mac),
+            dst_ip =str(sender_ip),
+            src_mac=str(request_metadata.interface.mac),
+        )
+        self.send(request_metadata.interface.ethernet_wrap(request["ARP"].src_mac, arp), request_metadata.interface)
 
     def arp_grat(self, interface: Interface) -> None:
         """
@@ -1121,7 +1124,7 @@ class Computer(LogicObject):
         It has the maximum time to live (must be more than the original packet it sends a time exceeded for)
         :return: None
         """
-        interface = self.get_interface_with_ip(self.routing_table[dst_ip].interface_ip)
+        interface = self.get_sending_interface_by_routing_table(dst_ip)
         self.send(
             interface.ethernet_wrap(dst_mac,
                                     IP(src=str(interface.ip), dst=str(dst_ip), ttl=TTL.MAX) /
@@ -1156,7 +1159,7 @@ class Computer(LogicObject):
     def send_packet_stream(self,
                            pid: int,
                            mode: str,
-                           packets: Iterator[Packet],
+                           packets: Sequence[Packet],
                            interval_between_packets: T_Time,
                            interface: Optional[Interface] = None,
                            sending_socket: Optional[RawSocket] = None) -> None:

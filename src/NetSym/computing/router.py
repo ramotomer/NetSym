@@ -30,10 +30,10 @@ class Router(Computer):
         Initiates a router with no IP addresses.
         """
         if interfaces is None:
-            interfaces = [Interface(ip='1.1.1.1')]
+            interfaces = [Interface(ip='192.168.1.1')]
 
         super(Router, self).__init__(name, OS.SOLARIS, None, *interfaces)
-        self.routing_table = RoutingTable.create_default(self, False)
+        self.routing_table = RoutingTable.create_default(self.ips, False)
 
         self.last_route_check = MainLoop.get_time()
 

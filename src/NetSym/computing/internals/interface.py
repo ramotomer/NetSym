@@ -173,8 +173,7 @@ class Interface:
         :param ip_address: IPAddress
         :return: boolean
         """
-        ip_address = IPAddress(ip_address)
-        return self.has_ip() and self.ip.string_ip == ip_address.string_ip  # type: ignore
+        return self.has_ip() and self.get_ip() == IPAddress(ip_address)
 
     def is_connected(self) -> bool:
         """Returns whether the interface is connected or not"""

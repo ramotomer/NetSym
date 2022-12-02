@@ -66,12 +66,10 @@ class RoutePacket(Process):
         :return: `bool`
         """
         dst_ip = self.packet["IP"].dst_ip
-        routing_interface = self.computer.routing_table[dst_ip].ip_address
-        gateway = self.computer.routing_table.default_gateway.ip_address
 
-        if (routing_interface == gateway and gateway is None) or \
-           self.computer.get_interface_with_ip(self.computer.routing_table[dst_ip].interface_ip).no_carrier:
-            self._send_icmp_unreachable()
+        if (dst_ip not in self.computer.routing_table) or \
+           self.computer.get_sending_interface_by_routing_table(dst_ip).no_carrier:
+            self._send_icmp_unreachable(OPCODES.ICMP.CODES.NETWORK_UNREACHABLE)
             return True
         return False
 
@@ -111,7 +109,7 @@ class RoutePacket(Process):
             self._send_icmp_unreachable()
             raise
 
-        interface = self.computer.get_interface_with_ip(self.computer.routing_table[dst_ip].interface_ip)
+        interface = self.computer.get_sending_interface_by_routing_table(dst_ip)
         packet = interface.ethernet_wrap(dst_mac, self.packet["IP"])
 
         if needs_fragmentation(packet, interface.mtu) and not allows_fragmentation(packet):

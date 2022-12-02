@@ -235,6 +235,12 @@ class RoutingTableError(ComputerError):
     """
 
 
+class RoutingTableCouldNotRouteToIPAddress(KeyError, RoutingTableError):
+    """
+    The routing table did not have an item that matched the IP that one tried to route to :(
+    """
+
+
 class PortError(ComputerError):
     """
     Indicates a port-related error

@@ -286,7 +286,7 @@ class ComputerGraphics(ImageGraphics):
         Generates the text that will be shown in the side window when this computer is pressed.
         :return: a long string.
         """
-        gateway = self.computer.routing_table.default_gateway.ip_address
+        gateway = self.computer.routing_table.default_gateway
         addresses = linesep.join(str(interface.ip) for interface in self.computer.interfaces if interface.has_ip())
 
         return f"""
@@ -294,7 +294,7 @@ class ComputerGraphics(ImageGraphics):
 '{self.computer.name}'
 
 {f'Operation System: {self.computer.os}' if self.computer.os is not None else ""}
-{f'Gateway: {gateway}' if gateway is not None else ""}
+{f'Gateway: {gateway.ip_address}' if gateway is not None else ""}
 {f'DNS server: {self.computer.dns_server}' if self.computer.dns_server is not None else ""}
 {f'IP Addresses: {linesep + addresses}' if addresses else ""}
 """
