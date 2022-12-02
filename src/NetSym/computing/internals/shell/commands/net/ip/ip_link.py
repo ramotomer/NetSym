@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Callable, Dict
 
+from NetSym.address.mac_address import MACAddress
 from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
 from NetSym.computing.loopback_connection import LoopbackConnection
 from NetSym.exceptions import DeviceAlreadyConnectedError, NoSuchInterfaceError
@@ -131,7 +132,7 @@ link:
         if 'name' in args:
             interface.name = args[args.index('name') + 1]
         if 'macaddr' in args:
-            interface.mac = args[args.index('macaddr') + 1]
+            interface.mac = MACAddress(args[args.index('macaddr') + 1])
 
         if 'connection' in args:
             return self._set_link_connection(interface, args)

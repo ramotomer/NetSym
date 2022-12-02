@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, List, Tuple, Optional
+from typing import TYPE_CHECKING, List, Tuple, Optional, cast
 
 from NetSym.computing.logic_object import LogicObject
 from NetSym.consts import CONNECTIONS, PACKET, T_Time
@@ -97,6 +97,9 @@ class Connection(LogicObject):
         graphics = ConnectionGraphics(self, start_computer, end_computer, self.packet_loss)
         self.graphics = graphics
         return [graphics]
+    
+    def get_graphics(self) -> ConnectionGraphics:
+        return cast("ConnectionGraphics", super(Connection, self).get_graphics())
 
     def get_sides(self) -> Tuple[ConnectionSide, ConnectionSide]:
         """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""

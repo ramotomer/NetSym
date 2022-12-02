@@ -28,7 +28,7 @@ def validate_fragments(fragments: List[Packet]) -> None:
         3. All fragments except the last have the MORE_FRAGMENTS flag set
         4. Fragments match the lengths specified in their 'fragment offset's (the order does not matter)
     """
-    fragments = sorted(fragments, key=lambda p: p["IP"].fragment_offset)
+    fragments = sorted(fragments, key=lambda p: int(p["IP"].fragment_offset))
 
     if not fragments:
         raise InvalidFragmentsError(f"Cannot reassemble fragments if none are given... Stupid! fragment list: {fragments}")
@@ -70,7 +70,7 @@ def reassemble_fragmented_packet(fragments: List[Packet]) -> Packet:
     """
     validate_fragments(fragments)
 
-    fragments =          sorted(fragments, key=lambda p: p["IP"].fragment_offset)
+    fragments =          sorted(fragments, key=lambda p: int(p["IP"].fragment_offset))
     ether_layer =        fragments[0].get_layer_by_name_no_payload("Ether")
     ip_layer =           fragments[0].get_layer_by_name_no_payload("IP")
     summed_ip_datas =    b''.join([fragment["IP"].payload.build() for fragment in fragments])

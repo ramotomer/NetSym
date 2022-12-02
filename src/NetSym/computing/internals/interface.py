@@ -58,15 +58,16 @@ class Interface:
         self.ip: Optional[IPAddress] = IPAddress(ip) if ip is not None else None
 
         self.is_promisc = True
-        self.is_blocked = False
+        self.is_blocked: bool = False
         self.accepting: Optional[str] = None  # This is the only type of packet that is accepted when the interface is blocked.
 
         self.is_powered_on = True
-        self.type = type_
-        self.mtu = mtu
+        self.type: str = type_
+        self.mtu: int = mtu
 
         self.graphics: Optional[InterfaceGraphics] = None
-        self.display_color = display_color
+        self.display_color: T_Color = display_color
+        # TODO: This ^ belongs in the InterfaceGraphics class FOR SURE!!!
 
     @property
     def connection(self) -> Connection:

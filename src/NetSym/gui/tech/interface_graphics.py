@@ -44,7 +44,7 @@ class InterfaceGraphics(ViewableGraphicsObject, Selectable):
         self.width, self.height = INTERFACES.WIDTH, INTERFACES.HEIGHT
         self.computer_graphics = computer_graphics
 
-        self.interface = interface
+        self.interface: Interface = interface
         interface.graphics = self
 
     @property
