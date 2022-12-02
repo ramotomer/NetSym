@@ -52,7 +52,7 @@ class DNSCache:
         Remove all items in the cache that their TTL (time to live) has expired
         """
         for item_name, dns_item in list(self.__cache.items()):
-            if MainLoop.instance.time_since(dns_item.creation_time) > dns_item.ttl:
+            if MainLoop.get_time_since(dns_item.creation_time) > dns_item.ttl:
                 del self.__cache[item_name]
 
     def wipe(self) -> None:

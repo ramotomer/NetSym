@@ -214,7 +214,7 @@ class Timeout:
         """
         Returns whether or not the timeout has passed yet or not
         """
-        return MainLoop.instance.time_since(self.init_time) > self.seconds
+        return MainLoop.get_time_since(self.init_time) > self.seconds
 
     def is_done(self) -> bool:
         return bool(self)

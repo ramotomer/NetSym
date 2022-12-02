@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Optional
 from NetSym.computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, WaitingFor
 from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_NoIPAddressError
 from NetSym.consts import OPCODES, PROTOCOLS
+from NetSym.exceptions import *
 from NetSym.packets.usefuls.dns import T_Hostname
 
 if TYPE_CHECKING:
@@ -34,6 +35,9 @@ class TraceRouteProcess(Process):
         """
         if not self.computer.has_ip():
             raise ProcessInternalError_NoIPAddressError("Could not send ICMP packets without an IP address!")
+
+        if self.dst_ip is None:
+            raise NoIPAddressError(f"The dst_ip of the process was not yet initialized! that is important...")
 
         self.computer.send_ping_to(dst_mac, self.dst_ip, ttl=ttl)
 

@@ -34,7 +34,7 @@ class L4Socket(Socket):
                 f"no such l4 protocol! socket: {self}, type: {self.kind} only known types are: {COMPUTER.SOCKETS.L4_PROTOCOLS}")
 
     @property
-    def remote_address(self) -> Tuple[IPAddress, T_Port]:
+    def remote_address(self) -> Tuple[Optional[IPAddress], Optional[T_Port]]:
         return self.computer.sockets[self].remote_ip_address, self.computer.sockets[self].remote_port
 
     @property

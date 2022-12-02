@@ -5,6 +5,7 @@ from typing import Optional, Dict, Callable, TYPE_CHECKING, Tuple, Any
 
 import pyglet
 
+from NetSym.exceptions import *
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
 
 if TYPE_CHECKING:
@@ -37,4 +38,7 @@ class ViewableGraphicsObject(GraphicsObject):
         :param user_interface:
         :return:
         """
+        if self.buttons_id is None:
+            raise WrongUsageError("Do not call `end_viewing` if `start_viewing` was never called")
+
         user_interface.remove_buttons(self.buttons_id)

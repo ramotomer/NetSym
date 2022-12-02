@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Optional, Tuple
 import pyglet
 
 from NetSym.consts import TEXT, T_Color, WINDOWS
+from NetSym.exceptions import *
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 
 if TYPE_CHECKING:
@@ -60,13 +61,21 @@ class Text(UserInterfaceGraphicsObject):
         self.color = color
         self.font = font
 
-        self.label = None
-        self.set_parent_graphics(parent_graphics, padding)
+        self._label: Optional[pyglet.text.Label] = None
+        if parent_graphics is not None:
+            self.set_parent_graphics(parent_graphics, padding)
         self.set_text(text)
 
     @property
     def text(self) -> str:
         return self._text
+
+    @property
+    def label(self) -> pyglet.text.Label:
+        if self._label is None:
+            raise GraphicsObjectNotYetInitialized
+
+        return self._label
 
     def set_text(self, text: str, hard_refresh: bool = False) -> None:
         """
@@ -76,17 +85,19 @@ class Text(UserInterfaceGraphicsObject):
         :param hard_refresh: whether or not to recreate the `Label` object of the text
         :return: None
         """
+        x_padding, y_padding = (0, 0) if not self.padding else self.padding
+
         self._text = text
-        if self.label is None or hard_refresh:
-            self.label = pyglet.text.Label(self._text,
+        if not self._label or hard_refresh:
+            self._label = pyglet.text.Label(self._text,
                                            font_name=self.font,
                                            font_size=self.font_size,
-                                           x=self.x + self.padding[0], y=(self.y + self.padding[1]),
+                                           x=self.x + x_padding, y=(self.y + y_padding),
                                            color=self.color + (255,),
                                            anchor_x='center', anchor_y='top',
                                            align=self.align)
         else:
-            self.label.text = self._text
+            self._label.text = self._text
 
         self.label.width = self.max_width
         self.label.multiline = True

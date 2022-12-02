@@ -38,6 +38,15 @@ class Packet:
         self.graphics = PacketGraphics(self.deepest_layer(), connection_graphics, direction)
         return [self.graphics]
 
+    def get_graphics(self) -> PacketGraphics:
+        """
+        Get the PacketGraphics object of this packet, If it is not yet initialized - raise
+        """
+        if self.graphics is None:
+            raise GraphicsObjectNotYetInitialized(f"packet: {self.multiline_repr()}")
+
+        return self.graphics
+
     def deepest_layer(self) -> scapy.packet.Packet:
         """
         Returns the deepest layer in the packet.

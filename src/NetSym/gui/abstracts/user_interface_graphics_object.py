@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict
 
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.usefuls.funcs import sum_tuples
@@ -10,11 +10,11 @@ class UserInterfaceGraphicsObject(GraphicsObject):
     """
     A GraphicsObject which is used only for the user interface (popup windows, buttons, etc...)
 
-    TODO: get rid of this stupid class that means nothing ASAP - or at least change the name
+    TODO: get rid of this stupid class that means nothing ASAP - or at least change the name to one that has meaning
     """
     def __init__(self,
-                 x: Optional[float] = None,
-                 y: Optional[float] = None,
+                 x: float,
+                 y: float,
                  do_render: bool = True,
                  centered: bool = False,
                  is_in_background: bool = False,
@@ -41,11 +41,11 @@ class UserInterfaceGraphicsObject(GraphicsObject):
         if (self.parent_graphics is not None) and (self.padding is not None):
             self.location = sum_tuples(self.parent_graphics.location, self.padding)
 
-    def dict_save(self) -> None:
+    def dict_save(self) -> Dict:
         """
         These do not need to be implement this method.
         It is used to save the simulation status into a file.
         They are loaded anyway, so there is no need to save them.
         :return: None
         """
-        return None
+        pass

@@ -146,6 +146,15 @@ class Interface:
         self.graphics = self.GRAPHICS_CLASS(x, y, self, parent_computer)
         return self.graphics
 
+    def get_graphics(self) -> InterfaceGraphics:
+        """
+
+        """
+        if self.graphics is None:
+            raise GraphicsObjectNotYetInitialized
+
+        return self.graphics
+
     def is_directly_for_me(self, packet: Packet) -> bool:
         """
         Receives a packet and determines whether it is destined directly for this Interface (broadcast is not)

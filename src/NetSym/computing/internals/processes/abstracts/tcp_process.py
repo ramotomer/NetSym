@@ -532,7 +532,7 @@ class SendingWindow:
         Retransmits all of the packets that were not ACKed for too long!
         """
         for non_acked_packet in list(self.window):
-            if MainLoop.instance.time_since(non_acked_packet.sending_time) > PROTOCOLS.TCP.RESEND_TIME:
+            if MainLoop.get_time_since(non_acked_packet.sending_time) > PROTOCOLS.TCP.RESEND_TIME:
                 non_acked_packet.packet["TCP"].is_retransmission = True
                 self.add_no_wait(non_acked_packet.packet)
                 non_acked_packet.sending_time = MainLoop.get_time()

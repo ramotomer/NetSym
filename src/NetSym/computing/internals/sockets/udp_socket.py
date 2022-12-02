@@ -79,6 +79,7 @@ class UDPSocket(L4Socket):
         dst_ip, dst_port = self.remote_address
         if dst_ip is not None:
             raise SocketAlreadyConnectedError(f"{self} is already connected to {dst_ip, dst_port}")
+
         self.computer.sockets[self].remote_ip_address, self.computer.sockets[self].remote_port = address
         self.computer.sockets[self].state = COMPUTER.SOCKETS.STATES.ESTABLISHED
         self.is_connected = True

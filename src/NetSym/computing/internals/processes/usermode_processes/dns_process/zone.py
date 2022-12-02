@@ -207,13 +207,10 @@ $TTL {self.default_ttl}\n
                 return
             full_string_lines.remove(line)
 
-    def resolve_aliasing(self, alias_record: Optional[ZoneRecord]) -> Optional[str]:
+    def resolve_aliasing(self, alias_record: ZoneRecord) -> str:
         """
         Take in an alias record and return the record_data of the record that the alias refers to
         """
-        if alias_record is None:
-            return None
-
         if not is_domain_hostname_valid(alias_record.record_data):  # record is not an alias
             return alias_record.record_data
 

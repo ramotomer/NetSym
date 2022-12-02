@@ -151,7 +151,7 @@ class Frequency(Connection):
         :param sent_packet: a `SentPacket` namedtuple
         :return: None
         """
-        distance_ = MainLoop.instance.time_since(sent_packet.sending_time) * self.speed
+        distance_ = MainLoop.get_time_since(sent_packet.sending_time) * self.speed
         sent_packet.packet.graphics.distance = distance_
 
         if distance_ > self.length:

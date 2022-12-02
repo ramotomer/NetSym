@@ -277,7 +277,7 @@ class STPProcess(Process):
         """For debugging, returns some information about the state of the STP process on the switch."""
 
         def get_time_since_packet(port: Interface) -> str:
-            return str(MainLoop.instance.time_since(self.stp_ports[port].last_time_got_packet))[:5]
+            return str(MainLoop.get_time_since(self.stp_ports[port].last_time_got_packet))[:5]
 
         return f"""
     STP info:
@@ -285,7 +285,7 @@ class STPProcess(Process):
     my BID: {self.my_bid}                   {"(ROOT!)" if self._am_i_root() else ""}
     root BID: {self.root_bid!r}
     distance to root: {self.distance_to_root}
-    root declaration time: {str(MainLoop.instance.time_since(self.root_declaration_time))[:5]} seconds ago
+    root declaration time: {str(MainLoop.get_time_since(self.root_declaration_time))[:5]} seconds ago
     port states:
 
 {linesep.join(f"{port.name}: {self.stp_ports[port].state} (last got packet {get_time_since_packet(port)} seconds ago)" for port in self.stp_ports)}
@@ -294,7 +294,7 @@ class STPProcess(Process):
 
     def _root_not_updated_for(self, seconds: T_Time) -> bool:
         """Returns whether or not the root was updated in the last `seconds` seconds."""
-        return MainLoop.instance.time_since(self.last_root_changing_time) > seconds
+        return MainLoop.get_time_since(self.last_root_changing_time) > seconds
 
     def _port_hasnt_seen_stp_packets_lately(self, port: Interface) -> bool:
         """
@@ -302,7 +302,7 @@ class STPProcess(Process):
         If it has not, it should be removed from the STP interfaces list.
         :param port: a key in the `self.stp_ports` dictionary.
         """
-        return MainLoop.instance.time_since(self.stp_ports[port].last_time_got_packet) > PROTOCOLS.STP.MAX_CONNECTION_DISAPPEARED_TIME
+        return MainLoop.get_time_since(self.stp_ports[port].last_time_got_packet) > PROTOCOLS.STP.MAX_CONNECTION_DISAPPEARED_TIME
 
     def _block_blocked_ports(self) -> None:
         """Blocks the `BLOCKED_PORT`-s and unblocks the other ones."""
@@ -372,7 +372,7 @@ class STPProcess(Process):
         """
         Learn the age of the root by a packet and update all attributes accordingly
         """
-        if stp_layer.age > self.root_age and MainLoop.instance.time_since(self.root_declaration_time) < self.root_timeout:
+        if stp_layer.age > self.root_age and MainLoop.get_time_since(self.root_declaration_time) < self.root_timeout:
             return
 
         if self._am_i_root():
@@ -409,7 +409,7 @@ class STPProcess(Process):
 
         while True:
 
-            if MainLoop.instance.time_since(self.last_sending_time) > self.sending_interval:
+            if MainLoop.get_time_since(self.last_sending_time) > self.sending_interval:
                 self._flood_stp_packets()
 
             stp_packets = yield WaitingFor(lambda p: ("STP" in p), timeout=Timeout(0))

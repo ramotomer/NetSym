@@ -31,7 +31,7 @@ class PacketSendingQueue:
         """
         Send the next packet - unless the last packet was sent recently
         """
-        if MainLoop.instance.time_since(self.last_packet_sending_time) <= self.interval:
+        if MainLoop.get_time_since(self.last_packet_sending_time) <= self.interval:
             return
 
         if not self.packets:

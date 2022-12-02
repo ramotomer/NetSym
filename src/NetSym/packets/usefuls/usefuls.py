@@ -19,11 +19,7 @@ def scapy_layer_class_to_our_class(scapy_layer_class: Type[scapy.packet.Packet])
     Takes in a scapy packet class                                    (for example `scapy.layers.inet.IP`)
     Returns the class we created with the indicative attribute names (for example `packets.all.IP`)
     """
-    our_class = get_the_one_with_default(protocols, lambda p: issubclass(p, scapy_layer_class), default=scapy_layer_class)
-    if our_class is None:
-        raise SomethingWentTerriblyWrongError("This exception will never happen and is only here because mypy is stupid!!!!")
-
-    return our_class
+    return get_the_one_with_default(protocols, lambda p: issubclass(p, scapy_layer_class), default=scapy_layer_class)
 
 
 def get_packet_attribute(packet: Packet, attribute_name: str, containing_protocols: List[str]) -> Any:

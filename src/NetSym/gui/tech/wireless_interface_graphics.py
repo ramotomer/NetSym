@@ -11,6 +11,7 @@ from NetSym.usefuls.funcs import with_args, distance, get_the_one_with_raise
 
 if TYPE_CHECKING:
     from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.internals.wireless_interface import WirelessInterface
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
@@ -18,12 +19,14 @@ class WirelessInterfaceGraphics(InterfaceGraphics):
     """
     The graphics object of a wireless interface.
     """
+    interface: WirelessInterface
+
     def __init__(self,
                  x: float, y: float,
                  interface: Interface,
                  computer_graphics: ComputerGraphics) -> None:
         super(WirelessInterfaceGraphics, self).__init__(x, y, interface, computer_graphics)
-        self.width = INTERFACES.WIDTH / 2
+        self.width: float = INTERFACES.WIDTH / 2
 
     @property
     def radius(self) -> float:

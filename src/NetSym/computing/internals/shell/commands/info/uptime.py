@@ -48,4 +48,4 @@ class Uptime(Command):
         """
         if self.computer.boot_time is None:
             return CommandOutput('', 'Computer is turned off! How did you even run this command??? should be impossible... Something went wrong')
-        return CommandOutput(self._to_print(MainLoop.instance.time_since(self.computer.boot_time)), '')
+        return CommandOutput(self._to_print(MainLoop.get_time_since(self.computer.boot_time)), '')

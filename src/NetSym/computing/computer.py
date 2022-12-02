@@ -5,7 +5,7 @@ from collections import deque
 from dataclasses import dataclass
 from functools import reduce
 from operator import concat
-from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterable, Union, Tuple, Any, Set, cast, Callable, Sequence
+from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterable, Union, Tuple, Any, Set, Callable, Sequence
 
 import scapy
 
@@ -34,7 +34,6 @@ from NetSym.computing.internals.sockets.raw_socket import RawSocket
 from NetSym.computing.internals.sockets.tcp_socket import TCPSocket
 from NetSym.computing.internals.sockets.udp_socket import ReturnedUDPPacket, UDPSocket
 from NetSym.computing.internals.wireless_interface import WirelessInterface
-from NetSym.computing.logic_object import LogicObject
 from NetSym.consts import IMAGES, COMPUTER, OPCODES, PACKET, PROTOCOLS, INTERFACES, OS, T_Time, SENDING_GRAT_ARPS, \
     FILE_PATHS, T_Port, TTL, PORTS, debugp
 from NetSym.exceptions import *
@@ -70,7 +69,7 @@ class SocketData:
     pid:               int
 
 
-class Computer(LogicObject):
+class Computer:
     """
     This is a base class for all of the machines that will operate on the screen
     in our little simulation.
@@ -131,7 +130,7 @@ class Computer(LogicObject):
         if not interfaces:
             self.interfaces = []  # a list of all of the interfaces without the loopback
         self.loopback = Interface.loopback()
-        self.boot_time = self.main_loop.time()
+        self.boot_time: Optional[T_Time] = MainLoop.get_time()
 
         self.received:     List[ReturnedPacket] = []
         self.received_raw: List[ReturnedPacket] = []
@@ -172,7 +171,10 @@ class Computer(LogicObject):
         # ^ method does not run when program is paused
 
     @property
-    def main_loop(self):
+    def main_loop(self) -> MainLoop:
+        if MainLoop.instance is None:
+            raise MainLoopInstanceNotYetInitiated
+
         return MainLoop.instance
 
     @property
@@ -242,12 +244,14 @@ class Computer(LogicObject):
     def raw_sockets(self) -> List[RawSocket]:
         return [socket for socket in self.sockets if isinstance(socket, RawSocket)]
 
-    def get_graphics(self) -> ComputerGraphics:
+    def get_graphics(self) -> GraphicsObject:
         """
-        Return the GraphicsObject of the computer.
-        If it is not yet initialized - raise
+        Return the graphics object or raise if the `init_graphics` was not yet called
         """
-        return cast(ComputerGraphics, super(Computer, self).get_graphics())
+        if self.graphics is None:
+            raise GraphicsObjectNotYetInitialized(f"self: {self}, self.graphics: {self.graphics}")
+
+        return self.graphics
 
     @classmethod
     def with_ip(cls: Type[Computer], ip_address: Union[str, IPAddress], name: Optional[str] = None) -> Computer:
@@ -282,8 +286,7 @@ class Computer(LogicObject):
         cls.EXISTING_COMPUTER_NAMES.add(name)
         return name
 
-    def init_graphics(self, x: float, y: float,
-                      console_location: Tuple[float, float] = (0, 0), *args: Any, **kwargs: Any) -> Sequence[GraphicsObject]:
+    def init_graphics(self, x: float, y: float, console_location: Tuple[float, float] = (0, 0)) -> Sequence[GraphicsObject]:
         """
         This is called once to initiate the graphics of the computer.
         Gives it a `GraphicsObject`. (`ComputerGraphics`)
@@ -442,7 +445,7 @@ class Computer(LogicObject):
         Things the computer should do when it is turned on
         :return:
         """
-        self.boot_time = self.main_loop.time()
+        self.boot_time = MainLoop.instance.time()
         self.process_scheduler.run_startup_processes()
 
         self.icmp_sequence_number = 0
@@ -819,7 +822,7 @@ class Computer(LogicObject):
                 [rp for rp in self._active_packet_fragments if rp.packet["IP"].id == ip_id],
                 key=lambda rp: rp.metadata.time,
             )
-            if self.main_loop.time_since(latest_sibling_fragment.metadata.time) > PROTOCOLS.IP.FRAGMENT_DROP_TIMEOUT:
+            if MainLoop.get_time_since(latest_sibling_fragment.metadata.time) > PROTOCOLS.IP.FRAGMENT_DROP_TIMEOUT:
                 fragment = None
                 for fragment in self._active_packet_fragments[:]:
                     if fragment.packet["IP"].id == ip_id:
@@ -940,7 +943,7 @@ class Computer(LogicObject):
                 packet,
                 PacketMetadata(
                     interface,
-                    self.main_loop.time(),
+                    MainLoop.get_time(),
                     PACKET.DIRECTION.OUTGOING
                 )
             ),
@@ -1443,12 +1446,12 @@ class Computer(LogicObject):
         :param socket_list: List[Socket]
         :param timeout: the amount of seconds to wait before returning without a selected socket
         """
-        start_time = self.main_loop.time()
+        start_time = MainLoop.get_time()
         while True:
             for socket in socket_list:
                 if socket.has_data_to_receive:
                     return socket
-            if (timeout is not None) and (start_time + timeout < self.main_loop.time()):
+            if (timeout is not None) and (start_time + timeout < MainLoop.get_time()):
                 return None
             yield WaitingFor.nothing()
 
@@ -1471,7 +1474,7 @@ class Computer(LogicObject):
             if not interface.is_connected():
                 continue
             for packet in interface.receive():
-                packet_with_metadata = ReturnedPacket(packet, PacketMetadata(interface, self.main_loop.time(), PACKET.DIRECTION.INCOMING))
+                packet_with_metadata = ReturnedPacket(packet, PacketMetadata(interface, MainLoop.get_time(), PACKET.DIRECTION.INCOMING))
                 self.received_raw.append(packet_with_metadata)
                 self._sniff_packet_on_relevant_raw_sockets(packet_with_metadata)
 

@@ -35,7 +35,7 @@ class Touch(Command):
         stderr = ''
         for file_path in parsed_args.files:
             if self.computer.filesystem.is_file(file_path, self.shell.cwd):
-                file = self.computer.filesystem.at_path(self.shell.cwd, file_path)
+                file = self.computer.filesystem.file_at_path(self.shell.cwd, file_path)
                 file.last_edit_time = datetime.now()
                 stdout += f"touched {file_path}\n"
             else:
