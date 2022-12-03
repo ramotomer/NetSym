@@ -10,7 +10,7 @@ from NetSym.computing.connections.connection import ConnectionSide
 from NetSym.computing.internals.network_interfaces.base_interface import BaseInterface
 from NetSym.consts import INTERFACES, PROTOCOLS, T_Color, T_Time
 from NetSym.exceptions import *
-from NetSym.gui.tech.interface_graphics import InterfaceGraphics
+from NetSym.gui.tech.network_interfaces.interface_graphics import InterfaceGraphics
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject

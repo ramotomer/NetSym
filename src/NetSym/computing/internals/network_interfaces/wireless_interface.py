@@ -9,7 +9,7 @@ from NetSym.computing.connections.frequency import Frequency, FrequencyConnectio
 from NetSym.computing.internals.network_interfaces.base_interface import BaseInterface
 from NetSym.consts import T_Color, INTERFACES
 from NetSym.exceptions import *
-from NetSym.gui.tech.wireless_interface_graphics import WirelessInterfaceGraphics
+from NetSym.gui.tech.network_interfaces.wireless_interface_graphics import WirelessInterfaceGraphics
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject

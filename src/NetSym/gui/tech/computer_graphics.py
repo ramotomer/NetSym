@@ -23,7 +23,7 @@ from NetSym.gui.user_interface.text_graphics import Text
 from NetSym.usefuls.funcs import with_args
 
 if TYPE_CHECKING:
-    from NetSym.gui.tech.interface_graphics import InterfaceGraphics
+    from NetSym.gui.tech.network_interfaces.interface_graphics import InterfaceGraphics
     from NetSym.computing.computer import Computer
     from NetSym.gui.user_interface.user_interface import UserInterface
 

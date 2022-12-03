@@ -11,7 +11,7 @@ from NetSym.address.mac_address import MACAddress
 from NetSym.computing.connections.base_connection import BaseConnection
 from NetSym.consts import FILE_PATHS, INTERFACES, PROTOCOLS, T_Color
 from NetSym.exceptions import *
-from NetSym.gui.tech.interface_graphics import InterfaceGraphics
+from NetSym.gui.tech.network_interfaces.interface_graphics import InterfaceGraphics
 from NetSym.packets.all import Ether
 from NetSym.packets.packet import Packet
 

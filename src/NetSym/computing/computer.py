@@ -52,7 +52,7 @@ if TYPE_CHECKING:
     from NetSym.computing.internals.processes.abstracts.process import Process
     from NetSym.computing.internals.sockets.socket import Socket
     from NetSym.computing.connections.connection import Connection
-    from NetSym.gui.tech.interface_graphics import InterfaceGraphics
+    from NetSym.gui.tech.network_interfaces.interface_graphics import InterfaceGraphics
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 

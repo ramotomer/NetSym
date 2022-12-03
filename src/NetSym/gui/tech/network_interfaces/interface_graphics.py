@@ -6,7 +6,7 @@ from NetSym.address.mac_address import MACAddress
 from NetSym.consts import INTERFACES
 from NetSym.exceptions import *
 from NetSym.gui.shape_drawing import draw_rectangle
-from NetSym.gui.tech.base_interface_graphics import BaseInterfaceGraphics
+from NetSym.gui.tech.network_interfaces.base_interface_graphics import BaseInterfaceGraphics
 from NetSym.usefuls.funcs import distance, with_args, get_the_one_with_raise
 
 if TYPE_CHECKING:

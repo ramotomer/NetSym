@@ -34,9 +34,9 @@ from NetSym.gui.abstracts.uniquely_dragged import UniquelyDragged
 from NetSym.gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
 from NetSym.gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from NetSym.gui.tech.computer_graphics import ComputerGraphics
-from NetSym.gui.tech.interface_graphics import InterfaceGraphics
+from NetSym.gui.tech.network_interfaces.interface_graphics import InterfaceGraphics
+from NetSym.gui.tech.network_interfaces.wireless_interface_graphics import WirelessInterfaceGraphics
 from NetSym.gui.tech.packet_graphics import PacketGraphics
-from NetSym.gui.tech.wireless_interface_graphics import WirelessInterfaceGraphics
 from NetSym.gui.tech.wireless_packet_graphics import WirelessPacketGraphics
 from NetSym.gui.user_interface.button import Button
 from NetSym.gui.user_interface.popup_windows.device_creation_window import DeviceCreationWindow
