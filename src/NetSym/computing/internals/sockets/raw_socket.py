@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, List, Callable, Union
 
-from NetSym.computing.internals.network_interfaces.interface import Interface
 from NetSym.computing.internals.sockets.socket import Socket
 from NetSym.consts import COMPUTER, INTERFACES
 from NetSym.exceptions import *
@@ -10,6 +9,7 @@ from NetSym.exceptions import *
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
     from NetSym.computing.internals.processes.abstracts.process import ReturnedPacket
+    from NetSym.computing.internals.network_interfaces.interface import Interface
     from NetSym.computing.computer import Computer
 
 

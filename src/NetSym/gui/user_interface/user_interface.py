@@ -17,6 +17,7 @@ from pyglet.window import key
 from NetSym.address.ip_address import IPAddress
 from NetSym.computing.computer import Computer
 from NetSym.computing.connections.frequency import Frequency
+from NetSym.computing.internals.network_interfaces.base_interface import BaseInterface
 from NetSym.computing.internals.network_interfaces.interface import Interface
 from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
 from NetSym.computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
@@ -994,7 +995,7 @@ class UserInterface:
                 self.connection_data.remove(connection_data)
                 break
 
-    def remove_interface(self, interface: Interface) -> None:
+    def remove_interface(self, interface: BaseInterface) -> None:
         """
         Remove an interface and disconnect everything it is connected to
         """

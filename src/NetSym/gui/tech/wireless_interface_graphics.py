@@ -6,16 +6,15 @@ from NetSym.address.mac_address import MACAddress
 from NetSym.consts import INTERFACES, COLORS
 from NetSym.exceptions import NoSuchInterfaceError
 from NetSym.gui.shape_drawing import draw_circle
-from NetSym.gui.tech.interface_graphics import InterfaceGraphics
+from NetSym.gui.tech.base_interface_graphics import BaseInterfaceGraphics
 from NetSym.usefuls.funcs import with_args, distance, get_the_one_with_raise
 
 if TYPE_CHECKING:
-    from NetSym.computing.internals.network_interfaces.interface import Interface
     from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
-class WirelessInterfaceGraphics(InterfaceGraphics):
+class WirelessInterfaceGraphics(BaseInterfaceGraphics):
     """
     The graphics object of a wireless interface.
     """
@@ -23,7 +22,7 @@ class WirelessInterfaceGraphics(InterfaceGraphics):
 
     def __init__(self,
                  x: float, y: float,
-                 interface: Interface,
+                 interface: WirelessInterface,
                  computer_graphics: ComputerGraphics) -> None:
         super(WirelessInterfaceGraphics, self).__init__(x, y, interface, computer_graphics)
         self.width = INTERFACES.WIDTH / 2

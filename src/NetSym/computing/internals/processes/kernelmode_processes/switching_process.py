@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import NamedTuple, TYPE_CHECKING, List, Dict
 
 from NetSym.address.mac_address import MACAddress
-from NetSym.computing.internals.network_interfaces.interface import Interface
 from NetSym.computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, WaitingFor
 from NetSym.consts import COMPUTER, T_Time
 from NetSym.exceptions import *
@@ -11,6 +10,7 @@ from NetSym.gui.main_loop import MainLoop
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
+    from NetSym.computing.internals.network_interfaces.interface import Interface
     from NetSym.computing.switch import Switch
 
 

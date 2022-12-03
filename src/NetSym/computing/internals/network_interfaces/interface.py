@@ -19,12 +19,7 @@ if TYPE_CHECKING:
 
 class Interface(BaseInterface):
     """
-    This class represents a computer net interface.
-    It can send and receive packets.
-    It contains methods that provide abstraction for sending many types of packets.
-
-    An interface can be either connected or disconnected to a `ConnectionSide` object, which enables it to move its packets
-    down the connection_side further.
+    Represents a computer network interface that leads to a cable
     """
     __connection: Connection
     __connection_side: ConnectionSide
