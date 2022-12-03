@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 from abc import ABC, abstractmethod
-from typing import Optional, List, Dict, Union, Any, TYPE_CHECKING, Set, Type
+from typing import Optional, List, Dict, Union, Any, TYPE_CHECKING, Set
 
 import scapy
 
@@ -32,8 +32,6 @@ class BaseInterface(ABC):
     """
     POSSIBLE_INTERFACE_NAMES: Optional[List[str]] = None
     EXISTING_INTERFACE_NAMES: Set[str] = set()
-
-    GRAPHICS_CLASS: Type[GraphicsObject] = InterfaceGraphics
 
     def __init__(self,
                  mac: Optional[Union[str, MACAddress]] = None,
@@ -117,18 +115,6 @@ class BaseInterface(ABC):
 
         return self.ip
 
-    def init_graphics(self, parent_computer: ComputerGraphics, x: Optional[float] = None, y: Optional[float] = None) -> InterfaceGraphics:
-        """
-        Initiates the InterfaceGraphics object of this interface
-        """
-        if (x is None) or (y is None):
-            if (x is None and y is not None) or (x is not None and y is None):
-                raise WrongUsageError(f"If one of x or y is None, the other should also be None! x, y: {x, y}")
-            x, y = (parent_computer.x + parent_computer.interface_distance()), parent_computer.y
-
-        self.graphics = self.GRAPHICS_CLASS(x, y, self, parent_computer)
-        return self.graphics
-
     def get_graphics(self) -> InterfaceGraphics:
         """
 
@@ -171,6 +157,12 @@ class BaseInterface(ABC):
     @abstractmethod
     def is_connected(self) -> bool:
         """Returns whether the interface is connected or not"""
+
+    @abstractmethod
+    def init_graphics(self, parent_computer: ComputerGraphics, x: Optional[float] = None, y: Optional[float] = None) -> GraphicsObject:
+        """
+        Initiate the GraphicsObject that represents the interface visually
+        """
 
     def set_mac(self, new_mac: MACAddress) -> None:
         """

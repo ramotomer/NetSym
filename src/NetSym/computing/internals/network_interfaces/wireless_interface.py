@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, Dict, Union
+from typing import Optional, Dict, Union, TYPE_CHECKING
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
@@ -10,6 +10,10 @@ from NetSym.computing.internals.network_interfaces.base_interface import BaseInt
 from NetSym.consts import T_Color, INTERFACES
 from NetSym.exceptions import *
 from NetSym.gui.tech.wireless_interface_graphics import WirelessInterfaceGraphics
+
+if TYPE_CHECKING:
+    from NetSym.gui.abstracts.graphics_object import GraphicsObject
+    from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
 class WirelessInterface(BaseInterface):
@@ -23,8 +27,6 @@ class WirelessInterface(BaseInterface):
     """
     __connection: Frequency
     __connection_side: FrequencyConnectionSide
-
-    GRAPHICS_CLASS = WirelessInterfaceGraphics
 
     def __init__(self,
                  mac:           Optional[Union[MACAddress, str]] = None,
@@ -70,6 +72,13 @@ class WirelessInterface(BaseInterface):
 
         if value is not None:
             self.__connection = value.connection
+
+    def init_graphics(self, parent_computer: ComputerGraphics, x: Optional[float] = None, y: Optional[float] = None) -> GraphicsObject:
+        """
+        Initiates the InterfaceGraphics object of this interface
+        """
+        self.graphics = WirelessInterfaceGraphics(x, y, self, parent_computer)
+        return self.graphics
 
     def is_connected(self) -> bool:
         return (self.frequency is not None) and (self.connection_side is not None)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, Dict, Union, Any
+from typing import Optional, Dict, Union, Any, TYPE_CHECKING
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
@@ -10,6 +10,11 @@ from NetSym.computing.connections.connection import ConnectionSide
 from NetSym.computing.internals.network_interfaces.base_interface import BaseInterface
 from NetSym.consts import INTERFACES, PROTOCOLS, T_Color, T_Time
 from NetSym.exceptions import *
+from NetSym.gui.tech.interface_graphics import InterfaceGraphics
+
+if TYPE_CHECKING:
+    from NetSym.gui.abstracts.graphics_object import GraphicsObject
+    from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
 class Interface(BaseInterface):
@@ -71,6 +76,13 @@ class Interface(BaseInterface):
             raise InterfaceNotConnectedError(repr(self))
 
         return self.connection.deliver_time
+
+    def init_graphics(self, parent_computer: ComputerGraphics, x: Optional[float] = None, y: Optional[float] = None) -> GraphicsObject:
+        """
+        Initiates the InterfaceGraphics object of this interface
+        """
+        self.graphics = InterfaceGraphics(x, y, self, parent_computer)
+        return self.graphics
 
     def is_connected(self) -> bool:
         """Returns whether the interface is connected or not"""

@@ -30,8 +30,8 @@ class InterfaceGraphics(ViewableGraphicsObject, Selectable):
     height: float
 
     def __init__(self,
-                 x: float,
-                 y: float,
+                 x: Optional[float],
+                 y: Optional[float],
                  interface: Interface,
                  computer_graphics: ComputerGraphics) -> None:
         """
@@ -41,14 +41,19 @@ class InterfaceGraphics(ViewableGraphicsObject, Selectable):
         :param interface: the physical `Interface` of the computer.
         :param computer_graphics: the graphics object of the computer that this interface belongs to.
         """
+        if (x is None) or (y is None):
+            if (x is None and y is not None) or (x is not None and y is None):
+                raise WrongUsageError(f"If one of x or y is None, the other should also be None! x, y: {x, y}")
+
+            x, y = (computer_graphics.x + computer_graphics.interface_distance()), computer_graphics.y
+
         super(InterfaceGraphics, self).__init__(x, y, centered=True, is_in_background=True, is_pressable=True)
         self.color = interface.display_color
-        self.real_x, self.real_y = x, y
+        self.real_x, self.real_y = x, y  # TODO: why do you love shit code? WTF is real_x... change. thx.
         self.width, self.height = INTERFACES.WIDTH, INTERFACES.HEIGHT
         self.computer_graphics = computer_graphics
 
         self.interface: Interface = interface
-        interface.graphics = self
 
     @property
     def logic_object(self):
