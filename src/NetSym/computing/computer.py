@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from collections import deque
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterable, Union, Tuple, Any, Set, Callable, Sequence, cast
+from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterable, Union, Tuple, Any, Set, Callable, Sequence, cast, TypeVar
 
 import scapy
 
@@ -55,6 +55,9 @@ if TYPE_CHECKING:
     from NetSym.gui.tech.interface_graphics import InterfaceGraphics
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
+
+
+Socket_T = TypeVar("Socket_T", bound="Socket")
 
 
 @dataclass
@@ -1435,17 +1438,32 @@ class Computer:
             if not self.process_scheduler.is_usermode_process_running(socket_metadata.pid):
                 self.remove_socket(socket)
 
-    def select(self, socket_list: List[Socket], timeout: Optional[Union[int, float]] = None) -> Generator[WaitingFor, None, Optional[Socket]]:
+    def select(self, socket_list: Sequence[Socket_T]) -> Generator[WaitingFor, None, Socket_T]:
         """
         Similar to the `select` syscall of linux
         Loops over all sockets until one of them has something to receive
         The selected socket will later be returned. Use in the format:
-            >>> ready_socket = yield from self.select([socket], timeout)
+            >>> ready_socket = yield from self.select([socket])
 
         This is a generator that yields `WaitingFor` objects
         To use in a computer `Process` - yield from this
-        If the command ended due to a timeout - None will be returned
+
         :param socket_list: List[Socket]
+
+        """
+        while True:
+            for socket in socket_list:
+                if socket.has_data_to_receive:
+                    return socket
+            yield WaitingFor.nothing()
+
+    def select_with_timeout(self,
+                            socket_list: Sequence[Socket_T],
+                            timeout: Optional[Union[int, float]] = None) -> Generator[WaitingFor, None, Optional[Socket_T]]:
+        """
+        Just like the `select` method - only it can return after a given time, even if no socket got anything
+        If the command ended due to a timeout - None will be returned
+        :param socket_list: The list of sockets to check
         :param timeout: the amount of seconds to wait before returning without a selected socket
         """
         start_time = MainLoop.get_time()

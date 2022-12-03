@@ -89,7 +89,7 @@ class Directory:
         self.directories[name] = directory
         return directory
 
-    def make_empty_file(self, name: str, raise_on_exists: bool = True) -> Optional[File]:
+    def make_empty_file(self, name: str, raise_on_exists: bool = True) -> File:
         """
         Create an empty file
         """

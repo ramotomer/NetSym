@@ -368,7 +368,7 @@ class Filesystem:
         parent_folder.add_item(subfolder)
         return subfolder
 
-    def make_empty_file_with_directory_tree(self, path: str, raise_on_exists: bool = True) -> Optional[File]:
+    def make_empty_file_with_directory_tree(self, path: str, raise_on_exists: bool = True) -> File:
         """
         Creates an empty file at the specified path
         Returns it

@@ -1,7 +1,7 @@
 import pytest
 
 from NetSym.address.ip_address import IPAddress
-from NetSym.computing.internals.routing_table import RoutingTable, RoutingTableItem
+from NetSym.computing.internals.routing_table import RoutingTable, RoutingTableItem, TypeSafeRoutingTableItem
 from NetSym.consts import ADDRESSES
 from NetSym.exceptions import *
 
@@ -38,7 +38,7 @@ def example_table_without_default_gateway():
 def test_default_gateway(example_table):
     assert RoutingTable().default_gateway is None
     gateway = example_table.default_gateway
-    assert isinstance(gateway, RoutingTableItem)
+    assert isinstance(gateway, TypeSafeRoutingTableItem)
     assert gateway.ip_address   == "2.2.2.1"
     assert gateway.interface_ip == "2.2.2.200"
 
@@ -93,7 +93,7 @@ def test_route_add(example_table, dst_ip, gateway_ip, interface_ip):
     example_table.route_add(dst_ip, gateway_ip, interface_ip)
 
     assert dst_ip in example_table
-    assert isinstance(example_table[dst_ip], RoutingTableItem)
+    assert isinstance(example_table[dst_ip], TypeSafeRoutingTableItem)
     assert example_table[dst_ip].interface_ip == IPAddress(interface_ip)
 
 

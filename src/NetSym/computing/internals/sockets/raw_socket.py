@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, List, Callable
+from typing import TYPE_CHECKING, Optional, List, Callable, Union
 
 from NetSym.computing.internals.interface import Interface
 from NetSym.computing.internals.sockets.socket import Socket
@@ -33,7 +33,7 @@ class RawSocket(Socket):
         self.is_connected = True
 
         self._filter: Optional[Callable[[Packet], bool]] = None
-        self.interface: Optional[Interface] = INTERFACES.NO_INTERFACE
+        self.interface: Optional[Union[str, Interface]] = INTERFACES.NO_INTERFACE
         self.is_promisc = False
 
     @property
@@ -42,6 +42,16 @@ class RawSocket(Socket):
             raise SocketNotBoundError(f"Cannot get the filter if the socket was not yet bound! socket: {self!r}")
 
         return self._filter
+
+    def get_interface(self) -> Interface:
+        """
+        Return the interface the socket is bound to.
+        If the socket is not bound, or if it is bound to ANY - raise :)
+        """
+        if (self.interface is None) or (self.interface is INTERFACES.NO_INTERFACE):
+            raise SocketNotBoundError(f"No interface to get! Socket: {self!r}")
+
+        return self.interface
 
     def send(self, packet: Packet) -> None:
         """

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, TYPE_CHECKING, Iterable
+from typing import List, Optional, Tuple, TYPE_CHECKING, Iterator
 
 from NetSym.consts import OPCODES
 from NetSym.exceptions import FilesystemError
@@ -62,7 +62,7 @@ class Zone:
     max_record_cache_time:            Optional[int] = None
 
     origin:                           Optional[str] = None
-    default_ttl:                      Optional[int] = None
+    default_ttl:                      int           = 3600
 
     authoritative_master_name_server: Optional[T_Hostname] = None
     admin_mail_address:               Optional[T_Hostname] = None
@@ -76,7 +76,7 @@ class Zone:
     def name_server_records(self) -> List[ZoneRecord]:
         return [r for r in self.records if r.record_type == OPCODES.DNS.TYPES.AUTHORITATIVE_NAME_SERVER]
 
-    def __iter__(self) -> Iterable[ZoneRecord]:
+    def __iter__(self) -> Iterator[ZoneRecord]:
         return iter(self.records)
 
     @classmethod

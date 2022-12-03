@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from NetSym.computing.internals.processes.abstracts.process import Process, T_ProcessCode
 from NetSym.consts import T_Port, PORTS
@@ -8,6 +8,7 @@ from NetSym.exceptions import TCPSocketConnectionRefused
 from NetSym.packets.usefuls.dns import T_Hostname
 
 if TYPE_CHECKING:
+    from NetSym.computing.internals.sockets.tcp_socket import TCPSocket
     from NetSym.computing.computer import Computer
 
 
@@ -19,7 +20,7 @@ class DAYTIMEClientProcess(Process):
         super(DAYTIMEClientProcess, self).__init__(pid, computer)
         self.server_hostname = server_hostname
         self.server_port = server_port
-        self.socket = None
+        self.socket: Optional[TCPSocket] = None
 
     def code(self) -> T_ProcessCode:
         """
