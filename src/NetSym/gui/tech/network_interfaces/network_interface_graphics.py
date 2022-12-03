@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
 
 
-class BaseInterfaceGraphics(ViewableGraphicsObject, Selectable):
+class NetworkInterfaceGraphics(ViewableGraphicsObject, Selectable):
     """
     Everything in common between the graphics of the regular CableInterface and the WirelessNetworkInterface
     """
@@ -42,7 +42,7 @@ class BaseInterfaceGraphics(ViewableGraphicsObject, Selectable):
 
             x, y = (computer_graphics.x + computer_graphics.interface_distance()), computer_graphics.y
 
-        super(BaseInterfaceGraphics, self).__init__(x, y, centered=True, is_in_background=True, is_pressable=True)
+        super(NetworkInterfaceGraphics, self).__init__(x, y, centered=True, is_in_background=True, is_pressable=True)
         self.color = interface.display_color
         self.real_x, self.real_y = x, y  # TODO: why do you love shit code? WTF is real_x... change. thx.
         self.width, self.height = INTERFACES.WIDTH, INTERFACES.HEIGHT
@@ -120,5 +120,5 @@ class BaseInterfaceGraphics(ViewableGraphicsObject, Selectable):
         """
         Delete the interface!
         """
-        super(BaseInterfaceGraphics, self).delete(user_interface)
+        super(NetworkInterfaceGraphics, self).delete(user_interface)
         user_interface.remove_interface(self.interface)

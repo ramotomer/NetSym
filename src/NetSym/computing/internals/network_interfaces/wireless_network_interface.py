@@ -9,7 +9,7 @@ from NetSym.computing.connections.frequency import Frequency, FrequencyConnectio
 from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
 from NetSym.consts import T_Color, INTERFACES
 from NetSym.exceptions import *
-from NetSym.gui.tech.network_interfaces.wireless_interface_graphics import WirelessInterfaceGraphics
+from NetSym.gui.tech.network_interfaces.wireless_network_interface_graphics import WirelessNetworkInterfaceGraphics
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
@@ -75,9 +75,9 @@ class WirelessNetworkInterface(NetworkInterface):
 
     def init_graphics(self, parent_computer: ComputerGraphics, x: Optional[float] = None, y: Optional[float] = None) -> GraphicsObject:
         """
-        Initiates the InterfaceGraphics object of this interface
+        Initiates the CableNetworkInterfaceGraphics object of this interface
         """
-        self.graphics = WirelessInterfaceGraphics(x, y, self, parent_computer)
+        self.graphics = WirelessNetworkInterfaceGraphics(x, y, self, parent_computer)
         return self.graphics
 
     def is_connected(self) -> bool:

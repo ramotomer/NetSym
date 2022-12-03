@@ -6,7 +6,7 @@ from NetSym.address.mac_address import MACAddress
 from NetSym.consts import INTERFACES
 from NetSym.exceptions import *
 from NetSym.gui.shape_drawing import draw_rectangle
-from NetSym.gui.tech.network_interfaces.base_interface_graphics import BaseInterfaceGraphics
+from NetSym.gui.tech.network_interfaces.network_interface_graphics import NetworkInterfaceGraphics
 from NetSym.usefuls.funcs import distance, with_args, get_the_one_with_raise
 
 if TYPE_CHECKING:
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
 
 
-class InterfaceGraphics(BaseInterfaceGraphics):
+class CableNetworkInterfaceGraphics(NetworkInterfaceGraphics):
     """
     This is the graphics of a network interface of a computer.
     It is the little square next to computers.
@@ -35,7 +35,7 @@ class InterfaceGraphics(BaseInterfaceGraphics):
         :param interface: the physical `CableNetworkInterface` of the computer.
         :param computer_graphics: the graphics object of the computer that this interface belongs to.
         """
-        super(InterfaceGraphics, self).__init__(x, y, interface, computer_graphics)
+        super(CableNetworkInterfaceGraphics, self).__init__(x, y, interface, computer_graphics)
 
     @property
     def logic_object(self) -> CableNetworkInterface:
@@ -132,7 +132,7 @@ class InterfaceGraphics(BaseInterfaceGraphics):
         }
 
     def __str__(self) -> str:
-        return "InterfaceGraphics"
+        return "CableNetworkInterfaceGraphics"
 
     def __repr__(self) -> str:
-        return f"<< InterfaceGraphics of interface {self.interface.name!r} in computer {self.computer_graphics.computer.name!r} >>"
+        return f"<< CableNetworkInterfaceGraphics of interface {self.interface.name!r} in computer {self.computer_graphics.computer.name!r} >>"

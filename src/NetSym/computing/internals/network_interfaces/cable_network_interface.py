@@ -10,7 +10,7 @@ from NetSym.computing.connections.connection import ConnectionSide
 from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
 from NetSym.consts import INTERFACES, PROTOCOLS, T_Color, T_Time
 from NetSym.exceptions import *
-from NetSym.gui.tech.network_interfaces.interface_graphics import InterfaceGraphics
+from NetSym.gui.tech.network_interfaces.cable_network_interface_graphics import CableNetworkInterfaceGraphics
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
@@ -74,9 +74,9 @@ class CableNetworkInterface(NetworkInterface):
 
     def init_graphics(self, parent_computer: ComputerGraphics, x: Optional[float] = None, y: Optional[float] = None) -> GraphicsObject:
         """
-        Initiates the InterfaceGraphics object of this interface
+        Initiates the CableNetworkInterfaceGraphics object of this interface
         """
-        self.graphics = InterfaceGraphics(x, y, self, parent_computer)
+        self.graphics = CableNetworkInterfaceGraphics(x, y, self, parent_computer)
         return self.graphics
 
     def is_connected(self) -> bool:

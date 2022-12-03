@@ -34,8 +34,8 @@ from NetSym.gui.abstracts.uniquely_dragged import UniquelyDragged
 from NetSym.gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
 from NetSym.gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from NetSym.gui.tech.computer_graphics import ComputerGraphics
-from NetSym.gui.tech.network_interfaces.interface_graphics import InterfaceGraphics
-from NetSym.gui.tech.network_interfaces.wireless_interface_graphics import WirelessInterfaceGraphics
+from NetSym.gui.tech.network_interfaces.cable_network_interface_graphics import CableNetworkInterfaceGraphics
+from NetSym.gui.tech.network_interfaces.wireless_network_interface_graphics import WirelessNetworkInterfaceGraphics
 from NetSym.gui.tech.packet_graphics import PacketGraphics
 from NetSym.gui.tech.wireless_packet_graphics import WirelessPacketGraphics
 from NetSym.gui.user_interface.button import Button
@@ -876,8 +876,8 @@ class UserInterface:
         )
 
     def connect_devices_by_graphics(self,
-                                    device1: Union[ComputerGraphics, InterfaceGraphics],
-                                    device2: Union[ComputerGraphics, InterfaceGraphics]) -> None:
+                                    device1: Union[ComputerGraphics, CableNetworkInterfaceGraphics],
+                                    device2: Union[ComputerGraphics, CableNetworkInterfaceGraphics]) -> None:
         """
         Connect two devices to each other, show the connection and everything....
         The devices can be computers or interfaces. Works either way
@@ -885,8 +885,8 @@ class UserInterface:
         :param device2: the two `Computer` object or `CableNetworkInterface` objects. Could also be their graphics objects.
         :return: None
         """
-        if any(not isinstance(device, (ComputerGraphics, InterfaceGraphics)) for device in [device1, device2]) or \
-                (isinstance(device1, WirelessInterfaceGraphics) or isinstance(device2, WirelessInterfaceGraphics)):
+        if any(not isinstance(device, (ComputerGraphics, CableNetworkInterfaceGraphics)) for device in [device1, device2]) or \
+                (isinstance(device1, WirelessNetworkInterfaceGraphics) or isinstance(device2, WirelessNetworkInterfaceGraphics)):
             self.register_window(PopupError("Unconnectable type!!!"))
             return
 
@@ -1131,7 +1131,7 @@ class UserInterface:
         Does that using popup window in the `PopupTextBox` class.
         :return: None
         """
-        if not isinstance(self.selected_object, (InterfaceGraphics, ComputerGraphics)):
+        if not isinstance(self.selected_object, (CableNetworkInterfaceGraphics, ComputerGraphics)):
             return
 
         computer, interface = self._get_computer_and_interface(self.selected_object.logic_object)

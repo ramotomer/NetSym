@@ -52,7 +52,7 @@ if TYPE_CHECKING:
     from NetSym.computing.internals.processes.abstracts.process import Process
     from NetSym.computing.internals.sockets.socket import Socket
     from NetSym.computing.connections.connection import Connection
-    from NetSym.gui.tech.network_interfaces.interface_graphics import InterfaceGraphics
+    from NetSym.gui.tech.network_interfaces.cable_network_interface_graphics import CableNetworkInterfaceGraphics
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 
@@ -468,7 +468,7 @@ class Computer:
     def add_interface(self,
                       name: Optional[str] = None,
                       mac: Optional[Union[str, MACAddress]] = None,
-                      type_: str = INTERFACES.TYPE.ETHERNET) -> Tuple[CableNetworkInterface, InterfaceGraphics]:
+                      type_: str = INTERFACES.TYPE.ETHERNET) -> Tuple[CableNetworkInterface, CableNetworkInterfaceGraphics]:
         """
         Adds an interface to the computer with a given name.
         If the name already exists, raise a DeviceNameAlreadyExists.

@@ -21,7 +21,7 @@ from NetSym.usefuls.funcs import with_args
 if TYPE_CHECKING:
     from NetSym.computing.connections.connection import Connection
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
-    from NetSym.gui.tech.network_interfaces.interface_graphics import InterfaceGraphics
+    from NetSym.gui.tech.network_interfaces.cable_network_interface_graphics import CableNetworkInterfaceGraphics
     from NetSym.gui.user_interface.user_interface import UserInterface
     from NetSym.gui.main_loop import MainLoop
 
@@ -36,10 +36,10 @@ class Computers(NamedTuple):
 
 class Interfaces(NamedTuple):
     """
-    A data structure to save the two InterfaceGraphics of the two sides of the connection.
+    A data structure to save the two CableNetworkInterfaceGraphics of the two sides of the connection.
     """
-    start: Optional[InterfaceGraphics]
-    end:   Optional[InterfaceGraphics]
+    start: Optional[CableNetworkInterfaceGraphics]
+    end:   Optional[CableNetworkInterfaceGraphics]
 
 
 class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Selectable):
