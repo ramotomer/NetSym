@@ -5,7 +5,7 @@ from typing import Optional, Iterable, Dict, TYPE_CHECKING
 from NetSym.computing.computer import Computer
 from NetSym.computing.internals.filesystem.filesystem import Filesystem
 from NetSym.computing.internals.network_data_structures.routing_table import RoutingTable
-from NetSym.computing.internals.network_interfaces.interface import Interface
+from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
 from NetSym.computing.internals.processes.kernelmode_processes.route_packet_process import RoutePacket
 from NetSym.computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
 from NetSym.consts import OS
@@ -24,13 +24,13 @@ class Router(Computer):
     """
     def __init__(self,
                  name: Optional[str] = None,
-                 interfaces: Optional[Iterable[Interface]] = None,
+                 interfaces: Optional[Iterable[CableNetworkInterface]] = None,
                  is_dhcp_server: bool = True) -> None:
         """
         Initiates a router with no IP addresses.
         """
         if interfaces is None:
-            interfaces = [Interface(ip='192.168.1.1')]
+            interfaces = [CableNetworkInterface(ip='192.168.1.1')]
 
         super(Router, self).__init__(name, OS.SOLARIS, None, *interfaces)
         self.routing_table = RoutingTable.create_default(self.ips, False)

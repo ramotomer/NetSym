@@ -15,7 +15,7 @@ from NetSym.packets.all import STP
 from NetSym.packets.packet import Packet
 
 if TYPE_CHECKING:
-    from NetSym.computing.internals.network_interfaces.interface import Interface
+    from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
     from NetSym.computing.switch import Switch
 
 
@@ -93,7 +93,7 @@ class STPPortData:
     This represents a port of the switch that receives STP packets. (That means there is another STP switch behind it)
     It contains all kinds of information that the process has to remember per-port of the switch.
     """
-    interface:            Interface
+    interface:            CableNetworkInterface
     state:                str
     distance_to_root:     float
     last_time_got_packet: T_Time
@@ -114,7 +114,7 @@ class STPProcess(Process):
         super(STPProcess, self).__init__(pid, computer)
         self.my_bid = BID(self.computer.priority, self.computer.get_mac(), self.computer.name)
         self.root_bid = self.my_bid
-        self.stp_ports: Dict[Interface, STPPortData] = {}
+        self.stp_ports: Dict[CableNetworkInterface, STPPortData] = {}
 
         self.last_root_changing_time = MainLoop.get_time()
         self.last_sending_time = MainLoop.get_time()
@@ -130,11 +130,11 @@ class STPProcess(Process):
         self._root_disappeared = False
 
     @property
-    def root_port(self) -> Interface:
+    def root_port(self) -> CableNetworkInterface:
         """
         Returns the current port of the switch that points to the shortest way to the root switch.
         If no STP packets were received raises `NoSuchInterfaceError`
-        :return: an `Interface` object.
+        :return: an `CableNetworkInterface` object.
         """
         if not self.stp_ports:
             raise NoSuchInterfaceError("No STP packets were received yet!!!!")
@@ -180,7 +180,7 @@ class STPProcess(Process):
         )
         self.last_sending_time = MainLoop.get_time()
 
-    def _update_root(self, new_root: BID, distance_to_root: int, root_age: int, receiving_port: Interface) -> None:
+    def _update_root(self, new_root: BID, distance_to_root: int, root_age: int, receiving_port: CableNetworkInterface) -> None:
         """
         Updates the root switch according to the information from other received STP packets.
         """
@@ -196,7 +196,7 @@ class STPProcess(Process):
             self._add_port(receiving_port)
         self._update_distance(distance_to_root, receiving_port)
 
-    def _update_distance(self, distance_to_root: int, receiving_port: Interface) -> None:
+    def _update_distance(self, distance_to_root: int, receiving_port: CableNetworkInterface) -> None:
         """
         Updates the distance to the root that a certain interface keeps.
         The information comes from a received STP packet with the same root_bid
@@ -206,19 +206,19 @@ class STPProcess(Process):
         else:
             self.stp_ports[receiving_port].distance_to_root = distance_to_root + self.connection_length_to_path_cost(receiving_port.connection_length)
 
-    def _add_port(self, interface: Interface) -> None:
+    def _add_port(self, interface: CableNetworkInterface) -> None:
         """
-        Adds a new `Interface` to the `self.stp_ports` dictionary.
+        Adds a new `CableNetworkInterface` to the `self.stp_ports` dictionary.
         An interface turns to an 'stp interface' when it receives an STP packet.
-        :param interface: an `Interface` object of the switch.
+        :param interface: an `CableNetworkInterface` object of the switch.
         :return: None
         """
         self.stp_ports[interface] = STPPortData(interface, PROTOCOLS.STP.NO_STATE, 0, MainLoop.get_time())
 
-    def _set_state(self, port: Interface, state: str) -> None:
+    def _set_state(self, port: CableNetworkInterface, state: str) -> None:
         """
         Sets the state of an stp interface. They can be ROOT_PORT, DESIGNATED_PORT or BLOCKED_PORT.
-        :param port: the `Interface` object
+        :param port: the `CableNetworkInterface` object
         :param state: the new state that is should have. (ROOT_PORT, DESIGNATED_PORT or BLOCKED_PORT.)
         :return: None
         """
@@ -232,19 +232,19 @@ class STPProcess(Process):
 
         self.stp_ports[port].state = state
 
-    def _is_root_port(self, port: Interface) -> bool:
+    def _is_root_port(self, port: CableNetworkInterface) -> bool:
         """Receives an STP interface of the switch and decides if it is a root port"""
         if self._am_i_root():
             return False
         return port is self.root_port
 
-    def _should_be_designated(self, port: Interface) -> bool:
+    def _should_be_designated(self, port: CableNetworkInterface) -> bool:
         """
         Finds out if an stp interface should be designated.
         Every STP interface has another STP switch behind it. Every interface now checks if that switch has a higher
         distance to the root or does its own switch. The switch with the lower distance to the root is the one with the
         designated port (The other switch's port will be either root port or a blocked port).
-        :param port: an `Interface` object.
+        :param port: an `CableNetworkInterface` object.
         :return: whether or not this interface should be designated. (`bool`)
         """
         if self._am_i_root():
@@ -268,7 +268,7 @@ class STPProcess(Process):
     def get_info(self) -> str:
         """For debugging, returns some information about the state of the STP process on the switch."""
 
-        def get_time_since_packet(port: Interface) -> str:
+        def get_time_since_packet(port: CableNetworkInterface) -> str:
             return str(MainLoop.get_time_since(self.stp_ports[port].last_time_got_packet))[:5]
 
         return f"""
@@ -288,7 +288,7 @@ class STPProcess(Process):
         """Returns whether or not the root was updated in the last `seconds` seconds."""
         return MainLoop.get_time_since(self.last_root_changing_time) > seconds
 
-    def _port_hasnt_seen_stp_packets_lately(self, port: Interface) -> bool:
+    def _port_hasnt_seen_stp_packets_lately(self, port: CableNetworkInterface) -> bool:
         """
         Returns whether or not the given interface received any STP packets lately.
         If it has not, it should be removed from the STP interfaces list.
@@ -334,12 +334,12 @@ class STPProcess(Process):
         for port in self.stp_ports:
             self._update_root(self.my_bid, 0, -1, port)  # set self to be the root
 
-    def _learn_from_packet(self, packet: Packet, receiving_port: Interface) -> None:
+    def _learn_from_packet(self, packet: Packet, receiving_port: CableNetworkInterface) -> None:
         """
         Learns from a new packet (adds a new interface to the `stp_ports`, updates the root and updates the
         distances of existing interfaces to the root)
         :param packet: a `Packet` that contains STP
-        :param receiving_port: the `Interface` that the packet was captured on.
+        :param receiving_port: the `CableNetworkInterface` that the packet was captured on.
         """
         stp_layer = packet["STP"]
         packet_root_bid = BID.root_from_stp(stp_layer)

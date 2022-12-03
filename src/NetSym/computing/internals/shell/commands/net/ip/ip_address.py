@@ -9,7 +9,7 @@ from NetSym.exceptions import AddressError, NoSuchInterfaceError
 
 if TYPE_CHECKING:
     import argparse
-    from NetSym.computing.internals.network_interfaces.interface import Interface
+    from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
     from NetSym.computing.internals.shell.shell import Shell
     from NetSym.computing.computer import Computer
 
@@ -35,7 +35,7 @@ class IpAddressCommand(Command):
         }
 
     @staticmethod
-    def _get_interface_data(interface: Interface, index: int = 0) -> str:
+    def _get_interface_data(interface: CableNetworkInterface, index: int = 0) -> str:
         """
         Receives interface, returns string data
         :param interface:

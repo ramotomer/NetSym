@@ -7,7 +7,7 @@ from NetSym.address.mac_address import MACAddress
 from NetSym.computing.connections.base_connection import BaseConnectionSide
 from NetSym.computing.connections.connection import Connection
 from NetSym.computing.connections.connection import ConnectionSide
-from NetSym.computing.internals.network_interfaces.base_interface import BaseInterface
+from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
 from NetSym.consts import INTERFACES, PROTOCOLS, T_Color, T_Time
 from NetSym.exceptions import *
 from NetSym.gui.tech.network_interfaces.interface_graphics import InterfaceGraphics
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
-class Interface(BaseInterface):
+class CableNetworkInterface(NetworkInterface):
     """
     Represents a computer network interface that leads to a cable
     """
@@ -33,11 +33,11 @@ class Interface(BaseInterface):
                  type_: str = INTERFACES.TYPE.ETHERNET,
                  mtu: int = PROTOCOLS.ETHERNET.MTU) -> None:
         """
-        Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
+        Initiates the CableNetworkInterface instance with addresses (mac and possibly ip), the operating system, and a name.
         :param mac: a string MAC address ('aa:bb:cc:11:22:76' for example)
         :param ip: a string ip address ('10.3.252.5/24' for example)
         """
-        super(Interface, self).__init__(mac, ip, name, connection_side, display_color, type_, mtu)
+        super(CableNetworkInterface, self).__init__(mac, ip, name, connection_side, display_color, type_, mtu)
 
     @property
     def connection(self) -> Connection:
@@ -52,7 +52,7 @@ class Interface(BaseInterface):
     @connection_side.setter
     def connection_side(self, value: Optional[BaseConnectionSide]) -> None:
         if (value is not None) and (not isinstance(value, ConnectionSide)):
-            raise WrongUsageError(f"Do not set the `connection_side` of an `Interface` with something that is not a `ConnectionSide` "
+            raise WrongUsageError(f"Do not set the `connection_side` of an `CableNetworkInterface` with something that is not a `ConnectionSide` "
                                   f"You inserted {value!r} which is a {type(value)}...")
 
         self.__connection = None
@@ -64,7 +64,7 @@ class Interface(BaseInterface):
     @property
     def connection_length(self) -> T_Time:
         """
-        The length of the connection_side this `Interface` is connected to. (The time a packet takes to go through it in seconds)
+        The length of the connection_side this `CableNetworkInterface` is connected to. (The time a packet takes to go through it in seconds)
         :return: a number of seconds.
         """
         if not self.is_connected():
@@ -83,7 +83,7 @@ class Interface(BaseInterface):
         """Returns whether the interface is connected or not"""
         return (self.__connection_side is not None) and (self.__connection is not None)
 
-    def connect(self, other: Interface) -> Connection:
+    def connect(self, other: CableNetworkInterface) -> Connection:
         """
         Connects this interface to another interface, return the `Connection` object.
         If grat arps are enabled, each interface sends a gratuitous arp.
@@ -113,7 +113,7 @@ class Interface(BaseInterface):
         It only accepts packets that contain the `accept` layer (for example "STP")
         if blocked, does nothing (updates the 'accept')
         """
-        super(Interface, self).block(accept)
+        super(CableNetworkInterface, self).block(accept)
 
         if self.connection_side is not None:
             self.connection_side.mark_as_blocked()
@@ -124,7 +124,7 @@ class Interface(BaseInterface):
         if not blocked, does nothing...
         :return: None
         """
-        super(Interface, self).unblock()
+        super(CableNetworkInterface, self).unblock()
 
         if self.connection_side is not None:
             self.connection_side.mark_as_unblocked()
@@ -138,16 +138,16 @@ class Interface(BaseInterface):
         return hash(id(self))
 
     def __str__(self) -> str:
-        """A shorter string representation of the Interface"""
+        """A shorter string representation of the CableNetworkInterface"""
         mac = f"\n{self.mac}" if not self.mac.is_no_mac() else ""
         return f"{self.name}: {mac}" + ('\n' + repr(self.ip) if self.has_ip() else '')
 
     def __repr__(self) -> str:
-        """The string representation of the Interface"""
-        return f"Interface(name={self.name}, mac={self.mac}, ip={self.ip})"
+        """The string representation of the CableNetworkInterface"""
+        return f"CableNetworkInterface(name={self.name}, mac={self.mac}, ip={self.ip})"
 
     @classmethod
-    def from_dict_load(cls, dict_: Dict) -> Interface:
+    def from_dict_load(cls, dict_: Dict) -> CableNetworkInterface:
         """
         Loads a new interface from a dict
         :param dict_:

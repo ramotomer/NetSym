@@ -17,9 +17,9 @@ from pyglet.window import key
 from NetSym.address.ip_address import IPAddress
 from NetSym.computing.computer import Computer
 from NetSym.computing.connections.frequency import Frequency
-from NetSym.computing.internals.network_interfaces.base_interface import BaseInterface
-from NetSym.computing.internals.network_interfaces.interface import Interface
-from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
+from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
+from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
+from NetSym.computing.internals.network_interfaces.wireless_network_interface import WirelessNetworkInterface
 from NetSym.computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
 from NetSym.computing.internals.processes.usermode_processes.stp_process import STPProcess
 from NetSym.computing.router import Router
@@ -834,8 +834,8 @@ class UserInterface:
         self.set_mode(MODES.NORMAL)
 
     def _connect_interfaces(self,
-                            computer1: Computer, interface1: Interface,
-                            computer2: Computer, interface2: Interface) -> Connection:
+                            computer1: Computer, interface1: CableNetworkInterface,
+                            computer2: Computer, interface2: CableNetworkInterface) -> Connection:
         """
         Take in the graphics-objects of two computers, and their interfaces.
         Create and register a connection between the two.
@@ -846,7 +846,7 @@ class UserInterface:
         self.main_loop.register_graphics_object(connection.init_graphics(computer1.graphics, computer2.graphics), is_in_background=True)
         return connection
 
-    def _get_computer_and_interface(self, interface_or_computer: Union[Interface, Computer]) -> Tuple[Computer, Interface]:
+    def _get_computer_and_interface(self, interface_or_computer: Union[CableNetworkInterface, Computer]) -> Tuple[Computer, CableNetworkInterface]:
         """
         Take in interface or computer:
             If interface:
@@ -856,7 +856,7 @@ class UserInterface:
                 Get a disconnected interface (create one if necessary)
         return (computer, interface)
         """
-        if isinstance(interface_or_computer, Interface):
+        if isinstance(interface_or_computer, CableNetworkInterface):
             interface = interface_or_computer
             return get_the_one_with_raise(self.computers, lambda c: interface in c.interfaces, NoSuchInterfaceError), interface
 
@@ -882,7 +882,7 @@ class UserInterface:
         Connect two devices to each other, show the connection and everything....
         The devices can be computers or interfaces. Works either way
         :param device1:
-        :param device2: the two `Computer` object or `Interface` objects. Could also be their graphics objects.
+        :param device2: the two `Computer` object or `CableNetworkInterface` objects. Could also be their graphics objects.
         :return: None
         """
         if any(not isinstance(device, (ComputerGraphics, InterfaceGraphics)) for device in [device1, device2]) or \
@@ -995,7 +995,7 @@ class UserInterface:
                 self.connection_data.remove(connection_data)
                 break
 
-    def remove_interface(self, interface: BaseInterface) -> None:
+    def remove_interface(self, interface: NetworkInterface) -> None:
         """
         Remove an interface and disconnect everything it is connected to
         """
@@ -1033,7 +1033,7 @@ class UserInterface:
                 self.connection_data.remove(connection_data)
 
         for interface in computer.interfaces:
-            if isinstance(interface, WirelessInterface):
+            if isinstance(interface, WirelessNetworkInterface):
                 interface.disconnect()
 
     def add_delete_interface(self,
@@ -1883,9 +1883,9 @@ class UserInterface:
         self.main_loop.insert_to_loop_pausable(new_frequency.move_packets, supply_function_with_main_loop_object=True)
         return new_frequency
 
-    def set_interface_frequency(self, interface: WirelessInterface, frequency: float) -> None:
+    def set_interface_frequency(self, interface: WirelessNetworkInterface, frequency: float) -> None:
         """
-        Take in a WirelessInterface and set its frequency object
+        Take in a WirelessNetworkInterface and set its frequency object
         If the object does not exist - create it :)
         """
         interface.connect(self.get_frequency(frequency))

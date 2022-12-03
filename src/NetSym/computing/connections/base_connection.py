@@ -29,7 +29,7 @@ class BaseSentPacket:
 
 class BaseConnection(ABC):
     """
-    This class represents a cable or any connection between two `Interface` objects.
+    This class represents a cable or any connection between two `CableNetworkInterface` objects.
     It allows for packets to move in both sides, To be sent and received.
 
     Each packet that is sent takes some time through the cable, that time is
@@ -39,7 +39,7 @@ class BaseConnection(ABC):
     displayed nicely.
 
     The `Connection` object keeps references to its two `ConnectionSide` objects. These are nice interfaces for
-        the `Interface` object to talk to its connection.
+        the `CableNetworkInterface` object to talk to its connection.
     """
     speed:        float
     packet_loss:  float
@@ -99,7 +99,7 @@ class BaseConnection(ABC):
         """
         Adds the packet to its appropriate destination side's `received_packets` list.
         This is called to check when the packet finished its route through this connection and is ready to be received at the
-        connected `Interface`.
+        connected `CableNetworkInterface`.
         """
 
     def _drop_predetermined_dropped_packets(self) -> List[AnimationGraphics]:
@@ -160,12 +160,12 @@ class BaseConnection(ABC):
 class BaseConnectionSide:
     """
     This represents one side of a given `Connection` object.
-    This is the API that the `Interface` object sees.
+    This is the API that the `CableNetworkInterface` object sees.
     Each Connection object holds two of these, one for each of its sides (Duh).
 
     The `ConnectionSide` has a list of packets the user sent, but were not yet picked up by the main `Connection`.
     It also has a list of packets that reached this side but were not yet picked up by the appropriate connected
-        `Interface` object.
+        `CableNetworkInterface` object.
     """
     def __init__(self, main_connection: BaseConnection) -> None:
         self._packets_to_send: List[Packet] = []
@@ -180,7 +180,7 @@ class BaseConnectionSide:
 
     def send(self, packet: Packet) -> None:
         """
-        This is an API for the Interface class to send its packets to the Connection object.
+        This is an API for the CableNetworkInterface class to send its packets to the Connection object.
         :param packet: The packet to send. An `Ethernet` object.
         :return: None
         """
@@ -188,7 +188,7 @@ class BaseConnectionSide:
 
     def receive(self) -> List[Packet]:
         """
-        This is an API for the Interface class to receive its packets from the
+        This is an API for the CableNetworkInterface class to receive its packets from the
         Connection object. If no packets have arrived, returns None.
         :return: A `Packet` object that was received from the connection. or None.
         """

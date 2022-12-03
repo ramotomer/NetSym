@@ -6,7 +6,7 @@ from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.connections.base_connection import BaseConnectionSide
 from NetSym.computing.connections.frequency import Frequency, FrequencyConnectionSide
-from NetSym.computing.internals.network_interfaces.base_interface import BaseInterface
+from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
 from NetSym.consts import T_Color, INTERFACES
 from NetSym.exceptions import *
 from NetSym.gui.tech.network_interfaces.wireless_interface_graphics import WirelessInterfaceGraphics
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
-class WirelessInterface(BaseInterface):
+class WirelessNetworkInterface(NetworkInterface):
     """
     This class represents a computer net interface.
     It can send and receive packets.
@@ -35,11 +35,11 @@ class WirelessInterface(BaseInterface):
                  frequency:     Optional[Frequency]              = None,
                  display_color: T_Color                          = INTERFACES.COLOR) -> None:
         """
-        Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
+        Initiates the CableNetworkInterface instance with addresses (mac and possibly ip), the operating system, and a name.
         :param mac: a string MAC address ('aa:bb:cc:11:22:76' for example)
         :param ip: a string ip address ('10.3.252.5/24' for example)
         """
-        super(WirelessInterface, self).__init__(mac, ip, name, display_color=display_color, type_=INTERFACES.TYPE.WIFI)
+        super(WirelessNetworkInterface, self).__init__(mac, ip, name, display_color=display_color, type_=INTERFACES.TYPE.WIFI)
 
         self.connection_side = frequency.get_side(self) if frequency is not None else None
         self.frequency       = frequency.frequency      if frequency is not None else None
@@ -64,7 +64,7 @@ class WirelessInterface(BaseInterface):
     @connection_side.setter
     def connection_side(self, value: Optional[BaseConnectionSide]) -> None:
         if (value is not None) and (not isinstance(value, FrequencyConnectionSide)):
-            raise WrongUsageError(f"Do not set the `connection_side` of a `WirelessInterface` with something that is not a `FrequencyConnectionSide` "
+            raise WrongUsageError(f"Do not set the `connection_side` of a `WirelessNetworkInterface` with something that is not a `FrequencyConnectionSide` "
                                   f"You inserted {value!r} which is a {type(value)}...")
 
         self.__connection = None
@@ -111,10 +111,10 @@ class WirelessInterface(BaseInterface):
         Generates the text for the side view of the interface
         :return: `str`
         """
-        return super(WirelessInterface, self).generate_view_text() + f"\nfrequency: {self.frequency}"
+        return super(WirelessNetworkInterface, self).generate_view_text() + f"\nfrequency: {self.frequency}"
 
     @classmethod
-    def from_dict_load(cls, dict_: Dict) -> WirelessInterface:
+    def from_dict_load(cls, dict_: Dict) -> WirelessNetworkInterface:
         """
         Loads a new interface from a dict
         :param dict_:
@@ -130,4 +130,4 @@ class WirelessInterface(BaseInterface):
         return loaded
 
     def __repr__(self) -> str:
-        return f"WirelessInterface(name={self.name}, mac='{self.mac.string_mac}', ip={self.ip})"
+        return f"WirelessNetworkInterface(name={self.name}, mac='{self.mac.string_mac}', ip={self.ip})"

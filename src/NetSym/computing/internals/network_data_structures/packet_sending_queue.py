@@ -9,7 +9,7 @@ from NetSym.gui.main_loop import MainLoop
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
     from NetSym.computing.internals.sockets.raw_socket import RawSocket
-    from NetSym.computing.internals.network_interfaces.interface import Interface
+    from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
     from NetSym.computing.computer import Computer
 
 
@@ -23,7 +23,7 @@ class PacketSendingQueue:
     process_mode:             str
     packets:                  Deque[Packet]
     interval:                 T_Time
-    interface:                Optional[Interface] = None
+    interface:                Optional[CableNetworkInterface] = None
     sending_socket:           Optional[RawSocket] = None
     last_packet_sending_time: T_Time              = field(default_factory=MainLoop.get_time)
 

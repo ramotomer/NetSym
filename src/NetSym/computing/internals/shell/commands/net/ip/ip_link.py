@@ -9,7 +9,7 @@ from NetSym.exceptions import DeviceAlreadyConnectedError, NoSuchInterfaceError
 
 if TYPE_CHECKING:
     import argparse
-    from NetSym.computing.internals.network_interfaces.interface import Interface
+    from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
     from NetSym.computing.internals.shell.shell import Shell
     from NetSym.computing.computer import Computer
 
@@ -36,10 +36,10 @@ class IpLinkCommand(Command):
         }
 
     @staticmethod
-    def _link_description_from_interface(interface: Interface, index: int = 0) -> str:
+    def _link_description_from_interface(interface: CableNetworkInterface, index: int = 0) -> str:
         """
         returns a string description of the link, receives an interface of the computer.
-        :param interface: `Interface`
+        :param interface: `CableNetworkInterface`
         :return:
         """
 
@@ -140,7 +140,7 @@ link:
         return CommandOutput("OK!", '')
 
     @staticmethod
-    def _set_link_connection(interface: Interface, args: List[str]) -> CommandOutput:
+    def _set_link_connection(interface: CableNetworkInterface, args: List[str]) -> CommandOutput:
         """
         Takes care of `ip link set <NIC> connection_side ...` commands
         """

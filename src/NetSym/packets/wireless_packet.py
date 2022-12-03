@@ -9,7 +9,7 @@ from NetSym.packets.packet import Packet
 
 if TYPE_CHECKING:
     from NetSym.computing.connections.frequency import Frequency
-    from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
+    from NetSym.computing.internals.network_interfaces.wireless_network_interface import WirelessNetworkInterface
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
 
 
@@ -23,7 +23,7 @@ class WirelessPacket(Packet):
     def __init__(self, data: scapy.packet.Packet) -> None:
         super(WirelessPacket, self).__init__(data)
 
-    def init_graphics(self, frequency_object: Frequency, sending_interface: WirelessInterface) -> List[GraphicsObject]:  # type: ignore
+    def init_graphics(self, frequency_object: Frequency, sending_interface: WirelessNetworkInterface) -> List[GraphicsObject]:  # type: ignore
         """
         Starts the display of the object. (Creating the graphics object)
         """

@@ -3,10 +3,10 @@ from typing import cast
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.connections.loopback_connection import LoopbackConnection
-from NetSym.computing.internals.network_interfaces.interface import Interface
+from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
 
 
-class LoopbackInterface(Interface):
+class LoopbackInterface(CableNetworkInterface):
     """
     This is just a regular interface - only with a `LoopbackConnection` as a connection
     """

@@ -9,7 +9,7 @@ from NetSym.exceptions import *
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
     from NetSym.computing.internals.processes.abstracts.process import ReturnedPacket
-    from NetSym.computing.internals.network_interfaces.interface import Interface
+    from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
     from NetSym.computing.computer import Computer
 
 
@@ -33,7 +33,7 @@ class RawSocket(Socket):
         self.is_connected = True
 
         self._filter: Optional[Callable[[Packet], bool]] = None
-        self.interface: Optional[Union[str, Interface]] = INTERFACES.NO_INTERFACE
+        self.interface: Optional[Union[str, CableNetworkInterface]] = INTERFACES.NO_INTERFACE
         self.is_promisc = False
 
     @property
@@ -43,7 +43,7 @@ class RawSocket(Socket):
 
         return self._filter
 
-    def get_interface(self) -> Interface:
+    def get_interface(self) -> CableNetworkInterface:
         """
         Return the interface the socket is bound to.
         If the socket is not bound, or if it is bound to ANY - raise :)
@@ -79,7 +79,7 @@ class RawSocket(Socket):
 
     def bind(self,
              filter: Callable[[Packet], bool],
-             interface: Optional[Interface] = INTERFACES.ANY_INTERFACE,
+             interface: Optional[CableNetworkInterface] = INTERFACES.ANY_INTERFACE,
              promisc: bool = False) -> None:
         """
         Binds the socket to an interface and filter.

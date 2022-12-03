@@ -6,7 +6,7 @@ from NetSym.address.mac_address import MACAddress
 from NetSym.computing.computer import Computer, COMPUTER
 from NetSym.computing.internals.filesystem.filesystem import Filesystem
 from NetSym.computing.internals.network_data_structures.routing_table import RoutingTable
-from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
+from NetSym.computing.internals.network_interfaces.wireless_network_interface import WirelessNetworkInterface
 from NetSym.computing.internals.processes.kernelmode_processes.switching_process import SwitchingProcess
 from NetSym.computing.internals.processes.usermode_processes.stp_process import STPProcess, BID
 from NetSym.consts import OS, PROTOCOLS, ADDRESSES
@@ -14,7 +14,7 @@ from NetSym.packets.all import LLC, STP
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
-    from NetSym.computing.internals.network_interfaces.interface import Interface
+    from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
 
 
 class Switch(Computer):
@@ -112,10 +112,10 @@ class Antenna(Switch):
     """
     This class represents an Antenna, which is just a Switch that can send things over radio waves.
     """
-    def __init__(self, name: Optional[str] = None, *interfaces: Interface) -> None:
+    def __init__(self, name: Optional[str] = None, *interfaces: CableNetworkInterface) -> None:
         super(Antenna, self).__init__(name)
         self.stp_enabled = False
-        self.interfaces = [WirelessInterface()] if not interfaces else list(interfaces)
+        self.interfaces = [WirelessNetworkInterface()] if not interfaces else list(interfaces)
 
     @classmethod
     def from_dict_load(cls, dict_: Dict) -> Switch:

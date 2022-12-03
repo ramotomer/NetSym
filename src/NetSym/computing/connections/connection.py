@@ -27,7 +27,7 @@ class SentPacket(BaseSentPacket):
 
 class Connection(BaseConnection):
     """
-    This class represents a cable or any connection between two `Interface` objects.
+    This class represents a cable or any connection between two `CableNetworkInterface` objects.
     It allows for packets to move in both sides, To be sent and received.
 
     Each packet that is sent takes some time through the cable, that time is
@@ -37,7 +37,7 @@ class Connection(BaseConnection):
     displayed nicely.
 
     The `Connection` object keeps references to its two `ConnectionSide` objects. These are nice interfaces for
-        the `Interface` object to talk to its connection.
+        the `CableNetworkInterface` object to talk to its connection.
     """
     def __init__(self,
                  length: float = CONNECTIONS.DEFAULT_LENGTH,
@@ -144,7 +144,7 @@ class Connection(BaseConnection):
         """
         Adds the packet to its appropriate destination side's `received_packets` list.
         This is called to check when the packet finished its route through this connection and is ready to be received at the
-        connected `Interface`.
+        connected `CableNetworkInterface`.
         """
         if sent_packet.packet.get_graphics().progress < 1:
             return  # did not reach...
@@ -203,12 +203,12 @@ class Connection(BaseConnection):
 class ConnectionSide(BaseConnectionSide):
     """
     This represents one side of a given `Connection` object.
-    This is the API that the `Interface` object sees.
+    This is the API that the `CableNetworkInterface` object sees.
     Each Connection object holds two of these, one for each of its sides (Duh).
 
     The `ConnectionSide` has a list of packets the user sent, but were not yet picked up by the main `Connection`.
     It also has a list of packets that reached this side but were not yet picked up by the appropriate connected
-        `Interface` object.
+        `CableNetworkInterface` object.
     """
     connection: Connection
 

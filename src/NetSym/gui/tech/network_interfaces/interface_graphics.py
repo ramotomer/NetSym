@@ -10,7 +10,7 @@ from NetSym.gui.tech.network_interfaces.base_interface_graphics import BaseInter
 from NetSym.usefuls.funcs import distance, with_args, get_the_one_with_raise
 
 if TYPE_CHECKING:
-    from NetSym.computing.internals.network_interfaces.interface import Interface
+    from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
     from NetSym.gui.user_interface.user_interface import UserInterface
 
@@ -21,24 +21,24 @@ class InterfaceGraphics(BaseInterfaceGraphics):
     It is the little square next to computers.
     It allows the user much more control over their computers and to inspect the network interfaces of their computers.
     """
-    interface: Interface
+    interface: CableNetworkInterface
 
     def __init__(self,
                  x: Optional[float],
                  y: Optional[float],
-                 interface: Interface,
+                 interface: CableNetworkInterface,
                  computer_graphics: ComputerGraphics) -> None:
         """
         initiates the object.
         :param x:
         :param y: the location
-        :param interface: the physical `Interface` of the computer.
+        :param interface: the physical `CableNetworkInterface` of the computer.
         :param computer_graphics: the graphics object of the computer that this interface belongs to.
         """
         super(InterfaceGraphics, self).__init__(x, y, interface, computer_graphics)
 
     @property
-    def logic_object(self) -> Interface:
+    def logic_object(self) -> CableNetworkInterface:
         return self.interface
 
     def is_in(self, x: float, y: float) -> bool:

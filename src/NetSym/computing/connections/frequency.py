@@ -14,7 +14,7 @@ from NetSym.usefuls.funcs import distance
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
-    from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
+    from NetSym.computing.internals.network_interfaces.wireless_network_interface import WirelessNetworkInterface
 
 
 @dataclass
@@ -50,7 +50,7 @@ class Frequency(BaseConnection):
 
         self.color: T_Color = (random.randint(0, 150), random.randint(0, 150), random.randint(0, 150))
 
-    def get_side(self, wireless_interface: WirelessInterface) -> FrequencyConnectionSide:
+    def get_side(self, wireless_interface: WirelessNetworkInterface) -> FrequencyConnectionSide:
         """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""
         new_side = FrequencyConnectionSide(self, wireless_interface)
         self.connection_sides.append(new_side)
@@ -92,7 +92,7 @@ class Frequency(BaseConnection):
         """
         Adds the packet to its appropriate destination side's `received_packets` list.
         This is called when the packet finished its route through this connection and is ready to be received at the
-        connected `Interface`.
+        connected `CableNetworkInterface`.
         :param sent_packet: a `SentPacket` namedtuple.
         :return: None
         """
@@ -170,7 +170,7 @@ class FrequencyConnectionSide(BaseConnectionSide):
     This is the API that a computer sees to the frequency, using it the computer can send and receive packets.
     Each computer in the Frequency receives a distinct `FrequencyConnectionSide` object
     """
-    def __init__(self, main_connection: Frequency, wireless_interface: WirelessInterface) -> None:
+    def __init__(self, main_connection: Frequency, wireless_interface: WirelessNetworkInterface) -> None:
         super(FrequencyConnectionSide, self).__init__(main_connection)
 
         self.wireless_interface = wireless_interface

@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
-class BaseInterface(ABC):
+class NetworkInterface(ABC):
     """
     This class represents a computer net interface.
     It can send and receive packets.
@@ -42,7 +42,7 @@ class BaseInterface(ABC):
                  type_: str = INTERFACES.TYPE.ETHERNET,
                  mtu: int = PROTOCOLS.ETHERNET.MTU) -> None:
         """
-        Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
+        Initiates the CableNetworkInterface instance with addresses (mac and possibly ip), the operating system, and a name.
         :param mac: a string MAC address ('aa:bb:cc:11:22:76' for example)
         :param ip: a string ip address ('10.3.252.5/24' for example)
         """
@@ -50,7 +50,7 @@ class BaseInterface(ABC):
         self.__connection_side: Optional[BaseConnectionSide] = None
         self.connection_side = connection_side
 
-        self.name: str = name if name is not None else BaseInterface.random_name()
+        self.name: str = name if name is not None else NetworkInterface.random_name()
         self.mac: MACAddress = MACAddress(MACAddress.randomac()) if mac is None else MACAddress(mac)
         self.ip: Optional[IPAddress] = IPAddress(ip) if ip is not None else None
 
@@ -90,7 +90,7 @@ class BaseInterface(ABC):
 
     @classmethod
     def random_name(cls) -> str:
-        """Returns a random Interface name and caches it to never be generated again :)"""
+        """Returns a random CableNetworkInterface name and caches it to never be generated again :)"""
         if cls.POSSIBLE_INTERFACE_NAMES is None:
             cls.POSSIBLE_INTERFACE_NAMES = [line.strip() for line in open(FILE_PATHS.INTERFACE_NAMES_FILE_PATH).readlines()]
 
@@ -101,7 +101,7 @@ class BaseInterface(ABC):
         return name
 
     @classmethod
-    def with_ip(cls, ip_address: Union[str, IPAddress]) -> BaseInterface:
+    def with_ip(cls, ip_address: Union[str, IPAddress]) -> NetworkInterface:
         """Constructor for an interface with a given (string) IP address, a random name and a random MAC address"""
         return cls(MACAddress.randomac(), ip_address, cls.random_name())
 
@@ -126,24 +126,24 @@ class BaseInterface(ABC):
 
     def is_directly_for_me(self, packet: Packet) -> bool:
         """
-        Receives a packet and determines whether it is destined directly for this Interface (broadcast is not)
+        Receives a packet and determines whether it is destined directly for this CableNetworkInterface (broadcast is not)
         On the second layer
         :param packet: a `Packet` object.
-        :return: whether the destination MAC address is of this Interface
+        :return: whether the destination MAC address is of this CableNetworkInterface
         """
         return bool((self.mac == packet["Ether"].dst_mac) or packet["Ether"].dst_mac.is_no_mac())
 
     def is_for_me(self, packet: Packet) -> bool:
         """
-        Receives a packet and determines whether it is destined for this Interface (or is broadcast)
+        Receives a packet and determines whether it is destined for this CableNetworkInterface (or is broadcast)
         On the second layer
         :param packet: a `Packet` object.
-        :return: whether the destination MAC address is of this Interface
+        :return: whether the destination MAC address is of this CableNetworkInterface
         """
         return self.is_directly_for_me(packet) or (packet["Ether"].dst_mac.is_broadcast())
 
     def has_ip(self) -> bool:
-        """Returns whether the Interface has an IP address"""
+        """Returns whether the CableNetworkInterface has an IP address"""
         return self.ip is not None
 
     def has_this_ip(self, ip_address: Union[str, IPAddress]) -> bool:
@@ -325,7 +325,7 @@ MTU: {self.mtu}
 
     @classmethod
     @abstractmethod
-    def from_dict_load(cls, dict_: Dict) -> BaseInterface:
+    def from_dict_load(cls, dict_: Dict) -> NetworkInterface:
         """
         Loads a new interface from a dict
         :param dict_:

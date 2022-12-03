@@ -13,13 +13,13 @@ from NetSym.gui.tech.computer_graphics import ComputerGraphics
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
 
 if TYPE_CHECKING:
-    from NetSym.computing.internals.network_interfaces.base_interface import BaseInterface
+    from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
     from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 class BaseInterfaceGraphics(ViewableGraphicsObject, Selectable):
     """
-    Everything in common between the graphics of the regular CableInterface and the WirelessInterface
+    Everything in common between the graphics of the regular CableInterface and the WirelessNetworkInterface
     """
     width: float
     height: float
@@ -27,13 +27,13 @@ class BaseInterfaceGraphics(ViewableGraphicsObject, Selectable):
     def __init__(self,
                  x: Optional[float],
                  y: Optional[float],
-                 interface: BaseInterface,
+                 interface: NetworkInterface,
                  computer_graphics: ComputerGraphics) -> None:
         """
         initiates the object.
         :param x:
         :param y: the location
-        :param interface: the physical `Interface` of the computer.
+        :param interface: the physical `CableNetworkInterface` of the computer.
         :param computer_graphics: the graphics object of the computer that this interface belongs to.
         """
         if (x is None) or (y is None):
@@ -48,7 +48,7 @@ class BaseInterfaceGraphics(ViewableGraphicsObject, Selectable):
         self.width, self.height = INTERFACES.WIDTH, INTERFACES.HEIGHT
         self.computer_graphics = computer_graphics
 
-        self.interface: BaseInterface = interface
+        self.interface: NetworkInterface = interface
 
     @property
     def logic_object(self):
