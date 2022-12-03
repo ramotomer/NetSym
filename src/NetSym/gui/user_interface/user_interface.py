@@ -1877,7 +1877,7 @@ class UserInterface:
             if freq.frequency == frequency:
                 return freq
 
-        new_frequency = Frequency(frequency, longest_line_in_screen=sqrt((self.main_window.width ** 2) + (self.main_window.height ** 2)))
+        new_frequency = Frequency(frequency, longest_line_on_the_screen=sqrt((self.main_window.width ** 2) + (self.main_window.height ** 2)))
         self.frequencies.append(new_frequency)
         self.main_loop.insert_to_loop_pausable(new_frequency.move_packets, supply_function_with_main_loop_object=True)
         return new_frequency

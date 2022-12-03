@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Dict, Union
+from typing import Optional, Dict, Union
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
+from NetSym.computing.connections.base_connection import BaseConnectionSide
+from NetSym.computing.connections.frequency import Frequency, FrequencyConnectionSide
 from NetSym.computing.internals.network_interfaces.base_interface import BaseInterface
 from NetSym.consts import T_Color, INTERFACES
 from NetSym.exceptions import *
 from NetSym.gui.tech.wireless_interface_graphics import WirelessInterfaceGraphics
-
-if TYPE_CHECKING:
-    from NetSym.computing.connections.frequency import Frequency, FrequencyConnectionSide
 
 
 class WirelessInterface(BaseInterface):
@@ -22,10 +21,10 @@ class WirelessInterface(BaseInterface):
     An interface can be either connected or disconnected to a `ConnectionSide` object, which enables it to move its packets
     down the connection further.
     """
-    GRAPHICS_CLASS = WirelessInterfaceGraphics
+    __connection: Frequency
+    __connection_side: FrequencyConnectionSide
 
-    connection:      Frequency
-    connection_side: Optional[FrequencyConnectionSide]
+    GRAPHICS_CLASS = WirelessInterfaceGraphics
 
     def __init__(self,
                  mac:           Optional[Union[MACAddress, str]] = None,
@@ -50,8 +49,30 @@ class WirelessInterface(BaseInterface):
 
         return self.connection
 
+    @property
+    def connection(self) -> Frequency:
+        if self.__connection is None:
+            raise NoSuchConnectionError(f"self: {self}, self.__connection: {self.__connection}")
+        return self.__connection
+
+    @property
+    def connection_side(self) -> Optional[FrequencyConnectionSide]:
+        return self.__connection_side
+
+    @connection_side.setter
+    def connection_side(self, value: Optional[BaseConnectionSide]) -> None:
+        if (value is not None) and (not isinstance(value, FrequencyConnectionSide)):
+            raise WrongUsageError(f"Do not set the `connection_side` of a `WirelessInterface` with something that is not a `FrequencyConnectionSide` "
+                                  f"You inserted {value!r} which is a {type(value)}...")
+
+        self.__connection = None
+        self.__connection_side = value
+
+        if value is not None:
+            self.__connection = value.connection
+
     def is_connected(self) -> bool:
-        return self.frequency is not None and self.connection_side is not None
+        return (self.frequency is not None) and (self.connection_side is not None)
 
     def connect(self, frequency: Frequency) -> None:
         """

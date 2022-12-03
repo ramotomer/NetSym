@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-from typing import Optional, Dict, Union, Any, TYPE_CHECKING
+from typing import Optional, Dict, Union, Any
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
+from NetSym.computing.connections.base_connection import BaseConnectionSide
+from NetSym.computing.connections.connection import Connection
+from NetSym.computing.connections.connection import ConnectionSide
 from NetSym.computing.internals.network_interfaces.base_interface import BaseInterface
-from NetSym.consts import INTERFACES, PROTOCOLS, T_Color
-
-if TYPE_CHECKING:
-    from NetSym.computing.connections.connection import ConnectionSide
+from NetSym.consts import INTERFACES, PROTOCOLS, T_Color, T_Time
+from NetSym.exceptions import *
 
 
 class Interface(BaseInterface):
@@ -20,6 +21,9 @@ class Interface(BaseInterface):
     An interface can be either connected or disconnected to a `ConnectionSide` object, which enables it to move its packets
     down the connection_side further.
     """
+    __connection: Connection
+    __connection_side: ConnectionSide
+
     def __init__(self,
                  mac: Optional[Union[str, MACAddress]] = None,
                  ip: Optional[Union[str, IPAddress]] = None,
@@ -35,6 +39,89 @@ class Interface(BaseInterface):
         """
         super(Interface, self).__init__(mac, ip, name, connection_side, display_color, type_, mtu)
 
+    @property
+    def connection(self) -> Connection:
+        if self.__connection is None:
+            raise NoSuchConnectionError(f"self: {self}, self.__connection: {self.__connection}")
+        return self.__connection
+
+    @property
+    def connection_side(self) -> Optional[ConnectionSide]:
+        return self.__connection_side
+
+    @connection_side.setter
+    def connection_side(self, value: Optional[BaseConnectionSide]) -> None:
+        if (value is not None) and (not isinstance(value, ConnectionSide)):
+            raise WrongUsageError(f"Do not set the `connection_side` of an `Interface` with something that is not a `ConnectionSide` "
+                                  f"You inserted {value!r} which is a {type(value)}...")
+
+        self.__connection = None
+        self.__connection_side = value
+
+        if value is not None:
+            self.__connection = value.connection
+
+    @property
+    def connection_length(self) -> T_Time:
+        """
+        The length of the connection_side this `Interface` is connected to. (The time a packet takes to go through it in seconds)
+        :return: a number of seconds.
+        """
+        if not self.is_connected():
+            raise InterfaceNotConnectedError(repr(self))
+
+        return self.connection.deliver_time
+
+    def is_connected(self) -> bool:
+        """Returns whether the interface is connected or not"""
+        return (self.__connection_side is not None) and (self.__connection is not None)
+
+    def connect(self, other: Interface) -> Connection:
+        """
+        Connects this interface to another interface, return the `Connection` object.
+        If grat arps are enabled, each interface sends a gratuitous arp.
+        """
+        if self.is_connected() or other.is_connected():
+            raise DeviceAlreadyConnectedError("The interface is connected already!!!")
+        connection = Connection()
+        self.connection_side, other.connection_side = connection.get_sides()
+        return connection
+
+    def disconnect(self) -> None:
+        """
+        Disconnect an interface from its `Connection`.
+
+        Note that the `Connection` object does not know about this disconnection,
+        so the other interface should be disconnected as well or this side of
+        connection_side should be reconnected.
+        :return: None
+        """
+        if not self.is_connected():
+            raise InterfaceNotConnectedError("Cannot disconnect an interface that is not connected!")
+        self.connection_side = None
+    
+    def block(self, accept: Optional[str] = None) -> None:
+        """
+        Blocks the connection_side and does not receive packets from it anymore.
+        It only accepts packets that contain the `accept` layer (for example "STP")
+        if blocked, does nothing (updates the 'accept')
+        """
+        super(Interface, self).block(accept)
+
+        if self.connection_side is not None:
+            self.connection_side.mark_as_blocked()
+
+    def unblock(self) -> None:
+        """
+        Releases the blocking of the connection_side and allows it to receive packets again.
+        if not blocked, does nothing...
+        :return: None
+        """
+        super(Interface, self).unblock()
+
+        if self.connection_side is not None:
+            self.connection_side.mark_as_unblocked()
+
     def __eq__(self, other: Any) -> bool:
         """Determines which interfaces are equal"""
         return self is other
@@ -42,24 +129,6 @@ class Interface(BaseInterface):
     def __hash__(self) -> int:
         """hash of the interface"""
         return hash(id(self))
-
-    def generate_view_text(self) -> str:
-        """
-        Generates the text for the side view of the interface
-        :return: `str`
-        """
-        linesep = '\n'
-        return f"""
-Interface: 
-{self.name}
-
-{str(self.mac) if not self.mac.is_no_mac() else ""} 
-{repr(self.ip) if self.has_ip() else ''}
-MTU: {self.mtu}
-{"Connected" if self.is_connected() else "Disconnected"}
-{f"Promisc{linesep}" if self.is_promisc else ""}{"Blocked" if 
-        self.is_blocked else ""}
-"""
 
     def __str__(self) -> str:
         """A shorter string representation of the Interface"""

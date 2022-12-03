@@ -8,8 +8,8 @@ import scapy
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
-from NetSym.computing.connections.connection import Connection
-from NetSym.consts import T_Time, FILE_PATHS, INTERFACES, PROTOCOLS, T_Color
+from NetSym.computing.connections.base_connection import BaseConnection
+from NetSym.consts import FILE_PATHS, INTERFACES, PROTOCOLS, T_Color
 from NetSym.exceptions import *
 from NetSym.gui.tech.interface_graphics import InterfaceGraphics
 from NetSym.packets.all import Ether
@@ -17,7 +17,7 @@ from NetSym.packets.packet import Packet
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
-    from NetSym.computing.connections.connection import ConnectionSide
+    from NetSym.computing.connections.base_connection import BaseConnectionSide
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
@@ -32,13 +32,14 @@ class BaseInterface(ABC):
     """
     POSSIBLE_INTERFACE_NAMES: Optional[List[str]] = None
     EXISTING_INTERFACE_NAMES: Set[str] = set()
+
     GRAPHICS_CLASS: Type[GraphicsObject] = InterfaceGraphics
 
     def __init__(self,
                  mac: Optional[Union[str, MACAddress]] = None,
                  ip: Optional[Union[str, IPAddress]] = None,
                  name: Optional[str] = None,
-                 connection_side: Optional[ConnectionSide] = None,
+                 connection_side: Optional[BaseConnectionSide] = None,
                  display_color: T_Color = INTERFACES.COLOR,
                  type_: str = INTERFACES.TYPE.ETHERNET,
                  mtu: int = PROTOCOLS.ETHERNET.MTU) -> None:
@@ -47,8 +48,8 @@ class BaseInterface(ABC):
         :param mac: a string MAC address ('aa:bb:cc:11:22:76' for example)
         :param ip: a string ip address ('10.3.252.5/24' for example)
         """
-        self.__connection: Optional[Connection] = None
-        self.__connection_side = None
+        self.__connection: Optional[BaseConnection] = None
+        self.__connection_side: Optional[BaseConnectionSide] = None
         self.connection_side = connection_side
 
         self.name: str = name if name is not None else BaseInterface.random_name()
@@ -68,17 +69,17 @@ class BaseInterface(ABC):
         # TODO: This ^ belongs in the InterfaceGraphics class FOR SURE!!!
 
     @property
-    def connection(self) -> Connection:
+    def connection(self) -> BaseConnection:
         if self.__connection is None:
             raise NoSuchConnectionError(f"self: {self}, self.__connection: {self.__connection}")
         return self.__connection
 
     @property
-    def connection_side(self) -> Optional[ConnectionSide]:
+    def connection_side(self) -> Optional[BaseConnectionSide]:
         return self.__connection_side
 
     @connection_side.setter
-    def connection_side(self, value: Optional[ConnectionSide]) -> None:
+    def connection_side(self, value: Optional[BaseConnectionSide]) -> None:
         self.__connection = None
         self.__connection_side = value
 
@@ -86,23 +87,12 @@ class BaseInterface(ABC):
             self.__connection = value.connection
 
     @property
-    def connection_length(self) -> T_Time:
-        """
-        The length of the connection_side this `Interface` is connected to. (The time a packet takes to go through it in seconds)
-        :return: a number of seconds.
-        """
-        if not self.is_connected():
-            raise InterfaceNotConnectedError(repr(self))
-
-        return self.connection.deliver_time
-
-    @property
     def no_carrier(self) -> bool:
         return not self.is_connected()
 
     @classmethod
     def random_name(cls) -> str:
-        """Returns a random Interface name"""
+        """Returns a random Interface name and caches it to never be generated again :)"""
         if cls.POSSIBLE_INTERFACE_NAMES is None:
             cls.POSSIBLE_INTERFACE_NAMES = [line.strip() for line in open(FILE_PATHS.INTERFACE_NAMES_FILE_PATH).readlines()]
 
@@ -294,8 +284,6 @@ class BaseInterface(ABC):
         """
         self.is_blocked = True
         self.accepting = accept
-        if self.connection_side is not None:
-            self.connection_side.mark_as_blocked()
 
     def unblock(self) -> None:
         """
@@ -305,8 +293,6 @@ class BaseInterface(ABC):
         """
         self.is_blocked = False
         self.accepting = None
-        if self.connection_side is not None:
-            self.connection_side.mark_as_unblocked()
 
     def toggle_block(self, accept: Optional[str] = None) -> None:
         """
@@ -327,12 +313,23 @@ class BaseInterface(ABC):
         """hash of the interface"""
         return hash(id(self))
 
-    @abstractmethod
     def generate_view_text(self) -> str:
         """
         Generates the text for the side view of the interface
         :return: `str`
         """
+        linesep = '\n'
+        return f"""
+Interface: 
+{self.name}
+
+{str(self.mac) if not self.mac.is_no_mac() else ""} 
+{repr(self.ip) if self.has_ip() else ''}
+MTU: {self.mtu}
+{"Connected" if self.is_connected() else "Disconnected"}
+{f"Promisc{linesep}" if self.is_promisc else ""}{"Blocked" if
+        self.is_blocked else ""}
+"""
 
     @classmethod
     @abstractmethod

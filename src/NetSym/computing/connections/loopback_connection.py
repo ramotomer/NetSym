@@ -39,7 +39,7 @@ class LoopbackConnection(Connection):
     def get_graphics(self) -> LoopbackConnectionGraphics:
         return cast("LoopbackConnectionGraphics", super(LoopbackConnection, self).get_graphics())
 
-    def add_packet(self, packet: Packet, direction: str) -> None:
+    def _add_packet(self, packet: Packet, direction: str) -> None:
         """performs the super-method of `add_packet` but also makes sure the connection is visible."""
         super(LoopbackConnection, self).add_packet(packet, direction)
         self.get_graphics().show()

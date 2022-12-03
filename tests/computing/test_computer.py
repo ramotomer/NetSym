@@ -591,7 +591,7 @@ def test_handle_arp(example_computers):
             computer.interfaces[0].connect(Interface())
             packet = Packet(example_ethernet() / example_arp())
             computer._handle_arp(ReturnedPacket(packet, PacketMetadata(computer.interfaces[0], 1.0, PACKET.DIRECTION.INCOMING)))
-            to_send = computer.interfaces[0].connection_side.packets_to_send
+            to_send = computer.interfaces[0].connection_side._packets_to_send
 
             assert len(to_send) == 1
             reply, = to_send

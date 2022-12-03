@@ -17,3 +17,6 @@ class LoopbackInterface(Interface):
     @property
     def connection(self) -> LoopbackConnection:
         return cast("LoopbackConnection", super(LoopbackInterface, self).connection)
+
+    def is_connected(self) -> bool:
+        return True

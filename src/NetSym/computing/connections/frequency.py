@@ -1,48 +1,54 @@
 from __future__ import annotations
 
 import random
-from typing import NamedTuple, TYPE_CHECKING, List
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, List, Sequence
 
-from NetSym.computing.connections.connection import Connection, ConnectionSide
-from NetSym.consts import CONNECTIONS, T_Time, T_Color
-from NetSym.exceptions import NoSuchConnectionSideError
+from NetSym.computing.connections.base_connection import BaseSentPacket, BaseConnection, BaseConnectionSide
+from NetSym.consts import CONNECTIONS, T_Color, WINDOWS
+from NetSym.exceptions import NoSuchConnectionSideError, WrongUsageError
 from NetSym.gui.main_loop import MainLoop
 from NetSym.packets.packet import Packet
 from NetSym.packets.wireless_packet import WirelessPacket
 from NetSym.usefuls.funcs import distance
 
 if TYPE_CHECKING:
-    from NetSym.gui.tech.wireless_packet_graphics import WirelessPacketGraphics
+    from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
 
 
-class SentWirelessPacket(NamedTuple):
-    packet:       Packet
-    sending_time: T_Time
-    id:           int
+@dataclass
+class SentWirelessPacket(BaseSentPacket):
+    id: int = 0
 
 
-class Frequency(Connection):
+class Frequency(BaseConnection):
     """
     A Wifi connection is a frequency on which the antennas transmit.
     It is a global object, since you do not need
     """
     sent_packets: List[SentWirelessPacket]
 
-    def __init__(self, frequency: float, longest_line_in_screen: float) -> None:
-        super(Frequency, self).__init__(length=longest_line_in_screen, speed=CONNECTIONS.WIRELESS.DEFAULT_SPEED)
-        self.frequency = frequency
+    def __init__(self,
+                 frequency: float,
+                 longest_line_on_the_screen: float,
+                 speed: float = CONNECTIONS.WIRELESS.DEFAULT_SPEED,
+                 packet_loss: float = 0, latency: float = 0) -> None:
+        self.speed = speed
+        self.sent_packets = []
+        self.connection_sides: List[FrequencyConnectionSide] = []
 
-        del self.left_side, self.right_side
-        self.connection_sides = []
+        self.last_packet_motion = MainLoop.get_time()
+
+        self.packet_loss = packet_loss
+        self.latency = latency
+
+        self.frequency = frequency
+        self.longest_line_on_the_screen = longest_line_on_the_screen
 
         self.sent_packet_id = 0
 
         self.color: T_Color = (random.randint(0, 150), random.randint(0, 150), random.randint(0, 150))
-
-    @property
-    def length(self) -> float:
-        return self.initial_length
 
     def get_side(self, wireless_interface: WirelessInterface) -> FrequencyConnectionSide:
         """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""
@@ -59,35 +65,11 @@ class Frequency(Connection):
         """
         self.connection_sides.remove(frequency_connection_side)
 
-    def get_sides(self) -> List[FrequencyConnectionSide]:
+    def get_sides(self) -> Sequence[FrequencyConnectionSide]:
         """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""
         return self.connection_sides
 
-    def set_speed(self, new_speed: float) -> None:
-        """Sets the speed of the connection"""
-        raise NotImplementedError()
-
-    def set_pl(self, new_pl: float) -> None:
-        """Sets the PL amount of this connection"""
-        raise NotImplementedError()
-
-    def mark_as_blocked(self) -> None:
-        """
-        Marks the connection as blocked!
-        Makes sure that one of the connection sides is really blocked.
-        :return: None
-        """
-        raise NotImplementedError()
-
-    def mark_as_unblocked(self) -> None:
-        """
-        Marks the connection as an unblocked connection.
-        Makes sure first that both sides are actually unblocked. (That causes bugs!!)
-        :return: None
-        """
-        raise NotImplementedError()
-
-    def add_packet(self, packet: Packet, sending_side: FrequencyConnectionSide) -> WirelessPacket:
+    def _add_packet(self, packet: Packet, sending_side: FrequencyConnectionSide) -> WirelessPacket:
         """
         Add a packet that was sent on one of the `FrequencyConnectionSide`-s to the `self.sent_packets` list.
         This method starts the motion of the packet through the connection.
@@ -95,12 +77,18 @@ class Frequency(Connection):
         :param sending_side: the connection side the packet was sent from
         """
         wireless_packet = WirelessPacket(packet.data)
-        self.sent_packets.append(SentWirelessPacket(wireless_packet, MainLoop.get_time(), self.sent_packet_id))
-        sending_side.received_packet_ids.append(self.sent_packet_id)
+        self.sent_packets.append(
+            SentWirelessPacket(
+                packet=wireless_packet,
+                sending_time=MainLoop.get_time(),
+                id=self.sent_packet_id,
+            )
+        )
+        sending_side.recognize_sent_packet(self.sent_packet_id)
         self.sent_packet_id += 1
         return wireless_packet
 
-    def _reach_destinations(self, sent_packet: SentWirelessPacket) -> None:
+    def _receive_on_sides_if_reached_destination(self, sent_packet: SentWirelessPacket) -> None:
         """
         Adds the packet to its appropriate destination side's `received_packets` list.
         This is called when the packet finished its route through this connection and is ready to be received at the
@@ -114,21 +102,25 @@ class Frequency(Connection):
             location = side.wireless_interface.graphics.location
 
             if 0 != distance(location, wireless_packet.graphics.center_location) - wireless_packet.graphics.distance < 20:
-                if sent_packet.id not in side.received_packet_ids:  # dont get packets twice!
-                    side.packets_to_receive.append(Packet(wireless_packet.data))
-                    side.received_packet_ids.append(sent_packet.id)
+                if side.was_already_received(sent_packet):  # dont get packets twice!
+                    continue
 
-    def _remove_out_of_screen_packet(self, sent_packet: SentWirelessPacket) -> None:
+                side.get_packet_from_connection(sent_packet)
+
+    def _remove_packet_if_out_of_screen(self, sent_packet: SentWirelessPacket) -> None:
         """
         When a packet gets too far from its origin (the Antenna) it is not longer displayed nor used, so
         it should be deleted
         :param sent_packet: a `SentPacket`
         :return:
         """
+        if self._get_distance(sent_packet) <= self.longest_line_on_the_screen:
+            return  # packet still visible in screen...
+
         sent_packet.packet.graphics.unregister()
         self.sent_packets.remove(sent_packet)
 
-    def _send_packets_from_side(self, side: FrequencyConnectionSide) -> List[WirelessPacketGraphics]:
+    def _send_packets_from_side(self, side: FrequencyConnectionSide) -> List[GraphicsObject]:
         """
         Takes all of the packets that are waiting to be sent on one ConnectionSide and sends them down the main connection.
         :param side: a `ConnectionSide` object.
@@ -138,10 +130,9 @@ class Frequency(Connection):
 
         packet_graphics_to_register = []
         if side.is_sending():
-            for packet in side.packets_to_send:
-                wireless_packet = self.add_packet(packet, side)
+            for packet in side.pop_packets_to_send():
+                wireless_packet = self._add_packet(packet, side)
                 packet_graphics_to_register.extend(wireless_packet.init_graphics(self, side.wireless_interface))
-            side.packets_to_send.clear()
         return packet_graphics_to_register
 
     def _update_packet(self, sent_packet: SentWirelessPacket) -> None:
@@ -149,55 +140,62 @@ class Frequency(Connection):
         Receives a SentPacket object and updates its progress on the connection.
         If the packet has reached the end of the connection, make it be received at the appropriate ConnectionSide
         :param sent_packet: a `SentPacket` namedtuple
-        :return: None
         """
-        distance_ = MainLoop.get_time_since(sent_packet.sending_time) * self.speed
+        distance_ = self._get_distance(sent_packet)
         sent_packet.packet.graphics.distance = distance_
 
-        if distance_ > self.length:
-            self._remove_out_of_screen_packet(sent_packet)
+        self._remove_packet_if_out_of_screen(sent_packet)
 
-    def move_packets(self, main_loop: MainLoop) -> None:
+    def _get_distance(self, sent_packet: BaseSentPacket) -> float:
         """
-        This method is inserted into the main loop of the simulation when this `Connection` object is initiated.
-        The packets in the connection should always be moving. (unless paused)
-        This method sends new packets from the `ConnectionSide` object, updates the time they have been in the cable, and
-            removes them if they reached the end.
-        :return: None
+        Returns the distance of the packet from the source of origin
+        Calculated by the time and speed of the wireless packet
         """
-        for side in self.get_sides():
-            new_packet_graphics_objects = self._send_packets_from_side(side)
-            main_loop.register_graphics_object(new_packet_graphics_objects)
+        return MainLoop.get_time_since(sent_packet.sending_time) * self.speed
 
-        for sent_packet in self.sent_packets[:]:  # we copy the list because we alter it during the run
-            self._update_packet(sent_packet)
-            self._reach_destinations(sent_packet)
+    def _is_lucky_packet(self, sent_packet: BaseSentPacket) -> bool:
+        """
+        Checks whether a certain event should happen to a packet
+        The chances go up as the packet moves further and further away from the center of origin.
+        """
+        return (2 * (self._get_distance(sent_packet) / WINDOWS.MAIN.WIDTH)) >= (random.random() + 0.3)
 
     def __repr__(self) -> str:
         """The ip_layer representation of the connection"""
         return f"Frequency({self.frequency}, connected: {len(self.connection_sides)})"
 
 
-class FrequencyConnectionSide(ConnectionSide):
+class FrequencyConnectionSide(BaseConnectionSide):
     """
     This is the API that a computer sees to the frequency, using it the computer can send and receive packets.
     Each computer in the Frequency receives a distinct `FrequencyConnectionSide` object
     """
     def __init__(self, main_connection: Frequency, wireless_interface: WirelessInterface) -> None:
         super(FrequencyConnectionSide, self).__init__(main_connection)
+
         self.wireless_interface = wireless_interface
-        self.received_packet_ids = []
+        self._received_packet_ids = []
 
-    def mark_as_blocked(self) -> None:
+    def get_packet_from_connection(self, sent_packet: BaseSentPacket) -> None:
         """
-        Marks the connection as being a blocked connection (paints it a different color)
-        :return: None
+        This will be called by the frequency when a new packet arrives at this side of it
         """
-        raise NotImplementedError()
+        if not isinstance(sent_packet, SentWirelessPacket):
+            raise WrongUsageError(f"Only call this function with a SentWirelessPacket object not {type(sent_packet)} like {sent_packet!r}!!!")
 
-    def mark_as_unblocked(self) -> None:
+        self._packets_to_receive.append(Packet(sent_packet.packet.data))
+        self._received_packet_ids.append(sent_packet.id)
+
+    def was_already_received(self, sent_packet: SentWirelessPacket) -> bool:
         """
-        Marks the connection as a regular (unblocked) connection.
-        :return: None
+        Return whether or not the packet was already received on this side of the frequency and translated into a regular packet :)
+        Does it by looking at the ID of that packet :)
         """
-        raise NotImplementedError()
+        return bool(sent_packet.id in self._received_packet_ids)
+
+    def recognize_sent_packet(self, id_: int) -> None:
+        """
+        Lets the connection side know that a certain packet was sent by itself.
+        That way it will not take it in at any case.
+        """
+        self._received_packet_ids.append(id_)
