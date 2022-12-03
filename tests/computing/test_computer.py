@@ -7,10 +7,10 @@ from _pytest.monkeypatch import MonkeyPatch
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.computer import Computer
-from NetSym.computing.internals.interface import Interface
+from NetSym.computing.internals.network_interfaces.interface import Interface
+from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
 from NetSym.computing.internals.processes.abstracts.process import ReturnedPacket, PacketMetadata
 from NetSym.computing.internals.processes.usermode_processes.sniffing_process import SniffingProcess
-from NetSym.computing.internals.wireless_interface import WirelessInterface
 from NetSym.consts import OS, FILE_PATHS, DIRECTORIES, COMPUTER, INTERFACES, PACKET
 from NetSym.exceptions import NoSuchInterfaceError, PopupWindowWithThisError
 from NetSym.gui.abstracts.graphics_object import GraphicsObject

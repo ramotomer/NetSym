@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional, Callable, Dict, Union
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
-from NetSym.computing.internals.interface import Interface
+from NetSym.computing.internals.network_interfaces.interface import Interface
 from NetSym.consts import T_Color, INTERFACES
 from NetSym.exceptions import *
 from NetSym.gui.tech.wireless_interface_graphics import WirelessInterfaceGraphics
@@ -50,16 +50,6 @@ class WirelessInterface(Interface):
             raise InterfaceNotConnectedError("No frequency object to get!")
 
         return self.connection
-
-    @property
-    def connection_length(self) -> Optional[float]:
-        """
-        The length of the connection_side this `Interface` is connected to. (The time a packet takes to go through it in seconds)
-        :return: a number of seconds.
-        """
-        if not self.is_connected():
-            return None
-        return self.connection.deliver_time
 
     def is_connected(self) -> bool:
         return self.frequency is not None and self.connection_side is not None

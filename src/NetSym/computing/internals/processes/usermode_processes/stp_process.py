@@ -15,7 +15,7 @@ from NetSym.packets.all import STP
 from NetSym.packets.packet import Packet
 
 if TYPE_CHECKING:
-    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.internals.network_interfaces.interface import Interface
     from NetSym.computing.switch import Switch
 
 

@@ -4,7 +4,7 @@ from typing import Optional, Iterable, Dict, TYPE_CHECKING
 
 from NetSym.computing.computer import Computer
 from NetSym.computing.internals.filesystem.filesystem import Filesystem
-from NetSym.computing.internals.interface import Interface
+from NetSym.computing.internals.network_interfaces.interface import Interface
 from NetSym.computing.internals.processes.kernelmode_processes.route_packet_process import RoutePacket
 from NetSym.computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
 from NetSym.computing.internals.routing_table import RoutingTable

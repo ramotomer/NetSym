@@ -95,6 +95,9 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
 
     @property
     def length(self) -> float:  # the length of the connection.
+        if (self.interfaces.start is None) or (self.interfaces.end is None):
+            raise GraphicsObjectNotYetInitialized(f"Connection Graphics interfaces.start or interfaces.end is None!: {self!r}, {self.interfaces}")
+
         return distance(self.interfaces.start.location, self.interfaces.end.location)
 
     @property
@@ -138,8 +141,9 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
 
     def is_in(self, x: float, y: float) -> bool:
         """Returns whether or not the mouse is close enough to the connection for it to count as pressed"""
-        if any(interface is None for interface in self.interfaces):
-            pass
+        if (self.interfaces.start is None) or (self.interfaces.end is None):
+            raise SomethingWentTerriblyWrongError("Do not check a connection that was not yet connected or initialized!")
+
         location = x, y
         a = distance(self.interfaces.start.location, location)
         b = distance(self.interfaces.end.location, location)
@@ -151,11 +155,12 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
             return True
 
         cos_of_beta = (c**2 + a**2 - b**2) / (2 * a * c)
-        beta = 0
+        beta = 0.
         try:
             beta = acos(cos_of_beta)  # the law of the cosines
         except ValueError:
             pass
+
         mouse_distance_to_connection = a * sin(beta)
         return mouse_distance_to_connection <= CONNECTIONS.MOUSE_TOUCH_SENSITIVITY
 
@@ -167,6 +172,9 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
         :param direction: `PACKET.DIRECTION.RIGHT` or `PACKET.DIRECTION.LEFT`.
         :return: (self.start_computer.x, self.start_computer.y, self.end_computer.x, self.end_computer.y)
         """
+        if (self.interfaces.start is None) or (self.interfaces.end is None):
+            raise GraphicsObjectNotYetInitialized("Do not use a connection that was not yet connected or initialized!")
+
         if direction == PACKET.DIRECTION.RIGHT:
             return self.interfaces.start.x, self.interfaces.start.y, self.interfaces.end.x, self.interfaces.end.y
         elif direction == PACKET.DIRECTION.LEFT:

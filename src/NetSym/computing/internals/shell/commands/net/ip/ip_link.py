@@ -9,7 +9,7 @@ from NetSym.exceptions import DeviceAlreadyConnectedError, NoSuchInterfaceError
 
 if TYPE_CHECKING:
     import argparse
-    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.internals.network_interfaces.interface import Interface
     from NetSym.computing.internals.shell.shell import Shell
     from NetSym.computing.computer import Computer
 

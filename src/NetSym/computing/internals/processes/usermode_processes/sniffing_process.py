@@ -8,7 +8,7 @@ from NetSym.exceptions import SocketIsClosedError
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
-    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.internals.network_interfaces.interface import Interface
     from NetSym.computing.computer import Computer
 
 

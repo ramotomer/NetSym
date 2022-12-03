@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, List, Callable, Union
 
-from NetSym.computing.internals.interface import Interface
+from NetSym.computing.internals.network_interfaces.interface import Interface
 from NetSym.computing.internals.sockets.socket import Socket
 from NetSym.consts import COMPUTER, INTERFACES
 from NetSym.exceptions import *

@@ -17,10 +17,10 @@ from pyglet.window import key
 from NetSym.address.ip_address import IPAddress
 from NetSym.computing.computer import Computer
 from NetSym.computing.internals.frequency import Frequency
-from NetSym.computing.internals.interface import Interface
+from NetSym.computing.internals.network_interfaces.interface import Interface
+from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
 from NetSym.computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
 from NetSym.computing.internals.processes.usermode_processes.stp_process import STPProcess
-from NetSym.computing.internals.wireless_interface import WirelessInterface
 from NetSym.computing.router import Router
 from NetSym.computing.switch import Switch, Hub, Antenna
 from NetSym.consts import VIEW, TEXT, BUTTONS, IMAGES, DIRECTORIES, T_Color, SELECTED_OBJECT, KEYBOARD, MODES, WINDOWS, COLORS, CONNECTIONS, \

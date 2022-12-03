@@ -13,7 +13,7 @@ from NetSym.usefuls.funcs import distance
 
 if TYPE_CHECKING:
     from NetSym.gui.tech.wireless_packet_graphics import WirelessPacketGraphics
-    from NetSym.computing.internals.wireless_interface import WirelessInterface
+    from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
 
 
 class SentWirelessPacket(NamedTuple):

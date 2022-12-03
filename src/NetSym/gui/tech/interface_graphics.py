@@ -15,7 +15,7 @@ from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsO
 from NetSym.usefuls.funcs import distance, with_args, get_the_one_with_raise
 
 if TYPE_CHECKING:
-    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.internals.network_interfaces.interface import Interface
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
     from NetSym.gui.user_interface.user_interface import UserInterface
 
@@ -26,6 +26,9 @@ class InterfaceGraphics(ViewableGraphicsObject, Selectable):
     It is the little square next to computers.
     It allows the user much more control over their computers and to inspect the network interfaces of their computers.
     """
+    width: float
+    height: float
+
     def __init__(self,
                  x: float,
                  y: float,

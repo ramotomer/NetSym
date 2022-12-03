@@ -12,8 +12,9 @@ from NetSym.address.mac_address import MACAddress
 from NetSym.computing.internals.arp_cache import ArpCache
 from NetSym.computing.internals.dns_cache import DNSCache
 from NetSym.computing.internals.filesystem.filesystem import Filesystem
-from NetSym.computing.internals.interface import Interface
 from NetSym.computing.internals.loopback_interface import LoopbackInterface
+from NetSym.computing.internals.network_interfaces.interface import Interface
+from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
 from NetSym.computing.internals.packet_sending_queue import PacketSendingQueue
 from NetSym.computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket, WaitingFor
 from NetSym.computing.internals.processes.kernelmode_processes.arp_process import ARPProcess, SendPacketWithARPProcess
@@ -32,7 +33,6 @@ from NetSym.computing.internals.sockets.l4_socket import L4Socket
 from NetSym.computing.internals.sockets.raw_socket import RawSocket
 from NetSym.computing.internals.sockets.tcp_socket import TCPSocket
 from NetSym.computing.internals.sockets.udp_socket import ReturnedUDPPacket, UDPSocket
-from NetSym.computing.internals.wireless_interface import WirelessInterface
 from NetSym.consts import IMAGES, COMPUTER, OPCODES, PACKET, PROTOCOLS, INTERFACES, OS, T_Time, SENDING_GRAT_ARPS, \
     FILE_PATHS, T_Port, TTL, PORTS, debugp
 from NetSym.exceptions import *
