@@ -3,9 +3,7 @@ from __future__ import annotations
 import random
 from collections import deque
 from dataclasses import dataclass
-from functools import reduce
-from operator import concat
-from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterable, Union, Tuple, Any, Set, Callable, Sequence
+from typing import TYPE_CHECKING, Optional, List, Type, Generator, Dict, Iterable, Union, Tuple, Any, Set, Callable, Sequence, cast
 
 import scapy
 
@@ -15,6 +13,7 @@ from NetSym.computing.internals.arp_cache import ArpCache
 from NetSym.computing.internals.dns_cache import DNSCache
 from NetSym.computing.internals.filesystem.filesystem import Filesystem
 from NetSym.computing.internals.interface import Interface
+from NetSym.computing.internals.loopback_interface import LoopbackInterface
 from NetSym.computing.internals.packet_sending_queue import PacketSendingQueue
 from NetSym.computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket, WaitingFor
 from NetSym.computing.internals.processes.kernelmode_processes.arp_process import ARPProcess, SendPacketWithARPProcess
@@ -80,7 +79,7 @@ class Computer:
 
     The computer runs many `Process`-s that are all either currently running or waiting for a certain packet to arrive.
     """
-    PORTS_TO_PROCESSES = {
+    PORTS_TO_PROCESSES: Dict[str, Dict[int, Optional[Type[Process]]]] = {
         "TCP": {
             PORTS.DAYTIME: DAYTIMEServerProcess,
             PORTS.FTP: ServerFTPProcess,
@@ -129,7 +128,7 @@ class Computer:
         self.interfaces: List[Interface] = list(interfaces)
         if not interfaces:
             self.interfaces = []  # a list of all of the interfaces without the loopback
-        self.loopback = Interface.loopback()
+        self.loopback = LoopbackInterface()
         self.boot_time: Optional[T_Time] = MainLoop.get_time()
 
         self.received:     List[ReturnedPacket] = []
@@ -144,7 +143,7 @@ class Computer:
         self.filesystem = Filesystem.with_default_dirs()
         self.process_scheduler = ProcessScheduler(self)
 
-        self.graphics = None
+        self.graphics: Optional[ComputerGraphics] = None
         # ^ The `GraphicsObject` of the computer, not initiated for now.
 
         self.is_powered_on = True
@@ -244,7 +243,7 @@ class Computer:
     def raw_sockets(self) -> List[RawSocket]:
         return [socket for socket in self.sockets if isinstance(socket, RawSocket)]
 
-    def get_graphics(self) -> GraphicsObject:
+    def get_graphics(self) -> ComputerGraphics:
         """
         Return the graphics object or raise if the `init_graphics` was not yet called
         """
@@ -296,7 +295,7 @@ class Computer:
         :return: The graphics objects to register in the main loop
         """
         self.graphics = ComputerGraphics(x, y, self, console_location=console_location)
-        return [self.graphics] + self.loopback.connection.init_graphics(self.graphics)
+        return self.loopback.connection.init_graphics(self.graphics) + [cast("GraphicsObject", self.graphics)]
 
     def print(self, string: str) -> None:
         """
@@ -304,7 +303,7 @@ class Computer:
         :param string: The string to print.
         :return: None
         """
-        output_methods: Dict[str, Callable[[str, ...], None]] = {
+        output_methods: Dict[str, Callable[..., None]] = {
             COMPUTER.OUTPUT_METHOD.CONSOLE: self.get_graphics().child_graphics_objects.console.write,
             COMPUTER.OUTPUT_METHOD.SHELL:   self._print_on_all_shells,
             COMPUTER.OUTPUT_METHOD.STDOUT:  print,
@@ -445,7 +444,7 @@ class Computer:
         Things the computer should do when it is turned on
         :return:
         """
-        self.boot_time = MainLoop.instance.time()
+        self.boot_time = MainLoop.get_time()
         self.process_scheduler.run_startup_processes()
 
         self.icmp_sequence_number = 0
@@ -500,7 +499,7 @@ class Computer:
         if interface.has_ip():
             self.routing_table.delete_interface(interface.get_ip())
         self.interfaces.remove(interface)
-        self.main_loop.unregister_graphics_object(interface.graphics)
+        self.main_loop.unregister_graphics_object(interface.get_graphics())
 
     def available_interface(self) -> Interface:
         """
@@ -620,7 +619,7 @@ class Computer:
         :return: None
         """
         interface_ip_address = interface_ip
-        if interface_ip is None:
+        if interface_ip_address is None:
             interface_ip_address = self.same_subnet_interfaces(gateway_ip)[0].get_ip()
         self.routing_table.set_default_gateway(gateway_ip, interface_ip_address)
 
@@ -973,7 +972,7 @@ class Computer:
         interface = self.get_sending_interface_by_routing_table(dst_ip)
         self.send_packet_stream(
             pid, mode,
-            (interface.ethernet_wrap(dst_mac, data) for data in datas),
+            [interface.ethernet_wrap(dst_mac, data) for data in datas],
             interval_between_packets,
             interface,
         )
@@ -1001,7 +1000,7 @@ class Computer:
         """
         self.send_packet_stream(
             pid, mode,
-            (self.ip_wrap(dst_mac, dst_ip, data) for data in datas),
+            [self.ip_wrap(dst_mac, dst_ip, data) for data in datas],
             interval_between_packets,
         )
 
@@ -1155,7 +1154,7 @@ class Computer:
         :return: The actual IP address it is looking for (The IP of your gateway (or the original if in the same subnet))
         and a condition to test whether or not the process is done looking for the IP.
         """
-        ip_for_the_mac = self.routing_table[ip_address].ip_address
+        ip_for_the_mac = self.routing_table[ip_address].gateway_ip
         yield from ARPProcess(requesting_process.pid, self, ip_for_the_mac.string_ip).code()
         return ip_for_the_mac, self.arp_cache[ip_for_the_mac].mac
 
@@ -1219,20 +1218,20 @@ class Computer:
         """
         Allows programs on the computer to acquire a network socket.
         """
-        socket = {
+        socket: Socket = {
             COMPUTER.SOCKETS.TYPES.SOCK_STREAM: TCPSocket,
             COMPUTER.SOCKETS.TYPES.SOCK_RAW:    RawSocket,
             COMPUTER.SOCKETS.TYPES.SOCK_DGRAM:  UDPSocket,
         }[kind](self, address_family)
 
         self.sockets[socket] = SocketData(
-            kind=kind,
-            local_ip_address=None,
-            local_port=None,
+            kind             =kind,
+            local_ip_address =None,
+            local_port       =None,
             remote_ip_address=None,
-            remote_port=None,
-            state=COMPUTER.SOCKETS.STATES.UNBOUND,
-            pid=requesting_process_pid,
+            remote_port      =None,
+            state            =COMPUTER.SOCKETS.STATES.UNBOUND,
+            pid              =requesting_process_pid,
         )
         return socket
 
@@ -1287,13 +1286,13 @@ class Computer:
         Can filter by protocol ("TCP" / "UDP") if supplied
         """
         if protocol is None:
-            return reduce(concat, [self.get_open_ports(protocol) for protocol in COMPUTER.SOCKETS.L4_PROTOCOLS.values()])
+            return sum([self.get_open_ports(protocol) for protocol in COMPUTER.SOCKETS.L4_PROTOCOLS.values()], start=[])
 
         return [socket_data.local_port for socket, socket_data in self.sockets.items()
                 if socket_data.state in [COMPUTER.SOCKETS.STATES.BOUND,
                                          COMPUTER.SOCKETS.STATES.LISTENING,
                                          COMPUTER.SOCKETS.STATES.ESTABLISHED] and
-                isinstance(socket, L4Socket) and socket.protocol == protocol]
+                isinstance(socket, L4Socket) and (socket.protocol == protocol) and (socket_data.local_port is not None)]
 
     def bind_socket(self, socket: Socket, address: Tuple[IPAddress, T_Port]) -> None:
         """
@@ -1360,7 +1359,7 @@ class Computer:
         """
         for socket in self.sockets:
             if self._does_packet_match_udp_socket_fourtuple(socket, packet):
-                socket.received.append(ReturnedUDPPacket(packet["UDP"].payload.build(), packet["IP"].src_ip, packet["UDP"].src_port))
+                cast(UDPSocket, socket).received.append(ReturnedUDPPacket(packet["UDP"].payload.build(), packet["IP"].src_ip, packet["UDP"].src_port))
 
     def open_port(self, port_number: int, protocol: str = "TCP") -> None:
         """
@@ -1373,11 +1372,14 @@ class Computer:
             raise PopupWindowWithThisError(f"{port_number} is an unknown {protocol} port!!!")
 
         process = self.PORTS_TO_PROCESSES[protocol][port_number]
-        if process is not None:
-            if port_number in self.get_open_ports(protocol):
-                self.process_scheduler.kill_all_usermode_processes_by_type(process, force=True)
-            else:
-                self.process_scheduler.start_usermode_process(self.PORTS_TO_PROCESSES[protocol][port_number])
+        if process is None:
+            return
+
+        if port_number in self.get_open_ports(protocol):
+            self.process_scheduler.kill_all_usermode_processes_by_type(process, force=True)
+            return
+
+        self.process_scheduler.start_usermode_process(process)
 
     def _does_packet_match_socket_fourtuple(self, socket: Socket, packet: Packet) -> bool:
         """
@@ -1478,10 +1480,10 @@ class Computer:
                 self.received_raw.append(packet_with_metadata)
                 self._sniff_packet_on_relevant_raw_sockets(packet_with_metadata)
 
-                packet_with_metadata = self._handle_ip_fragments(packet_with_metadata)
-                if packet_with_metadata is not None:
-                    self.received.append(packet_with_metadata)
-                    self._handle_special_packet(packet_with_metadata)
+                reassembled_packet = self._handle_ip_fragments(packet_with_metadata)
+                if reassembled_packet is not None:
+                    self.received.append(reassembled_packet)
+                    self._handle_special_packet(reassembled_packet)
 
         self._handle_packet_streams()
         self.process_scheduler.handle_processes()
@@ -1504,7 +1506,10 @@ class Computer:
         :param dict_:
         :return:
         """
-        interface_classes = {INTERFACES.TYPE.ETHERNET: Interface, INTERFACES.TYPE.WIFI: WirelessInterface}
+        interface_classes: Dict[str, Type[Interface]] = {
+            INTERFACES.TYPE.ETHERNET: Interface,
+            INTERFACES.TYPE.WIFI: WirelessInterface
+        }
         return [interface_classes[iface_dict["type_"]].from_dict_load(iface_dict) for iface_dict in dict_["interfaces"]]
 
     @classmethod

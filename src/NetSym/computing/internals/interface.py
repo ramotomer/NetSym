@@ -8,7 +8,6 @@ import scapy
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.connection import Connection
-from NetSym.computing.loopback_connection import LoopbackConnection
 from NetSym.consts import T_Time, FILE_PATHS, INTERFACES, PROTOCOLS, T_Color
 from NetSym.exceptions import *
 from NetSym.gui.tech.interface_graphics import InterfaceGraphics
@@ -118,12 +117,6 @@ class Interface:
     def with_ip(cls, ip_address: Union[str, IPAddress]) -> Interface:
         """Constructor for an interface with a given (string) IP address, a random name and a random MAC address"""
         return cls(MACAddress.randomac(), ip_address, cls.random_name())
-
-    @classmethod
-    def loopback(cls) -> Interface:
-        """Constructor for a loopback interface"""
-        connection = LoopbackConnection()
-        return cls(MACAddress.no_mac(), IPAddress.loopback(), "loopback", connection.get_side())
 
     def get_ip(self) -> IPAddress:
         """
@@ -300,14 +293,14 @@ class Interface:
             self.connection_side.send(packet)
             return True
 
-    def receive(self) -> Optional[List[Packet]]:
+    def receive(self) -> List[Packet]:
         """
         Returns the packet that was received (if one was received) else, returns None.
         If the interface is not in promiscuous, only returns packets that are directed for it (and broadcast).
         :return: A `Packet` object that was sent from the other side of the connection_side.
         """
         if not self.is_powered_on:
-            return
+            return []
 
         if not self.is_connected():
             raise InterfaceNotConnectedError("The interface is not connected so it cannot receive packets!!!")

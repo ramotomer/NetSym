@@ -71,16 +71,17 @@ class ArpCache:
         for key in [ip for ip in self.__cache if self.__cache[ip].type == COMPUTER.ARP_CACHE.DYNAMIC]:
             del self.__cache[key]
 
-    def __contains__(self, item: IPAddress) -> bool:
-        if not isinstance(item, IPAddress):
-            raise InvalidAddressError(f"Key of an arp cache must be an IPAddress object!!! not {type(item)} like {repr(item)}")
+    def __contains__(self, item: Union[str, IPAddress]) -> bool:
+        if not isinstance(item, (str, IPAddress)):
+            raise InvalidAddressError(f"Key of an arp cache must be a string or IPAddress object!!! not {type(item)} like {repr(item)}")
 
-        return item.string_ip in {ip.string_ip: value for ip, value in self.__cache.items()}
+        return IPAddress(item).string_ip in {ip.string_ip: value for ip, value in self.__cache.items()}
 
-    def __getitem__(self, item: IPAddress) -> ARPCacheItem:
+    def __getitem__(self, item: Union[str, IPAddress]) -> ARPCacheItem:
         if not isinstance(item, IPAddress):
-            raise KeyError(f"Only search the arp cache for IPAddress! not {type(item)}!")
-        return {ip.string_ip: value for ip, value in self.__cache.items()}[item.string_ip]
+            raise KeyError(f"Only search the arp cache for string or IPAddress! not {type(item)}!")
+
+        return {ip.string_ip: value for ip, value in self.__cache.items()}[IPAddress(item).string_ip]
 
     def __iter__(self) -> Iterator:
         return iter(self.__cache)

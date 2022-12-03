@@ -26,6 +26,7 @@ class UDPSocket(L4Socket):
     """
     A socket is an operation-system object that allows for an abstraction of network access and sessions
     """
+    received: List[ReturnedUDPPacket]  # type: ignore
 
     def __init__(self,
                  computer: Computer,

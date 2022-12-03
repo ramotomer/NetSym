@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from itertools import product
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, TYPE_CHECKING
 
 from NetSym.gui.user_interface.resizing_dot import ResizingDot
+
+if TYPE_CHECKING:
+    from NetSym.gui.abstracts.resizable import Resizable
 
 
 class ResizingDotsHandler:
@@ -15,7 +18,7 @@ class ResizingDotsHandler:
         Initiates the object
         """
         self.dots: List[ResizingDot] = dots if dots is not None else []
-        self.resized_object = None
+        self.resized_object: Optional[Resizable] = None
 
     def select(self, graphics_object: Resizable) -> None:
         """

@@ -15,8 +15,24 @@ class RoutingTableItem(NamedTuple):
     ip_address is the IP address to send the packet to (on the second layer) - the gateway
     interface is the IPAddress of the interface the packet should be sent on.
     """
-    ip_address:   Union[str, IPAddress]
+    gateway_ip:   Union[str, IPAddress]  # can be 'On-link'
     interface_ip: IPAddress
+
+    @property
+    def ip_address(self):
+        return self.gateway_ip  # TODO: remove this alias please it is not as understandable
+
+
+class TypeSafeRoutingTableItem(NamedTuple):
+    """
+    Just like RoutingTableItem - only it is guaranteed that the `ip_address` field is never 'On-link'
+    """
+    gateway_ip:   IPAddress
+    interface_ip: IPAddress
+
+    @property
+    def ip_address(self):
+        return self.gateway_ip  # TODO: remove this alias please it is not as understandable
 
 
 class RoutingTable:
@@ -43,7 +59,7 @@ class RoutingTable:
         }
 
     @property
-    def default_gateway(self) -> Optional[RoutingTableItem]:
+    def default_gateway(self) -> Optional[TypeSafeRoutingTableItem]:
         """The default gateway in the routing table"""
         try:
             return self[IPAddress("0.0.0.0/0")]
@@ -123,7 +139,7 @@ class RoutingTable:
         self.route_delete(interface_ip.subnet())
         self.route_delete(IPAddress(interface_ip.string_ip + "/32"))
 
-    def __getitem__(self, item: Union[str, IPAddress]) -> RoutingTableItem:
+    def __getitem__(self, item: Union[str, IPAddress]) -> TypeSafeRoutingTableItem:
         """
         allows the dictionary notation of dict[key].
         :param item: The key. Has to be an `IPAddress` object.
@@ -135,10 +151,10 @@ class RoutingTable:
             raise RoutingTableCouldNotRouteToIPAddress(f"IP: {requested_address!r}... ")  # Routing Table: \n{self!r}")
 
         result = self.dictionary[max(possible_addresses, key=attrgetter("subnet_mask"))]
-        if result.ip_address is ADDRESSES.IP.ON_LINK:
-            return RoutingTableItem(requested_address, result.interface_ip)
+        if result.gateway_ip is ADDRESSES.IP.ON_LINK:
+            return TypeSafeRoutingTableItem(requested_address, result.interface_ip)
 
-        return result
+        return TypeSafeRoutingTableItem(*result)
 
     def __contains__(self, item: Union[str, IPAddress]) -> bool:
         """
@@ -160,7 +176,7 @@ class RoutingTable:
 ====================================================================
 Active Routes:
 Network Destination             Gateway           Interface  
-{linesep.join(''.join([repr(key).rjust(20, ' '), str(self.dictionary[key].ip_address).rjust(20, ' '), 
+{linesep.join(''.join([repr(key).rjust(20, ' '), str(self.dictionary[key].gateway_ip).rjust(20, ' '), 
                        str(self.dictionary[key].interface_ip).rjust(20, ' ')]) for key in self.dictionary)}	
 
 Default Gateway:        {getattr(self.default_gateway, "ip_address", None)}

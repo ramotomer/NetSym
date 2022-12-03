@@ -35,7 +35,7 @@ class Ls(Command):
         :return:
         """
         if self.computer.filesystem.is_absolute_path(path):
-            dir_ = self.computer.filesystem.at_absolute_path(path)
+            dir_ = self.computer.filesystem.directory_at_absolute_path(path)
         else:
             dir_ = self.shell.cwd.at_relative_path(path)
         dir_items = list(dir_.items)

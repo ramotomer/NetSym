@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Optional, List, Callable
 from NetSym.computing.internals.interface import Interface
 from NetSym.computing.internals.sockets.socket import Socket
 from NetSym.consts import COMPUTER, INTERFACES
-from NetSym.exceptions import RawSocketError
+from NetSym.exceptions import *
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
@@ -18,6 +18,7 @@ class RawSocket(Socket):
     A socket is an operation-system object that allows for an abstraction of network access
     and sessions
     """
+    received: List[ReturnedPacket]  # type: ignore
 
     def __init__(self, computer: Computer, kind: int) -> None:
         """
@@ -31,9 +32,16 @@ class RawSocket(Socket):
         super(RawSocket, self).__init__(computer, kind=COMPUTER.SOCKETS.TYPES.SOCK_RAW)
         self.is_connected = True
 
-        self.filter = None
+        self._filter: Optional[Callable[[Packet], bool]] = None
         self.interface: Optional[Interface] = INTERFACES.NO_INTERFACE
         self.is_promisc = False
+
+    @property
+    def filter(self) -> Callable[[Packet], bool]:
+        if (self._filter is None) or not self.is_bound:
+            raise SocketNotBoundError(f"Cannot get the filter if the socket was not yet bound! socket: {self!r}")
+
+        return self._filter
 
     def send(self, packet: Packet) -> None:
         """
@@ -70,7 +78,7 @@ class RawSocket(Socket):
         self.assert_is_not_closed()
 
         self.is_bound = True
-        self.filter = filter
+        self._filter = filter
         self.interface = interface
         if promisc:
             if interface is INTERFACES.ANY_INTERFACE:
