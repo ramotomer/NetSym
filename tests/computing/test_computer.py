@@ -14,20 +14,10 @@ from NetSym.computing.internals.wireless_interface import WirelessInterface
 from NetSym.consts import OS, FILE_PATHS, DIRECTORIES, COMPUTER, INTERFACES, PACKET
 from NetSym.exceptions import NoSuchInterfaceError, PopupWindowWithThisError
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
-from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 from NetSym.packets.packet import Packet
 from NetSym.usefuls.dotdict import DotDict
-from tests.usefuls import MACS, IPS, example_ethernet, example_arp
-
-
-class MockingMainLoop(MainLoop):
-    def time(self):
-        return 1
-
-
-def mock_mainloop_time(patcher):
-    patcher.setattr(MainLoop, "instance", MockingMainLoop())
+from tests.usefuls import MACS, IPS, example_ethernet, example_arp, mock_mainloop_time
 
 
 def mock_for_computer_generation(patcher):
