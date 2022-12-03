@@ -1,20 +1,19 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Callable, Dict, Union
+from typing import TYPE_CHECKING, Optional, Dict, Union
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
-from NetSym.computing.internals.network_interfaces.interface import Interface
+from NetSym.computing.internals.network_interfaces.base_interface import BaseInterface
 from NetSym.consts import T_Color, INTERFACES
 from NetSym.exceptions import *
 from NetSym.gui.tech.wireless_interface_graphics import WirelessInterfaceGraphics
 
 if TYPE_CHECKING:
-    from NetSym.packets.packet import Packet
-    from NetSym.computing.internals.frequency import Frequency, FrequencyConnectionSide
+    from NetSym.computing.connections.frequency import Frequency, FrequencyConnectionSide
 
 
-class WirelessInterface(Interface):
+class WirelessInterface(BaseInterface):
     """
     This class represents a computer net interface.
     It can send and receive packets.
@@ -76,31 +75,6 @@ class WirelessInterface(Interface):
         self.frequency_object.remove_side(self.connection_side)
         self.connection_side = None
         self.frequency = None
-
-    def block(self, accept: Optional[Callable[[Packet], bool]] = None) -> None:
-        """
-        Blocks the connection and does not receive packets from it anymore.
-        It only accepts packets that contain the `accept` layer (for example "STP")
-        if blocked, does nothing (updates the 'accept')
-        :return: None
-        """
-        raise NotImplementedError()
-
-    def unblock(self) -> None:
-        """
-        Releases the blocking of the connection and allows it to receive packets again.
-        if not blocked, does nothing...
-        :return: None
-        """
-        raise NotImplementedError()
-
-    def toggle_block(self, accept: Optional[Callable[[Packet], bool]] = None) -> None:
-        """
-        Toggles between block() and unblock()
-        :param accept:
-        :return:
-        """
-        raise NotImplementedError()
 
     def generate_view_text(self) -> str:
         """

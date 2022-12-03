@@ -2,8 +2,8 @@ from typing import cast
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
+from NetSym.computing.connections.loopback_connection import LoopbackConnection
 from NetSym.computing.internals.network_interfaces.interface import Interface
-from NetSym.computing.loopback_connection import LoopbackConnection
 
 
 class LoopbackInterface(Interface):

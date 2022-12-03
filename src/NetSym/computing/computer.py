@@ -9,13 +9,14 @@ import scapy
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
-from NetSym.computing.internals.arp_cache import ArpCache
-from NetSym.computing.internals.dns_cache import DNSCache
 from NetSym.computing.internals.filesystem.filesystem import Filesystem
-from NetSym.computing.internals.loopback_interface import LoopbackInterface
+from NetSym.computing.internals.network_data_structures.arp_cache import ArpCache
+from NetSym.computing.internals.network_data_structures.dns_cache import DNSCache
+from NetSym.computing.internals.network_data_structures.packet_sending_queue import PacketSendingQueue
+from NetSym.computing.internals.network_data_structures.routing_table import RoutingTable
 from NetSym.computing.internals.network_interfaces.interface import Interface
+from NetSym.computing.internals.network_interfaces.loopback_interface import LoopbackInterface
 from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
-from NetSym.computing.internals.packet_sending_queue import PacketSendingQueue
 from NetSym.computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket, WaitingFor
 from NetSym.computing.internals.processes.kernelmode_processes.arp_process import ARPProcess, SendPacketWithARPProcess
 from NetSym.computing.internals.processes.process_scheduler import ProcessScheduler
@@ -28,7 +29,6 @@ from NetSym.computing.internals.processes.usermode_processes.echo_server_process
 from NetSym.computing.internals.processes.usermode_processes.ftp_process.ftp_server_process import ServerFTPProcess
 from NetSym.computing.internals.processes.usermode_processes.ping_process import SendPing
 from NetSym.computing.internals.processes.usermode_processes.sniffing_process import SniffingProcess
-from NetSym.computing.internals.routing_table import RoutingTable
 from NetSym.computing.internals.sockets.l4_socket import L4Socket
 from NetSym.computing.internals.sockets.raw_socket import RawSocket
 from NetSym.computing.internals.sockets.tcp_socket import TCPSocket
@@ -51,7 +51,7 @@ if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
     from NetSym.computing.internals.processes.abstracts.process import Process
     from NetSym.computing.internals.sockets.socket import Socket
-    from NetSym.computing.connection import Connection
+    from NetSym.computing.connections.connection import Connection
     from NetSym.gui.tech.interface_graphics import InterfaceGraphics
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow

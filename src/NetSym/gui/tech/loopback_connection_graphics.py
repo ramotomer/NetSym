@@ -8,7 +8,7 @@ from NetSym.gui.shape_drawing import draw_circle
 from NetSym.gui.tech.connection_graphics import ConnectionGraphics
 
 if TYPE_CHECKING:
-    from NetSym.computing.connection import Connection
+    from NetSym.computing.connections.connection import Connection
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 

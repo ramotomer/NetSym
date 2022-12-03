@@ -19,7 +19,7 @@ from NetSym.usefuls.funcs import distance, get_the_one_with_raise
 from NetSym.usefuls.funcs import with_args
 
 if TYPE_CHECKING:
-    from NetSym.computing.connection import Connection
+    from NetSym.computing.connections.connection import Connection
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
     from NetSym.gui.tech.interface_graphics import InterfaceGraphics
     from NetSym.gui.user_interface.user_interface import UserInterface

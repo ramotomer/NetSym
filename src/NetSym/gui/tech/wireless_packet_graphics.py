@@ -17,7 +17,7 @@ from NetSym.usefuls.funcs import distance
 
 if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
-    from NetSym.computing.internals.frequency import Frequency
+    from NetSym.computing.connections.frequency import Frequency
 
 
 class WirelessPacketGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Selectable):

@@ -16,7 +16,7 @@ from pyglet.window import key
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.computing.computer import Computer
-from NetSym.computing.internals.frequency import Frequency
+from NetSym.computing.connections.frequency import Frequency
 from NetSym.computing.internals.network_interfaces.interface import Interface
 from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
 from NetSym.computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
@@ -54,7 +54,7 @@ from NetSym.usefuls.funcs import get_the_one, distance, with_args, called_in_ord
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.packets.packet import Packet
-    from NetSym.computing.connection import Connection, SentPacket
+    from NetSym.computing.connections.connection import Connection, SentPacket
     from NetSym.gui.main_loop import MainLoop
     from NetSym.gui.main_window import MainWindow
 

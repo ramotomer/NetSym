@@ -8,7 +8,7 @@ from NetSym.gui.tech.wireless_packet_graphics import WirelessPacketGraphics
 from NetSym.packets.packet import Packet
 
 if TYPE_CHECKING:
-    from NetSym.computing.internals.frequency import Frequency
+    from NetSym.computing.connections.frequency import Frequency
     from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
 

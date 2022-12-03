@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, List, cast
 
-from NetSym.computing.connection import Connection
+from NetSym.computing.connections.connection import Connection
 from NetSym.consts import CONNECTIONS
 from NetSym.gui.tech.loopback_connection_graphics import LoopbackConnectionGraphics
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
-    from NetSym.computing.connection import SentPacket
-    from NetSym.computing.connection import ConnectionSide
+    from NetSym.computing.connections.connection import SentPacket
+    from NetSym.computing.connections.connection import ConnectionSide
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
 

@@ -5,10 +5,10 @@ from typing import Optional, TYPE_CHECKING, Dict
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.computer import Computer, COMPUTER
 from NetSym.computing.internals.filesystem.filesystem import Filesystem
+from NetSym.computing.internals.network_data_structures.routing_table import RoutingTable
 from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
 from NetSym.computing.internals.processes.kernelmode_processes.switching_process import SwitchingProcess
 from NetSym.computing.internals.processes.usermode_processes.stp_process import STPProcess, BID
-from NetSym.computing.internals.routing_table import RoutingTable
 from NetSym.consts import OS, PROTOCOLS, ADDRESSES
 from NetSym.packets.all import LLC, STP
 

@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List
 
 from NetSym.address.mac_address import MACAddress
+from NetSym.computing.connections.loopback_connection import LoopbackConnection
 from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
-from NetSym.computing.loopback_connection import LoopbackConnection
 from NetSym.exceptions import AddressError, NoSuchInterfaceError
 
 if TYPE_CHECKING:

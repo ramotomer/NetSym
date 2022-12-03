@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from typing import NamedTuple, TYPE_CHECKING, List
 
-from NetSym.computing.connection import Connection, ConnectionSide
+from NetSym.computing.connections.connection import Connection, ConnectionSide
 from NetSym.consts import CONNECTIONS, T_Time, T_Color
 from NetSym.exceptions import NoSuchConnectionSideError
 from NetSym.gui.main_loop import MainLoop
