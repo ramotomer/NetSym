@@ -88,13 +88,14 @@ class Interface:
             self.__connection = value.connection
 
     @property
-    def connection_length(self) -> Optional[T_Time]:
+    def connection_length(self) -> T_Time:
         """
         The length of the connection_side this `Interface` is connected to. (The time a packet takes to go through it in seconds)
         :return: a number of seconds.
         """
         if not self.is_connected():
-            return None
+            raise InterfaceNotConnectedError(repr(self))
+
         return self.connection.deliver_time
 
     @property

@@ -371,7 +371,7 @@ def test_temporary_attribute_values():
         ({1: 2, 'a': 'b'}, {2: 1, 'b': 'a'}),
     ]
 )
-def test_reverse_dict(dict_, result):
+def test_reverse_dict__success(dict_, result):
     assert reverse_dict(dict_) == result
 
 
@@ -382,7 +382,7 @@ def test_reverse_dict(dict_, result):
         {'a': 'A', 'A': 'A'},
     ]
 )
-def test_reverse_dict(dict_):
+def test_reverse_dict__fail(dict_):
     with pytest.raises(KeyError):
         reverse_dict(dict_)
 
@@ -398,7 +398,7 @@ def test_reverse_dict(dict_):
         ({1: 10, 2: 20, 3: 30},    {1: 2, 2: 3, 3: 4}, {2: 10, 3: 20, 4: 30}),
     ]
 )
-def test_change_dict_key_names(dict_, key_name_mapping, result):
+def test_change_dict_key_names__success(dict_, key_name_mapping, result):
     """
     Receive a dict and a mapping between old and new names
     change the keys of the dict to their new names (if they appear in the mapping)
@@ -415,7 +415,7 @@ def test_change_dict_key_names(dict_, key_name_mapping, result):
         ({1: None, 2: None},         {1: 2, 2: 2}),
     ]
 )
-def test_change_dict_key_names(dict_, key_name_mapping):
+def test_change_dict_key_names__fail(dict_, key_name_mapping):
     """
     Receive a dict and a mapping between old and new names
     change the keys of the dict to their new names (if they appear in the mapping)

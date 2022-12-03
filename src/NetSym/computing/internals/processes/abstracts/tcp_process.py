@@ -6,9 +6,10 @@ from collections import deque
 from dataclasses import dataclass
 from functools import reduce
 from operator import attrgetter, concat
-from typing import Optional, List, TYPE_CHECKING, Iterable, Union, Tuple
+from typing import Optional, List, TYPE_CHECKING, Iterable, Union, Tuple, Deque
 
 from NetSym.address.ip_address import IPAddress
+from NetSym.address.mac_address import MACAddress
 from NetSym.computing.internals.processes.abstracts.process import Process, Timeout, ReturnedPacket, T_ProcessCode, WaitingFor
 from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError
 from NetSym.consts import OPCODES, T_Time, COMPUTER, PORTS, PROTOCOLS, TCPFlag
@@ -62,7 +63,7 @@ def is_number_acking_packet(ack_number: int, packet: Packet) -> bool:
     :param packet: a `Packet` object.
     :return:
     """
-    return packet["TCP"].sequence_number + get_tcp_packet_data_length(packet) <= ack_number
+    return bool(packet["TCP"].sequence_number + get_tcp_packet_data_length(packet) <= ack_number)
 
 
 class TCPProcess(Process):
@@ -109,7 +110,7 @@ class TCPProcess(Process):
         self.dst_ip = dst_ip
         self.src_port = random.randint(*PORTS.USERMODE_USABLE_RANGE) if self.is_client else src_port
         self.dst_port = dst_port
-        self.dst_mac = None
+        self.dst_mac: Optional[MACAddress] = None
 
         self.sequence_number = 0  # randint(0, TCP_MAX_SEQUENCE_NUMBER)
         # self.next_sequence_number = 1 + self.sequence_number
@@ -121,7 +122,7 @@ class TCPProcess(Process):
         for signum in COMPUTER.PROCESSES.SIGNALS.KILLING_SIGNALS:
             self.signal_handlers[signum] = self.kill_signal_handler
 
-    def _create_packet(self, flags: Union[TCPFlag, int] = None, data: str = '', is_retransmission: bool = False) -> Packet:
+    def _create_packet(self, flags: Union[TCPFlag, int], data: str = '', is_retransmission: bool = False) -> Packet:
         """
         Creates a full packet that contains TCP with all of the appropriate fields according to the state of
         this process
@@ -186,9 +187,11 @@ class TCPProcess(Process):
                 (OPCODES.TCP.SYN & tcp_packet.flags):
             return True
 
-        return packet["IP"].src_ip == self.dst_ip and \
-               tcp_packet.dst_port == self.src_port and \
-               tcp_packet.src_port == self.dst_port
+        return bool(
+            packet["IP"].src_ip == self.dst_ip and
+            tcp_packet.dst_port == self.src_port and
+            tcp_packet.src_port == self.dst_port
+        )
 
     def reset_connection(self) -> None:
         """
@@ -257,7 +260,7 @@ class TCPProcess(Process):
 
         self.sending_window.add_waiting(self._create_packet(OPCODES.TCP.SYN))
 
-        tcp_syn_ack_list = []
+        tcp_syn_ack_list: List[Packet] = []
         yield from self.handle_tcp_and_receive(tcp_syn_ack_list, is_blocking=True, insert_flag_packets_to_received_data=True)
 
         syn_ack, = tcp_syn_ack_list
@@ -268,7 +271,7 @@ class TCPProcess(Process):
         The initial handshake on the server side. waits for syn, sends syn ack waits for ack
         :return:
         """
-        tcp_syn_list = []
+        tcp_syn_list: List[Packet] = []
         while not tcp_syn_list or \
                 not isinstance(tcp_syn_list[0], Packet) or \
                 "TCP" not in tcp_syn_list[0] or \
@@ -293,7 +296,7 @@ class TCPProcess(Process):
         if initiate:
             self.sending_window.clear()
             self.sending_window.add_waiting(self._create_packet(OPCODES.TCP.FIN))
-            fin_ack_list = []
+            fin_ack_list: List[Packet] = []
             while not fin_ack_list or \
                     not isinstance(fin_ack_list[0], Packet) or \
                     "TCP" not in fin_ack_list[0] or \
@@ -461,8 +464,8 @@ class SendingWindow:
         self.computer = computer
         self.window_size = window_size
 
-        self.waiting_for_sending = deque()
-        self.window = deque()
+        self.waiting_for_sending: Deque[Packet] = deque()
+        self.window: Deque[NotAckedPacket] = deque()
 
     @property
     def sent(self) -> Iterable[Packet]:
@@ -561,9 +564,9 @@ class ReceivingWindow:
         """
         Initiates the receiving window with an empty window.
         """
-        self.window = []
+        self.window: List[Packet] = []
         self.ack_number = 0
-        self.sack_blocks = []
+        self.sack_blocks: List[SackEdges] = []
 
     def clear(self) -> None:
         """

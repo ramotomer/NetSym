@@ -28,7 +28,7 @@ class Switch(Computer):
     """
     def __init__(self,
                  name: Optional[str] = None,
-                 priority: Optional[int] = PROTOCOLS.STP.DEFAULT_SWITCH_PRIORITY) -> None:
+                 priority: int = PROTOCOLS.STP.DEFAULT_SWITCH_PRIORITY) -> None:
         """
         Initiates the Switch with a given name.
         A switch has a variable `self.is_hub` that allows any switch to become a hub.
@@ -61,7 +61,7 @@ class Switch(Computer):
         if not self.process_scheduler.is_usermode_process_running_by_type(STPProcess) and self.interfaces:
             self.process_scheduler.start_usermode_process(STPProcess)
 
-    def send_stp(self, sender_bid: BID, root_bid: BID, distance_to_root: float, age: int, sending_interval: int, root_max_age: int) -> None:
+    def send_stp(self, sender_bid: BID, root_bid: BID, distance_to_root: float, age: int, sending_interval: float, root_max_age: float) -> None:
         """
         Sends an STP packet with the given information on all interfaces. (should only be used on a switch)
         """

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple, TYPE_CHECKING, Optional
+from typing import Tuple, TYPE_CHECKING, Optional, List
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.computing.internals.processes.abstracts.process import T_ProcessCode
@@ -30,7 +30,7 @@ class TCPSocketProcess(TCPProcess):
         """
         super(TCPSocketProcess, self).__init__(pid, computer, dst_ip, dst_port, src_port, is_client)
         self.socket = socket
-        self.received = []
+        self.received: List[bytes] = []
         self.close_socket_when_done_transmitting = False
 
     def _unload_socket_sending_queue(self) -> None:

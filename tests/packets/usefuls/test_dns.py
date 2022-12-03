@@ -87,7 +87,7 @@ def test_canonize_domain_hostname(hostname, zone_origin, result):
         ('@', None, InvalidDomainHostnameError),
     ]
 )
-def test_canonize_domain_hostname(hostname, zone_origin, error):
+def test_canonize_domain_hostname__fail(hostname, zone_origin, error):
     with pytest.raises(error):
         canonize_domain_hostname(hostname, zone_origin)
 
@@ -99,7 +99,7 @@ def test_canonize_domain_hostname(hostname, zone_origin, error):
         ('example.dom.', 'example.dom'),
     ]
 )
-def test_decanonize_domain_hostname(hostname, result):
+def test_canonize_domain_hostname__success(hostname, result):
     assert decanonize_domain_hostname(hostname) == result
 
 

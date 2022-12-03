@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from os import linesep
 from typing import Optional, TYPE_CHECKING, Dict, Any, Union
 
+import scapy
+
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.internals.processes.abstracts.process import Process, Timeout, T_ProcessCode, WaitingFor
 from NetSym.consts import PROTOCOLS, T_Time
@@ -47,24 +49,11 @@ class BID:
         return int(str(self.priority) + str(self.mac.as_number()))
 
     @classmethod
-    def root_from_stp(cls, packet: Packet) -> BID:
+    def root_from_stp(cls, stp: scapy.packet.Packet) -> BID:
         """
         Take in an STP packet and return the root BID
         """
-        stp = packet
-        if isinstance(packet, Packet):
-            stp = packet["STP"]
         return cls(stp.root_id, stp.root_mac)
-
-    @classmethod
-    def bridge_from_stp(cls, packet: Packet) -> BID:
-        """
-        Take in an STP packet and return the BID of the sending switch
-        """
-        stp = packet
-        if isinstance(packet, Packet):
-            stp = packet["STP"]
-        return cls(stp.bridge_id, stp.bridge_mac)
 
     def __gt__(self, other: Any) -> bool:
         """
@@ -74,8 +63,10 @@ class BID:
         """
         if isinstance(other, int) or isinstance(other, float):
             return self.value > other
+
         if isinstance(other, self.__class__):
             return self.value > other.value
+
         raise STPError(f"Cannot compare BID with this type: {type(other).__name__}!!!!")
 
     def __repr__(self) -> str:
@@ -93,7 +84,7 @@ class BID:
 
     def __eq__(self, other) -> bool:
         """Returns whether or not two BID objects are equal"""
-        return self.value == other.value
+        return bool(self.value == other.value)
 
 
 @dataclass
@@ -258,6 +249,7 @@ class STPProcess(Process):
         """
         if self._am_i_root():
             return True
+
         other_interface_distance_to_root = self.stp_ports[port].distance_to_root - self.connection_length_to_path_cost(port.connection_length)
         return other_interface_distance_to_root > self.distance_to_root
 

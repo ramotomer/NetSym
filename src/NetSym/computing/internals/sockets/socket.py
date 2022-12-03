@@ -31,7 +31,7 @@ class Socket(ABC):
         self.address_family = address_family
         self.kind = kind
 
-        self.received = []
+        self.received: List[bytes] = []
 
         self.is_closed = False
         self.is_bound = False

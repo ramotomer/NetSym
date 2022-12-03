@@ -153,7 +153,7 @@ class SendPing(Process):
             raise ProcessInternalError_InvalidParameters(f"ERROR: ICMP too long: {self.length} > {PROTOCOLS.ICMP.MAX_MESSAGE_LENGTH}!!!!")
 
         if self.length is not None and self.data is not None:
-            raise WrongUsageError(f"Do not supply both the length and the data of the ping!!!! length: {self.length}, data: {self.data}")
+            raise WrongUsageError(f"Do not supply both the length and the data of the ping!!!! length: {self.length}, data: {self.data!r}")
 
         if not IPAddress.is_valid(self.destination):
             validate_domain_hostname(self.destination, only_kill_process=True)

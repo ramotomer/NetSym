@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import Type, TYPE_CHECKING
+from typing import Type, TYPE_CHECKING, Optional
 
 from NetSym.computing.internals.processes.abstracts.process import Process, T_ProcessCode
 from NetSym.consts import T_Port
 
 if TYPE_CHECKING:
+    from NetSym.computing.internals.sockets.tcp_socket import TCPSocket
     from NetSym.computing.computer import Computer
 
 
@@ -22,7 +23,7 @@ class TCPServerProcess(Process):
         super(TCPServerProcess, self).__init__(pid, computer)
         self.src_port = src_port
         self.connection_process_type = connection_process_type
-        self.socket = None
+        self.socket: Optional[TCPSocket] = None
         self.set_killing_signals_handler(self.handle_killing_signals)
 
     def handle_killing_signals(self, signum: int) -> None:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple, TYPE_CHECKING, Union, Optional
+from typing import Tuple, TYPE_CHECKING, Union, Optional, List, Generator
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.computing.internals.processes.abstracts.process import WaitingFor, T_ProcessCode, Process
@@ -29,12 +29,15 @@ class TCPSocket(L4Socket):
         :param address_family: usually you need AF_INET
         """
         super(TCPSocket, self).__init__(computer, address_family, COMPUTER.SOCKETS.TYPES.SOCK_STREAM)
-        self.to_send = []
+        self.to_send: List[Union[str, bytes]] = []
 
-        self.socket_handling_kernelmode_pid = None
+        self.socket_handling_kernelmode_pid: Optional[int] = None
 
     @property
     def socket_handling_kernelmode_process(self) -> Optional[Process]:
+        if self.socket_handling_kernelmode_pid is None:
+            return None
+
         try:
             return self.computer.process_scheduler.get_process(self.socket_handling_kernelmode_pid, COMPUTER.PROCESSES.MODES.KERNELMODE)
         except NoSuchProcessError:
@@ -89,7 +92,7 @@ class TCPSocket(L4Socket):
         self.socket_handling_kernelmode_pid = self.computer.process_scheduler.start_kernelmode_process(ListeningTCPSocketProcess, self,
                                                                                                        self.bound_address)
 
-    def blocking_accept(self, requesting_process_pid: int) -> T_ProcessCode:
+    def blocking_accept(self, requesting_process_pid: int) -> Generator[WaitingFor, None, TCPSocket]:
         """
         Just like `self.accept` - only processes can use `yield from` to block until the socket is connected :)
         :return:
@@ -97,7 +100,7 @@ class TCPSocket(L4Socket):
         self.accept()
         yield WaitingFor(lambda: self.is_connected)
 
-        listening_socket = self.computer.get_socket(requesting_process_pid, address_family=self.address_family, kind=self.kind)
+        listening_socket = self.computer.get_tcp_socket(requesting_process_pid)
         listening_socket.bind(self.bound_address)
         listening_socket.listen()
         return listening_socket
@@ -106,7 +109,7 @@ class TCPSocket(L4Socket):
         if self.is_closed:
             return
         super(TCPSocket, self).close()
-        self.socket_handling_kernelmode_process.close_socket_when_done_transmitting = True
+        setattr(self.socket_handling_kernelmode_process, 'close_socket_when_done_transmitting', True)
 
     def close_when_done_transmitting(self) -> T_ProcessCode:
         """
