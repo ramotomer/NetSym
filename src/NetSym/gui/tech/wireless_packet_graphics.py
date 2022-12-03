@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Optional, Dict, Callable, Tuple
 import pyglet
 import scapy
 
-from NetSym.consts import PACKET, COLORS, SELECTED_OBJECT, DIRECTORIES
+from NetSym.consts import PACKET, COLORS, SELECTED_OBJECT, DIRECTORIES, T_Color
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
 from NetSym.gui.abstracts.selectable import Selectable
@@ -42,7 +42,7 @@ class WirelessPacketGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, 
         self.distance = 0
         self.str = str(deepest_layer)
         self.deepest_layer = deepest_layer
-        self.color = COLORS.WHITE
+        self.color: T_Color = COLORS.WHITE
 
         self.image_from_packet = PacketGraphics.image_from_packet
 
@@ -99,7 +99,7 @@ class WirelessPacketGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, 
     def __repr__(self) -> str:
         return self.str
 
-    def dict_save(self) -> None:
+    def dict_save(self) -> Dict:
         """
         The packets cannot be saved into the file.
         :return:

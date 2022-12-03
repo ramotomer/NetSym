@@ -15,8 +15,8 @@ from NetSym.gui.main_loop_function_to_call import FunctionToCall
 from NetSym.gui.shape_drawing import draw_line
 from NetSym.gui.shape_drawing import draw_rectangle
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
-from NetSym.usefuls.funcs import distance
-from NetSym.usefuls.funcs import with_args, get_the_one
+from NetSym.usefuls.funcs import distance, get_the_one_with_raise
+from NetSym.usefuls.funcs import with_args
 
 if TYPE_CHECKING:
     from NetSym.computing.connection import Connection
@@ -64,13 +64,12 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
         :param computer_graphics_end: The computer graphics at the end of the connection.
         :param packet_loss: the PL percent of the connection (defaults to 0)
         """
-        super(ConnectionGraphics, self).__init__(is_in_background=True, is_pressable=True)
+        super(ConnectionGraphics, self).__init__(0, 0, is_in_background=True, is_pressable=True)
         self.computers = Computers(computer_graphics_start, computer_graphics_end)
         self.regular_color = CONNECTIONS.COLOR if not packet_loss else CONNECTIONS.PL_COLOR
         self.color = self.regular_color
         self.width = width
         self.marked_as_blocked = False
-        self.x, self.y = 0, 0  # isn't used, just to avoid errors!
 
         self.connection = connection  # the `Connection` object.
 
@@ -78,20 +77,27 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
 
         if all(computer is not None for computer in self.computers):
             self.interfaces = Interfaces(
-                get_the_one(
+                get_the_one_with_raise(
                     self.start_computer.computer.interfaces,
-                    lambda i: i.connection is not None and i.connection.connection is connection,
+                    lambda i: i.is_connected() and i.connection is connection,
                     NoSuchInterfaceError,
                 ).graphics,
-                get_the_one(
+                get_the_one_with_raise(
                     self.end_computer.computer.interfaces,
-                    lambda i: i.connection is not None and i.connection.connection is connection,
+                    lambda i: i.is_connected() and i.connection is connection,
                     NoSuchInterfaceError,
                 ).graphics,
             )
 
     @property
+    def logic_object(self):
+        return self.connection
+
+    @property
     def length(self) -> float:  # the length of the connection.
+        if (self.interfaces.start is None) or (self.interfaces.end is None):
+            raise GraphicsObjectNotYetInitialized(f"Connection Graphics interfaces.start or interfaces.end is None!: {self!r}, {self.interfaces}")
+
         return distance(self.interfaces.start.location, self.interfaces.end.location)
 
     @property
@@ -129,14 +135,15 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
     def update_appearance(self) -> None:
         """Updates the color of the connection according to the PL and latency of the connection"""
         self.regular_color = CONNECTIONS.COLOR if not self.connection.packet_loss else CONNECTIONS.PL_COLOR
-        self.color = self.regular_color if all(not side.is_blocked for side in self.connection.get_sides()) else CONNECTIONS.BLOCKED_COLOR
+        self.color = self.color if all(not side.is_blocked for side in self.connection.get_sides()) else CONNECTIONS.BLOCKED_COLOR
 
         self.width = CONNECTIONS.DEFAULT_WIDTH if not self.connection.latency else CONNECTIONS.LATENCY_WIDTH
 
     def is_in(self, x: float, y: float) -> bool:
         """Returns whether or not the mouse is close enough to the connection for it to count as pressed"""
-        if any(interface is None for interface in self.interfaces):
-            pass
+        if (self.interfaces.start is None) or (self.interfaces.end is None):
+            raise SomethingWentTerriblyWrongError("Do not check a connection that was not yet connected or initialized!")
+
         location = x, y
         a = distance(self.interfaces.start.location, location)
         b = distance(self.interfaces.end.location, location)
@@ -148,11 +155,12 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
             return True
 
         cos_of_beta = (c**2 + a**2 - b**2) / (2 * a * c)
-        beta = 0
+        beta = 0.
         try:
             beta = acos(cos_of_beta)  # the law of the cosines
         except ValueError:
             pass
+
         mouse_distance_to_connection = a * sin(beta)
         return mouse_distance_to_connection <= CONNECTIONS.MOUSE_TOUCH_SENSITIVITY
 
@@ -164,6 +172,9 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
         :param direction: `PACKET.DIRECTION.RIGHT` or `PACKET.DIRECTION.LEFT`.
         :return: (self.start_computer.x, self.start_computer.y, self.end_computer.x, self.end_computer.y)
         """
+        if (self.interfaces.start is None) or (self.interfaces.end is None):
+            raise GraphicsObjectNotYetInitialized("Do not use a connection that was not yet connected or initialized!")
+
         if direction == PACKET.DIRECTION.RIGHT:
             return self.interfaces.start.x, self.interfaces.start.y, self.interfaces.end.x, self.interfaces.end.y
         elif direction == PACKET.DIRECTION.LEFT:
@@ -264,17 +275,17 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
             "speed": self.connection.speed,
             "start": {
                 "computer": self.start_computer.computer.name,
-                "interface": get_the_one(
+                "interface": get_the_one_with_raise(
                                 self.start_computer.computer.interfaces,
-                                lambda i: i.is_connected() and i.connection.connection is self.connection,
+                                lambda i: i.is_connected() and i.connection is self.connection,
                                 ThisCodeShouldNotBeReached,
                             ).name,
             },
             "end": {
                 "computer": self.end_computer.computer.name,
-                "interface": get_the_one(
+                "interface": get_the_one_with_raise(
                                 self.end_computer.computer.interfaces,
-                                lambda i: i.is_connected() and i.connection.connection is self.connection,
+                                lambda i: i.is_connected() and i.connection is self.connection,
                                 ThisCodeShouldNotBeReached,
                             ).name,
             },

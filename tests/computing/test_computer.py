@@ -7,27 +7,17 @@ from _pytest.monkeypatch import MonkeyPatch
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.computer import Computer
-from NetSym.computing.internals.interface import Interface
+from NetSym.computing.internals.network_interfaces.interface import Interface
+from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
 from NetSym.computing.internals.processes.abstracts.process import ReturnedPacket, PacketMetadata
 from NetSym.computing.internals.processes.usermode_processes.sniffing_process import SniffingProcess
-from NetSym.computing.internals.wireless_interface import WirelessInterface
 from NetSym.consts import OS, FILE_PATHS, DIRECTORIES, COMPUTER, INTERFACES, PACKET
 from NetSym.exceptions import NoSuchInterfaceError, PopupWindowWithThisError
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
-from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 from NetSym.packets.packet import Packet
 from NetSym.usefuls.dotdict import DotDict
-from tests.usefuls import MACS, IPS, example_ethernet, example_arp
-
-
-class MockingMainLoop(MainLoop):
-    def time(self):
-        return 1
-
-
-def mock_mainloop_time(patcher):
-    patcher.setattr(MainLoop, "instance", MockingMainLoop())
+from tests.usefuls import MACS, IPS, example_ethernet, example_arp, mock_mainloop_time
 
 
 def mock_for_computer_generation(patcher):
@@ -204,7 +194,7 @@ def test_init_graphics(x, y, console_location, example_computers):
 
             assert isinstance(graphics_list, list)
             assert all(isinstance(object_, GraphicsObject) for object_ in graphics_list)
-            assert computer.loopback.connection.connection.graphics in graphics_list
+            assert computer.loopback.connection.graphics in graphics_list
 
             assert computer.graphics in graphics_list
             assert computer.graphics.x == x, computer.graphics.y == y
@@ -308,9 +298,8 @@ def test_start_sniffing_REGULAR(example_computers_with_graphics, interface_name,
     for computer in example_computers_with_graphics:
         computer.start_sniffing(interface_name, is_promisc)
 
-        process = computer.process_scheduler.get_process_by_type(SniffingProcess, raises=False)
+        process = computer.process_scheduler.get_process_by_type(SniffingProcess)
 
-        assert process is not None
         assert process.socket.interface.name == interface_name
         if is_promisc:
             assert process.socket.interface.is_promisc
@@ -320,9 +309,8 @@ def test_start_sniffing_ANY(example_computers_with_graphics):
     for computer in example_computers_with_graphics:
         computer.start_sniffing(INTERFACES.ANY_INTERFACE, False)
 
-        process = computer.process_scheduler.get_process_by_type(SniffingProcess, raises=False)
+        process = computer.process_scheduler.get_process_by_type(SniffingProcess)
 
-        assert process is not None
         assert process.socket.interface is INTERFACES.ANY_INTERFACE
 
 
@@ -603,7 +591,7 @@ def test_handle_arp(example_computers):
             computer.interfaces[0].connect(Interface())
             packet = Packet(example_ethernet() / example_arp())
             computer._handle_arp(ReturnedPacket(packet, PacketMetadata(computer.interfaces[0], 1.0, PACKET.DIRECTION.INCOMING)))
-            to_send = computer.interfaces[0].connection.packets_to_send
+            to_send = computer.interfaces[0].connection_side.packets_to_send
 
             assert len(to_send) == 1
             reply, = to_send

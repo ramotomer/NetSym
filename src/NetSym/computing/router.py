@@ -4,7 +4,7 @@ from typing import Optional, Iterable, Dict, TYPE_CHECKING
 
 from NetSym.computing.computer import Computer
 from NetSym.computing.internals.filesystem.filesystem import Filesystem
-from NetSym.computing.internals.interface import Interface
+from NetSym.computing.internals.network_interfaces.interface import Interface
 from NetSym.computing.internals.processes.kernelmode_processes.route_packet_process import RoutePacket
 from NetSym.computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
 from NetSym.computing.internals.routing_table import RoutingTable
@@ -30,10 +30,10 @@ class Router(Computer):
         Initiates a router with no IP addresses.
         """
         if interfaces is None:
-            interfaces = [Interface(ip='1.1.1.1')]
+            interfaces = [Interface(ip='192.168.1.1')]
 
         super(Router, self).__init__(name, OS.SOLARIS, None, *interfaces)
-        self.routing_table = RoutingTable.create_default(self, False)
+        self.routing_table = RoutingTable.create_default(self.ips, False)
 
         self.last_route_check = MainLoop.get_time()
 

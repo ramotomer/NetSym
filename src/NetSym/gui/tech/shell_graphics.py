@@ -25,6 +25,8 @@ class ShellGraphics(OutputConsole):
     """
     Like an `OutputConsole` only you can write things into it!
     """
+    child_graphics_objects: ChildGraphicsObjects  # type: ignore
+
     def __init__(self,
                  x: float,
                  y: float,
@@ -184,7 +186,7 @@ class ShellGraphics(OutputConsole):
             return self.move_caret(len(self.input_line_content) - self.caret_index)
 
         text = self.input_line_content
-        self.caret_index = min(max(self.caret_index + amount, 0), len(text))
+        self.caret_index = int(min(max(self.caret_index + amount, 0), len(text)))
         text = text[:self.caret_index] + CONSOLE.SHELL.CARET + text[self.caret_index:]
         self.child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + text)
 

@@ -12,6 +12,9 @@ class Directory:
     """
     A directory on the computers of the simulation.
     """
+    files:       Dict[str, File]
+    directories: Dict[str, Directory]
+
     def __init__(self,
                  name: str,
                  parent: Optional[Directory],
@@ -75,19 +78,18 @@ class Directory:
         except KeyError:
             raise NoSuchFileError(f"File or Directory '{item_name}' do not exist in {cwd.name}")
 
-    def make_sub_dir(self, name: str, mount: str = FILESYSTEM.TYPE.EXT4) -> None:
+    def make_sub_dir(self, name: str, mount: str = FILESYSTEM.TYPE.EXT4) -> Directory:
         """
         Creates a new directory under this one.
-        :param name:
-        :param mount:
-        :return:
         """
         if name in self.directories:
             raise DirectoryAlreadyExistsError(f"{name} is already in {self.name}")
 
-        self.directories[name] = Directory(name=name, parent=self, mount=mount)
+        directory = Directory(name=name, parent=self, mount=mount)
+        self.directories[name] = directory
+        return directory
 
-    def make_empty_file(self, name: str, raise_on_exists: bool = True) -> Optional[File]:
+    def make_empty_file(self, name: str, raise_on_exists: bool = True) -> File:
         """
         Create an empty file
         """
@@ -136,6 +138,7 @@ class Directory:
         :param item_name:
         :return:
         """
+        item: T_ContainedItem
         try:
             if item_name in self.directories:
                 item = self.directories[item_name]
@@ -144,7 +147,7 @@ class Directory:
                 item = self.files[item_name]
                 del self.files[item_name]
         except KeyError:
-            raise NoSuchItemError
+            raise NoSuchItemError(f"No item called {item_name!r}")
 
         return item
 

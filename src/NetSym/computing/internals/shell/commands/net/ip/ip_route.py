@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
@@ -28,13 +28,13 @@ class IpRouteCommand(Command):
         self.parser.add_argument('args', metavar='args', type=str, nargs='*', help='arguments')
 
         self.commands = {
-            'list': self._list_routes,
+            'list':  self._list_routes,
             'print': self._list_routes,
-            'add': self._add_route,
-            'del': self._del_route,
+            'add':   self._add_route,
+            'del':   self._del_route,
         }
 
-    def _add_route(self, args: argparse.Namespace) -> CommandOutput:
+    def _add_route(self, args: List[str]) -> CommandOutput:
         """
         Receives arguments, adds a route and returns a CommandOutput
         :param args:
@@ -47,14 +47,17 @@ class IpRouteCommand(Command):
         except IndexError:
             raise WrongIPRouteUsageError()
 
-        interface_ip = get_the_one(self.computer.all_interfaces, lambda c: c.name == interface_name).ip
-        if interface_ip is None:
+        interface = get_the_one(self.computer.all_interfaces, lambda c: c.name == interface_name)
+        if interface is None:
+            return CommandOutput('', f"No device named {interface_name}!")
+
+        if interface.ip is None:
             return CommandOutput('', "The interface does not have an IP address!!!")
 
-        self.computer.routing_table.route_add(net, gateway, IPAddress.copy(interface_ip))
+        self.computer.routing_table.route_add(net, gateway, IPAddress.copy(interface.ip))
         return CommandOutput('OK!', '')
 
-    def _del_route(self, args: argparse.Namespace) -> CommandOutput:
+    def _del_route(self, args: List[str]) -> CommandOutput:
         """
         Receives arguments, deletes a route and returns CommandOutput
         :param args:
@@ -72,7 +75,7 @@ class IpRouteCommand(Command):
         else:
             return CommandOutput("OK!", '')
 
-    def _list_routes(self, args: argparse.Namespace) -> CommandOutput:
+    def _list_routes(self, args: List[str]) -> CommandOutput:
         """
         list the active routes
         :param args:

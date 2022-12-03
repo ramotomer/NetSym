@@ -1,4 +1,5 @@
 from NetSym.consts import OPCODES
+from NetSym.gui.main_loop import MainLoop
 from NetSym.packets.all import Ether, ARP, IP, DNS
 from NetSym.packets.usefuls.dns import DNSQueryRecord, list_to_dns_query, list_to_dns_resource_record, DNSResourceRecord
 
@@ -60,3 +61,24 @@ def example_dns(is_query=True):
             )
         ] if not is_query else [])
     )
+
+
+class MockingMainLoop(MainLoop):
+    def __init__(self):
+        super(MockingMainLoop, self).__init__()
+        self.mocked_time = 1
+
+    def time(self):
+        return self.mocked_time
+
+    def set_time(self, value):
+        self.mocked_time = value
+
+    def increase_time_by(self, value):
+        self.mocked_time += value
+
+
+def mock_mainloop_time(patcher):
+    mock = MockingMainLoop()
+    patcher.setattr(MainLoop, "instance", mock)
+    return mock

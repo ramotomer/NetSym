@@ -20,7 +20,7 @@ class Packet:
     and so on. The Packet class allows us to recursively check if a layer is in
     the packet and to draw the packet on the screen as one complete object.
     """
-    def __init__(self, data: scapy.packet.Packet = None) -> None:
+    def __init__(self, data: scapy.packet.Packet) -> None:
         """
         Initiates the packet object, ip_layer is the out-most layer of the packet (usually Ethernet).
         `self.graphics` is a `PacketGraphics` object.
@@ -37,6 +37,15 @@ class Packet:
         """
         self.graphics = PacketGraphics(self.deepest_layer(), connection_graphics, direction)
         return [self.graphics]
+
+    def get_graphics(self) -> PacketGraphics:
+        """
+        Get the PacketGraphics object of this packet, If it is not yet initialized - raise
+        """
+        if self.graphics is None:
+            raise GraphicsObjectNotYetInitialized(f"packet: {self.multiline_repr()}")
+
+        return self.graphics
 
     def deepest_layer(self) -> scapy.packet.Packet:
         """

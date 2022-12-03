@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import Union
+from typing import Union, List
 
 from NetSym.consts import ADDRESSES
 from NetSym.exceptions import *
@@ -13,7 +13,9 @@ class MACAddress:
     This class represents a MAC address in the program.
     """
 
-    generated_addresses = []
+    generated_addresses: List[str] = []
+
+    string_mac: str
 
     def __init__(self, string_mac: Union[MACAddress, str]) -> None:
         """
@@ -39,7 +41,7 @@ class MACAddress:
 
     def is_broadcast(self) -> bool:
         """Returns if a MAC address is the broadcast MAC or not"""
-        return self.string_mac.lower() == ADDRESSES.MAC.BROADCAST.lower()
+        return bool(self.string_mac.lower() == ADDRESSES.MAC.BROADCAST.lower())
 
     @classmethod
     def broadcast(cls) -> MACAddress:
@@ -50,7 +52,7 @@ class MACAddress:
         return cls(ADDRESSES.MAC.BROADCAST)
 
     @classmethod
-    def randomac(cls) -> MACAddress:
+    def randomac(cls) -> str:
         """
         A constructor that returns a randomized mac address.
         Returns a different one each time.
@@ -78,7 +80,7 @@ class MACAddress:
 
     def is_no_mac(self) -> bool:
         """Returns whether or not this mac is the 0s mac"""
-        return self.string_mac == "00:00:00:00:00:00"
+        return bool(self.string_mac == "00:00:00:00:00:00")
 
     @classmethod
     def copy(cls, mac_address: MACAddress) -> MACAddress:
@@ -96,7 +98,7 @@ class MACAddress:
         or not it is a valid address.
         """
         splitted_address = address.split(ADDRESSES.MAC.SEPARATOR)
-        return len(splitted_address) == 6 and all([is_hex(part) and len(part) == 2 for part in splitted_address])
+        return bool((len(splitted_address) == 6) and (all([is_hex(part) and len(part) == 2 for part in splitted_address])))
 
     def as_bytes(self) -> bytes:
         """
@@ -113,11 +115,15 @@ class MACAddress:
         """
         return int(''.join(hex_part for hex_part in self.string_mac.split(ADDRESSES.MAC.SEPARATOR)), base=16)
 
-    def __eq__(self, other: Union[str, MACAddress]) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Determines whether two MAC addresses are equal or not"""
         if isinstance(other, str):
             other = MACAddress(other)
-        return self.string_mac.lower() == other.string_mac.lower()
+        elif not isinstance(other, MACAddress):
+            raise NotImplementedError(f"MACAddress can only be checked for equality with an `str` or another `MACAddress` object, "
+                                      f"not {other} which is a `{type(other)}`")
+
+        return bool(self.string_mac.lower() == other.string_mac.lower())
 
     def __hash__(self) -> int:
         """Determines the hash of the `MACAddress` object"""

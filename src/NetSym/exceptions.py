@@ -235,6 +235,12 @@ class RoutingTableError(ComputerError):
     """
 
 
+class RoutingTableCouldNotRouteToIPAddress(KeyError, RoutingTableError):
+    """
+    The routing table did not have an item that matched the IP that one tried to route to :(
+    """
+
+
 class PortError(ComputerError):
     """
     Indicates a port-related error
@@ -277,6 +283,12 @@ class NoSuchGraphicsObjectError(GraphicsError):
 class GraphicsObjectAlreadyRegistered(GraphicsError):
     """
     Trying to register a `GraphicsObject` which is already registered
+    """
+
+
+class GraphicsObjectNotYetInitialized(GraphicsError):
+    """
+    Trying to get the value of the graphics object before the `init_graphics` method was called
     """
 
 
@@ -462,9 +474,29 @@ class CommandError(ShellError):
     """
 
 
+class ErrorForCommandOutput(CommandError):
+    """
+    This is an exception that is caught if it is raised inside of a shell command.
+    The message of this exception will be printed to the screen of the shell! nice
+    """
+
+
+class NoSuchFileError__ErrorForCommandOutput(NoSuchFileError, ErrorForCommandOutput):
+    """
+    This error will be raised when a file is accessed but no such file exists.
+    In addition this exception is caught and printed to the shell if it is raised inside of a shell command.
+    """
+
+
 class CommandParsingError(CommandError):
     """
     Error in parsing a command in the shell
+    """
+
+
+class SyntaxArgumentMessageError(CommandParsingError):
+    """
+    Raised when the syntax of a shell command is invalid
     """
 
 

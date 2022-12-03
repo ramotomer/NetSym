@@ -121,7 +121,7 @@ class Button(UserInterfaceGraphicsObject, DifferentColorWhenHovered):
         Moves the button according to its parent graphics (if it has any)
         :return: None
         """
-        if self.parent_graphics is not None:
+        if (self.parent_graphics is not None) and (self.padding is not None):
             self.x, self.y = sum_tuples(self.parent_graphics.location, self.padding)
 
     def __str__(self) -> str:

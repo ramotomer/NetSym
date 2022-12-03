@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
-from typing import Optional, Tuple, TYPE_CHECKING, Dict, List
+from abc import abstractmethod, ABC
+from typing import Tuple, TYPE_CHECKING, Dict, List
 
 from NetSym.gui.main_loop_function_to_call import FunctionToCall
 
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
 
 
-class GraphicsObject(metaclass=ABCMeta):
+class GraphicsObject(ABC):
     """
     This is an abstract class that its instances are things that will be drawn on the screen, for example the images of
     the computer, the packets the lines that connect the computers and the buttons.
@@ -23,8 +23,8 @@ class GraphicsObject(metaclass=ABCMeta):
     GraphicsObjects in that iterable are unregistered as well.
     """
     def __init__(self,
-                 x: Optional[float] = None,
-                 y: Optional[float] = None,
+                 x: float,
+                 y: float,
                  do_render: bool = True,
                  centered: bool = False,
                  is_in_background: bool = False,

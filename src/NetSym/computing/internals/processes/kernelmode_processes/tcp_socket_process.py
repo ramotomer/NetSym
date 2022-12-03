@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from abc import ABCMeta
-from typing import Tuple, TYPE_CHECKING, Optional
+from typing import Tuple, TYPE_CHECKING, Optional, List
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.computing.internals.processes.abstracts.process import T_ProcessCode
@@ -13,7 +12,7 @@ if TYPE_CHECKING:
     from NetSym.computing.computer import Computer
 
 
-class TCPSocketProcess(TCPProcess, metaclass=ABCMeta):
+class TCPSocketProcess(TCPProcess):
     """
     A process to handle the actions of a socket of kind SOCK_STREAM
     """
@@ -31,7 +30,7 @@ class TCPSocketProcess(TCPProcess, metaclass=ABCMeta):
         """
         super(TCPSocketProcess, self).__init__(pid, computer, dst_ip, dst_port, src_port, is_client)
         self.socket = socket
-        self.received = []
+        self.received: List[bytes] = []
         self.close_socket_when_done_transmitting = False
 
     def _unload_socket_sending_queue(self) -> None:

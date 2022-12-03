@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
-from NetSym.exceptions import NoSuchFileError, NoSuchDirectoryError
+from NetSym.exceptions import *
 
 if TYPE_CHECKING:
     import argparse
@@ -30,10 +30,8 @@ class Mv(Command):
         :return:
         """
         try:
-            self.computer.filesystem.move_file(parsed_args.src, parsed_args.dst, self.shell.cwd, False)
-        except NoSuchFileError:
+            self.computer.filesystem.move_file(parsed_args.src, parsed_args.dst, self.shell.cwd)
+        except NoSuchItemError:
             return CommandOutput('', "The source file does not exist! :(")
-        except NoSuchDirectoryError:
-            return CommandOutput('', "The path does not exist! :(")
 
         return CommandOutput(f"File moved to '{parsed_args.dst}' successfully", '')

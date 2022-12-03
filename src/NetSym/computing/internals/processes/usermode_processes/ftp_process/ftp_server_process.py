@@ -43,7 +43,7 @@ class ServerFTPSessionProcess(Process):
             # TODO: actually implement the FTP protocol with a layer - as it should behave
             filename = received.split()[received.split().index("FTP:") + 1]
 
-            with self.computer.filesystem.at_path(self.cwd, filename) as file:
+            with self.computer.filesystem.file_at_path(self.cwd, filename) as file:
                 self.socket.send(file.read())
 
         yield from self.socket.close_when_done_transmitting()

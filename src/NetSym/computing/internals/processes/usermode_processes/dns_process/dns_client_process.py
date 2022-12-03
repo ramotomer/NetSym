@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Tuple, Optional
+from typing import TYPE_CHECKING, Tuple, Optional, NamedTuple
 
 import scapy
 from scapy.layers.dns import dnstypes
@@ -17,6 +17,11 @@ from NetSym.packets.usefuls.dns import list_to_dns_query, DNSQueryRecord
 if TYPE_CHECKING:
     from NetSym.computing.internals.sockets.udp_socket import UDPSocket
     from NetSym.computing.computer import Computer
+
+
+class NetworkAddress(NamedTuple):
+    ip: Optional[IPAddress]
+    port: T_Port
 
 
 class DNSClientProcess(Process):
@@ -39,7 +44,7 @@ class DNSClientProcess(Process):
         :param server_ip: the IPAddress of the server
         """
         super(DNSClientProcess, self).__init__(pid, computer)
-        self._server_address: Tuple[IPAddress, T_Port] = (server_ip, server_port)
+        self._server_address = NetworkAddress(server_ip, server_port)
         self._name_to_resolve = name_to_resolve
 
         self.socket: Optional[UDPSocket] = None
@@ -47,10 +52,6 @@ class DNSClientProcess(Process):
         self._retry_count = default_retry_count
 
         self._output_file = output_result_to_path
-
-    @property
-    def _should_store_result_in_file(self) -> bool:
-        return self._output_file is not None
 
     def _dns_format_print(self, message: str) -> None:
         """
@@ -70,7 +71,7 @@ class DNSClientProcess(Process):
             self._dns_format_print(f"Name invalid! '{self._name_to_resolve}'")
             return False
 
-        if self._server_address[0] is None:
+        if self._server_address.ip is None:
             self._dns_format_print(f"No DNS server configured!")
             return False
 
@@ -104,7 +105,7 @@ class DNSClientProcess(Process):
         Write the output of the query to the file at `self._output_file`
         The format is json (so I have to write as little code as possible)
         """
-        if not self._should_store_result_in_file:
+        if self._output_file is None:
             return
 
         with self.computer.filesystem.make_empty_file_with_directory_tree(self._output_file, raise_on_exists=False) as f:

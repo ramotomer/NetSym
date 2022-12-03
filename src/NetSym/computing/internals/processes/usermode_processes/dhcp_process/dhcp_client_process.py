@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
@@ -8,11 +8,12 @@ from NetSym.computing.internals.processes.abstracts.process import Process, T_Pr
 from NetSym.consts import OPCODES, PORTS, PROTOCOLS
 from NetSym.exceptions import *
 from NetSym.packets.all import DHCP, BOOTP, IP, UDP
-from NetSym.usefuls.funcs import get_the_one
+from NetSym.usefuls.funcs import get_the_one_with_raise
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
-    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.internals.sockets.raw_socket import RawSocket
+    from NetSym.computing.internals.network_interfaces.interface import Interface
     from NetSym.computing.computer import Computer
 
 
@@ -34,7 +35,7 @@ class DHCPClientProcess(Process):
 
     def __init__(self, pid: int, computer: Computer) -> None:
         super(DHCPClientProcess, self).__init__(pid, computer)
-        self.sockets = []
+        self.sockets: List[RawSocket] = []
 
     def update_routing_table(self, session_interface: Interface, dhcp_pack: Packet) -> None:
         """
@@ -91,12 +92,12 @@ class DHCPClientProcess(Process):
             self.sockets.append(socket)
         self.computer.print("Asking For DHCP...")
         for socket in self.sockets:
-            socket.send(self.build_dhcp_discover(socket.interface))
+            socket.send(self.build_dhcp_discover(socket.get_interface()))
 
         ready_socket = yield from self.computer.select(self.sockets)
         dhcp_offer, session_interface = ready_socket.receive()[0].packet_and_interface
         # TODO: validate offer
-        session_socket = get_the_one(self.sockets, lambda s: s.interface == session_interface, ThisCodeShouldNotBeReached)
+        session_socket = get_the_one_with_raise(self.sockets, lambda s: bool(s.interface == session_interface), ThisCodeShouldNotBeReached)
 
         session_socket.send(self.build_dhcp_request(
             session_interface= session_interface,

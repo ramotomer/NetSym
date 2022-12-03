@@ -3,7 +3,8 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING, Tuple, List
 
-from NetSym.computing.internals.shell.commands.command import SyntaxArgumentMessage, CommandOutput
+from NetSym.computing.internals.filesystem.directory import Directory
+from NetSym.computing.internals.shell.commands.command import CommandOutput
 from NetSym.computing.internals.shell.commands.filesystem.cat import Cat
 from NetSym.computing.internals.shell.commands.filesystem.cd import Cd
 from NetSym.computing.internals.shell.commands.filesystem.cp import Cp
@@ -42,6 +43,7 @@ from NetSym.computing.internals.shell.commands.net.traceroute import Traceroute
 from NetSym.computing.internals.shell.commands.processes.kill import Kill
 from NetSym.computing.internals.shell.commands.processes.ps import Ps
 from NetSym.consts import CONSOLE, FILESYSTEM
+from NetSym.exceptions import *
 from NetSym.usefuls.funcs import called_in_order, all_indexes
 
 if TYPE_CHECKING:
@@ -95,7 +97,7 @@ class Shell:
         for extra_command, translation in command_translations.items():
             self.string_to_command[extra_command] = translation
 
-        self.cwd = self.computer.filesystem.root
+        self.cwd: Directory = self.computer.filesystem.root
 
         self.history = []
         self.history_index = None
@@ -281,11 +283,16 @@ class Shell:
         :param string:
         :return:
         """
-        parsed_command = self.string_to_command[string.split()[0]].parse(string)
-        if isinstance(parsed_command, SyntaxArgumentMessage):
-            self.shell_graphics.write(parsed_command)
+        try:
+            parsed_command = self.string_to_command[string.split()[0]].parse(string)
+        except SyntaxArgumentMessageError as e:
+            self.shell_graphics.write(e.args[0])
             return CommandOutput('', '')
-        return parsed_command.command_class.action(parsed_command.parsed_args)
+
+        try:
+            return parsed_command.command_class.action(parsed_command.parsed_args)
+        except ErrorForCommandOutput as e:
+            return CommandOutput('', e.args[0])
 
     @staticmethod
     def _handle_piping(string: str) -> List[str]:

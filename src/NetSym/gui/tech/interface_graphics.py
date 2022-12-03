@@ -12,10 +12,10 @@ from NetSym.gui.abstracts.image_graphics import ImageGraphics
 from NetSym.gui.abstracts.selectable import Selectable
 from NetSym.gui.shape_drawing import draw_rectangle
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
-from NetSym.usefuls.funcs import distance, with_args, get_the_one
+from NetSym.usefuls.funcs import distance, with_args, get_the_one_with_raise
 
 if TYPE_CHECKING:
-    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.internals.network_interfaces.interface import Interface
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
     from NetSym.gui.user_interface.user_interface import UserInterface
 
@@ -26,6 +26,9 @@ class InterfaceGraphics(ViewableGraphicsObject, Selectable):
     It is the little square next to computers.
     It allows the user much more control over their computers and to inspect the network interfaces of their computers.
     """
+    width: float
+    height: float
+
     def __init__(self,
                  x: float,
                  y: float,
@@ -44,8 +47,12 @@ class InterfaceGraphics(ViewableGraphicsObject, Selectable):
         self.width, self.height = INTERFACES.WIDTH, INTERFACES.HEIGHT
         self.computer_graphics = computer_graphics
 
-        self.interface = interface
+        self.interface: Interface = interface
         interface.graphics = self
+
+    @property
+    def logic_object(self):
+        return self.interface
 
     @property
     def computer_location(self) -> Tuple[float, float]:
@@ -66,7 +73,7 @@ class InterfaceGraphics(ViewableGraphicsObject, Selectable):
         :return:
         """
         if self.interface.is_connected():
-            start_computer, end_comp = self.interface.connection.connection.graphics.computers
+            start_computer, end_comp = self.interface.connection.get_graphics().computers
             other_computer = start_computer if self.computer_graphics is end_comp else end_comp
             self.x, self.y = other_computer.location
         computer_x, computer_y = self.computer_location
@@ -116,9 +123,9 @@ class InterfaceGraphics(ViewableGraphicsObject, Selectable):
                 self.interface.set_mtu,
             ),
             "sniffing start/stop (f)": with_args(
-                get_the_one(user_interface.computers,
-                            lambda c: self.interface in c.interfaces,
-                            NoSuchInterfaceError).toggle_sniff,
+                get_the_one_with_raise(user_interface.computers,
+                                       lambda c: self.interface in c.interfaces,
+                                       NoSuchInterfaceError).toggle_sniff,
                 self.interface.name,
                 is_promisc=True),
             "block (^b)": with_args(self.interface.toggle_block, "STP"),

@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, List, Tuple, Optional
 
 from NetSym.consts import CONNECTIONS, PACKET, T_Time
-from NetSym.exceptions import ConnectionsError
-from NetSym.exceptions import WrongUsageError, NoSuchConnectionSideError, SomethingWentTerriblyWrongError
+from NetSym.exceptions import *
 from NetSym.gui.abstracts.animation_graphics import AnimationGraphics
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.tech.connection_graphics import ConnectionGraphics
 
 if TYPE_CHECKING:
+    from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.packets.packet import Packet
     from NetSym.gui.tech.packet_graphics import PacketGraphics
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
@@ -65,9 +65,9 @@ class Connection:
 
         self.right_side, self.left_side = ConnectionSide(self), ConnectionSide(self)
 
-        self.last_packet_motion = MainLoop.instance.time()
+        self.last_packet_motion = MainLoop.get_time()
 
-        self.graphics = None
+        self.graphics: Optional[ConnectionGraphics] = None
 
         self.is_blocked = False
 
@@ -86,7 +86,7 @@ class Connection:
         """The time in seconds a packet takes to go through the connection"""
         return self.length / self.speed
 
-    def init_graphics(self, start_computer: ComputerGraphics, end_computer: ComputerGraphics) -> List[ConnectionGraphics]:
+    def init_graphics(self, start_computer: ComputerGraphics, end_computer: ComputerGraphics) -> List[GraphicsObject]:
         """
         Adds the `GraphicObject` of this class and gives it the parameters it requires.
 
@@ -94,8 +94,18 @@ class Connection:
         :param end_computer: The `GraphicsObject` of the computer which is the end of the connection
         :return: None
         """
-        self.graphics = ConnectionGraphics(self, start_computer, end_computer, self.packet_loss)
-        return [self.graphics]
+        graphics = ConnectionGraphics(self, start_computer, end_computer, self.packet_loss)
+        self.graphics = graphics
+        return [graphics]
+
+    def get_graphics(self) -> ConnectionGraphics:
+        """
+        Return the graphics object or raise if the `init_graphics` was not yet called
+        """
+        if self.graphics is None:
+            raise GraphicsObjectNotYetInitialized(f"self: {self}, self.graphics: {self.graphics}")
+
+        return self.graphics
 
     def get_sides(self) -> Tuple[ConnectionSide, ConnectionSide]:
         """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""
@@ -151,7 +161,7 @@ class Connection:
         self.sent_packets.append(
             SentPacket(
                 packet,
-                MainLoop.instance.time(),
+                MainLoop.get_time(),
                 direction,
                 will_be_dropped=(random.random() < self.packet_loss),
                 will_be_delayed=(random.random() < self.latency),
@@ -165,7 +175,7 @@ class Connection:
         connected `Interface`.
         """
         packet, direction = sent_packet.packet, sent_packet.direction
-        packet.graphics.unregister()
+        packet.get_graphics().unregister()
 
         if direction == PACKET.DIRECTION.RIGHT:
             self.right_side.packets_to_receive.append(packet)
@@ -201,11 +211,11 @@ class Connection:
         :param sent_packet: a `SentPacket`
         :return: None
         """
-        sent_packet.packet.graphics.progress += \
-            (MainLoop.instance.time_since(sent_packet.last_update_time) / self.deliver_time) * sent_packet.packet.graphics.speed
-        sent_packet.last_update_time = MainLoop.instance.time()
+        sent_packet.packet.get_graphics().progress += \
+            (MainLoop.get_time_since(sent_packet.last_update_time) / self.deliver_time) * sent_packet.packet.get_graphics().speed
+        sent_packet.last_update_time = MainLoop.get_time()
 
-        if sent_packet.packet.graphics.progress >= 1:
+        if sent_packet.packet.get_graphics().progress >= 1:
             self.reach_destination(sent_packet)
 
     def move_packets(self, main_loop: MainLoop) -> None:
@@ -232,10 +242,10 @@ class Connection:
         """
         animations_to_register = []
         for sent_packet in self.sent_packets[:]:
-            if sent_packet.will_be_dropped and sent_packet.packet.graphics.progress >= (random.random() + 0.3):
+            if sent_packet.will_be_dropped and sent_packet.packet.get_graphics().progress >= (random.random() + 0.3):
                 self.sent_packets.remove(sent_packet)
-                sent_packet.packet.graphics.unregister()
-                animations_to_register.append(sent_packet.packet.graphics.get_drop_animation())
+                sent_packet.packet.get_graphics().unregister()
+                animations_to_register.append(sent_packet.packet.get_graphics().get_drop_animation())
         return animations_to_register
 
     def _delay_predetermined_delayed_packets(self) -> List[AnimationGraphics]:
@@ -246,10 +256,10 @@ class Connection:
         """
         animations_to_register = []
         for sent_packet in self.sent_packets:
-            if sent_packet.will_be_delayed and sent_packet.packet.graphics.progress >= (random.random() + 0.3):
+            if sent_packet.will_be_delayed and sent_packet.packet.get_graphics().progress >= (random.random() + 0.3):
                 sent_packet.will_be_delayed = False
-                sent_packet.packet.graphics.decrease_speed()
-                animations_to_register.append(sent_packet.packet.graphics.get_decrease_speed_animation())
+                sent_packet.packet.get_graphics().decrease_speed()
+                animations_to_register.append(sent_packet.packet.get_graphics().get_decrease_speed_animation())
         return animations_to_register
 
     def stop_packets(self) -> None:
@@ -258,7 +268,7 @@ class Connection:
         Kills all of the packets in the connection and unregisters their `GraphicsObject`-s
         """
         for sent_packet in self.sent_packets:
-            sent_packet.packet.graphics.unregister()
+            sent_packet.packet.get_graphics().unregister()
         self.sent_packets.clear()
 
     def __repr__(self) -> str:

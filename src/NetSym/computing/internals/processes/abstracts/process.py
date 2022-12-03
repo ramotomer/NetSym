@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import inspect
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod, ABC
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Iterator, Union, Callable, TYPE_CHECKING, Optional, Tuple, Type, Generator
@@ -14,7 +14,7 @@ from NetSym.packets.packet import Packet
 from NetSym.usefuls.iterable_dataclass import IterableDataclass
 
 if TYPE_CHECKING:
-    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.internals.network_interfaces.interface import Interface
     from NetSym.computing.computer import Computer
 
 
@@ -116,7 +116,7 @@ class WaitingFor(IterableDataclass):
 T_ProcessCode = Generator[WaitingFor, ReturnedPacket, None]
 
 
-class Process(metaclass=ABCMeta):
+class Process(ABC):
     """
     This class is a process in the computer class.
     It holds a state of the process and can run and perform code, then stop, wait for a condition and
@@ -214,7 +214,7 @@ class Timeout:
         """
         Returns whether or not the timeout has passed yet or not
         """
-        return MainLoop.instance.time_since(self.init_time) > self.seconds
+        return MainLoop.get_time_since(self.init_time) > self.seconds
 
     def is_done(self) -> bool:
         return bool(self)

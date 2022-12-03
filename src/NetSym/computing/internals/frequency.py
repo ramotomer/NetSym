@@ -13,7 +13,7 @@ from NetSym.usefuls.funcs import distance
 
 if TYPE_CHECKING:
     from NetSym.gui.tech.wireless_packet_graphics import WirelessPacketGraphics
-    from NetSym.computing.internals.wireless_interface import WirelessInterface
+    from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
 
 
 class SentWirelessPacket(NamedTuple):
@@ -151,7 +151,7 @@ class Frequency(Connection):
         :param sent_packet: a `SentPacket` namedtuple
         :return: None
         """
-        distance_ = MainLoop.instance.time_since(sent_packet.sending_time) * self.speed
+        distance_ = MainLoop.get_time_since(sent_packet.sending_time) * self.speed
         sent_packet.packet.graphics.distance = distance_
 
         if distance_ > self.length:

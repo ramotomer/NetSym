@@ -9,7 +9,7 @@ from NetSym.gui.main_loop import MainLoop
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
     from NetSym.computing.internals.sockets.raw_socket import RawSocket
-    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.internals.network_interfaces.interface import Interface
     from NetSym.computing.computer import Computer
 
 
@@ -31,7 +31,7 @@ class PacketSendingQueue:
         """
         Send the next packet - unless the last packet was sent recently
         """
-        if MainLoop.instance.time_since(self.last_packet_sending_time) <= self.interval:
+        if MainLoop.get_time_since(self.last_packet_sending_time) <= self.interval:
             return
 
         if not self.packets:

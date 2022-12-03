@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING, List, Type
+from typing import Any, TYPE_CHECKING, List, Type, Union
 
 import scapy
 from scapy.packet import Raw
 
 from NetSym.exceptions import *
 from NetSym.packets.all import protocols
-from NetSym.usefuls.funcs import get_the_one
+from NetSym.usefuls.funcs import get_the_one_with_default
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
@@ -19,7 +19,7 @@ def scapy_layer_class_to_our_class(scapy_layer_class: Type[scapy.packet.Packet])
     Takes in a scapy packet class                                    (for example `scapy.layers.inet.IP`)
     Returns the class we created with the indicative attribute names (for example `packets.all.IP`)
     """
-    return get_the_one(protocols, lambda p: issubclass(p, scapy_layer_class), default=scapy_layer_class)
+    return get_the_one_with_default(protocols, lambda p: issubclass(p, scapy_layer_class), default=scapy_layer_class)
 
 
 def get_packet_attribute(packet: Packet, attribute_name: str, containing_protocols: List[str]) -> Any:
@@ -36,11 +36,11 @@ def get_packet_attribute(packet: Packet, attribute_name: str, containing_protoco
 
 
 def get_src_ip(packet: Packet) -> IPAddress:
-    return get_packet_attribute(packet, 'src_ip', ["IP", "ARP"])
+    return IPAddress(get_packet_attribute(packet, 'src_ip', ["IP", "ARP"]))
 
 
 def get_dst_ip(packet: Packet) -> IPAddress:
-    return get_packet_attribute(packet, 'dst_ip', ["IP", "ARP"])
+    return IPAddress(get_packet_attribute(packet, 'dst_ip', ["IP", "ARP"]))
 
 
 class ScapyRenamedPacketField:
@@ -93,10 +93,10 @@ def get_original_layer_name_by_instance(layer: scapy.packet.Packet) -> str:
     """
     Returns the name of the protocol - regardless of the `AttributeRenamer` encapsulation
     """
-    return getattr(layer, 'original_name', type(layer).__name__)
+    return str(getattr(layer, 'original_name', type(layer).__name__))
 
 
-def is_raw_layer(layer: Any) -> bool:
+def is_raw_layer(layer: Union[Any, Type[Any]]) -> bool:
     """
     Return whether or not the layer is a layer that only contains raw information
     Can accept either an instance or a subclass - works anyway

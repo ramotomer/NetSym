@@ -19,10 +19,26 @@ K2 = TypeVar("K2")
 V = TypeVar("V")
 
 
-def get_the_one(iterable: Iterable[T],
-                condition: Callable[[T], bool],
-                raises: Callable = None,
-                default: Optional[T] = None) -> T:
+def get_the_one(iterable:  Iterable[T],
+                condition: Callable[[T], bool]) -> Optional[T]:
+    """
+    Receives an iterable and a condition and returns the first item in the
+    iterable that the condition is true for.
+    If the function does not find one, it returns None, or if raises!=None then
+    it will raise a `raises`.
+    :param iterable: An iterable object.
+    :param condition: A boolean function that takes one argument.
+    :return: The item with that condition or None
+    """
+    for item in iterable:
+        if condition(item):
+            return item
+    return None
+
+
+def get_the_one_with_raise(iterable:  Iterable[T],
+                           condition: Callable[[T], bool],
+                           raises:    Callable) -> T:
     """
     Receives an iterable and a condition and returns the first item in the
     iterable that the condition is true for.
@@ -31,14 +47,30 @@ def get_the_one(iterable: Iterable[T],
     :param iterable: An iterable object.
     :param condition: A boolean function that takes one argument.
     :param raises: The exception this function will raise if it does not find.
-    :param default: A default value to return if no matching value is found
-    :return: The item with that condition or None
+    :return: The item with that condition
     """
     for item in iterable:
         if condition(item):
             return item
-    if raises is not None:
-        raise raises(f'Failed to "get_the_one" since it does not exist in your iterable: {iterable}')
+    raise raises(f'Failed to "get_the_one" since it does not exist in your iterable: {iterable}')
+
+
+def get_the_one_with_default(iterable:  Iterable[T],
+                             condition: Callable[[T], bool],
+                             default:   T) -> T:
+    """
+    Receives an iterable and a condition and returns the first item in the
+    iterable that the condition is true for.
+    If the function does not find one, it returns None, or if raises!=None then
+    it will raise a `raises`.
+    :param iterable: An iterable object.
+    :param condition: A boolean function that takes one argument.
+    :param default: A default value to return if no matching value is found
+    :return: The item with that condition, or the default - if not found
+    """
+    for item in iterable:
+        if condition(item):
+            return item
     return default
 
 
@@ -150,7 +182,7 @@ def sine_wave_coordinates(
         start_coordinates: Tuple[float, float],
         end_coordinates: Tuple[float, float],
         amplitude: float = 10,
-        frequency: float = 1) -> Generator[Tuple[float, float]]:
+        frequency: float = 1) -> Generator[Tuple[float, float], None, None]:
     """
     A generator that yields tuples that are coordinates for a sine wave.
     :return:
@@ -243,10 +275,11 @@ def datetime_from_string(string: str) -> datetime.datetime:
     returns the datetime object itself.
     """
     args = string[string.index('(') + 1: string.index(')')].split(', ')
-    return datetime.datetime(*map(int, args))
+    year, month, day, hour, minute, second, millisecond = list(map(int, args)) + ([0] * (7 - len(args)))
+    return datetime.datetime(year, month, day, hour, minute, second, millisecond)
 
 
-def all_indexes(string: str, substring: str) -> Generator[int]:
+def all_indexes(string: str, substring: str) -> Generator[int, None, None]:
     """
     generator that yields indexes of all of the occurrences of the substring in the string
     """
@@ -259,7 +292,7 @@ def all_indexes(string: str, substring: str) -> Generator[int]:
             return
 
 
-def my_range(start: float, end: Optional[float] = None, step: float = 1) -> Generator[float]:
+def my_range(start: float, end: Optional[float] = None, step: float = 1) -> Generator[float, None, None]:
     """
     Just like `range`, but supports non-whole `step`s
     :param start:
@@ -323,7 +356,7 @@ def split_with_escaping(string: str, separator: str = ' ', escaping_char: str = 
 
 
 @contextmanager
-def temporary_attribute_values(object_: Any, attribute_value_mapping: Dict[str, Any]) -> Generator[Any]:
+def temporary_attribute_values(object_: Any, attribute_value_mapping: Dict[str, Any]) -> Generator[Any, None, None]:
     """
     A `contextmanager` that takes in an instance of an object.
     The function allows us to temporarily change the values of
@@ -349,14 +382,14 @@ def reverse_dict(dict_: Dict[K, V]) -> Dict[V, K]:
     Take in a dict and reverse the keys and the values.
     If some values are duplicate - raise
     """
-    reversed_dict_ = {value: [] for value in dict_.values()}
+    reversed_dict_: Dict[V, Optional[K]] = {value: None for value in dict_.values()}
     for key, value in dict_.items():
-        reversed_dict_[value].append(key)
+        if reversed_dict_[value] is not None:
+            raise KeyError(f"Cannot reverse dict {dict_}! Duplicate values found. conflict in key: {key}, value: {value}, dict: {reversed_dict_}")
+        reversed_dict_[value] = key
 
-    if any(len(key_list) != 1 for key_list in reversed_dict_.values()):
-        raise KeyError(f"Cannot reverse dict {dict_}! Duplicate values found. Conflict: {reversed_dict_}")
-
-    return {value: key_list[0] for value, key_list in reversed_dict_.items()}
+    return reversed_dict_  # type: ignore
+    # ^ we know that if any of the values of this dict are None - it is OK and the type of them is not Optional[K] - just K
 
 
 def change_dict_key_names(dict_: Dict[K, V], key_name_mapping: Dict[K, K2]) -> Dict[Union[K, K2], V]:

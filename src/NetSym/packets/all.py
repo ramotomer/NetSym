@@ -1,3 +1,6 @@
+from typing import Type, List
+
+import scapy
 from scapy.layers.dhcp import BOOTP, DHCP
 from scapy.layers.dns import DNS
 from scapy.layers.inet import IP, UDP, TCP, ICMP
@@ -155,7 +158,7 @@ DNS = with_attribute_type_casting(
 )
 
 
-protocols = [
+protocols: List[Type[scapy.packet.Packet]] = [
     Ether,
     ARP, IP, LLC,
     ICMP, UDP, TCP, BOOTP, STP,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import scapy
 
@@ -24,7 +24,7 @@ def get_src_port(packet: Packet) -> int:
     Can be either UDP or TCP
     If it is neither - raise
     """
-    return get_packet_attribute(packet, 'src_port', ["UDP", "TCP"])
+    return cast(int, get_packet_attribute(packet, 'src_port', ["UDP", "TCP"]))
 
 
 def get_dst_port(packet: Packet) -> int:
@@ -33,4 +33,4 @@ def get_dst_port(packet: Packet) -> int:
     Can be either UDP or TCP
     If it is neither - raise
     """
-    return get_packet_attribute(packet, 'dst_port', ["UDP", "TCP"])
+    return cast(int, get_packet_attribute(packet, 'dst_port', ["UDP", "TCP"]))

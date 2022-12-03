@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
@@ -9,7 +9,7 @@ from NetSym.exceptions import AddressError, NoSuchInterfaceError
 
 if TYPE_CHECKING:
     import argparse
-    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.internals.network_interfaces.interface import Interface
     from NetSym.computing.internals.shell.shell import Shell
     from NetSym.computing.computer import Computer
 
@@ -43,7 +43,7 @@ class IpAddressCommand(Command):
         """
         # TODO: add interface MTU-s
         type_ = 'LOOPBACK' \
-            if interface.is_connected() and isinstance(interface.connection.connection, LoopbackConnection) \
+            if interface.is_connected() and isinstance(interface.connection, LoopbackConnection) \
             else 'BROADCAST'
         type_2 = 'loopback' if type_ == 'LOOPBACK' else 'ether'
 
@@ -59,7 +59,7 @@ class IpAddressCommand(Command):
     link/{type_2} {interface.mac} brd {MACAddress.broadcast()}{ip_info}
 """
 
-    def _list_address(self, args: argparse.Namespace) -> CommandOutput:
+    def _list_address(self, args: List[str]) -> CommandOutput:
         """
         return a string that lists the interfaces of the computer
         """
@@ -69,7 +69,7 @@ class IpAddressCommand(Command):
         else:
             return CommandOutput(self._get_interface_data(args[args.index('dev') + 1]), '')
 
-    def _add_address(self, args: argparse.Namespace) -> CommandOutput:
+    def _add_address(self, args: List[str]) -> CommandOutput:
         """
         for example: ip address add 1.1.1.1/24 dev work1
         only if the interface does not have an ip already
@@ -93,7 +93,7 @@ class IpAddressCommand(Command):
 
         return CommandOutput("Added IP address successfully! :)", '')
 
-    def _replace_address(self, args: argparse.Namespace) -> CommandOutput:
+    def _replace_address(self, args: List[str]) -> CommandOutput:
         """
         for example: ip address replace 1.1.1.1/24 dev work1
         only if the interface has an ip already
@@ -117,7 +117,7 @@ class IpAddressCommand(Command):
 
         return CommandOutput("Replaced IP address successfully! :)", '')
 
-    def _del_address(self, args: argparse.Namespace) -> CommandOutput:
+    def _del_address(self, args: List[str]) -> CommandOutput:
         """
         for example: ip address add 1.1.1.1/24 dev work1
         only if the interface does not have an ip already

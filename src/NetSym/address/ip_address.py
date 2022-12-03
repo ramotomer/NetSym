@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import Union, Optional
+from typing import Union
 
 from NetSym.consts import ADDRESSES, MESSAGES
-from NetSym.exceptions import InvalidAddressError, AddressTooLargeError
+from NetSym.exceptions import InvalidAddressError, AddressTooLargeError, WrongUsageError
 from NetSym.usefuls.funcs import bindigits
 
 
@@ -11,16 +11,23 @@ class IPAddress:
     """
     This class represents an IP address in the program.
     """
+    string_ip:   str
+    subnet_mask: int
+
     def __init__(self, string_ip: Union[str, IPAddress]) -> None:
         """
         Initiates a IPAddress object from a ip_layer
-        :param string_ip: The ip ('132.23.245.1/24' for example or '1.1.1.1')
+
+        self.string_ip: a string representation of the address itself (without the mask)
+        self.subnet_mask: The subnet mask of this current IPAddress as an integer
+            (255.255.255.0 would be 24, 255.255.0.0 would be 16 etc...)
         """
         if isinstance(string_ip, self.__class__):
             self.string_ip, self.subnet_mask = string_ip.string_ip, string_ip.subnet_mask
             return
-        elif not isinstance(string_ip, str):
-            raise InvalidAddressError("The argument to this constructor must be a string or an IPAddress object!!!")
+
+        if not isinstance(string_ip, str):
+            raise InvalidAddressError(f"IP must be a string or an IPAddress object!!! got: {string_ip!r} of type: {type(string_ip)}")
 
         string_ip = string_ip.replace(' ', '')
 
@@ -31,8 +38,8 @@ class IPAddress:
         if not self.is_valid(ip) or not self.is_valid_subnet_mask(subnet_mask):
             raise InvalidAddressError(MESSAGES.INVALID_IP_ADDRESS + ' ' + str(string_ip))
 
-        self.string_ip: str = ip
-        self.subnet_mask: int = int(subnet_mask)
+        self.string_ip = ip
+        self.subnet_mask = int(subnet_mask)
 
     @classmethod
     def broadcast(cls) -> IPAddress:
@@ -152,18 +159,21 @@ class IPAddress:
         return bytes([int(part) for part in address.split(ADDRESSES.IP.SEPARATOR)])
 
     @staticmethod
-    def is_valid(address: str) -> bool:
+    def is_valid(address: object) -> bool:
         """
-        Receives a ip_layer that is supposed to be an ip address and returns whether
+        Receives a string that is supposed to be an ip address and returns whether
         or not it is a valid address.
-        :param address: The ip_layer address
+        :param address: The string address
         :return: Whether or not it is valid.
         """
+        if isinstance(address, IPAddress):
+            raise WrongUsageError(f"Only call `is_valid` with a string! not an IPAddress object like {address!r}!")
+
         if not isinstance(address, str):
             return False
+
         splitted_address = address.split(ADDRESSES.IP.SEPARATOR)
-        return len(splitted_address) == 4 and \
-            all([part.isdigit() and 0 <= int(part) < 256 for part in splitted_address])
+        return len(splitted_address) == 4 and all([part.isdigit() and 0 <= int(part) < 256 for part in splitted_address])
 
     @staticmethod
     def is_valid_subnet_mask(subnet_mask: str) -> bool:
@@ -220,7 +230,7 @@ class IPAddress:
         """
         return cls(other.string_ip + ADDRESSES.IP.SUBNET_SEPARATOR + str(other.subnet_mask))
 
-    def __eq__(self, other: Optional[Union[str, IPAddress]]) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Test whether two ip addresses are equal or not (does no include subnet mask)"""
         if other is None:
             return False
@@ -228,8 +238,11 @@ class IPAddress:
         if not isinstance(other, (str, IPAddress)):
             raise TypeError(f"Cannot compare IPAddress object to {type(other)} - {other}")
 
+        if isinstance(other, str) and (not IPAddress.is_valid(other)):
+            return False  # The other is a string that does not represents a valid IP address - therefor it is not equal to our IPAddress
+
         other = IPAddress(other)
-        return self.string_ip == other.string_ip
+        return bool(self.string_ip == other.string_ip)
         # ^ maybe i broke something when i did not also check the subnet mask, take into consideration....
 
     def __hash__(self) -> int:
@@ -238,7 +251,7 @@ class IPAddress:
 
     def __repr__(self) -> str:
         """The string representation of the IP address"""
-        return f"{self.string_ip} /{self.subnet_mask}"
+        return f"{self.string_ip}/{self.subnet_mask}"
 
     def __str__(self) -> str:
         """The shorter string representation of the IP address"""

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from NetSym.computing.internals.processes.abstracts.process import Process, T_ProcessCode
 from NetSym.consts import PORTS, T_Port
@@ -8,6 +8,7 @@ from NetSym.exceptions import TCPSocketConnectionRefused
 from NetSym.packets.usefuls.dns import T_Hostname
 
 if TYPE_CHECKING:
+    from NetSym.computing.internals.sockets.tcp_socket import TCPSocket
     from NetSym.computing.computer import Computer
 
 
@@ -22,7 +23,7 @@ class ClientFTPProcess(Process):
                  filename: str = '/bin/cat',
                  server_port: T_Port = PORTS.FTP) -> None:
         super(ClientFTPProcess, self).__init__(pid, computer)
-        self.socket = None
+        self.socket: Optional[TCPSocket] = None
         self.server_host = server_hostname
         self.server_port = server_port
         self.filename = filename

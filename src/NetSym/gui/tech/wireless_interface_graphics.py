@@ -7,10 +7,11 @@ from NetSym.consts import INTERFACES, COLORS
 from NetSym.exceptions import NoSuchInterfaceError
 from NetSym.gui.shape_drawing import draw_circle
 from NetSym.gui.tech.interface_graphics import InterfaceGraphics
-from NetSym.usefuls.funcs import with_args, get_the_one, distance
+from NetSym.usefuls.funcs import with_args, distance, get_the_one_with_raise
 
 if TYPE_CHECKING:
-    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.internals.network_interfaces.interface import Interface
+    from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
@@ -18,6 +19,8 @@ class WirelessInterfaceGraphics(InterfaceGraphics):
     """
     The graphics object of a wireless interface.
     """
+    interface: WirelessInterface
+
     def __init__(self,
                  x: float, y: float,
                  interface: Interface,
@@ -85,9 +88,9 @@ class WirelessInterfaceGraphics(InterfaceGraphics):
                 self.interface.set_name,
             ),
             "sniffing start/stop (f)": with_args(
-                get_the_one(user_interface.computers,
-                            lambda c: self.interface in c.interfaces,
-                            NoSuchInterfaceError).toggle_sniff,
+                get_the_one_with_raise(user_interface.computers,
+                                       lambda c: self.interface in c.interfaces,
+                                       NoSuchInterfaceError).toggle_sniff,
                 self.interface.name,
                 is_promisc=True),
             "block (^b)": with_args(self.interface.toggle_block, "STP"),

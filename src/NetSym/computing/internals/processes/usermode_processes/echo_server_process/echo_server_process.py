@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.computing.internals.processes.abstracts.process import Process, T_ProcessCode
 from NetSym.consts import PORTS
 
 if TYPE_CHECKING:
+    from NetSym.computing.internals.sockets.udp_socket import UDPSocket
     from NetSym.computing.computer import Computer
 
 
@@ -15,7 +16,7 @@ class EchoServerProcess(Process):
                  pid: int,
                  computer: Computer) -> None:
         super(EchoServerProcess, self).__init__(pid, computer)
-        self.socket = None
+        self.socket: Optional[UDPSocket] = None
 
     def code(self) -> T_ProcessCode:
         self.socket = self.computer.get_udp_socket(self.pid)

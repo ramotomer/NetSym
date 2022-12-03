@@ -2,30 +2,58 @@ import datetime
 
 import pytest
 
+from NetSym.exceptions import NetworkSimulationError
 from NetSym.usefuls.dotdict import DotDict
 from NetSym.usefuls.funcs import get_the_one, is_matching, is_hex, with_args, distance, split_by_size, called_in_order, insort, sum_tuples, \
     scale_tuple, normal_color_to_weird_gl_color, lighten_color, darken_color, bindigits, datetime_from_string, all_indexes, my_range, \
-    split_with_escaping, temporary_attribute_values, reverse_dict, change_dict_key_names
+    split_with_escaping, temporary_attribute_values, reverse_dict, change_dict_key_names, get_the_one_with_raise, get_the_one_with_default
 
 
 @pytest.mark.parametrize(
-    "iterable, condition, raises, default, should_raise, should_return",
+    "iterable, condition, should_return",
     [
-        ([],            bool,                   None,      None,    None,      None),
-        ([],            bool,                   None,      "hello", None,      "hello"),
-        ([],            bool,                   Exception, None,    Exception, None),
-        ([1, 0],        bool,                   None,      None,    None,      1),
-        (["", 0, 2, 3], bool,                   None,      None,    None,      2),
-        ([2, 3, 4],     (lambda x: x % 2 == 0), None,      None,    None,      2),
+        ([],            bool,                   None),
+        ([1, 0],        bool,                   1),
+        (["", 0, 2, 3], bool,                   2),
+        ([20, 3, 4],    (lambda x: x % 2 == 0), 20),
     ]
 )
-def test_get_the_one(iterable, condition, raises, default, should_raise, should_return):
+def test_get_the_one(iterable, condition, should_return):
+    assert get_the_one(iterable, condition) == should_return
+
+
+@pytest.mark.parametrize(
+    "iterable, condition, raises, should_raise, should_return",
+    [
+        ([],            bool,                   Exception,              Exception,              None),
+        ([1, 0],        bool,                   KeyError,               None,                   1),
+        (["", 0, 2, 3], bool,                   ValueError,             None,                   2),
+        ([21, 3, 41],   (lambda x: x % 2 == 0), NetworkSimulationError, NetworkSimulationError, None),
+        ([2, 3, 4],     (lambda x: x % 2 == 0), NetworkSimulationError, None,                   2),
+    ]
+)
+def test_get_the_one_with_raise(iterable, condition, raises, should_raise, should_return):
     if should_raise:
         with pytest.raises(should_raise):
-            get_the_one(iterable, condition, raises, default)
+            get_the_one_with_raise(iterable, condition, raises)
         return
 
-    assert get_the_one(iterable, condition, raises, default) == should_return
+    assert get_the_one_with_raise(iterable, condition, raises) == should_return
+
+
+@pytest.mark.parametrize(
+    "iterable, condition, default, should_return",
+    [
+        ([],            bool,                   "hello", "hello"),
+        ([],            bool,                   None,    None),
+        ([1, 0],        bool,                   5,       1),
+        (["", 0, 2, 3], bool,                   4003,    2),
+        ([2, 3, 4],     (lambda x: x % 2 == 0), 1002,    2),
+        ([21, 3, 41],   (lambda x: x % 2 == 0), 1002,    1002),
+    ]
+)
+def test_get_the_one_with_default(iterable, condition, default, should_return):
+    assert get_the_one_with_default(iterable, condition, default) == should_return
 
 
 def test_is_matching():
@@ -343,7 +371,7 @@ def test_temporary_attribute_values():
         ({1: 2, 'a': 'b'}, {2: 1, 'b': 'a'}),
     ]
 )
-def test_reverse_dict(dict_, result):
+def test_reverse_dict__success(dict_, result):
     assert reverse_dict(dict_) == result
 
 
@@ -354,7 +382,7 @@ def test_reverse_dict(dict_, result):
         {'a': 'A', 'A': 'A'},
     ]
 )
-def test_reverse_dict(dict_):
+def test_reverse_dict__fail(dict_):
     with pytest.raises(KeyError):
         reverse_dict(dict_)
 
@@ -365,12 +393,11 @@ def test_reverse_dict(dict_):
         ({},                       {},                 {}),
         ({},                       {1: 2, 2: 3, 3: 4}, {}),
         ({1: 2},                   {},                 {1: 2}),
-        ({1: 2, 3: 4},             {1: 3},             {3: 4}),
         ({1: 'a', 2: 'b', 3: 'c'}, {1: 'A', 2: 'B'},   {'A': 'a', 'B': 'b', 3: 'c'}),
         ({1: 10, 2: 20, 3: 30},    {1: 2, 2: 3, 3: 4}, {2: 10, 3: 20, 4: 30}),
     ]
 )
-def test_change_dict_key_names(dict_, key_name_mapping, result):
+def test_change_dict_key_names__success(dict_, key_name_mapping, result):
     """
     Receive a dict and a mapping between old and new names
     change the keys of the dict to their new names (if they appear in the mapping)
@@ -387,7 +414,7 @@ def test_change_dict_key_names(dict_, key_name_mapping, result):
         ({1: None, 2: None},         {1: 2, 2: 2}),
     ]
 )
-def test_change_dict_key_names(dict_, key_name_mapping):
+def test_change_dict_key_names__fail(dict_, key_name_mapping):
     """
     Receive a dict and a mapping between old and new names
     change the keys of the dict to their new names (if they appear in the mapping)

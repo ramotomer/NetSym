@@ -28,7 +28,7 @@ def _set_line_width(value: float) -> None:
 
 
 @contextmanager
-def temporary_line_width(value: float) -> Generator[None]:
+def temporary_line_width(value: float) -> Generator[None, None, None]:
     """
     A contextmanager that temporarily sets the value of the width of lines
     """
@@ -156,7 +156,7 @@ def _draw_rect_with_outline(x: float, y: float, width: float, height: float,
 
 def draw_rect_by_corners(point1: Tuple[float, float], point2: Tuple[float, float],
                          color: Optional[T_Color] = None, outline_color: Optional[T_Color] = None,
-                         outline_width: Optional[float] = None) -> None:
+                         outline_width: float = 1) -> None:
     """
     Receives two points and draws a rect
     """

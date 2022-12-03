@@ -38,7 +38,7 @@ class ArpCache:
         :return: None
         """
         for ip, arp_cache_item in list(self.__cache.items()):
-            if MainLoop.instance.time_since(arp_cache_item.time) > max_lifetime:
+            if MainLoop.get_time_since(arp_cache_item.time) > max_lifetime:
                 del self.__cache[ip]
 
     def add_dynamic(self, ip_address: Union[str, IPAddress], mac_address: Union[str, MACAddress]) -> None:
@@ -59,31 +59,36 @@ class ArpCache:
         :param mac_address: MACAddress or str
         :return:
         """
-        self.__cache[IPAddress(ip_address)] = ARPCacheItem(mac_address,
+        self.__cache[IPAddress(ip_address)] = ARPCacheItem(MACAddress(mac_address),
                                                            MainLoop.get_time(),
                                                            COMPUTER.ARP_CACHE.STATIC)
 
-    def wipe(self) -> None:
+    def wipe(self, only_remove_dynamic_entries: bool = True) -> None:
         """
         Delete all dynamic items of the arp cache
         :return:
         """
-        for key in [ip for ip in self.__cache if self.__cache[ip].type == COMPUTER.ARP_CACHE.DYNAMIC]:
+        for key in [ip for ip in self.__cache if ((self.__cache[ip].type == COMPUTER.ARP_CACHE.DYNAMIC) or not only_remove_dynamic_entries)]:
+            # we use list comprehension here to not change the dict as we go over it :)
             del self.__cache[key]
 
-    def __contains__(self, item: IPAddress) -> bool:
-        if not isinstance(item, IPAddress):
-            raise InvalidAddressError(f"Key of an arp cache must be an IPAddress object!!! not {type(item)} like {repr(item)}")
+    def __contains__(self, item: Union[str, IPAddress]) -> bool:
+        if not isinstance(item, (str, IPAddress)):
+            raise InvalidAddressError(f"Key of an arp cache must be a string or IPAddress object!!! not {type(item)} like {repr(item)}")
 
-        return item.string_ip in {ip.string_ip: value for ip, value in self.__cache.items()}
+        return IPAddress(item).string_ip in {ip.string_ip: value for ip, value in self.__cache.items()}
 
-    def __getitem__(self, item: IPAddress) -> ARPCacheItem:
-        if not isinstance(item, IPAddress):
-            raise KeyError(f"Only search the arp cache for IPAddress! not {type(item)}!")
-        return {ip.string_ip: value for ip, value in self.__cache.items()}[item.string_ip]
+    def __getitem__(self, item: Union[str, IPAddress]) -> ARPCacheItem:
+        if not isinstance(item, (str, IPAddress)):
+            raise KeyError(f"Only search the arp cache for string or IPAddress! not {type(item)}!")
+
+        return {ip.string_ip: value for ip, value in self.__cache.items()}[IPAddress(item).string_ip]
 
     def __iter__(self) -> Iterator:
         return iter(self.__cache)
+
+    def __len__(self) -> int:
+        return len(self.__cache)
 
     def __repr__(self) -> str:
         string = f"{'IP address': >19}{'mac': >22}\n"

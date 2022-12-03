@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import NamedTuple, TYPE_CHECKING, List
+from typing import NamedTuple, TYPE_CHECKING, List, Dict
 
-from NetSym.computing.internals.interface import Interface
+from NetSym.address.mac_address import MACAddress
+from NetSym.computing.internals.network_interfaces.interface import Interface
 from NetSym.computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, WaitingFor
 from NetSym.consts import COMPUTER, T_Time
 from NetSym.exceptions import *
@@ -29,7 +30,7 @@ class SwitchingProcess(Process):
         Initiates the process with a computer that runs it.
         """
         super(SwitchingProcess, self).__init__(pid, switch)
-        self.switching_table = {}
+        self.switching_table: Dict[MACAddress, SwitchTableItem] = {}
         # ^ a dictionary mapping mac addresses to the corresponding leg (interface) they sit behind.
 
     def update_switch_table_from_packets(self, packets: ReturnedPacket) -> None:
@@ -51,7 +52,7 @@ class SwitchingProcess(Process):
         :return: None
         """
         for src_mac, switch_table_item in list(self.switching_table.items()):
-            if MainLoop.instance.time_since(switch_table_item.time) > COMPUTER.SWITCH_TABLE.ITEM_LIFETIME:
+            if MainLoop.get_time_since(switch_table_item.time) > COMPUTER.SWITCH_TABLE.ITEM_LIFETIME:
                 del self.switching_table[src_mac]
 
     def send_new_packets_to_destinations(self, packets: ReturnedPacket) -> None:

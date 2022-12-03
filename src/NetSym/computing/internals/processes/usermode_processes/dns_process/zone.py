@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, TYPE_CHECKING, Iterable
+from typing import List, Optional, Tuple, TYPE_CHECKING, Iterator
 
 from NetSym.consts import OPCODES
 from NetSym.exceptions import FilesystemError
 from NetSym.packets.usefuls.dns import T_Hostname, canonize_domain_hostname, is_domain_hostname_valid
-from NetSym.usefuls.funcs import get_the_one
+from NetSym.usefuls.funcs import get_the_one_with_raise
 
 if TYPE_CHECKING:
     from NetSym.computing.computer import Computer
@@ -62,7 +62,7 @@ class Zone:
     max_record_cache_time:            Optional[int] = None
 
     origin:                           Optional[str] = None
-    default_ttl:                      Optional[int] = None
+    default_ttl:                      int           = 3600
 
     authoritative_master_name_server: Optional[T_Hostname] = None
     admin_mail_address:               Optional[T_Hostname] = None
@@ -76,7 +76,7 @@ class Zone:
     def name_server_records(self) -> List[ZoneRecord]:
         return [r for r in self.records if r.record_type == OPCODES.DNS.TYPES.AUTHORITATIVE_NAME_SERVER]
 
-    def __iter__(self) -> Iterable[ZoneRecord]:
+    def __iter__(self) -> Iterator[ZoneRecord]:
         return iter(self.records)
 
     @classmethod
@@ -152,7 +152,7 @@ $TTL {self.default_ttl}\n
 """
 
     def __getitem__(self, item: T_Hostname) -> ZoneRecord:
-        return get_the_one(
+        return get_the_one_with_raise(
             self.records,
             lambda record: record.record_name == item,
             raises=KeyError
@@ -207,17 +207,14 @@ $TTL {self.default_ttl}\n
                 return
             full_string_lines.remove(line)
 
-    def resolve_aliasing(self, alias_record: Optional[ZoneRecord]) -> Optional[str]:
+    def resolve_aliasing(self, alias_record: ZoneRecord) -> str:
         """
         Take in an alias record and return the record_data of the record that the alias refers to
         """
-        if alias_record is None:
-            return None
-
         if not is_domain_hostname_valid(alias_record.record_data):  # record is not an alias
             return alias_record.record_data
 
-        resolved_record = get_the_one(self.records, lambda r: r.record_name == alias_record.record_data, InvalidZoneFileError)
+        resolved_record = get_the_one_with_raise(self.records, lambda r: r.record_name == alias_record.record_data, InvalidZoneFileError)
         if is_domain_hostname_valid(resolved_record.record_data):  # That means `resolved_record` is still an 'alias' record! (alias of an alias)
             return self.resolve_aliasing(resolved_record)
         return resolved_record.record_data

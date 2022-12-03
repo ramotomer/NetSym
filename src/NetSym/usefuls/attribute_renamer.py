@@ -14,7 +14,7 @@ T = TypeVar("T")
 
 
 def define_attribute_aliases(class_: Type[T], attribute_name_mapping: Dict[str, Any]) -> Type[T]:
-    class AttributeRenamer(class_):
+    class AttributeRenamer(class_):  # type: ignore
         original_name = getattr(class_, 'original_name', class_.__name__)
 
         def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -37,7 +37,7 @@ def define_attribute_aliases(class_: Type[T], attribute_name_mapping: Dict[str, 
 
 
 def with_parsed_attributes(class_: Type[T], attribute_name_to_parser: Dict[str, Callable[[Any], Any]]) -> Type[T]:
-    class AttributeParser(class_):
+    class AttributeParser(class_):  # type: ignore
         original_name = getattr(class_, 'original_name', class_.__name__)
 
         def __getattr__(self, item: str) -> Any:
@@ -55,7 +55,7 @@ def with_parsed_attributes(class_: Type[T], attribute_name_to_parser: Dict[str, 
 
 
 def with_attribute_type_casting(class_: Type[T], attribute_name_to_type: Dict[str, Callable[[Any], Any]]) -> Type[T]:
-    class AttributeTypeCaster(class_):
+    class AttributeTypeCaster(class_):  # type: ignore
         original_name = getattr(class_, 'original_name', class_.__name__)
 
         def __getattr__(self, item: str) -> Any:
@@ -72,7 +72,7 @@ def with_attribute_type_casting(class_: Type[T], attribute_name_to_type: Dict[st
 
 
 def with_attribute_type_casting_by_suffix(class_: Type[T], attribute_suffix_to_type: Dict[str, Callable[[Any], Any]]) -> Type[T]:
-    class AttributeTypeCasterBySuffix(class_):
+    class AttributeTypeCasterBySuffix(class_):  # type: ignore
         original_name = getattr(class_, 'original_name', class_.__name__)
 
         def __getattr__(self, item: str) -> Any:

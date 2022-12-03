@@ -1,25 +1,26 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, NamedTuple
+from typing import TYPE_CHECKING, Optional, NamedTuple, Dict, List
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.internals.processes.abstracts.process import Process, T_ProcessCode
+from NetSym.computing.internals.sockets.raw_socket import RawSocket
 from NetSym.consts import OPCODES, PORTS, PROTOCOLS
 from NetSym.exceptions import *
 from NetSym.packets.all import DHCP, BOOTP, IP, UDP
 from NetSym.packets.usefuls.dns import T_Hostname
-from NetSym.usefuls.funcs import get_the_one
+from NetSym.usefuls.funcs import get_the_one_with_raise
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
-    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.internals.network_interfaces.interface import Interface
     from NetSym.computing.computer import Computer
 
 
 class DHCPData(NamedTuple):
-    given_ip:         Optional[IPAddress]
-    given_gateway:    Optional[IPAddress]
+    given_ip:         IPAddress
+    given_gateway:    IPAddress
     given_dns_server: Optional[IPAddress]
 
 
@@ -50,13 +51,13 @@ class DHCPServerProcess(Process):
         self.dns_server = dns_server
         self.domain = domain
 
-        self.interface_to_dhcp_data = {}  # interface : DHCPData
+        self.interface_to_dhcp_data: Dict[Interface, DHCPData] = {}
         # ^ a mapping for each interface of the server to a ip_layer that it packs for its clients.
         self.update_server_data()
 
-        self.in_session_with = {}  # {mac : offered_ip}
+        self.in_session_with: Dict[MACAddress, IPAddress] = {}  # {mac : offered_ip}
 
-        self.sockets = []
+        self.sockets: List[RawSocket] = []
 
     def update_server_data(self) -> None:
         """
@@ -65,8 +66,8 @@ class DHCPServerProcess(Process):
         :return: None
         """
         self.interface_to_dhcp_data = {
-            interface: DHCPData(IPAddress.copy(interface.ip),
-                                self.default_gateway.same_subnet_interfaces(interface.ip)[0].ip, None)
+            interface: DHCPData(IPAddress.copy(interface.get_ip()),
+                                self.default_gateway.same_subnet_interfaces(interface.get_ip())[0].get_ip(), None)
             for interface in self.computer.interfaces if interface.has_ip()
         }
 
@@ -87,7 +88,7 @@ class DHCPServerProcess(Process):
                                              server_ip=str(interface.ip)) /
                                        DHCP(options=[
                                            ('message-type', OPCODES.DHCP.OFFER),
-                                           ('subnet_mask', str(IPAddress.mask_from_number(interface.ip.subnet_mask))),
+                                           ('subnet_mask', str(IPAddress.mask_from_number(interface.get_ip().subnet_mask))),
                                            ('server_id', str(interface.ip)),
                                        ]))
 
@@ -129,7 +130,7 @@ class DHCPServerProcess(Process):
         """
         client_mac = request_packet["Ether"].src_mac
 
-        socket = get_the_one(self.sockets, lambda s: s.interface == interface, ThisCodeShouldNotBeReached)
+        socket = get_the_one_with_raise(self.sockets, lambda s: bool(s.interface == interface), ThisCodeShouldNotBeReached)
         socket.send(self.build_dhcp_pack(
             client_mac,
             offered_ip=self.in_session_with[client_mac],
@@ -151,7 +152,7 @@ class DHCPServerProcess(Process):
         offered = self.offer_ip(interface)
 
         self.in_session_with[client_mac] = IPAddress.copy(offered)
-        socket = get_the_one(self.sockets, lambda s: s.interface == interface, ThisCodeShouldNotBeReached)
+        socket = get_the_one_with_raise(self.sockets, lambda s: bool(s.interface == interface), ThisCodeShouldNotBeReached)
         socket.send(self.build_dhcp_offer(client_mac, offered, interface))
 
     def offer_ip(self, interface: Interface) -> IPAddress:
@@ -167,8 +168,9 @@ class DHCPServerProcess(Process):
         except KeyError:  # if the interface was created after the start of this process.
             if not interface.has_ip():
                 raise AddressError("The interface cannot serve DHCP because it has no IP address!")
-            self.interface_to_dhcp_data[interface] = DHCPData(IPAddress.copy(interface.ip),
-                                                              self.default_gateway.same_subnet_interfaces(interface.ip)[0].ip, None)
+
+            self.interface_to_dhcp_data[interface] = DHCPData(IPAddress.copy(interface.get_ip()),
+                                                              self.default_gateway.same_subnet_interfaces(interface.get_ip())[0].get_ip(), None)
             self._bind_interface_to_socket(interface)
             return self.offer_ip(interface)
 
@@ -182,7 +184,7 @@ class DHCPServerProcess(Process):
             self._bind_interface_to_socket(interface)
 
         while True:
-            ready_socket = yield from self.computer.select(self.sockets, timeout=PROTOCOLS.DHCP.NEW_INTERFACE_DETECTION_TIMEOUT)
+            ready_socket = yield from self.computer.select_with_timeout(self.sockets, timeout=PROTOCOLS.DHCP.NEW_INTERFACE_DETECTION_TIMEOUT)
             self._detect_new_interfaces()
             if ready_socket is None:
                 continue  # This means `select` ended due to timeout!

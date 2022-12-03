@@ -139,7 +139,7 @@ DNSQueryRecord = define_attribute_aliases(
 )
 
 
-def dns_resource_record_to_list(dns_resource_records: DNSRR) -> List[DNSResourceRecord]:
+def dns_resource_record_to_list(dns_resource_records: DNSRR) -> List[DNSRR]:
     """
     Take in the raw scapy format and turn it to something that will be more fun to use
 
@@ -160,7 +160,7 @@ def dns_resource_record_to_list(dns_resource_records: DNSRR) -> List[DNSResource
     #  the objects automatically
 
 
-def list_to_dns_resource_record(list_: List[DNSResourceRecord]) -> DNSRR:
+def list_to_dns_resource_record(list_: List[DNSRR]) -> DNSRR:
     """
 
     :param list_:
@@ -180,7 +180,7 @@ def list_to_dns_resource_record(list_: List[DNSResourceRecord]) -> DNSRR:
     return returned
 
 
-def dns_query_record_to_list(dns_query_records: DNSQR) -> List[DNSQueryRecord]:
+def dns_query_record_to_list(dns_query_records: DNSQR) -> List[DNSQR]:
     """
     Take in the raw scapy format and turn it to something that will be more fun to use
 
@@ -196,7 +196,7 @@ def dns_query_record_to_list(dns_query_records: DNSQR) -> List[DNSQueryRecord]:
     ]
 
 
-def list_to_dns_query(list_: List[DNSQueryRecord]) -> DNSQR:
+def list_to_dns_query(list_: List[DNSQR]) -> DNSQR:
     """
 
     :param list_:

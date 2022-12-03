@@ -11,10 +11,11 @@ from NetSym.computing.internals.processes.abstracts.process import Process, T_Pr
 from NetSym.computing.internals.processes.usermode_processes.dns_process.dns_client_process import DNSClientProcess
 from NetSym.computing.internals.processes.usermode_processes.dns_process.zone import Zone, ZoneRecord
 from NetSym.consts import PORTS, T_Port
+from NetSym.exceptions import *
 from NetSym.exceptions import DNSRouteNotFound, WrongUsageError, NoSuchFileError
 from NetSym.packets.all import DNS
 from NetSym.packets.usefuls.dns import *
-from NetSym.usefuls.funcs import get_the_one, with_args
+from NetSym.usefuls.funcs import with_args, get_the_one_with_raise
 
 if TYPE_CHECKING:
     from NetSym.computing.internals.sockets.udp_socket import UDPSocket
@@ -51,7 +52,7 @@ class DNSServerProcess(Process):
     def domain_names(self) -> List[T_Hostname]:
         try:
             return [canonize_domain_hostname(file.name.rsplit('.', 1)[0])
-                    for file in self.computer.filesystem.at_absolute_path(COMPUTER.FILES.CONFIGURATIONS.DNS_ZONE_FILES).files.values()]
+                    for file in self.computer.filesystem.directory_at_absolute_path(COMPUTER.FILES.CONFIGURATIONS.DNS_ZONE_FILES).files.values()]
         except NoSuchFileError:
             return []
 
@@ -61,14 +62,14 @@ class DNSServerProcess(Process):
 
     @property
     def _zone_files(self) -> List[File]:
-        return [self.computer.filesystem.at_absolute_path(path) for path in self._zone_file_paths]
+        return [self.computer.filesystem.file_at_absolute_path(path) for path in self._zone_file_paths]
 
     @staticmethod
     def _zone_file_path_by_domain_name(domain_name: T_Hostname) -> str:
         return COMPUTER.FILES.CONFIGURATIONS.DNS_ZONE_FILES + "/" + decanonize_domain_hostname(domain_name) + '.zone'
 
     def _zone_file_by_domain_name(self, domain_name: T_Hostname) -> File:
-        return self.computer.filesystem.at_absolute_path(self._zone_file_path_by_domain_name(domain_name))
+        return self.computer.filesystem.file_at_absolute_path(self._zone_file_path_by_domain_name(domain_name))
 
     def _zone_by_domain_name(self, domain_name: T_Hostname) -> Zone:
         with self._zone_file_by_domain_name(domain_name) as zone_file:
@@ -88,20 +89,26 @@ class DNSServerProcess(Process):
         """
         Takes in a name and TTL and builds a DNS packet that can be sent to the client as an answer to his query
         """
-        is_ok = (record_name is not None) and (time_to_live is not None)
-        dns_answer = DNS(
-            transaction_id=self.computer.dns_cache.transaction_counter,
-            is_response=True,
-            return_code=OPCODES.DNS.RETURN_CODES.OK if is_ok else OPCODES.DNS.RETURN_CODES.NAME_ERROR,
-            is_recursion_desired=True,
-            is_recursion_available=True,
-            answer_records=(list_to_dns_resource_record([
+        answer_records: Optional[DNSRR] = None
+        return_code = OPCODES.DNS.RETURN_CODES.NAME_ERROR
+
+        if (record_name is not None) and (time_to_live is not None):
+            return_code = OPCODES.DNS.RETURN_CODES.OK
+            answer_records = list_to_dns_resource_record([
                 DNSResourceRecord(
                     record_name=record_name,
                     time_to_live=time_to_live,
                     record_data=self.computer.dns_cache[record_name].ip_address.string_ip,
                 )
-            ]) if is_ok else None)
+            ])
+
+        dns_answer = DNS(
+            transaction_id=self.computer.dns_cache.transaction_counter,
+            is_response=True,
+            return_code=return_code,
+            is_recursion_desired=True,
+            is_recursion_available=True,
+            answer_records=answer_records,
         )
         # TODO: add the Query object itself to the DNS answer packet
         self.computer.dns_cache.transaction_counter += 1
@@ -129,6 +136,9 @@ class DNSServerProcess(Process):
         Take in all of the queries that are ready to be sent back to the clients
         Send them back to the clients
         """
+        if self.socket is None:
+            raise SocketNotRegisteredError("Do not call this method without initiating the socket first!")
+
         for item_name, client in query_dict.items():
             del self._active_queries[item_name]
             self.socket.sendto(self._build_dns_answer(item_name, self.computer.dns_cache[item_name].ttl), (client.client_ip, client.client_port))
@@ -137,6 +147,9 @@ class DNSServerProcess(Process):
         """
         Send error messages to the clients whose queries could sadly not be resolved :(
         """
+        if self.socket is None:
+            raise SocketNotRegisteredError("Do not call this method without initiating the socket first!")
+
         timed_out_clients = {hostname: client for hostname, client in self._active_queries.items()
                              if client.active_query_process_id is not None and
                                 not self.computer.process_scheduler.is_usermode_process_running(client.active_query_process_id) and
@@ -166,18 +179,20 @@ class DNSServerProcess(Process):
 
         This function checks for these files, and runs the new processes to continue the search
         """
-        tmp_query_files_dir = self.computer.filesystem.at_absolute_path(COMPUTER.FILES.CONFIGURATIONS.DNS_TMP_QUERY_RESULTS_DIR_PATH)
+        tmp_query_files_dir = self.computer.filesystem.directory_at_absolute_path(COMPUTER.FILES.CONFIGURATIONS.DNS_TMP_QUERY_RESULTS_DIR_PATH)
 
         for file in list(tmp_query_files_dir.files.values()):
             with file as f:
                 file_contents = json.loads(f.read())
             del tmp_query_files_dir.files[file.name]  # file was handled and is no longer necessary - delete!
 
-            record_name,  record_type = file_contents["record_name"],  file_contents["record_type"]
-            time_to_live, record_data = file_contents["time_to_live"], file_contents["record_data"]
+            record_name,  record_type = file_contents["record_name"],       file_contents["record_type"]
+            time_to_live, record_data = int(file_contents["time_to_live"]), file_contents["record_data"]
 
             if record_type == OPCODES.DNS.TYPES.HOST_ADDRESS:
-                relevant_domain_name = get_the_one(self.domain_names, with_args(does_domain_hostname_end_with, record_name), DNSRouteNotFound)
+                relevant_domain_name = get_the_one_with_raise(self.domain_names,
+                                                              with_args(does_domain_hostname_end_with, record_name),
+                                                              DNSRouteNotFound)
                 self.computer.dns_cache.add_item(
                     record_name,
                     IPAddress(record_data),
@@ -236,7 +251,7 @@ class DNSServerProcess(Process):
         if name in self.computer.dns_cache:
             return  # name is known - no need to resolve :)
 
-        domain_name = get_the_one(self.domain_names, with_args(does_domain_hostname_end_with, name), DNSRouteNotFound)
+        domain_name = get_the_one_with_raise(self.domain_names, with_args(does_domain_hostname_end_with, name), DNSRouteNotFound)
         zone = self._zone_by_domain_name(domain_name)
 
         exact_host_record = self._get_exact_host_record(name, zone)                  # A and CNAME records
@@ -265,10 +280,6 @@ class DNSServerProcess(Process):
         """
         return DNS(query_bytes)
 
-    def _init_socket(self) -> None:
-        self.socket = self.computer.get_udp_socket(self.pid)
-        self.socket.bind((IPAddress.no_address(), PORTS.DNS))
-
     def _init_zone_file(self, domain_name: T_Hostname) -> None:
         """
         Generate all zone files with default values
@@ -291,7 +302,8 @@ class DNSServerProcess(Process):
         The main code of the process
         """
         self._init_tmp_query_result_files()
-        self._init_socket()
+        self.socket = self.computer.get_udp_socket(self.pid)
+        self.socket.bind((IPAddress.no_address(), PORTS.DNS))
 
         for domain_name in self.__initial_domain_names:
             self._init_zone_file(domain_name)

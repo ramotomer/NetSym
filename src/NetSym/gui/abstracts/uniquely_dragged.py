@@ -1,7 +1,9 @@
-from abc import ABCMeta, abstractmethod
+from __future__ import annotations
+
+from abc import abstractmethod, ABC
 
 
-class UniquelyDragged(metaclass=ABCMeta):
+class UniquelyDragged(ABC):
     """
     A GraphicsObject that does something special when you drag it
     """

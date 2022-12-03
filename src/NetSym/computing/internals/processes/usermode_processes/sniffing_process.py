@@ -8,7 +8,7 @@ from NetSym.exceptions import SocketIsClosedError
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
-    from NetSym.computing.internals.interface import Interface
+    from NetSym.computing.internals.network_interfaces.interface import Interface
     from NetSym.computing.computer import Computer
 
 
@@ -63,5 +63,5 @@ class SniffingProcess(Process):
 
     def __repr__(self) -> str:
         return f"tcpdump " \
-            f"{f'-A' if self.socket.interface == INTERFACES.ANY_INTERFACE else f'-i {self.socket.interface.name}'} " \
+            f"{f'-A' if self.socket.interface is None else f'-i {self.socket.interface.name}'} " \
             f"{'-p' if self.socket.is_promisc else ''}"

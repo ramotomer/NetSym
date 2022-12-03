@@ -97,6 +97,10 @@ class ComputerGraphics(ImageGraphics):
         self.update_text_location()
 
     @property
+    def logic_object(self):
+        return self.computer
+
+    @property
     def should_be_transparent(self) -> bool:
         return not self.computer.is_powered_on
 
@@ -189,7 +193,7 @@ class ComputerGraphics(ImageGraphics):
         self.child_graphics_objects.console.location = user_interface.get_computer_output_console_location()
         self.child_graphics_objects.console.show()
 
-        buttons = {
+        buttons: Dict[str,  Callable[[], None]] = {
             "set ip (i)": user_interface.ask_user_for_ip,
             "change name (shift+n)": with_args(
                 user_interface.ask_user_for,
@@ -282,7 +286,7 @@ class ComputerGraphics(ImageGraphics):
         Generates the text that will be shown in the side window when this computer is pressed.
         :return: a long string.
         """
-        gateway = self.computer.routing_table.default_gateway.ip_address
+        gateway = self.computer.routing_table.default_gateway
         addresses = linesep.join(str(interface.ip) for interface in self.computer.interfaces if interface.has_ip())
 
         return f"""
@@ -290,7 +294,7 @@ class ComputerGraphics(ImageGraphics):
 '{self.computer.name}'
 
 {f'Operation System: {self.computer.os}' if self.computer.os is not None else ""}
-{f'Gateway: {gateway}' if gateway is not None else ""}
+{f'Gateway: {gateway.ip_address}' if gateway is not None else ""}
 {f'DNS server: {self.computer.dns_server}' if self.computer.dns_server is not None else ""}
 {f'IP Addresses: {linesep + addresses}' if addresses else ""}
 """
