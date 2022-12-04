@@ -31,6 +31,7 @@ class WirelessNetworkInterface(NetworkInterface):
     __connection:      Optional[WirelessConnection]
     __connection_side: Optional[WirelessConnectionSide]
 
+    frequency:         float
     graphics:          Optional[WirelessNetworkInterfaceGraphics]
 
     def __init__(self,
