@@ -16,6 +16,7 @@ from NetSym.computing.internals.network_data_structures.packet_sending_queue imp
 from NetSym.computing.internals.network_data_structures.routing_table import RoutingTable
 from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
 from NetSym.computing.internals.network_interfaces.loopback_interface import LoopbackInterface
+from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
 from NetSym.computing.internals.network_interfaces.wireless_network_interface import WirelessNetworkInterface
 from NetSym.computing.internals.processes.abstracts.process import PacketMetadata, ReturnedPacket, WaitingFor
 from NetSym.computing.internals.processes.kernelmode_processes.arp_process import ARPProcess, SendPacketWithARPProcess
@@ -52,7 +53,6 @@ if TYPE_CHECKING:
     from NetSym.computing.internals.processes.abstracts.process import Process
     from NetSym.computing.internals.sockets.socket import Socket
     from NetSym.computing.connections.connection import Connection
-    from NetSym.gui.tech.network_interfaces.cable_network_interface_graphics import CableNetworkInterfaceGraphics
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 
@@ -105,13 +105,13 @@ class Computer:
 
     os:                str
     is_powered_on:     bool
-    interfaces:        List[CableNetworkInterface]
+    interfaces:        List[NetworkInterface]
     filesystem:        Filesystem
     arp_cache:         ArpCache
     routing_table:     RoutingTable
     process_scheduler: ProcessScheduler
 
-    def __init__(self, name: Optional[str] = None, os: str = OS.WINDOWS, gateway: Optional[IPAddress] = None, *interfaces: CableNetworkInterface) -> None:
+    def __init__(self, name: Optional[str] = None, os: str = OS.WINDOWS, gateway: Optional[IPAddress] = None, *interfaces: NetworkInterface) -> None:
         """
         Initiates a Computer object.
         :param name: the name of the computer which will be displayed next to it.
@@ -128,7 +128,7 @@ class Computer:
         self.os = os
         self.default_gateway = gateway  # an IPAddress object of the default gateway of this computer
 
-        self.interfaces: List[CableNetworkInterface] = list(interfaces)
+        self.interfaces: List[NetworkInterface] = list(interfaces)
         if not interfaces:
             self.interfaces = []  # a list of all of the interfaces without the loopback
         self.loopback = LoopbackInterface()
@@ -190,7 +190,7 @@ class Computer:
         return [interface.get_ip() for interface in self.interfaces if interface.has_ip()]
 
     @property
-    def all_interfaces(self) -> List[CableNetworkInterface]:
+    def all_interfaces(self) -> List[NetworkInterface]:
         """Returns the list of interfaces with the loopback"""
         return self.interfaces + [self.loopback]
 
@@ -468,7 +468,7 @@ class Computer:
     def add_interface(self,
                       name: Optional[str] = None,
                       mac: Optional[Union[str, MACAddress]] = None,
-                      type_: str = INTERFACES.TYPE.ETHERNET) -> Tuple[CableNetworkInterface, CableNetworkInterfaceGraphics]:
+                      type_: str = INTERFACES.TYPE.ETHERNET) -> Tuple[NetworkInterface, GraphicsObject]:
         """
         Adds an interface to the computer with a given name.
         If the name already exists, raise a DeviceNameAlreadyExists.
@@ -484,7 +484,7 @@ class Computer:
 
         interface_class = interface_type_to_object[type_]
 
-        new_interface = interface_class((MACAddress.randomac() if mac is not None else mac), name=name)
+        new_interface: NetworkInterface = interface_class((MACAddress.randomac() if mac is not None else mac), name=name)
         self.interfaces.append(new_interface)
 
         graphics = new_interface.init_graphics(parent_computer=self.get_graphics())
@@ -504,7 +504,7 @@ class Computer:
         self.interfaces.remove(interface)
         self.main_loop.unregister_graphics_object(interface.get_graphics())
 
-    def available_interface(self) -> CableNetworkInterface:
+    def available_interface(self) -> NetworkInterface:
         """
         Returns an interface of the computer that is disconnected and
         is available to connect to another computer.
@@ -528,7 +528,7 @@ class Computer:
                 interface.disconnect()
                 return
 
-    def same_subnet_interfaces(self, ip_address: IPAddress) -> List[CableNetworkInterface]:
+    def same_subnet_interfaces(self, ip_address: IPAddress) -> List[NetworkInterface]:
         """
         Returns all of the interfaces of the computer that are in the same subnet as the given IP address.
         It is tested (naturally) using the subnet mask of the given `IPAddress` object.
@@ -538,7 +538,7 @@ class Computer:
         return [interface for interface in self.all_interfaces
                 if interface.has_ip() and interface.get_ip().is_same_subnet(ip_address)]
 
-    def interface_by_name(self, name: str) -> CableNetworkInterface:
+    def interface_by_name(self, name: str) -> NetworkInterface:
         """
         Receives an interface name and returns the `CableNetworkInterface`
         """
@@ -575,7 +575,7 @@ class Computer:
         return any(interface.has_ip() and interface.get_ip().string_ip == ip_address.string_ip
                    for interface in self.all_interfaces)
 
-    def get_sending_interface_by_routing_table(self, dst_ip: IPAddress) -> CableNetworkInterface:
+    def get_sending_interface_by_routing_table(self, dst_ip: IPAddress) -> NetworkInterface:
         """
         Receives an `IPAddress` one wishes to send a packet to
         Returns the `CableNetworkInterface` that the packet should be sent from (as the routing table specifies)
@@ -626,7 +626,7 @@ class Computer:
             interface_ip_address = self.same_subnet_interfaces(gateway_ip)[0].get_ip()
         self.routing_table.set_default_gateway(gateway_ip, interface_ip_address)
 
-    def set_ip(self, interface: CableNetworkInterface, string_ip: str) -> None:
+    def set_ip(self, interface: NetworkInterface, string_ip: str) -> None:
         """
         Sets the IP address of a given interface.
         Updates all relevant attributes of the computer (routing table, DHCP serving, etc...)
@@ -646,7 +646,7 @@ class Computer:
 
         self.routing_table.add_interface(interface.ip)
 
-    def remove_ip(self, interface: CableNetworkInterface) -> None:
+    def remove_ip(self, interface: NetworkInterface) -> None:
         """
         Removes the ip of an interface.
         """
@@ -904,7 +904,7 @@ class Computer:
 
     # ------------------------- v  Packet sending and wrapping  v ---------------------------------------------
 
-    def send(self, packet: Packet, interface: Optional[CableNetworkInterface] = None, sending_socket: Optional[RawSocket] = None) -> None:
+    def send(self, packet: Packet, interface: Optional[NetworkInterface] = None, sending_socket: Optional[RawSocket] = None) -> None:
         """
         Every sent packet from the computer should pass through this function!!!!!!!
 
@@ -1087,7 +1087,7 @@ class Computer:
         )
         self.send(request_metadata.interface.ethernet_wrap(request["ARP"].src_mac, arp), request_metadata.interface)
 
-    def arp_grat(self, interface: CableNetworkInterface) -> None:
+    def arp_grat(self, interface: NetworkInterface) -> None:
         """
         Send a gratuitous ARP from a given interface.
         If the interface has no IP address, do nothing.
@@ -1166,7 +1166,7 @@ class Computer:
                            mode: str,
                            packets: Sequence[Packet],
                            interval_between_packets: T_Time,
-                           interface: Optional[CableNetworkInterface] = None,
+                           interface: Optional[NetworkInterface] = None,
                            sending_socket: Optional[RawSocket] = None) -> None:
         """
         Send a large amount of packets that should be sent in quick succession one after the other
@@ -1518,15 +1518,15 @@ class Computer:
     # ----------------------------------------- v  File Saving  v ----------------------------------------
 
     @classmethod
-    def _interfaces_from_dict(cls, dict_: Dict) -> List[CableNetworkInterface]:
+    def _interfaces_from_dict(cls, dict_: Dict) -> List[NetworkInterface]:
         """
         Receives a dict from a json file and return a list of interfaces
         :param dict_:
         :return:
         """
-        interface_classes: Dict[str, Type[CableNetworkInterface]] = {
+        interface_classes: Dict[str, Type[NetworkInterface]] = {
             INTERFACES.TYPE.ETHERNET: CableNetworkInterface,
-            INTERFACES.TYPE.WIFI: WirelessNetworkInterface
+            INTERFACES.TYPE.WIFI:     WirelessNetworkInterface
         }
         return [interface_classes[iface_dict["type_"]].from_dict_load(iface_dict) for iface_dict in dict_["interfaces"]]
 

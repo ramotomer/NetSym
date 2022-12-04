@@ -14,7 +14,7 @@ from NetSym.usefuls.funcs import get_the_one_with_raise
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
-    from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
+    from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
     from NetSym.computing.computer import Computer
 
 
@@ -51,7 +51,7 @@ class DHCPServerProcess(Process):
         self.dns_server = dns_server
         self.domain = domain
 
-        self.interface_to_dhcp_data: Dict[CableNetworkInterface, DHCPData] = {}
+        self.interface_to_dhcp_data: Dict[NetworkInterface, DHCPData] = {}
         # ^ a mapping for each interface of the server to a ip_layer that it packs for its clients.
         self.update_server_data()
 
@@ -71,14 +71,14 @@ class DHCPServerProcess(Process):
             for interface in self.computer.interfaces if interface.has_ip()
         }
 
-    def raise_on_unknown_packet(self, packet: Packet, interface: CableNetworkInterface) -> None:
+    def raise_on_unknown_packet(self, packet: Packet, interface: NetworkInterface) -> None:
         """When a DHCP packet with an unknown opcode is received"""
         raise UnknownPacketTypeError(f"DHCP type unknown, {packet['DHCP'].parsed_options.message_type}")
 
     @staticmethod
     def build_dhcp_offer(client_mac: MACAddress,
                          offered_ip: IPAddress,
-                         interface: CableNetworkInterface) -> Packet:
+                         interface: NetworkInterface) -> Packet:
         return interface.ethernet_wrap(client_mac,
                                        IP(src_ip=str(interface.ip), dst_ip=str(offered_ip), ttl=PROTOCOLS.DHCP.DEFAULT_TTL) /
                                        UDP(src_port=PORTS.DHCP_SERVER, dst_port=PORTS.DHCP_CLIENT) /
@@ -96,7 +96,7 @@ class DHCPServerProcess(Process):
     def build_dhcp_pack(client_mac: MACAddress,
                         offered_ip: IPAddress,
                         offered_gateway: IPAddress,
-                        session_interface: CableNetworkInterface,
+                        session_interface: NetworkInterface,
                         dns_server: Optional[IPAddress] = None,
                         domain: Optional[T_Hostname] = None) -> Packet:
         """
@@ -124,7 +124,7 @@ class DHCPServerProcess(Process):
                                                      your_ip=str(offered_ip)) /
                                                DHCP(options=options))
 
-    def send_pack(self, request_packet: Packet, interface: CableNetworkInterface) -> None:
+    def send_pack(self, request_packet: Packet, interface: NetworkInterface) -> None:
         """
         Sends the `DHCP_PACK` packet to the destination with all of the details the client had requested.
         """
@@ -141,7 +141,7 @@ class DHCPServerProcess(Process):
         ))
         del self.in_session_with[client_mac]
 
-    def send_offer(self, discover_packet: Packet, interface: CableNetworkInterface) -> None:
+    def send_offer(self, discover_packet: Packet, interface: NetworkInterface) -> None:
         """
         This is called when a Discover was received, it sends a `DHCP_OFFER` to the asking computer.
         with an offer for an ip address.
@@ -155,7 +155,7 @@ class DHCPServerProcess(Process):
         socket = get_the_one_with_raise(self.sockets, lambda s: bool(s.interface == interface), ThisCodeShouldNotBeReached)
         socket.send(self.build_dhcp_offer(client_mac, offered, interface))
 
-    def offer_ip(self, interface: CableNetworkInterface) -> IPAddress:
+    def offer_ip(self, interface: NetworkInterface) -> IPAddress:
         """
         Offers the next available IP address for a new client, based on the `CableNetworkInterface` that is serving the DHCP.
         :param interface: the `CableNetworkInterface` that the request came from (to know the subnet)
@@ -203,7 +203,7 @@ class DHCPServerProcess(Process):
                         self.raise_on_unknown_packet
                     )(packet, interface)
 
-    def _bind_interface_to_socket(self, interface: CableNetworkInterface) -> None:
+    def _bind_interface_to_socket(self, interface: NetworkInterface) -> None:
         """
         Takes in an `CableNetworkInterface` and gets a raw socket from the operation system of the computer
         Binds the socket to the interface with a DHCP packet filter

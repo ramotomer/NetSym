@@ -8,7 +8,7 @@ from NetSym.exceptions import SocketIsClosedError
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
-    from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
+    from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
     from NetSym.computing.computer import Computer
 
 
@@ -21,7 +21,7 @@ class SniffingProcess(Process):
                  pid: int,
                  computer: Computer,
                  filter: Callable[[Packet], bool],
-                 interface: Optional[CableNetworkInterface] = INTERFACES.ANY_INTERFACE,
+                 interface: Optional[NetworkInterface] = INTERFACES.ANY_INTERFACE,
                  promisc: bool = False) -> None:
         super(SniffingProcess, self).__init__(pid, computer)
 

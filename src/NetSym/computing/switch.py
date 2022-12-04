@@ -14,7 +14,7 @@ from NetSym.packets.all import LLC, STP
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
-    from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
+    from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
 
 
 class Switch(Computer):
@@ -112,7 +112,7 @@ class Antenna(Switch):
     """
     This class represents an Antenna, which is just a Switch that can send things over radio waves.
     """
-    def __init__(self, name: Optional[str] = None, *interfaces: CableNetworkInterface) -> None:
+    def __init__(self, name: Optional[str] = None, *interfaces: NetworkInterface) -> None:
         super(Antenna, self).__init__(name)
         self.stp_enabled = False
         self.interfaces = [WirelessNetworkInterface()] if not interfaces else list(interfaces)

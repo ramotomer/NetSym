@@ -13,7 +13,7 @@ from NetSym.usefuls.funcs import get_the_one_with_raise
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
     from NetSym.computing.internals.sockets.raw_socket import RawSocket
-    from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
+    from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
     from NetSym.computing.computer import Computer
 
 
@@ -37,7 +37,7 @@ class DHCPClientProcess(Process):
         super(DHCPClientProcess, self).__init__(pid, computer)
         self.sockets: List[RawSocket] = []
 
-    def update_routing_table(self, session_interface: CableNetworkInterface, dhcp_pack: Packet) -> None:
+    def update_routing_table(self, session_interface: NetworkInterface, dhcp_pack: Packet) -> None:
         """
         Receive the interface that runs the session with the server and the DHCP pack packet that it sent,
         update the routing table accordingly.
@@ -51,7 +51,7 @@ class DHCPClientProcess(Process):
         self.computer.set_default_gateway(IPAddress(dhcp_pack["DHCP"].parsed_options.router), given_ip)
 
     @staticmethod
-    def build_dhcp_discover(interface: CableNetworkInterface) -> Packet:
+    def build_dhcp_discover(interface: NetworkInterface) -> Packet:
         return interface.ethernet_wrap(MACAddress.broadcast(),
                                        IP(src_ip=str(IPAddress.no_address()), dst_ip=str(IPAddress.broadcast()), ttl=PROTOCOLS.DHCP.DEFAULT_TTL) /
                                        UDP(src_port=PORTS.DHCP_CLIENT, dst_port=PORTS.DHCP_SERVER) /
@@ -60,7 +60,7 @@ class DHCPClientProcess(Process):
 
     @staticmethod
     def build_dhcp_request(server_mac: MACAddress,
-                           session_interface: CableNetworkInterface,
+                           session_interface: NetworkInterface,
                            server_ip: IPAddress,
                            requested_ip: IPAddress) -> Packet:
         """

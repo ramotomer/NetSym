@@ -11,11 +11,11 @@ from NetSym.address.mac_address import MACAddress
 from NetSym.computing.connections.base_connection import BaseConnection
 from NetSym.consts import FILE_PATHS, INTERFACES, PROTOCOLS, T_Color
 from NetSym.exceptions import *
-from NetSym.gui.tech.network_interfaces.cable_network_interface_graphics import CableNetworkInterfaceGraphics
 from NetSym.packets.all import Ether
 from NetSym.packets.packet import Packet
 
 if TYPE_CHECKING:
+    from NetSym.gui.tech.network_interfaces.network_interface_graphics import NetworkInterfaceGraphics
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.computing.connections.base_connection import BaseConnectionSide
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
@@ -62,7 +62,7 @@ class NetworkInterface(ABC):
         self.type: str = type_
         self.mtu: int = mtu
 
-        self.graphics: Optional[CableNetworkInterfaceGraphics] = None
+        self.graphics: Optional[NetworkInterfaceGraphics] = None
         self.display_color: T_Color = display_color
         # TODO: This ^ belongs in the CableNetworkInterfaceGraphics class FOR SURE!!!
 
@@ -115,7 +115,7 @@ class NetworkInterface(ABC):
 
         return self.ip
 
-    def get_graphics(self) -> CableNetworkInterfaceGraphics:
+    def get_graphics(self) -> NetworkInterfaceGraphics:
         """
 
         """

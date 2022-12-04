@@ -14,7 +14,7 @@ from NetSym.packets.packet import Packet
 from NetSym.usefuls.iterable_dataclass import IterableDataclass
 
 if TYPE_CHECKING:
-    from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
+    from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
     from NetSym.computing.computer import Computer
 
 
@@ -53,7 +53,7 @@ class ReturnedPacket:
         return self.packets[self.packet]
 
     @property
-    def packet_and_interface(self) -> Tuple[Packet, CableNetworkInterface]:
+    def packet_and_interface(self) -> Tuple[Packet, NetworkInterface]:
         """
         just like `self.packet` but returns a tuple of (packet, interface)
         """
@@ -229,7 +229,7 @@ class Timeout:
 
 @dataclass
 class PacketMetadata:
-    interface: CableNetworkInterface
+    interface: NetworkInterface
     time:      T_Time
     direction: str
 

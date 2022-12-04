@@ -1,5 +1,6 @@
 import os
 import random
+from typing import cast
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
@@ -588,7 +589,7 @@ def test_handle_arp(example_computers):
         mock_mainloop_time(m)
 
         for computer in example_computers:
-            computer.interfaces[0].connect(CableNetworkInterface())
+            cast(CableNetworkInterface, computer.interfaces[0]).connect(CableNetworkInterface())
             packet = Packet(example_ethernet() / example_arp())
             computer._handle_arp(ReturnedPacket(packet, PacketMetadata(computer.interfaces[0], 1.0, PACKET.DIRECTION.INCOMING)))
             to_send = computer.interfaces[0].connection_side._packets_to_send

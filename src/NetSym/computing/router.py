@@ -12,7 +12,7 @@ from NetSym.consts import OS
 from NetSym.gui.main_loop import MainLoop
 
 if TYPE_CHECKING:
-    pass
+    from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
 
 
 class Router(Computer):
@@ -24,7 +24,7 @@ class Router(Computer):
     """
     def __init__(self,
                  name: Optional[str] = None,
-                 interfaces: Optional[Iterable[CableNetworkInterface]] = None,
+                 interfaces: Optional[Iterable[NetworkInterface]] = None,
                  is_dhcp_server: bool = True) -> None:
         """
         Initiates a router with no IP addresses.
