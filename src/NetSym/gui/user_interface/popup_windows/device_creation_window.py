@@ -39,11 +39,11 @@ class DeviceCreationWindow(PopupWindowContainingText):
             ImageButton(
                 x + i * (WINDOWS.POPUP.DEVICE_CREATION.BUTTON_SIZE + WINDOWS.POPUP.DEVICE_CREATION.BUTTON_GAP),
                 y,
+                self.DEVICE_TO_IMAGE[device][0],
                 called_in_order(
                     with_args(user_interface.create_device, device),
                     self.delete,
                 ),
-                self.DEVICE_TO_IMAGE[device][0],
                 f"{device.__name__} {self.DEVICE_TO_IMAGE[device][1]}",
                 width=WINDOWS.POPUP.DEVICE_CREATION.BUTTON_SIZE, height=WINDOWS.POPUP.DEVICE_CREATION.BUTTON_SIZE,
                 key=user_interface.key_from_string(self.DEVICE_TO_IMAGE[device][1]),

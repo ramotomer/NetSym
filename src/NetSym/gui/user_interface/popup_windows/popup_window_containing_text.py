@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Sequence
 
 from NetSym.consts import WINDOWS, T_Color, SHAPES
-from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 from NetSym.gui.user_interface.text_graphics import Text
 
@@ -38,8 +37,9 @@ class PopupWindowContainingText(PopupWindow):
             max_width=self.width
         )
 
-        self.child_graphics_objects: Sequence[GraphicsObject] = [
+        self.child_graphics_objects = [
             self.title_text,
             self.information_text,
             self.exit_button,
-        ] + list(buttons)
+            *(buttons if buttons is not None else [])
+        ]

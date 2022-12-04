@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Callable
 
 from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
 from NetSym.computing.internals.shell.commands.net.ip.ip_address import IpAddressCommand
@@ -24,9 +24,9 @@ class Ip(Command):
         """
         super(Ip, self).__init__('ip', 'manage and display ip settings', computer, shell)
         self.parser.add_argument('object', metavar='object', type=str, nargs='?', help='type of ip command to run')
-        self.parser.add_argument('args', metavar='args', nargs='*', type=str, help='rest of the arguments')
+        self.parser.add_argument('args',   metavar='args',   type=str, nargs='*', help='rest of the arguments')
 
-        self.object_to_command = {
+        self.object_to_command: Dict[str, Callable[[Computer, Shell], Command]] = {
             'address': IpAddressCommand,
             'link': IpLinkCommand,
             'route': IpRouteCommand,

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Set, Tuple, Sequence
+from typing import TYPE_CHECKING, Optional, Set, Tuple, Sequence, cast
 
 from NetSym.consts import WINDOWS, T_Color, COLORS, SHAPES, debugp
+from NetSym.exceptions import *
 from NetSym.exceptions import WrongUsageError
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from NetSym.gui.main_loop import MainLoop
@@ -35,7 +36,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         :param buttons: a list of buttons that will be displayed on this window. The `X` button is not included.
         """
         super(PopupWindow, self).__init__(x, y)
-        button_list = list(buttons) or []
+        button_list = list(buttons) if buttons is not None else []
 
         self.width, self.height = width, height
         self.__is_active = False
@@ -72,13 +73,15 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.child_graphics_objects = [
             self.title_text,
             self.exit_button,
-        ] + button_list
+            *button_list,
+        ]
 
         self.buttons = [self.exit_button] + button_list
 
-        self._x_before_pinning, self._y_before_pinning = None, None
+        self._x_before_pinning: Optional[float] = None
+        self._y_before_pinning: Optional[float] = None
         self._size_before_pinning = self.width, self.height
-        self._pinned_directions = set()
+        self._pinned_directions: Set[str] = set()
 
         self.unregister_this_window_from_user_interface = False
 
@@ -117,6 +120,9 @@ class PopupWindow(UserInterfaceGraphicsObject):
         Deletes the window and removes it from the UserInterface.popup_windows list
         :return: None
         """
+        if user_interface is None:
+            raise NotImplementedError
+
         super(PopupWindow, self).delete(user_interface)
         self.unregister_this_window_from_user_interface = True
 
@@ -270,9 +276,12 @@ class PopupWindow(UserInterfaceGraphicsObject):
         """
         Set the size and location of the window to be just like before the window was pinned
         """
+        if (self._x_before_pinning is None) or (self._y_before_pinning is None):
+            raise SomethingWentTerriblyWrongError("!! Do not call this function if there is no 'before pinned'....")
+
         self.x, self.y = self._x_before_pinning, self._y_before_pinning
         self.resize(*self._size_before_pinning)
         self._pinned_directions = set()
 
     def __repr__(self) -> str:
-        return f"<< PopupWindow(title='{self.child_graphics_objects[0].text}') >>"
+        return f"""<< PopupWindow(title='{cast(Text, self.child_graphics_objects[0]).text}') >>"""

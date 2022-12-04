@@ -292,6 +292,13 @@ class GraphicsObjectNotYetInitialized(GraphicsError):
     """
 
 
+class ParentGraphicsObjectNotSet(GraphicsObjectNotYetInitialized):
+    """
+    An object has an attribute that can only be initialized by a parent `GraphicsObject`.
+    That attribute was accessed but no parent `GraphicsObject` was set :(
+    """
+
+
 class PopupWindowWithThisError(GraphicsError):
     """
     This is raised inside an action of a popup window and it is caught inside the popup and a popup error window
