@@ -198,7 +198,7 @@ class MainLoop:
         A 'nice to have' method - is just less parameters for `insert_to_loop_prioritized`
 
         This is just like `insert_to_loop` but the function is inserted to the
-        head of the list so it is called first. this is done for example so `Connection`
+        head of the list so it is called first. this is done for example so `CableConnection`
         objects will be drawn in the background.
         :param function: The function
         :param args:

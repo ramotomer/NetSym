@@ -38,7 +38,7 @@ class BaseConnection(ABC):
     connected computers. These properties of the `Connection` class is mainly so the packet sending could be
     displayed nicely.
 
-    The `Connection` object keeps references to its two `ConnectionSide` objects. These are nice interfaces for
+    The `Connection` object keeps references to its two `CableConnectionSide` objects. These are nice interfaces for
         the `CableNetworkInterface` object to talk to its connection.
     """
     speed:        float
@@ -48,7 +48,7 @@ class BaseConnection(ABC):
 
     @abstractmethod
     def get_sides(self) -> Sequence[BaseConnectionSide]:
-        """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""
+        """Returns the two sides of the connection as a tuple (they are `CableConnectionSide` objects)"""
 
     def set_speed(self, new_speed: float) -> None:
         """Sets the speed of the connection"""
@@ -82,15 +82,15 @@ class BaseConnection(ABC):
     @abstractmethod
     def _send_packets_from_side(self, side: BaseConnectionSide) -> List[PacketGraphics]:
         """
-        Takes all of the packets that are waiting to be sent on one ConnectionSide and sends them down the main connection.
-        :param side: a `ConnectionSide` object.
+        Takes all of the packets that are waiting to be sent on one CableConnectionSide and sends them down the main connection.
+        :param side: a `CableConnectionSide` object.
         """
 
     @abstractmethod
     def _update_packet(self, sent_packet: BaseSentPacket) -> None:
         """
         Receives a SentPacket object and updates its progress on the connection.
-        If the packet has reached the end of the connection, make it be received at the appropriate ConnectionSide
+        If the packet has reached the end of the connection, make it be received at the appropriate CableConnectionSide
         :param sent_packet: a `SentPacket`
         """
 
@@ -131,9 +131,9 @@ class BaseConnection(ABC):
 
     def move_packets(self, main_loop: MainLoop) -> None:
         """
-        This method is inserted into the main loop of the simulation when this `Connection` object is initiated.
+        This method is inserted into the main loop of the simulation when this `Connection` object is initialized.
         The packets in the connection should always be moving. (unless paused)
-        This method sends new packets from the `ConnectionSide` object, updates the time they have been in the cable, and
+        This method sends new packets from the `CableConnectionSide` object, updates the time they have been in the cable, and
             removes them if they reached the end.
         """
         for side in self.get_sides():
@@ -163,7 +163,7 @@ class BaseConnectionSide:
     This is the API that the `CableNetworkInterface` object sees.
     Each Connection object holds two of these, one for each of its sides (Duh).
 
-    The `ConnectionSide` has a list of packets the user sent, but were not yet picked up by the main `Connection`.
+    The `CableConnectionSide` has a list of packets the user sent, but were not yet picked up by the main `Connection`.
     It also has a list of packets that reached this side but were not yet picked up by the appropriate connected
         `CableNetworkInterface` object.
     """

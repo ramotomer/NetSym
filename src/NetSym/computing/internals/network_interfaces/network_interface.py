@@ -27,7 +27,7 @@ class NetworkInterface(ABC):
     It can send and receive packets.
     It contains methods that provide abstraction for sending many types of packets.
 
-    An interface can be either connected or disconnected to a `ConnectionSide` object, which enables it to move its packets
+    An interface can be either connected or disconnected to a `CableConnectionSide` object, which enables it to move its packets
     down the connection_side further.
     """
     POSSIBLE_INTERFACE_NAMES: Optional[List[str]] = None
@@ -199,9 +199,9 @@ class NetworkInterface(ABC):
 
     def disconnect(self) -> None:
         """
-        Disconnect an interface from its `Connection`.
+        Disconnect an interface from its `CableConnection`.
 
-        Note that the `Connection` object does not know about this disconnection,
+        Note that the `CableConnection` object does not know about this disconnection,
         so the other interface should be disconnected as well or this side of
         connection_side should be reconnected.
         :return: None

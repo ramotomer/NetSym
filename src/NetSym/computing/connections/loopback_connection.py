@@ -2,19 +2,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, List, cast
 
-from NetSym.computing.connections.connection import Connection
+from NetSym.computing.connections.cable_connection import CableConnection
 from NetSym.consts import CONNECTIONS
 from NetSym.gui.tech.loopback_connection_graphics import LoopbackConnectionGraphics
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
-    from NetSym.computing.connections.connection import SentPacket
-    from NetSym.computing.connections.connection import ConnectionSide
+    from NetSym.computing.connections.cable_connection import SentPacket
+    from NetSym.computing.connections.cable_connection import CableConnectionSide
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
 
 
-class LoopbackConnection(Connection):
+class LoopbackConnection(CableConnection):
     """
     This class represents a connection of a loopback interface to itself. It enables its graphical is_showing.
     It only has a left_side, no right_side.
@@ -27,7 +27,7 @@ class LoopbackConnection(Connection):
         super(LoopbackConnection, self).__init__(length=CONNECTIONS.DEFAULT_LENGTH, speed=CONNECTIONS.LOOPBACK.SPEED)
         self.radius = radius
 
-    def get_side(self) -> ConnectionSide:
+    def get_side(self) -> CableConnectionSide:
         """Returns the only side of the connection"""
         return self.left_side
 

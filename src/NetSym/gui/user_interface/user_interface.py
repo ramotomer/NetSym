@@ -16,7 +16,7 @@ from pyglet.window import key
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.computing.computer import Computer
-from NetSym.computing.connections.frequency import Frequency
+from NetSym.computing.connections.wireless_connection import WirelessConnection
 from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
 from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
 from NetSym.computing.internals.network_interfaces.wireless_network_interface import WirelessNetworkInterface
@@ -55,7 +55,7 @@ from NetSym.usefuls.funcs import get_the_one, distance, with_args, called_in_ord
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.packets.packet import Packet
-    from NetSym.computing.connections.connection import Connection, SentPacket
+    from NetSym.computing.connections.cable_connection import CableConnection, SentPacket
     from NetSym.gui.main_loop import MainLoop
     from NetSym.gui.main_window import MainWindow
 
@@ -79,7 +79,7 @@ class ConnectionData(NamedTuple):
     """
     A way to save the connection on the screen together with the computers they are connected to.
     """
-    connection: Connection
+    connection: CableConnection
     computer1:  Computer
     computer2:  Computer
 
@@ -181,7 +181,7 @@ class UserInterface:
 
         self.computers:       List[Computer] = []
         self.connection_data: List[ConnectionData] = []
-        self.frequencies:     List[Frequency] = []
+        self.frequencies:     List[WirelessConnection] = []
 
         self.mode = MODES.NORMAL
         self.source_of_line_drag: Optional[GraphicsObject] = None
@@ -835,7 +835,7 @@ class UserInterface:
 
     def _connect_interfaces(self,
                             computer1: Computer, interface1: CableNetworkInterface,
-                            computer2: Computer, interface2: CableNetworkInterface) -> Connection:
+                            computer2: Computer, interface2: CableNetworkInterface) -> CableConnection:
         """
         Take in the graphics-objects of two computers, and their interfaces.
         Create and register a connection between the two.
@@ -866,7 +866,7 @@ class UserInterface:
 
         raise ThisCodeShouldNotBeReached(f"Only supply this function with an `Interface` or `Computer` not {type(interface_or_computer)}!!!")
 
-    def connect_computers(self, computer1: Computer, computer2: Computer) -> Connection:
+    def connect_computers(self, computer1: Computer, computer2: Computer) -> CableConnection:
         """
         Create and register a connection between two `Computer`s
         """
@@ -982,7 +982,7 @@ class UserInterface:
         """
         self.computers.remove(computer)
 
-    def remove_connection(self, connection: Connection) -> None:
+    def remove_connection(self, connection: CableConnection) -> None:
         """
         Take in a connection and disconnect it from the computers in both sides
         """
@@ -1083,7 +1083,7 @@ class UserInterface:
         :param graphics_object: a `PacketGraphics` object.
         :return:
         """
-        all_connections: Iterable[Connection] = chain(
+        all_connections: Iterable[CableConnection] = chain(
             self.frequencies,
             [connection_data[0] for connection_data in self.connection_data],
             [computer.loopback.connection for computer in self.computers],
@@ -1866,9 +1866,9 @@ class UserInterface:
                 if any(ip.is_same_subnet(subnet) for ip in computer_graphics.computer.ips):
                     computer_graphics.add_hue(color)
 
-    def get_frequency(self, frequency: float) -> Frequency:
+    def get_wireless_connection(self, frequency: float) -> WirelessConnection:
         """
-        Receives a float indicating a frequency and returning a Frequency object to connect the wireless devices
+        Receives a float indicating a frequency and returning a WirelessConnection object to connect the wireless devices
         that are listening to that frequency.
         :param frequency: `float`
         :return:
@@ -1877,17 +1877,17 @@ class UserInterface:
             if freq.frequency == frequency:
                 return freq
 
-        new_frequency = Frequency(frequency, longest_line_on_the_screen=sqrt((self.main_window.width ** 2) + (self.main_window.height ** 2)))
+        new_frequency = WirelessConnection(frequency, longest_line_on_the_screen=sqrt((self.main_window.width ** 2) + (self.main_window.height ** 2)))
         self.frequencies.append(new_frequency)
         self.main_loop.insert_to_loop_pausable(new_frequency.move_packets, supply_function_with_main_loop_object=True)
         return new_frequency
 
     def set_interface_frequency(self, interface: WirelessNetworkInterface, frequency: float) -> None:
         """
-        Take in a WirelessNetworkInterface and set its frequency object
+        Take in a WirelessNetworkInterface and set its `WirelessConnection` object
         If the object does not exist - create it :)
         """
-        interface.connect(self.get_frequency(frequency))
+        interface.connect(self.get_wireless_connection(frequency))
 
     def _handle_resizing_dots(self) -> None:
         """

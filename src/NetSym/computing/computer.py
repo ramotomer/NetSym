@@ -52,7 +52,7 @@ if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
     from NetSym.computing.internals.processes.abstracts.process import Process
     from NetSym.computing.internals.sockets.socket import Socket
-    from NetSym.computing.connections.connection import Connection
+    from NetSym.computing.connections.cable_connection import CableConnection
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 
@@ -519,9 +519,9 @@ class Computer:
             self.main_loop.register_graphics_object(graphics)
             return interface
 
-    def disconnect(self, connection: Connection) -> None:
+    def disconnect(self, connection: CableConnection) -> None:
         """
-        Receives a `Connection` object and disconnects the appropriate interface from that connection_side.
+        Receives a `CableConnection` object and disconnects the appropriate interface from that connection_side.
         """
         for interface in self.interfaces:
             if interface.connection_side is connection.left_side or interface.connection_side is connection.right_side:

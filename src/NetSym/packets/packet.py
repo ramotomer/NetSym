@@ -10,7 +10,7 @@ from NetSym.packets.all import Ether
 from NetSym.packets.usefuls.usefuls import is_raw_layer, scapy_layer_class_to_our_class
 
 if TYPE_CHECKING:
-    from NetSym.gui.tech.connection_graphics import ConnectionGraphics
+    from NetSym.gui.tech.cable_connection_graphics import CableConnectionGraphics
 
 
 class Packet:
@@ -28,7 +28,7 @@ class Packet:
         self.data: scapy.packet.Packet = data
         self.graphics: Optional[PacketGraphics] = None
 
-    def init_graphics(self, connection_graphics: ConnectionGraphics, direction: str) -> List[PacketGraphics]:
+    def init_graphics(self, connection_graphics: CableConnectionGraphics, direction: str) -> List[PacketGraphics]:
         """
         This signals the packet that it starts to be sent and that where it
         is sent from and to (Graphically).

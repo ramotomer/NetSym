@@ -14,7 +14,7 @@ from NetSym.packets.usefuls.usefuls import get_original_layer_name_by_instance
 from NetSym.usefuls.funcs import with_args
 
 if TYPE_CHECKING:
-    from NetSym.gui.tech.connection_graphics import ConnectionGraphics
+    from NetSym.gui.tech.cable_connection_graphics import CableConnectionGraphics
     from NetSym.gui.user_interface.user_interface import UserInterface
 
 
@@ -28,17 +28,17 @@ class PacketGraphics(ImageGraphics):
     """
     def __init__(self,
                  deepest_layer: scapy.packet.Packet,
-                 connection_graphics: ConnectionGraphics,
+                 connection_graphics: CableConnectionGraphics,
                  direction: str,
                  speed: float = CONNECTIONS.PACKETS.DEFAULT_SPEED) -> None:
         """
         This method initiates a `PacketGraphics` instance.
         :param deepest_layer: The deepest packet layer in the packet.
-        :param connection_graphics: The `ConnectionGraphics` object which is the graphics of the `Connection` this packet
+        :param connection_graphics: The `CableConnectionGraphics` object which is the graphics of the `CableConnection` this packet
             is sent through. It is used for the start and end coordinates.
             
         The self.progress variable is how much of the connection the packet has passed already. That information comes
-        from the `Connection` class that sent the packet. It updates it in the `Connection.move_packets` method.
+        from the `CableConnection` class that sent the packet. It updates it in the `CableConnection.move_packets` method.
         """
         super(PacketGraphics, self).__init__(
             self.image_from_packet(deepest_layer),

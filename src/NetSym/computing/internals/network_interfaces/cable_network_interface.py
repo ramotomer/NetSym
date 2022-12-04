@@ -5,8 +5,8 @@ from typing import Optional, Dict, Union, Any, TYPE_CHECKING
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.connections.base_connection import BaseConnectionSide
-from NetSym.computing.connections.connection import Connection
-from NetSym.computing.connections.connection import ConnectionSide
+from NetSym.computing.connections.cable_connection import CableConnection
+from NetSym.computing.connections.cable_connection import CableConnectionSide
 from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
 from NetSym.consts import INTERFACES, PROTOCOLS, T_Color, T_Time
 from NetSym.exceptions import *
@@ -21,14 +21,14 @@ class CableNetworkInterface(NetworkInterface):
     """
     Represents a computer network interface that leads to a cable
     """
-    __connection: Connection
-    __connection_side: ConnectionSide
+    __connection: CableConnection
+    __connection_side: CableConnectionSide
 
     def __init__(self,
                  mac: Optional[Union[str, MACAddress]] = None,
                  ip: Optional[Union[str, IPAddress]] = None,
                  name: Optional[str] = None,
-                 connection_side: Optional[ConnectionSide] = None,
+                 connection_side: Optional[CableConnectionSide] = None,
                  display_color: T_Color = INTERFACES.COLOR,
                  type_: str = INTERFACES.TYPE.ETHERNET,
                  mtu: int = PROTOCOLS.ETHERNET.MTU) -> None:
@@ -40,19 +40,19 @@ class CableNetworkInterface(NetworkInterface):
         super(CableNetworkInterface, self).__init__(mac, ip, name, connection_side, display_color, type_, mtu)
 
     @property
-    def connection(self) -> Connection:
+    def connection(self) -> CableConnection:
         if self.__connection is None:
             raise NoSuchConnectionError(f"self: {self}, self.__connection: {self.__connection}")
         return self.__connection
 
     @property
-    def connection_side(self) -> Optional[ConnectionSide]:
+    def connection_side(self) -> Optional[CableConnectionSide]:
         return self.__connection_side
 
     @connection_side.setter
     def connection_side(self, value: Optional[BaseConnectionSide]) -> None:
-        if (value is not None) and (not isinstance(value, ConnectionSide)):
-            raise WrongUsageError(f"Do not set the `connection_side` of an `CableNetworkInterface` with something that is not a `ConnectionSide` "
+        if (value is not None) and (not isinstance(value, CableConnectionSide)):
+            raise WrongUsageError(f"Do not set the `connection_side` of an `CableNetworkInterface` with something that is not a `CableConnectionSide` "
                                   f"You inserted {value!r} which is a {type(value)}...")
 
         self.__connection = None
@@ -83,22 +83,22 @@ class CableNetworkInterface(NetworkInterface):
         """Returns whether the interface is connected or not"""
         return (self.__connection_side is not None) and (self.__connection is not None)
 
-    def connect(self, other: CableNetworkInterface) -> Connection:
+    def connect(self, other: CableNetworkInterface) -> CableConnection:
         """
-        Connects this interface to another interface, return the `Connection` object.
+        Connects this interface to another interface, return the `CableConnection` object.
         If grat arps are enabled, each interface sends a gratuitous arp.
         """
         if self.is_connected() or other.is_connected():
             raise DeviceAlreadyConnectedError("The interface is connected already!!!")
-        connection = Connection()
+        connection = CableConnection()
         self.connection_side, other.connection_side = connection.get_sides()
         return connection
 
     def disconnect(self) -> None:
         """
-        Disconnect an interface from its `Connection`.
+        Disconnect an interface from its `CableConnection`.
 
-        Note that the `Connection` object does not know about this disconnection,
+        Note that the `CableConnection` object does not know about this disconnection,
         so the other interface should be disconnected as well or this side of
         connection_side should be reconnected.
         :return: None

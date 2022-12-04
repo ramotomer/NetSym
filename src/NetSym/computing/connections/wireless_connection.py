@@ -22,10 +22,13 @@ class SentWirelessPacket(BaseSentPacket):
     id: int = 0
 
 
-class Frequency(BaseConnection):
+class WirelessConnection(BaseConnection):
     """
-    A Wifi connection is a frequency on which the antennas transmit.
-    It is a global object, since you do not need
+    A `WirelessConnection` is the "frequency" on which the antennas transmit.
+    It is a global object, since you do not need to see it.
+    Each antenna can be connected to one frequency, And an antenna can see only packets transmitted on the frequency it is on.
+
+    The packets transmitted on each frequency have different colors.
     """
     sent_packets: List[SentWirelessPacket]
 
@@ -36,7 +39,7 @@ class Frequency(BaseConnection):
                  packet_loss: float = 0, latency: float = 0) -> None:
         self.speed = speed
         self.sent_packets = []
-        self.connection_sides: List[FrequencyConnectionSide] = []
+        self.connection_sides: List[WirelessConnectionSide] = []
 
         self.last_packet_motion = MainLoop.get_time()
 
@@ -50,28 +53,28 @@ class Frequency(BaseConnection):
 
         self.color: T_Color = (random.randint(0, 150), random.randint(0, 150), random.randint(0, 150))
 
-    def get_side(self, wireless_interface: WirelessNetworkInterface) -> FrequencyConnectionSide:
-        """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""
-        new_side = FrequencyConnectionSide(self, wireless_interface)
+    def get_side(self, wireless_interface: WirelessNetworkInterface) -> WirelessConnectionSide:
+        """Returns the two sides of the connection as a tuple (they are `CableConnectionSide` objects)"""
+        new_side = WirelessConnectionSide(self, wireless_interface)
         self.connection_sides.append(new_side)
         return new_side
 
-    def remove_side(self, frequency_connection_side: FrequencyConnectionSide) -> None:
+    def remove_side(self, wireless_connection_side: WirelessConnectionSide) -> None:
         """
-        When a computer would like to disconnection from the frequency (shift to another or close the interface for
-        example) the ConnectionSide is deleted
-        :param frequency_connection_side:
+        When a computer would like to disconnection from the `WirelessConnection` (shift to another frequency or close the interface for
+        example) the `ConnectionSide` is deleted
+        :param wireless_connection_side:
         :return:
         """
-        self.connection_sides.remove(frequency_connection_side)
+        self.connection_sides.remove(wireless_connection_side)
 
-    def get_sides(self) -> Sequence[FrequencyConnectionSide]:
-        """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""
+    def get_sides(self) -> Sequence[WirelessConnectionSide]:
+        """Returns the two sides of the connection as a tuple (they are `CableConnectionSide` objects)"""
         return self.connection_sides
 
-    def _add_packet(self, packet: Packet, sending_side: FrequencyConnectionSide) -> WirelessPacket:
+    def _add_packet(self, packet: Packet, sending_side: WirelessConnectionSide) -> WirelessPacket:
         """
-        Add a packet that was sent on one of the `FrequencyConnectionSide`-s to the `self.sent_packets` list.
+        Add a packet that was sent on one of the `WirelessConnectionSide`-s to the `self.sent_packets` list.
         This method starts the motion of the packet through the connection.
         :param packet: a `Packet` object
         :param sending_side: the connection side the packet was sent from
@@ -120,10 +123,10 @@ class Frequency(BaseConnection):
         sent_packet.packet.graphics.unregister()
         self.sent_packets.remove(sent_packet)
 
-    def _send_packets_from_side(self, side: FrequencyConnectionSide) -> List[GraphicsObject]:
+    def _send_packets_from_side(self, side: WirelessConnectionSide) -> List[GraphicsObject]:
         """
-        Takes all of the packets that are waiting to be sent on one ConnectionSide and sends them down the main connection.
-        :param side: a `ConnectionSide` object.
+        Takes all of the packets that are waiting to be sent on one CableConnectionSide and sends them down the main connection.
+        :param side: a `CableConnectionSide` object.
         """
         if side not in self.get_sides():
             raise NoSuchConnectionSideError()
@@ -138,7 +141,7 @@ class Frequency(BaseConnection):
     def _update_packet(self, sent_packet: SentWirelessPacket) -> None:
         """
         Receives a SentPacket object and updates its progress on the connection.
-        If the packet has reached the end of the connection, make it be received at the appropriate ConnectionSide
+        If the packet has reached the end of the connection, make it be received at the appropriate CableConnectionSide
         :param sent_packet: a `SentPacket` namedtuple
         """
         distance_ = self._get_distance(sent_packet)
@@ -162,16 +165,16 @@ class Frequency(BaseConnection):
 
     def __repr__(self) -> str:
         """The ip_layer representation of the connection"""
-        return f"Frequency({self.frequency}, connected: {len(self.connection_sides)})"
+        return f"WirelessConnection({self.frequency}, connected: {len(self.connection_sides)})"
 
 
-class FrequencyConnectionSide(BaseConnectionSide):
+class WirelessConnectionSide(BaseConnectionSide):
     """
-    This is the API that a computer sees to the frequency, using it the computer can send and receive packets.
-    Each computer in the Frequency receives a distinct `FrequencyConnectionSide` object
+    This is the API that a computer sees to the `WirelessConnection`, using it the computer can send and receive packets.
+    Each computer in the WirelessConnection receives a distinct `WirelessConnectionSide` object
     """
-    def __init__(self, main_connection: Frequency, wireless_interface: WirelessNetworkInterface) -> None:
-        super(FrequencyConnectionSide, self).__init__(main_connection)
+    def __init__(self, main_connection: WirelessConnection, wireless_interface: WirelessNetworkInterface) -> None:
+        super(WirelessConnectionSide, self).__init__(main_connection)
 
         self.wireless_interface = wireless_interface
         self._received_packet_ids = []
@@ -188,7 +191,7 @@ class FrequencyConnectionSide(BaseConnectionSide):
 
     def was_already_received(self, sent_packet: SentWirelessPacket) -> bool:
         """
-        Return whether or not the packet was already received on this side of the frequency and translated into a regular packet :)
+        Return whether or not the packet was already received on this side of the `WirelessConnection` and translated into a regular packet :)
         Does it by looking at the ID of that packet :)
         """
         return bool(sent_packet.id in self._received_packet_ids)

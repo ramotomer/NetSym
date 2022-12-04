@@ -17,7 +17,7 @@ from NetSym.usefuls.funcs import distance
 
 if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
-    from NetSym.computing.connections.frequency import Frequency
+    from NetSym.computing.connections.wireless_connection import WirelessConnection
 
 
 class WirelessPacketGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Selectable):
@@ -34,10 +34,10 @@ class WirelessPacketGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, 
                  center_x: float,
                  center_y: float,
                  deepest_layer: scapy.packet.Packet,
-                 frequency_object: Frequency) -> None:
+                 connection: WirelessConnection) -> None:
         super(WirelessPacketGraphics, self).__init__(center_x, center_y)
 
-        self.frequency_object = frequency_object
+        self.connection = connection
         self.direction = PACKET.DIRECTION.WIRELESS
         self.distance = 0
         self.str = str(deepest_layer)
@@ -59,10 +59,10 @@ class WirelessPacketGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, 
         return self.location
 
     def set_normal_color(self):
-        self.color = COLORS.WHITE
+        self.color = self.connection.color
 
     def set_hovered_color(self):
-        self.color = self.frequency_object.color
+        self.color = COLORS.WHITE
 
     def draw(self) -> None:
         draw_circle(*self.location, self.distance, outline_color=self.color)

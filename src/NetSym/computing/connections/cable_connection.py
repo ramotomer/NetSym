@@ -8,7 +8,7 @@ from NetSym.computing.connections.base_connection import BaseConnection, BaseSen
 from NetSym.consts import CONNECTIONS, PACKET
 from NetSym.exceptions import *
 from NetSym.gui.main_loop import MainLoop
-from NetSym.gui.tech.connection_graphics import ConnectionGraphics
+from NetSym.gui.tech.cable_connection_graphics import CableConnectionGraphics
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
@@ -25,7 +25,7 @@ class SentPacket(BaseSentPacket):
     direction: str = PACKET.DIRECTION.RIGHT
 
 
-class Connection(BaseConnection):
+class CableConnection(BaseConnection):
     """
     This class represents a cable or any connection between two `CableNetworkInterface` objects.
     It allows for packets to move in both sides, To be sent and received.
@@ -33,10 +33,10 @@ class Connection(BaseConnection):
     Each packet that is sent takes some time through the cable, that time is
     defined in the `speed` and `length` properties. They can be different for each connection.
     There is a default value for the speed, and the length is defined by the graphics object and the locations of the
-    connected computers. These properties of the `Connection` class is mainly so the packet sending could be
+    connected computers. These properties of the `CableConnection` class is mainly so the packet sending could be
     displayed nicely.
 
-    The `Connection` object keeps references to its two `ConnectionSide` objects. These are nice interfaces for
+    The `CableConnection` object keeps references to its two `CableConnectionSide` objects. These are nice interfaces for
         the `CableNetworkInterface` object to talk to its connection.
     """
     def __init__(self,
@@ -46,7 +46,7 @@ class Connection(BaseConnection):
                  latency: float = 0,
                  ) -> None:
         """
-        Initiates a Connection object.
+        Initiates a CableConnection object.
 
         `self.sent_packets` is the list of packets that are currently being sent through the connection.
 
@@ -57,11 +57,11 @@ class Connection(BaseConnection):
         self.initial_length = length
         self.sent_packets: List[SentPacket] = []  # represents the packets that are currently being sent through the connection
 
-        self.right_side, self.left_side = ConnectionSide(self), ConnectionSide(self)
+        self.right_side, self.left_side = CableConnectionSide(self), CableConnectionSide(self)
 
         self.last_packet_motion = MainLoop.get_time()
 
-        self.graphics: Optional[ConnectionGraphics] = None
+        self.graphics: Optional[CableConnectionGraphics] = None
 
         self.is_blocked = False
 
@@ -88,11 +88,11 @@ class Connection(BaseConnection):
         :param end_computer: The `GraphicsObject` of the computer which is the end of the connection
         :return: None
         """
-        graphics = ConnectionGraphics(self, start_computer, end_computer, self.packet_loss)
+        graphics = CableConnectionGraphics(self, start_computer, end_computer, self.packet_loss)
         self.graphics = graphics
         return [graphics]
 
-    def get_graphics(self) -> ConnectionGraphics:
+    def get_graphics(self) -> CableConnectionGraphics:
         """
         Return the graphics object or raise if the `init_graphics` was not yet called
         """
@@ -101,8 +101,8 @@ class Connection(BaseConnection):
 
         return self.graphics
 
-    def get_sides(self) -> Sequence[ConnectionSide]:
-        """Returns the two sides of the connection as a tuple (they are `ConnectionSide` objects)"""
+    def get_sides(self) -> Sequence[CableConnectionSide]:
+        """Returns the two sides of the connection as a tuple (they are `CableConnectionSide` objects)"""
         return self.left_side, self.right_side
 
     def mark_as_blocked(self) -> None:
@@ -125,7 +125,7 @@ class Connection(BaseConnection):
 
     def _add_packet(self, packet: Packet, direction: str) -> None:
         """
-        Add a packet that was sent on one of the `ConnectionSide`-s to the `self.sent_packets` list.
+        Add a packet that was sent on one of the `CableConnectionSide`-s to the `self.sent_packets` list.
         This method starts the motion of the packet through the connection.
 
         :direction: the direction the packet is going to (PACKET.DIRECTION.RIGHT or PACKET.DIRECTION.LEFT)
@@ -160,10 +160,10 @@ class Connection(BaseConnection):
 
         self.sent_packets.remove(sent_packet)
 
-    def _send_packets_from_side(self, side: ConnectionSide) -> List[PacketGraphics]:
+    def _send_packets_from_side(self, side: CableConnectionSide) -> List[PacketGraphics]:
         """
-        Takes all of the packets that are waiting to be sent on one ConnectionSide and sends them down the main connection.
-        :param side: a `ConnectionSide` object.
+        Takes all of the packets that are waiting to be sent on one CableConnectionSide and sends them down the main connection.
+        :param side: a `CableConnectionSide` object.
         :return: None
         """
         if side not in self.get_sides():
@@ -180,7 +180,7 @@ class Connection(BaseConnection):
     def _update_packet(self, sent_packet: SentPacket) -> None:
         """
         Receives a SentPacket object and updates its progress on the connection.
-        If the packet has reached the end of the connection, make it be received at the appropriate ConnectionSide
+        If the packet has reached the end of the connection, make it be received at the appropriate CableConnectionSide
         :param sent_packet: a `SentPacket`
         :return: None
         """
@@ -197,23 +197,23 @@ class Connection(BaseConnection):
 
     def __repr__(self) -> str:
         """The ip_layer representation of the connection"""
-        return f"Connection({self.length}, {self.speed})"
+        return f"CableConnection({self.length}, {self.speed})"
 
 
-class ConnectionSide(BaseConnectionSide):
+class CableConnectionSide(BaseConnectionSide):
     """
-    This represents one side of a given `Connection` object.
+    This represents one side of a given `CableConnection` object.
     This is the API that the `CableNetworkInterface` object sees.
-    Each Connection object holds two of these, one for each of its sides (Duh).
+    Each CableConnection object holds two of these, one for each of its sides (Duh).
 
-    The `ConnectionSide` has a list of packets the user sent, but were not yet picked up by the main `Connection`.
+    The `CableConnectionSide` has a list of packets the user sent, but were not yet picked up by the main `CableConnection`.
     It also has a list of packets that reached this side but were not yet picked up by the appropriate connected
         `CableNetworkInterface` object.
     """
-    connection: Connection
+    connection: CableConnection
 
-    def __init__(self, main_connection: Connection) -> None:
-        super(ConnectionSide, self).__init__(main_connection)
+    def __init__(self, main_connection: CableConnection) -> None:
+        super(CableConnectionSide, self).__init__(main_connection)
         self.is_blocked = False
 
     def mark_as_blocked(self) -> None:
