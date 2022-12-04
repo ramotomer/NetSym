@@ -17,7 +17,7 @@ from NetSym.packets.packet import Packet
 if TYPE_CHECKING:
     from NetSym.gui.tech.network_interfaces.network_interface_graphics import NetworkInterfaceGraphics
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
-    from NetSym.computing.connections.connection import BaseConnectionSide
+    from NetSym.computing.connections.connection import ConnectionSide
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
@@ -37,7 +37,7 @@ class NetworkInterface(ABC):
                  mac: Optional[Union[str, MACAddress]] = None,
                  ip: Optional[Union[str, IPAddress]] = None,
                  name: Optional[str] = None,
-                 connection_side: Optional[BaseConnectionSide] = None,
+                 connection_side: Optional[ConnectionSide] = None,
                  display_color: T_Color = INTERFACES.COLOR,
                  type_: str = INTERFACES.TYPE.ETHERNET,
                  mtu: int = PROTOCOLS.ETHERNET.MTU) -> None:
@@ -47,7 +47,7 @@ class NetworkInterface(ABC):
         :param ip: a string ip address ('10.3.252.5/24' for example)
         """
         self.__connection: Optional[Connection] = None
-        self.__connection_side: Optional[BaseConnectionSide] = None
+        self.__connection_side: Optional[ConnectionSide] = None
         self.connection_side = connection_side
 
         self.name: str = name if name is not None else NetworkInterface.random_name()
@@ -73,11 +73,11 @@ class NetworkInterface(ABC):
         return self.__connection
 
     @property
-    def connection_side(self) -> Optional[BaseConnectionSide]:
+    def connection_side(self) -> Optional[ConnectionSide]:
         return self.__connection_side
 
     @connection_side.setter
-    def connection_side(self, value: Optional[BaseConnectionSide]) -> None:
+    def connection_side(self, value: Optional[ConnectionSide]) -> None:
         self.__connection = None
         self.__connection_side = value
 

@@ -47,7 +47,7 @@ class Connection(ABC):
     sent_packets: List[SentPacket]
 
     @abstractmethod
-    def get_sides(self) -> Sequence[BaseConnectionSide]:
+    def get_sides(self) -> Sequence[ConnectionSide]:
         """Returns the two sides of the connection as a tuple (they are `CableConnectionSide` objects)"""
 
     def set_speed(self, new_speed: float) -> None:
@@ -80,7 +80,7 @@ class Connection(ABC):
         """
 
     @abstractmethod
-    def _send_packets_from_side(self, side: BaseConnectionSide) -> List[PacketGraphics]:
+    def _send_packets_from_side(self, side: ConnectionSide) -> List[PacketGraphics]:
         """
         Takes all of the packets that are waiting to be sent on one CableConnectionSide and sends them down the main connection.
         :param side: a `CableConnectionSide` object.
@@ -157,15 +157,15 @@ class Connection(ABC):
         self.sent_packets.clear()
 
 
-class BaseConnectionSide:
+class ConnectionSide(ABC):
     """
     This represents one side of a given `Connection` object.
     This is the API that the `CableNetworkInterface` object sees.
     Each Connection object holds two of these, one for each of its sides (Duh).
 
-    The `CableConnectionSide` has a list of packets the user sent, but were not yet picked up by the main `Connection`.
+    The `ConnectionSide` has a list of packets the user sent, but were not yet picked up by the main `Connection`.
     It also has a list of packets that reached this side but were not yet picked up by the appropriate connected
-        `CableNetworkInterface` object.
+        `NetworkInterface` object.
     """
     def __init__(self, main_connection: Connection) -> None:
         self._packets_to_send: List[Packet] = []

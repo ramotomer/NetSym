@@ -196,7 +196,7 @@ def test_get_ip(example_interfaces):
 # def test_connection_side(self):
 #     return self.__connection_side
 #
-# def test_connection_side(self, value: Optional[BaseConnectionSide]):
+# def test_connection_side(self, value: Optional[ConnectionSide]):
 #     if (value is not None) and (not isinstance(value, ConnectionSide)):
 #         raise WrongUsageError(f"Do not set the `connection_side` of an `CableNetworkInterface` with something that is not a `ConnectionSide` "
 #                               f"You inserted {value!r} which is a {type(value)}...")

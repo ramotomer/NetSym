@@ -4,7 +4,7 @@ from typing import Optional, Dict, Union, TYPE_CHECKING
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
-from NetSym.computing.connections.connection import BaseConnectionSide
+from NetSym.computing.connections.connection import ConnectionSide
 from NetSym.computing.connections.wireless_connection import WirelessConnection, WirelessConnectionSide
 from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
 from NetSym.consts import T_Color, INTERFACES
@@ -55,7 +55,7 @@ class WirelessNetworkInterface(NetworkInterface):
         return self.__connection_side
 
     @connection_side.setter
-    def connection_side(self, value: Optional[BaseConnectionSide]) -> None:
+    def connection_side(self, value: Optional[ConnectionSide]) -> None:
         if (value is not None) and (not isinstance(value, WirelessConnectionSide)):
             raise WrongUsageError(f"Do not set the `connection_side` of a `WirelessNetworkInterface` with something that is not a `WirelessConnectionSide` "
                                   f"You inserted {value!r} which is a {type(value)}...")

@@ -4,7 +4,7 @@ import random
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List, Optional, Sequence
 
-from NetSym.computing.connections.connection import Connection, SentPacket, BaseConnectionSide
+from NetSym.computing.connections.connection import Connection, SentPacket, ConnectionSide
 from NetSym.consts import CONNECTIONS, PACKET
 from NetSym.exceptions import *
 from NetSym.gui.main_loop import MainLoop
@@ -200,7 +200,7 @@ class CableConnection(Connection):
         return f"CableConnection({self.length}, {self.speed})"
 
 
-class CableConnectionSide(BaseConnectionSide):
+class CableConnectionSide(ConnectionSide):
     """
     This represents one side of a given `CableConnection` object.
     This is the API that the `CableNetworkInterface` object sees.

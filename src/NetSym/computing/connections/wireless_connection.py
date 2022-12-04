@@ -4,7 +4,7 @@ import random
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List, Sequence
 
-from NetSym.computing.connections.connection import SentPacket, Connection, BaseConnectionSide
+from NetSym.computing.connections.connection import SentPacket, Connection, ConnectionSide
 from NetSym.consts import CONNECTIONS, T_Color, WINDOWS
 from NetSym.exceptions import NoSuchConnectionSideError, WrongUsageError
 from NetSym.gui.main_loop import MainLoop
@@ -168,7 +168,7 @@ class WirelessConnection(Connection):
         return f"WirelessConnection({self.frequency}, connected: {len(self.connection_sides)})"
 
 
-class WirelessConnectionSide(BaseConnectionSide):
+class WirelessConnectionSide(ConnectionSide):
     """
     This is the API that a computer sees to the `WirelessConnection`, using it the computer can send and receive packets.
     Each computer in the WirelessConnection receives a distinct `WirelessConnectionSide` object

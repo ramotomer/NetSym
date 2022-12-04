@@ -6,7 +6,7 @@ from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.connections.cable_connection import CableConnection
 from NetSym.computing.connections.cable_connection import CableConnectionSide
-from NetSym.computing.connections.connection import BaseConnectionSide
+from NetSym.computing.connections.connection import ConnectionSide
 from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
 from NetSym.consts import INTERFACES, PROTOCOLS, T_Color, T_Time
 from NetSym.exceptions import *
@@ -50,7 +50,7 @@ class CableNetworkInterface(NetworkInterface):
         return self.__connection_side
 
     @connection_side.setter
-    def connection_side(self, value: Optional[BaseConnectionSide]) -> None:
+    def connection_side(self, value: Optional[ConnectionSide]) -> None:
         if (value is not None) and (not isinstance(value, CableConnectionSide)):
             raise WrongUsageError(f"Do not set the `connection_side` of an `CableNetworkInterface` with something that is not a `CableConnectionSide` "
                                   f"You inserted {value!r} which is a {type(value)}...")
