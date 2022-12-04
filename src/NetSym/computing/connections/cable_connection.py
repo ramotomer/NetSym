@@ -9,11 +9,11 @@ from NetSym.consts import CONNECTIONS, PACKET
 from NetSym.exceptions import *
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.tech.cable_connection_graphics import CableConnectionGraphics
+from NetSym.packets.cable_packet import CablePacket
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.packets.packet import Packet
-    from NetSym.gui.tech.packet_graphics import PacketGraphics
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
@@ -22,6 +22,7 @@ class CableSentPacket(SentPacket):
     """
     a packet that is currently being sent through the connection.
     """
+    packet: CablePacket
     direction: str = PACKET.DIRECTION.RIGHT
 
 
@@ -171,7 +172,7 @@ class CableConnection(Connection):
 
         self.sent_packets.remove(sent_packet)
 
-    def _send_packets_from_side(self, side: ConnectionSide) -> List[PacketGraphics]:
+    def _send_packets_from_side(self, side: ConnectionSide) -> List[GraphicsObject]:
         """
         Takes all of the packets that are waiting to be sent on one CableConnectionSide and sends them down the main connection.
         :param side: a `CableConnectionSide` object.
@@ -184,6 +185,9 @@ class CableConnection(Connection):
         direction = PACKET.DIRECTION.LEFT if side is self.right_side else PACKET.DIRECTION.RIGHT
         if side.is_sending():
             for packet in side.pop_packets_to_send():
+                if not isinstance(packet, CablePacket):
+                    continue
+
                 self._add_packet(packet, direction)
                 new_graphics_to_register.extend(packet.init_graphics(self.get_graphics(), direction))
         return new_graphics_to_register

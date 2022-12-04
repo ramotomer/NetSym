@@ -16,7 +16,7 @@ from NetSym.consts import OS, FILE_PATHS, DIRECTORIES, COMPUTER, INTERFACES, PAC
 from NetSym.exceptions import NoSuchInterfaceError, PopupWindowWithThisError
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
-from NetSym.packets.packet import Packet
+from NetSym.packets.cable_packet import CablePacket
 from NetSym.usefuls.dotdict import DotDict
 from tests.usefuls import MACS, IPS, example_ethernet, example_arp, mock_mainloop_time
 
@@ -590,7 +590,7 @@ def test_handle_arp(example_computers):
 
         for computer in example_computers:
             cast(CableNetworkInterface, computer.interfaces[0]).connect(CableNetworkInterface())
-            packet = Packet(example_ethernet() / example_arp())
+            packet = CablePacket(example_ethernet() / example_arp())
             computer._handle_arp(ReturnedPacket(packet, PacketMetadata(computer.interfaces[0], 1.0, PACKET.DIRECTION.INCOMING)))
             to_send = computer.interfaces[0].connection_side._packets_to_send
 

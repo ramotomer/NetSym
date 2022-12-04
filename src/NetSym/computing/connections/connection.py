@@ -11,7 +11,7 @@ from NetSym.gui.main_loop import MainLoop
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
-    from NetSym.gui.tech.packet_graphics import PacketGraphics
+    from NetSym.gui.tech.packets.packet_graphics import PacketGraphics
 
 
 @dataclass

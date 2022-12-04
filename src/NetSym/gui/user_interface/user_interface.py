@@ -36,8 +36,8 @@ from NetSym.gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from NetSym.gui.tech.computer_graphics import ComputerGraphics
 from NetSym.gui.tech.network_interfaces.cable_network_interface_graphics import CableNetworkInterfaceGraphics
 from NetSym.gui.tech.network_interfaces.network_interface_graphics import NetworkInterfaceGraphics
-from NetSym.gui.tech.packet_graphics import PacketGraphics
-from NetSym.gui.tech.wireless_packet_graphics import WirelessPacketGraphics
+from NetSym.gui.tech.packets.cable_packet_graphics import CablePacketGraphics
+from NetSym.gui.tech.packets.packet_graphics import PacketGraphics
 from NetSym.gui.user_interface.button import Button
 from NetSym.gui.user_interface.popup_windows.device_creation_window import DeviceCreationWindow
 from NetSym.gui.user_interface.popup_windows.popup_console import PopupConsole
@@ -181,7 +181,7 @@ class UserInterface:
 
         self.computers:       List[Computer] = []
         self.connection_data: List[ConnectionData] = []
-        self.frequencies:     List[WirelessConnection] = []
+        self.wireless_connections:     List[WirelessConnection] = []
 
         self.mode = MODES.NORMAL
         self.source_of_line_drag: Optional[GraphicsObject] = None
@@ -360,8 +360,8 @@ class UserInterface:
         stops viewing it.
         :return:
         """
-        if isinstance(self.selected_object, PacketGraphics) and \
-                self.packet_from_graphics_object(self.selected_object) is None:
+        selected_object = self.selected_object
+        if isinstance(selected_object, PacketGraphics) and self.packet_from_graphics_object(selected_object) is None:
             self.set_mode(MODES.NORMAL)
 
     def _draw_side_window(self) -> None:
@@ -430,7 +430,7 @@ class UserInterface:
                           scale_y=VIEW.IMAGE_SIZE / sprite.image.height)
             self.main_loop.insert_to_loop(sprite.draw)
 
-            if isinstance(graphics_object, (PacketGraphics, WirelessPacketGraphics)):
+            if isinstance(graphics_object, PacketGraphics):
                 text = self.packet_from_graphics_object(graphics_object).multiline_repr()
 
         x, y = self.viewing_text_location
@@ -960,7 +960,7 @@ class UserInterface:
 
         self.computers.clear()
         self.connection_data.clear()
-        self.frequencies.clear()
+        self.wireless_connections.clear()
         self.popup_windows.clear()
         self.set_mode(MODES.NORMAL)
 
@@ -1084,7 +1084,7 @@ class UserInterface:
         :return:
         """
         all_connections: Iterable[CableConnection] = chain(
-            self.frequencies,
+            self.wireless_connections,
             [connection_data[0] for connection_data in self.connection_data],
             [computer.loopback.connection for computer in self.computers],
         )
@@ -1714,7 +1714,7 @@ class UserInterface:
         :return: None
         """
         self._update_selecting_square()
-        self._mark_object_inside_selecting_square(object_types=(ComputerGraphics, PacketGraphics))
+        self._mark_object_inside_selecting_square(object_types=(ComputerGraphics, CablePacketGraphics))
 
         if self.selected_object is not None:
             self.selected_object.mark_as_selected()
@@ -1873,12 +1873,12 @@ class UserInterface:
         :param frequency: `float`
         :return:
         """
-        for freq in self.frequencies:
+        for freq in self.wireless_connections:
             if freq.frequency == frequency:
                 return freq
 
         new_frequency = WirelessConnection(frequency, longest_line_on_the_screen=sqrt((self.main_window.width ** 2) + (self.main_window.height ** 2)))
-        self.frequencies.append(new_frequency)
+        self.wireless_connections.append(new_frequency)
         self.main_loop.insert_to_loop_pausable(new_frequency.move_packets, supply_function_with_main_loop_object=True)
         return new_frequency
 

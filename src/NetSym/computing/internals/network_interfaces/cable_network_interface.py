@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Optional, Dict, Union, Any, TYPE_CHECKING
 
+import scapy
+
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.connections.cable_connection import CableConnection
@@ -11,6 +13,7 @@ from NetSym.computing.internals.network_interfaces.network_interface import Netw
 from NetSym.consts import INTERFACES, PROTOCOLS, T_Color, T_Time
 from NetSym.exceptions import *
 from NetSym.gui.tech.network_interfaces.cable_network_interface_graphics import CableNetworkInterfaceGraphics
+from NetSym.packets.cable_packet import CablePacket
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
@@ -128,6 +131,16 @@ class CableNetworkInterface(NetworkInterface):
 
         if self.connection_side is not None:
             self.connection_side.mark_as_unblocked()
+
+    def ethernet_wrap(self, dst_mac: MACAddress, data: scapy.packet.Packet) -> CablePacket:
+        """
+        Takes in ip_layer (string, a `Protocol` object...) and wraps it as an `Ethernet` packet ready to be sent.
+        :param data: any ip_layer to put in the ethernet packet (ARP, IP, str, more Ethernet, whatever you want, only
+            the receiver computer should know whats coming and how to handle it...)
+        :param dst_mac: a `MACAddress` object of the destination of the packet.
+        :return: the ready `CablePacket` object
+        """
+        return CablePacket(self.get_with_ethernet(dst_mac, data))
 
     def __eq__(self, other: Any) -> bool:
         """Determines which interfaces are equal"""

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, List, Optional, cast
 
 import scapy
 
-from NetSym.gui.tech.wireless_packet_graphics import WirelessPacketGraphics
+from NetSym.gui.tech.packets.wireless_packet_graphics import WirelessPacketGraphics
 from NetSym.packets.packet import Packet
 
 if TYPE_CHECKING:
@@ -17,13 +17,12 @@ class WirelessPacket(Packet):
     """
     just like a regular packet but it is sent over a WirelessConnection rather than a regular connection.
     """
-    # TODO: Wireless stuff should not inherit from regular stuff... It causes many problems. Maybe both should inherit from one parent or something...
-    graphics: Optional[WirelessPacketGraphics]  # type: ignore
+    graphics: Optional[WirelessPacketGraphics]
 
     def __init__(self, data: scapy.packet.Packet) -> None:
         super(WirelessPacket, self).__init__(data)
 
-    def init_graphics(self, wireless_connection: WirelessConnection, sending_interface: WirelessNetworkInterface) -> List[GraphicsObject]:  # type: ignore
+    def init_graphics(self, wireless_connection: WirelessConnection, sending_interface: WirelessNetworkInterface) -> List[GraphicsObject]:
         """
         Starts the display of the object. (Creating the graphics object)
         """
@@ -31,4 +30,14 @@ class WirelessPacket(Packet):
             sending_interface.get_graphics().x, sending_interface.get_graphics().y,
             self.deepest_layer(), wireless_connection
         )
-        return [cast("GraphicsObject", self.graphics)]
+        return [self.graphics]
+
+    def get_graphics(self) -> WirelessPacketGraphics:
+        """
+        Get the PacketGraphics object of this packet, If it is not yet initialized - raise
+        """
+        return cast("WirelessPacketGraphics", super(WirelessPacket, self).get_graphics())
+
+    def __repr__(self) -> str:
+        """The string representation of the packet"""
+        return f"WirelessPacket({self.data!r})"

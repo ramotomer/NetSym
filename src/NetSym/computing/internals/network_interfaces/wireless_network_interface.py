@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Optional, Dict, Union, TYPE_CHECKING
 
+import scapy
+
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.connections.connection import ConnectionSide
@@ -10,6 +12,7 @@ from NetSym.computing.internals.network_interfaces.network_interface import Netw
 from NetSym.consts import T_Color, INTERFACES
 from NetSym.exceptions import *
 from NetSym.gui.tech.network_interfaces.wireless_network_interface_graphics import WirelessNetworkInterfaceGraphics
+from NetSym.packets.wireless_packet import WirelessPacket
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
@@ -99,6 +102,16 @@ class WirelessNetworkInterface(NetworkInterface):
         self.connection_side = None
         self.frequency = None
 
+    def ethernet_wrap(self, dst_mac: MACAddress, data: scapy.packet.Packet) -> WirelessPacket:
+        """
+        Takes in ip_layer (string, a `Protocol` object...) and wraps it as an `Ethernet` packet ready to be sent.
+        :param data: any ip_layer to put in the ethernet packet (ARP, IP, str, more Ethernet, whatever you want, only
+            the receiver computer should know whats coming and how to handle it...)
+        :param dst_mac: a `MACAddress` object of the destination of the packet.
+        :return: the ready `WirelessPacket` object
+        """
+        return WirelessPacket(self.get_with_ethernet(dst_mac, data))
+
     def generate_view_text(self) -> str:
         """
         Generates the text for the side view of the interface
@@ -118,7 +131,7 @@ class WirelessNetworkInterface(NetworkInterface):
             ip=dict_["ip"],
             name=dict_["name"],
         )
-        # TODO: make it so configured frequencies are also saved to files
+        # TODO: make it so configured wireless_connections are also saved to files
 
         return loaded
 

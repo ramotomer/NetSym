@@ -1,24 +1,27 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple, Optional, List
+from abc import ABC
+from typing import TYPE_CHECKING, Tuple, Optional
 
 import scapy
 
 from NetSym.exceptions import *
-from NetSym.gui.tech.packet_graphics import PacketGraphics
+from NetSym.gui.tech.packets.packet_graphics import PacketGraphics
 from NetSym.packets.all import Ether
 from NetSym.packets.usefuls.usefuls import is_raw_layer, scapy_layer_class_to_our_class
 
 if TYPE_CHECKING:
-    from NetSym.gui.tech.cable_connection_graphics import CableConnectionGraphics
+    pass
 
 
-class Packet:
+class Packet(ABC):
     """
     The container for all sendable packets.
     The class contains the Ethernet layer which is turn contains the IP layer
     and so on. The Packet class allows us to recursively check if a layer is in
     the packet and to draw the packet on the screen as one complete object.
+
+    The class is an abstract class for all packets (cable, wireless, etc...)
     """
     def __init__(self, data: scapy.packet.Packet) -> None:
         """
@@ -27,16 +30,6 @@ class Packet:
         """
         self.data: scapy.packet.Packet = data
         self.graphics: Optional[PacketGraphics] = None
-
-    def init_graphics(self, connection_graphics: CableConnectionGraphics, direction: str) -> List[PacketGraphics]:
-        """
-        This signals the packet that it starts to be sent and that where it
-        is sent from and to (Graphically).
-        :param connection_graphics: the graphics_object of the connection the packet is currently in
-        :param direction: The direction that the packet is going in the connection.
-        """
-        self.graphics = PacketGraphics(self.deepest_layer(), connection_graphics, direction)
-        return [self.graphics]
 
     def get_graphics(self) -> PacketGraphics:
         """
@@ -136,10 +129,6 @@ class Packet:
     def __str__(self) -> str:
         """The shorter string representation of the packet"""
         return str(self.deepest_layer())
-
-    def __repr__(self) -> str:
-        """The string representation of the packet"""
-        return f"Packet({self.data!r})"
 
     def multiline_repr(self) -> str:
         """Multiline representation of the packet"""

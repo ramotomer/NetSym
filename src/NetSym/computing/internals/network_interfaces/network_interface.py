@@ -249,6 +249,17 @@ class NetworkInterface(ABC):
             return packets
         return list(filter(lambda packet: self.is_for_me(packet), packets))
 
+    def get_with_ethernet(self, dst_mac: MACAddress, data: scapy.packet.Packet) -> scapy.packet.Packet:
+        """
+        Takes in data (string, a `Protocol` object...) and wraps it with an `Ethernet` layer.
+        :param data: any data to put in the ethernet packet (ARP, IP, str, more Ethernet, whatever you want, only
+            the receiver computer should know whats coming and how to handle it...)
+        :param dst_mac: a `MACAddress` object of the destination of the packet.
+        :return: the layers to put inside the `Packet` object to send :)
+        """
+        return Ether(src_mac=str(self.mac), dst_mac=str(dst_mac)) / data
+
+    @abstractmethod
     def ethernet_wrap(self, dst_mac: MACAddress, data: scapy.packet.Packet) -> Packet:
         """
         Takes in ip_layer (string, a `Protocol` object...) and wraps it as an `Ethernet` packet ready to be sent.
@@ -257,7 +268,6 @@ class NetworkInterface(ABC):
         :param dst_mac: a `MACAddress` object of the destination of the packet.
         :return: the ready `Packet` object
         """
-        return Packet(Ether(src_mac=str(self.mac), dst_mac=str(dst_mac)) / data)
 
     def send_with_ethernet(self, dst_mac: MACAddress, protocol: scapy.packet.Packet) -> None:
         """

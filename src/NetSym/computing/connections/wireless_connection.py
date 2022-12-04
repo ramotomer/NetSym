@@ -8,6 +8,7 @@ from NetSym.computing.connections.connection import SentPacket, Connection, Conn
 from NetSym.consts import CONNECTIONS, T_Color, WINDOWS
 from NetSym.exceptions import NoSuchConnectionSideError, WrongUsageError
 from NetSym.gui.main_loop import MainLoop
+from NetSym.packets.cable_packet import CablePacket
 from NetSym.packets.packet import Packet
 from NetSym.packets.wireless_packet import WirelessPacket
 from NetSym.usefuls.funcs import distance
@@ -197,7 +198,7 @@ class WirelessConnectionSide(ConnectionSide):
         if not isinstance(sent_packet, WirelessSentPacket):
             raise WrongUsageError(f"Only call this function with a WirelessSentPacket object not {type(sent_packet)} like {sent_packet!r}!!!")
 
-        self._packets_to_receive.append(Packet(sent_packet.packet.data))
+        self._packets_to_receive.append(CablePacket(sent_packet.packet.data))
         self._received_packet_ids.append(sent_packet.id)
 
     def was_already_received(self, sent_packet: WirelessSentPacket) -> bool:
