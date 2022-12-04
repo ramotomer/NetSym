@@ -195,6 +195,13 @@ class Computer:
         return self.interfaces + [self.loopback]
 
     @property
+    def cable_interfaces(self) -> List[CableNetworkInterface]:
+        """
+        A list of all of the cable interfaces that the computer has. (Loopback not included...)
+        """
+        return [interface for interface in self.interfaces if isinstance(interface, CableNetworkInterface)]
+
+    @property
     def dns_server(self) -> Optional[IPAddress]:
         """
         Read the name of the DNS server from the '/etc/resolv.conf'

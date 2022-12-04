@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class WirelessSentPacket(SentPacket):
+    packet: WirelessPacket
     id: int = 0
 
 
@@ -91,7 +92,13 @@ class WirelessConnection(Connection):
         self.sent_packet_id += 1
         return wireless_packet
 
-    def _receive_on_sides_if_reached_destination(self, sent_packet: WirelessSentPacket) -> None:
+    def _remove_packet(self, sent_packet: SentPacket) -> None:
+        if not isinstance(sent_packet, WirelessSentPacket):
+            return  # It is not in the `sent_packets` list...
+
+        self.sent_packets.remove(sent_packet)
+
+    def _receive_on_sides_if_reached_destination(self, sent_packet: SentPacket) -> None:
         """
         Adds the packet to its appropriate destination side's `received_packets` list.
         This is called when the packet finished its route through this connection and is ready to be received at the
@@ -99,12 +106,16 @@ class WirelessConnection(Connection):
         :param sent_packet: a `CableSentPacket` namedtuple.
         :return: None
         """
+        if not isinstance(sent_packet, WirelessSentPacket):
+            raise WrongUsageError(f"Do not call this function with a `sent_packet` which is not a `WirelessSentPacket`. "
+                                  f"You inserted: {sent_packet} which is a {type(sent_packet)}")
+
         wireless_packet = sent_packet.packet
 
         for side in self.connection_sides:
-            location = side.wireless_interface.graphics.location
+            location = side.wireless_interface.get_graphics().location
 
-            if 0 != distance(location, wireless_packet.graphics.center_location) - wireless_packet.graphics.distance < 20:
+            if 0 != distance(location, wireless_packet.get_graphics().center_location) - wireless_packet.graphics.distance < 20:
                 if side.was_already_received(sent_packet):  # dont get packets twice!
                     continue
 

@@ -55,7 +55,8 @@ class CableConnection(Connection):
         """
         self.speed = speed
         self.initial_length = length
-        self.sent_packets: List[CableSentPacket] = []  # represents the packets that are currently being sent through the connection
+        self.sent_packets: List[CableSentPacket] = []
+        # ^ represents the packets that are currently being sent through the connection
 
         self.right_side, self.left_side = CableConnectionSide(self), CableConnectionSide(self)
 
@@ -140,12 +141,22 @@ class CableConnection(Connection):
             )
         )
 
-    def _receive_on_sides_if_reached_destination(self, sent_packet: CableSentPacket) -> None:
+    def _remove_packet(self, sent_packet: SentPacket) -> None:
+        if not isinstance(sent_packet, CableSentPacket):
+            return  # It is not in the `sent_packets` list...
+
+        self.sent_packets.remove(sent_packet)
+
+    def _receive_on_sides_if_reached_destination(self, sent_packet: SentPacket) -> None:
         """
         Adds the packet to its appropriate destination side's `received_packets` list.
         This is called to check when the packet finished its route through this connection and is ready to be received at the
         connected `CableNetworkInterface`.
         """
+        if not isinstance(sent_packet, CableSentPacket):
+            raise WrongUsageError(f"Do not call this function with a `sent_packet` which is not a `CableSentPacket`. "
+                                  f"You inserted: {sent_packet} which is a {type(sent_packet)}")
+
         if sent_packet.packet.get_graphics().progress < 1:
             return  # did not reach...
 
@@ -160,7 +171,7 @@ class CableConnection(Connection):
 
         self.sent_packets.remove(sent_packet)
 
-    def _send_packets_from_side(self, side: CableConnectionSide) -> List[PacketGraphics]:
+    def _send_packets_from_side(self, side: ConnectionSide) -> List[PacketGraphics]:
         """
         Takes all of the packets that are waiting to be sent on one CableConnectionSide and sends them down the main connection.
         :param side: a `CableConnectionSide` object.
@@ -174,10 +185,10 @@ class CableConnection(Connection):
         if side.is_sending():
             for packet in side.pop_packets_to_send():
                 self._add_packet(packet, direction)
-                new_graphics_to_register.extend(packet.init_graphics(self.graphics, direction))
+                new_graphics_to_register.extend(packet.init_graphics(self.get_graphics(), direction))
         return new_graphics_to_register
 
-    def _update_packet(self, sent_packet: CableSentPacket) -> None:
+    def _update_packet(self, sent_packet: SentPacket) -> None:
         """
         Receives a CableSentPacket object and updates its progress on the connection.
         If the packet has reached the end of the connection, make it be received at the appropriate CableConnectionSide

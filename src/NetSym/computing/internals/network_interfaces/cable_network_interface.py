@@ -21,8 +21,8 @@ class CableNetworkInterface(NetworkInterface):
     """
     Represents a computer network interface that leads to a cable
     """
-    __connection: CableConnection
-    __connection_side: CableConnectionSide
+    __connection:      Optional[CableConnection]
+    __connection_side: Optional[CableConnectionSide]
 
     def __init__(self,
                  mac: Optional[Union[str, MACAddress]] = None,

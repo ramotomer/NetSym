@@ -44,7 +44,7 @@ class Connection(ABC):
     speed:        float
     packet_loss:  float
     latency:      float
-    sent_packets: List[SentPacket]
+    sent_packets: Sequence[SentPacket]
 
     @abstractmethod
     def get_sides(self) -> Sequence[ConnectionSide]:
@@ -102,6 +102,12 @@ class Connection(ABC):
         connected `CableNetworkInterface`.
         """
 
+    @abstractmethod
+    def _remove_packet(self, sent_packet: SentPacket) -> None:
+        """
+        Remove a packet from the `sent_packets` list
+        """
+
     def _drop_predetermined_dropped_packets(self) -> List[AnimationGraphics]:
         """
         Goes through the packets that are being sent, When they reach the middle of the connection, check if they need
@@ -110,7 +116,7 @@ class Connection(ABC):
         animations_to_register = []
         for sent_packet in self.sent_packets[:]:
             if sent_packet.will_be_dropped and self._is_lucky_packet(sent_packet):
-                self.sent_packets.remove(sent_packet)
+                self._remove_packet(sent_packet)
                 sent_packet.packet.get_graphics().unregister()
                 animations_to_register.append(sent_packet.packet.get_graphics().get_drop_animation())
         return animations_to_register
@@ -152,9 +158,9 @@ class Connection(ABC):
         This is used to stop all of the action in the connection.
         Kills all of the packets in the connection and unregisters their `GraphicsObject`-s
         """
-        for sent_packet in self.sent_packets:
+        for sent_packet in self.sent_packets[:]:
             sent_packet.packet.get_graphics().unregister()
-        self.sent_packets.clear()
+            self._remove_packet(sent_packet)
 
 
 class ConnectionSide(ABC):

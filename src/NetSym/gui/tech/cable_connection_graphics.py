@@ -78,12 +78,12 @@ class CableConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered,
         if all(computer is not None for computer in self.computers):
             self.interfaces = Interfaces(
                 get_the_one_with_raise(
-                    self.start_computer.computer.interfaces,
+                    self.start_computer.computer.cable_interfaces,
                     lambda i: i.is_connected() and i.connection is connection,
                     NoSuchInterfaceError,
                 ).graphics,
                 get_the_one_with_raise(
-                    self.end_computer.computer.interfaces,
+                    self.end_computer.computer.cable_interfaces,
                     lambda i: i.is_connected() and i.connection is connection,
                     NoSuchInterfaceError,
                 ).graphics,
@@ -115,6 +115,9 @@ class CableConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered,
                                                f"The connection is probably disconnected on that end!")
 
         return self.computers.end
+
+    def get_computers(self) -> Tuple[ComputerGraphics, ComputerGraphics]:
+        return self.start_computer, self.end_computer
 
     def set_hovered_color(self):
         self.color = CONNECTIONS.SELECTED_COLOR

@@ -56,21 +56,22 @@ class CableNetworkInterfaceGraphics(NetworkInterfaceGraphics):
         :return:
         """
         if self.interface.is_connected():
-            start_computer, end_comp = self.interface.connection.get_graphics().computers
+            start_computer, end_comp = self.interface.connection.get_graphics().get_computers()
             other_computer = start_computer if self.computer_graphics is end_comp else end_comp
             self.x, self.y = other_computer.location
-        computer_x, computer_y = self.computer_location
-        dist = distance((computer_x, computer_y), (self.x, self.y)) / self.computer_graphics.interface_distance()
-        dist = dist if dist else 1  # cannot be 0
+            # If the interface is connected - it should point to the other end of the connection
 
-        self.real_x, self.real_y = ((self.x - computer_x) / dist) + computer_x, ((self.y - computer_y) / dist) + computer_y
+        computer_x, computer_y = self.computer_location
+        distance_ = distance((computer_x, computer_y), (self.x, self.y)) / self.computer_graphics.interface_distance()
+        distance_ = distance_ if distance_ else 1  # cannot be 0
+
+        self.real_x, self.real_y = ((self.x - computer_x) / distance_) + computer_x, ((self.y - computer_y) / distance_) + computer_y
         self.x, self.y = self.real_x, self.real_y
-        # ^ keeps the interface in a fixed distance away from the computer despite being dragged.
+        # ^ keeps the interface in a fixed distance away from the computer despite being moved.
 
     def draw(self) -> None:
         """
         Draw the interface.
-        :return:
         """
         self.color = INTERFACES.BLOCKED_COLOR if self.interface.is_blocked else INTERFACES.COLOR
         draw_rectangle(

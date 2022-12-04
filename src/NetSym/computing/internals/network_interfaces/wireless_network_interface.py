@@ -25,8 +25,8 @@ class WirelessNetworkInterface(NetworkInterface):
     An interface can be either connected or disconnected to a `CableConnectionSide` object, which enables it to move its packets
     down the connection further.
     """
-    __connection: WirelessConnection
-    __connection_side: WirelessConnectionSide
+    __connection:      Optional[WirelessConnection]
+    __connection_side: Optional[WirelessConnectionSide]
 
     def __init__(self,
                  mac:           Optional[Union[MACAddress, str]] = None,
