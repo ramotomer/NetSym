@@ -16,7 +16,7 @@ from NetSym.gui.tech.network_interfaces.cable_network_interface_graphics import 
 from NetSym.packets.cable_packet import CablePacket
 
 if TYPE_CHECKING:
-    from NetSym.gui.abstracts.graphics_object import GraphicsObject
+    from NetSym.gui.tech.network_interfaces.network_interface_graphics import NetworkInterfaceGraphics
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
@@ -26,6 +26,8 @@ class CableNetworkInterface(NetworkInterface):
     """
     __connection:      Optional[CableConnection]
     __connection_side: Optional[CableConnectionSide]
+
+    graphics:          Optional[CableNetworkInterfaceGraphics]
 
     def __init__(self,
                  mac: Optional[Union[str, MACAddress]] = None,
@@ -75,7 +77,7 @@ class CableNetworkInterface(NetworkInterface):
 
         return self.connection.deliver_time
 
-    def init_graphics(self, parent_computer: ComputerGraphics, x: Optional[float] = None, y: Optional[float] = None) -> GraphicsObject:
+    def init_graphics(self, parent_computer: ComputerGraphics, x: Optional[float] = None, y: Optional[float] = None) -> NetworkInterfaceGraphics:
         """
         Initiates the CableNetworkInterfaceGraphics object of this interface
         """

@@ -13,7 +13,6 @@ from NetSym.packets.cable_packet import CablePacket
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
-    from NetSym.packets.packet import Packet
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
@@ -125,7 +124,7 @@ class CableConnection(Connection):
         if all(not side.is_blocked for side in self.get_sides()):
             self.is_blocked = False
 
-    def _add_packet(self, packet: Packet, direction: str) -> None:
+    def _add_packet(self, packet: CablePacket, direction: str) -> None:
         """
         Add a packet that was sent on one of the `CableConnectionSide`-s to the `self.sent_packets` list.
         This method starts the motion of the packet through the connection.
@@ -148,16 +147,12 @@ class CableConnection(Connection):
 
         self.sent_packets.remove(sent_packet)
 
-    def _receive_on_sides_if_reached_destination(self, sent_packet: SentPacket) -> None:
+    def _receive_on_sides_if_reached_destination(self, sent_packet: CableSentPacket) -> None:
         """
         Adds the packet to its appropriate destination side's `received_packets` list.
         This is called to check when the packet finished its route through this connection and is ready to be received at the
         connected `CableNetworkInterface`.
         """
-        if not isinstance(sent_packet, CableSentPacket):
-            raise WrongUsageError(f"Do not call this function with a `sent_packet` which is not a `CableSentPacket`. "
-                                  f"You inserted: {sent_packet} which is a {type(sent_packet)}")
-
         if sent_packet.packet.get_graphics().progress < 1:
             return  # did not reach...
 
@@ -192,7 +187,7 @@ class CableConnection(Connection):
                 new_graphics_to_register.extend(packet.init_graphics(self.get_graphics(), direction))
         return new_graphics_to_register
 
-    def _update_packet(self, sent_packet: SentPacket) -> None:
+    def _update_packet(self, sent_packet: CableSentPacket) -> None:
         """
         Receives a CableSentPacket object and updates its progress on the connection.
         If the packet has reached the end of the connection, make it be received at the appropriate CableConnectionSide
@@ -208,7 +203,29 @@ class CableConnection(Connection):
         Checks whether a certain event should happen to a packet
         The chances go up as the packet moves further and further down the connection
         """
+        if not isinstance(sent_packet, CableSentPacket):
+            raise WrongUsageError(f"Do not call this function with a `sent_packet` which is not a `CableSentPacket`. "
+                                  f"You inserted: {sent_packet} which is a {type(sent_packet)}")
+
         return bool(sent_packet.packet.get_graphics().progress >= (random.random() + 0.3))
+
+    def move_packets(self, main_loop: MainLoop) -> None:
+        """
+        This method is inserted into the main loop of the simulation when this `Connection` object is initialized.
+        The packets in the connection should always be moving. (unless paused)
+        This method sends new packets from the `CableConnectionSide` object, updates the time they have been in the cable, and
+            removes them if they reached the end.
+        """
+        for side in self.get_sides():
+            new_packet_graphics_objects = self._send_packets_from_side(side)
+            main_loop.register_graphics_object(new_packet_graphics_objects)
+
+        for sent_packet in self.sent_packets[:]:  # we copy the list because we alter it during the run
+            self._update_packet(sent_packet)
+            self._receive_on_sides_if_reached_destination(sent_packet)
+
+        main_loop.register_graphics_object(self._drop_predetermined_dropped_packets())
+        main_loop.register_graphics_object(self._delay_predetermined_delayed_packets())
 
     def __repr__(self) -> str:
         """The ip_layer representation of the connection"""

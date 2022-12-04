@@ -39,7 +39,7 @@ class CablePacketGraphics(PacketGraphics, ImageGraphics):
         The self.progress variable is how much of the connection the packet has passed already. That information comes
         from the `CableConnection` class that sent the packet. It updates it in the `CableConnection.move_packets` method.
         """
-        super(PacketGraphics, self).__init__(
+        super(CablePacketGraphics, self).__init__(
             image_from_packet(deepest_layer),
             connection_graphics.get_computer_coordinates(direction)[0],
             connection_graphics.get_computer_coordinates(direction)[1],
@@ -72,7 +72,7 @@ class CablePacketGraphics(PacketGraphics, ImageGraphics):
         :return: None
         """
         self.location = self.connection_graphics.packet_location(self.direction, self.progress)
-        super(PacketGraphics, self).move()
+        super(CablePacketGraphics, self).move()
 
     def start_viewing(self,
                       user_interface: UserInterface,
@@ -95,7 +95,7 @@ class CablePacketGraphics(PacketGraphics, ImageGraphics):
         """
         Delete the packet and drop it from the connection it is currently going through
         """
-        super(PacketGraphics, self).delete(user_interface)
+        super(CablePacketGraphics, self).delete(user_interface)
         user_interface.drop_packet(self)
 
     def __str__(self) -> str:

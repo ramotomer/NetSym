@@ -495,7 +495,7 @@ class Computer:
         self.interfaces.append(new_interface)
 
         graphics = new_interface.init_graphics(parent_computer=self.get_graphics())
-        self.get_graphics().child_graphics_objects.interface_list.append(graphics)
+        self.get_graphics().child_graphics_objects.interface_list.append(new_interface.get_graphics())
 
         return new_interface, graphics
 

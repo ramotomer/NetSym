@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import Optional, Callable
+from typing import Optional, Callable, Tuple
 
 from NetSym.consts import BUTTONS, IMAGES, DIRECTORIES, T_Color
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
@@ -19,7 +19,7 @@ class ImageButton(Button):
                  text: str = "",
                  start_hidden: bool = False,
                  width: float = IMAGES.SIZE, height: float = IMAGES.SIZE,
-                 key: Optional[str] = None,
+                 key: Optional[Tuple[int, int]] = None,
                  color: T_Color = BUTTONS.COLOR,
                  text_color: T_Color = BUTTONS.TEXT_COLOR,
                  is_outlined: bool = False) -> None:

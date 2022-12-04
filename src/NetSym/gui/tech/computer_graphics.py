@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from os import linesep
-from typing import TYPE_CHECKING, Optional, Dict, Callable, Iterable, Tuple, List
+from typing import TYPE_CHECKING, Optional, Dict, Callable, Iterable, Tuple, List, Type, Any
 
 import pyglet
 
@@ -23,6 +23,7 @@ from NetSym.gui.user_interface.text_graphics import Text
 from NetSym.usefuls.funcs import with_args
 
 if TYPE_CHECKING:
+    from NetSym.computing.internals.processes.abstracts.process import Process
     from NetSym.gui.tech.network_interfaces.network_interface_graphics import NetworkInterfaceGraphics
     from NetSym.computing.computer import Computer
     from NetSym.gui.user_interface.user_interface import UserInterface
@@ -145,7 +146,7 @@ class ComputerGraphics(ImageGraphics):
         This method returns the additional buttons that should be added based on what processes
             are currently running
         """
-        process_button_mapping = {
+        process_button_mapping: Dict[Type[Process], Dict[str, Callable[[], None]]] = {
             DNSServerProcess: {
                 "add DNS record (alt+d)": with_args(
                     user_interface.ask_user_for,
@@ -193,7 +194,7 @@ class ComputerGraphics(ImageGraphics):
         self.child_graphics_objects.console.location = user_interface.get_computer_output_console_location()
         self.child_graphics_objects.console.show()
 
-        buttons: Dict[str,  Callable[[], None]] = {
+        buttons: Dict[str,  Callable[[], Any]] = {
             "set ip (i)": user_interface.ask_user_for_ip,
             "change name (shift+n)": with_args(
                 user_interface.ask_user_for,
@@ -328,7 +329,7 @@ class ComputerGraphics(ImageGraphics):
             "name": self.computer.name,
             "scale_factor": self.scale_factor,
             "os": self.computer.os,
-            "interfaces": [interface.graphics.dict_save() for interface in self.computer.interfaces],
+            "interfaces": [interface.get_graphics().dict_save() for interface in self.computer.interfaces],
             "open_tcp_ports": self.computer.get_open_ports("TCP"),
             "open_udp_ports": self.computer.get_open_ports("UDP"),
             "routing_table": self.computer.routing_table.dict_save(),
@@ -336,7 +337,7 @@ class ComputerGraphics(ImageGraphics):
         }
 
         if self.class_name == "Router":
-            dict_["is_dhcp_server"] = self.computer.process_scheduler.is_usermode_process_running(DHCPServerProcess)
+            dict_["is_dhcp_server"] = self.computer.process_scheduler.is_usermode_process_running_by_type(DHCPServerProcess)
 
         return dict_
 

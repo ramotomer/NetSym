@@ -15,7 +15,7 @@ from NetSym.gui.tech.network_interfaces.wireless_network_interface_graphics impo
 from NetSym.packets.wireless_packet import WirelessPacket
 
 if TYPE_CHECKING:
-    from NetSym.gui.abstracts.graphics_object import GraphicsObject
+    from NetSym.gui.tech.network_interfaces.network_interface_graphics import NetworkInterfaceGraphics
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
@@ -30,6 +30,8 @@ class WirelessNetworkInterface(NetworkInterface):
     """
     __connection:      Optional[WirelessConnection]
     __connection_side: Optional[WirelessConnectionSide]
+
+    graphics:          Optional[WirelessNetworkInterfaceGraphics]
 
     def __init__(self,
                  mac:           Optional[Union[MACAddress, str]] = None,
@@ -69,7 +71,7 @@ class WirelessNetworkInterface(NetworkInterface):
         if value is not None:
             self.__connection = value.connection
 
-    def init_graphics(self, parent_computer: ComputerGraphics, x: Optional[float] = None, y: Optional[float] = None) -> GraphicsObject:
+    def init_graphics(self, parent_computer: ComputerGraphics, x: Optional[float] = None, y: Optional[float] = None) -> NetworkInterfaceGraphics:
         """
         Initiates the CableNetworkInterfaceGraphics object of this interface
         """

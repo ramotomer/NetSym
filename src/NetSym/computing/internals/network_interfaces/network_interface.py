@@ -16,7 +16,6 @@ from NetSym.packets.packet import Packet
 
 if TYPE_CHECKING:
     from NetSym.gui.tech.network_interfaces.network_interface_graphics import NetworkInterfaceGraphics
-    from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.computing.connections.connection import ConnectionSide
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
@@ -159,7 +158,7 @@ class NetworkInterface(ABC):
         """Returns whether the interface is connected or not"""
 
     @abstractmethod
-    def init_graphics(self, parent_computer: ComputerGraphics, x: Optional[float] = None, y: Optional[float] = None) -> GraphicsObject:
+    def init_graphics(self, parent_computer: ComputerGraphics, x: Optional[float] = None, y: Optional[float] = None) -> NetworkInterfaceGraphics:
         """
         Initiate the GraphicsObject that represents the interface visually
         """

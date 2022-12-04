@@ -11,7 +11,6 @@ from NetSym.gui.main_loop import MainLoop
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
-    from NetSym.gui.tech.packets.packet_graphics import PacketGraphics
 
 
 @dataclass
@@ -80,29 +79,6 @@ class Connection(ABC):
         """
 
     @abstractmethod
-    def _send_packets_from_side(self, side: ConnectionSide) -> List[PacketGraphics]:
-        """
-        Takes all of the packets that are waiting to be sent on one CableConnectionSide and sends them down the main connection.
-        :param side: a `CableConnectionSide` object.
-        """
-
-    @abstractmethod
-    def _update_packet(self, sent_packet: SentPacket) -> None:
-        """
-        Receives a CableSentPacket object and updates its progress on the connection.
-        If the packet has reached the end of the connection, make it be received at the appropriate CableConnectionSide
-        :param sent_packet: a `CableSentPacket`
-        """
-
-    @abstractmethod
-    def _receive_on_sides_if_reached_destination(self, sent_packet: SentPacket) -> None:
-        """
-        Adds the packet to its appropriate destination side's `received_packets` list.
-        This is called to check when the packet finished its route through this connection and is ready to be received at the
-        connected `CableNetworkInterface`.
-        """
-
-    @abstractmethod
     def _remove_packet(self, sent_packet: SentPacket) -> None:
         """
         Remove a packet from the `sent_packets` list
@@ -135,6 +111,7 @@ class Connection(ABC):
                 animations_to_register.append(sent_packet.packet.get_graphics().get_decrease_speed_animation())
         return animations_to_register
 
+    @abstractmethod
     def move_packets(self, main_loop: MainLoop) -> None:
         """
         This method is inserted into the main loop of the simulation when this `Connection` object is initialized.
@@ -142,16 +119,6 @@ class Connection(ABC):
         This method sends new packets from the `CableConnectionSide` object, updates the time they have been in the cable, and
             removes them if they reached the end.
         """
-        for side in self.get_sides():
-            new_packet_graphics_objects = self._send_packets_from_side(side)
-            main_loop.register_graphics_object(new_packet_graphics_objects)
-
-        for sent_packet in self.sent_packets[:]:  # we copy the list because we alter it during the run
-            self._update_packet(sent_packet)
-            self._receive_on_sides_if_reached_destination(sent_packet)
-
-        main_loop.register_graphics_object(self._drop_predetermined_dropped_packets())
-        main_loop.register_graphics_object(self._delay_predetermined_delayed_packets())
 
     def stop_packets(self) -> None:
         """

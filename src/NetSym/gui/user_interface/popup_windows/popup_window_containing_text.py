@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Optional, Sequence
 
 from NetSym.consts import WINDOWS, T_Color, SHAPES
+from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 from NetSym.gui.user_interface.text_graphics import Text
 
@@ -19,7 +20,7 @@ class PopupWindowContainingText(PopupWindow):
                  x: float,
                  y: float,
                  text: str,
-                 buttons: Optional[List[Button]] = None,
+                 buttons: Optional[Sequence[Button]] = None,
                  width: float = WINDOWS.POPUP.TEXTBOX.WIDTH,
                  height: float = WINDOWS.POPUP.TEXTBOX.HEIGHT,
                  color: T_Color = WINDOWS.POPUP.TEXTBOX.OUTLINE_COLOR,
@@ -37,8 +38,8 @@ class PopupWindowContainingText(PopupWindow):
             max_width=self.width
         )
 
-        self.child_graphics_objects = [
+        self.child_graphics_objects: Sequence[GraphicsObject] = [
             self.title_text,
             self.information_text,
             self.exit_button,
-        ] + buttons
+        ] + list(buttons)

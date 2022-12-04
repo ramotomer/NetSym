@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Optional, Set, Tuple, Sequence
 
 from NetSym.consts import WINDOWS, T_Color, COLORS, SHAPES, debugp
 from NetSym.exceptions import WrongUsageError
@@ -23,7 +23,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
     def __init__(self,
                  x: float,
                  y: float,
-                 buttons: Optional[List[Button]] = None,
+                 buttons: Optional[Sequence[Button]] = None,
                  width: float = WINDOWS.POPUP.TEXTBOX.WIDTH,
                  height: float = WINDOWS.POPUP.TEXTBOX.HEIGHT,
                  color: T_Color = WINDOWS.POPUP.TEXTBOX.OUTLINE_COLOR,
@@ -35,7 +35,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         :param buttons: a list of buttons that will be displayed on this window. The `X` button is not included.
         """
         super(PopupWindow, self).__init__(x, y)
-        buttons = buttons or []
+        button_list = list(buttons) or []
 
         self.width, self.height = width, height
         self.__is_active = False
@@ -53,7 +53,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
             max_width=self.width
         )
 
-        for button in buttons:
+        for button in button_list:
             button.set_parent_graphics(self, (button.x - self.x, button.y - self.y))
 
         self.exit_button = Button(
@@ -72,9 +72,9 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self.child_graphics_objects = [
             self.title_text,
             self.exit_button,
-        ] + buttons
+        ] + button_list
 
-        self.buttons = [self.exit_button] + buttons
+        self.buttons = [self.exit_button] + button_list
 
         self._x_before_pinning, self._y_before_pinning = None, None
         self._size_before_pinning = self.width, self.height

@@ -99,7 +99,7 @@ class WirelessConnection(Connection):
 
         self.sent_packets.remove(sent_packet)
 
-    def _receive_on_sides_if_reached_destination(self, sent_packet: SentPacket) -> None:
+    def _receive_on_sides_if_reached_destination(self, sent_packet: WirelessSentPacket) -> None:
         """
         Adds the packet to its appropriate destination side's `received_packets` list.
         This is called when the packet finished its route through this connection and is ready to be received at the
@@ -107,10 +107,6 @@ class WirelessConnection(Connection):
         :param sent_packet: a `CableSentPacket` namedtuple.
         :return: None
         """
-        if not isinstance(sent_packet, WirelessSentPacket):
-            raise WrongUsageError(f"Do not call this function with a `sent_packet` which is not a `WirelessSentPacket`. "
-                                  f"You inserted: {sent_packet} which is a {type(sent_packet)}")
-
         wireless_packet = sent_packet.packet
 
         for side in self.connection_sides:
@@ -174,6 +170,24 @@ class WirelessConnection(Connection):
         The chances go up as the packet moves further and further away from the center of origin.
         """
         return (2 * (self._get_distance(sent_packet) / WINDOWS.MAIN.WIDTH)) >= (random.random() + 0.3)
+
+    def move_packets(self, main_loop: MainLoop) -> None:
+        """
+        This method is inserted into the main loop of the simulation when this `Connection` object is initialized.
+        The packets in the connection should always be moving. (unless paused)
+        This method sends new packets from the `CableConnectionSide` object, updates the time they have been in the cable, and
+            removes them if they reached the end.
+        """
+        for side in self.get_sides():
+            new_packet_graphics_objects = self._send_packets_from_side(side)
+            main_loop.register_graphics_object(new_packet_graphics_objects)
+
+        for sent_packet in self.sent_packets[:]:  # we copy the list because we alter it during the run
+            self._update_packet(sent_packet)
+            self._receive_on_sides_if_reached_destination(sent_packet)
+
+        main_loop.register_graphics_object(self._drop_predetermined_dropped_packets())
+        main_loop.register_graphics_object(self._delay_predetermined_delayed_packets())
 
     def __repr__(self) -> str:
         """The ip_layer representation of the connection"""
