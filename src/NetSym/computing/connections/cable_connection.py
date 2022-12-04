@@ -4,7 +4,7 @@ import random
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List, Optional, Sequence
 
-from NetSym.computing.connections.base_connection import BaseConnection, BaseSentPacket, BaseConnectionSide
+from NetSym.computing.connections.connection import Connection, SentPacket, BaseConnectionSide
 from NetSym.consts import CONNECTIONS, PACKET
 from NetSym.exceptions import *
 from NetSym.gui.main_loop import MainLoop
@@ -18,14 +18,14 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class SentPacket(BaseSentPacket):
+class CableSentPacket(SentPacket):
     """
     a packet that is currently being sent through the connection.
     """
     direction: str = PACKET.DIRECTION.RIGHT
 
 
-class CableConnection(BaseConnection):
+class CableConnection(Connection):
     """
     This class represents a cable or any connection between two `CableNetworkInterface` objects.
     It allows for packets to move in both sides, To be sent and received.
@@ -55,7 +55,7 @@ class CableConnection(BaseConnection):
         """
         self.speed = speed
         self.initial_length = length
-        self.sent_packets: List[SentPacket] = []  # represents the packets that are currently being sent through the connection
+        self.sent_packets: List[CableSentPacket] = []  # represents the packets that are currently being sent through the connection
 
         self.right_side, self.left_side = CableConnectionSide(self), CableConnectionSide(self)
 
@@ -131,7 +131,7 @@ class CableConnection(BaseConnection):
         :direction: the direction the packet is going to (PACKET.DIRECTION.RIGHT or PACKET.DIRECTION.LEFT)
         """
         self.sent_packets.append(
-            SentPacket(
+            CableSentPacket(
                 packet         =packet,
                 sending_time   =MainLoop.get_time(),
                 will_be_dropped=(random.random() < self.packet_loss),
@@ -140,7 +140,7 @@ class CableConnection(BaseConnection):
             )
         )
 
-    def _receive_on_sides_if_reached_destination(self, sent_packet: SentPacket) -> None:
+    def _receive_on_sides_if_reached_destination(self, sent_packet: CableSentPacket) -> None:
         """
         Adds the packet to its appropriate destination side's `received_packets` list.
         This is called to check when the packet finished its route through this connection and is ready to be received at the
@@ -177,18 +177,18 @@ class CableConnection(BaseConnection):
                 new_graphics_to_register.extend(packet.init_graphics(self.graphics, direction))
         return new_graphics_to_register
 
-    def _update_packet(self, sent_packet: SentPacket) -> None:
+    def _update_packet(self, sent_packet: CableSentPacket) -> None:
         """
-        Receives a SentPacket object and updates its progress on the connection.
+        Receives a CableSentPacket object and updates its progress on the connection.
         If the packet has reached the end of the connection, make it be received at the appropriate CableConnectionSide
-        :param sent_packet: a `SentPacket`
+        :param sent_packet: a `CableSentPacket`
         :return: None
         """
         sent_packet.packet.get_graphics().progress += \
             (MainLoop.get_time_since(sent_packet.last_update_time) / self.deliver_time) * sent_packet.packet.get_graphics().speed
         sent_packet.last_update_time = MainLoop.get_time()
 
-    def _is_lucky_packet(self, sent_packet: BaseSentPacket) -> bool:
+    def _is_lucky_packet(self, sent_packet: SentPacket) -> bool:
         """
         Checks whether a certain event should happen to a packet
         The chances go up as the packet moves further and further down the connection

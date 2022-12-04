@@ -55,7 +55,7 @@ from NetSym.usefuls.funcs import get_the_one, distance, with_args, called_in_ord
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.packets.packet import Packet
-    from NetSym.computing.connections.cable_connection import CableConnection, SentPacket
+    from NetSym.computing.connections.cable_connection import CableConnection, CableSentPacket
     from NetSym.gui.main_loop import MainLoop
     from NetSym.gui.main_window import MainWindow
 
@@ -1089,7 +1089,7 @@ class UserInterface:
             [computer.loopback.connection for computer in self.computers],
         )
 
-        all_sent_packets: Iterable[SentPacket] = sum([connection.sent_packets for connection in all_connections], start=[])
+        all_sent_packets: Iterable[CableSentPacket] = sum([connection.sent_packets for connection in all_connections], start=[])
 
         for sent_packet in all_sent_packets:
             if sent_packet.packet.graphics is graphics_object:

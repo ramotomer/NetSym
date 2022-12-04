@@ -4,9 +4,9 @@ from typing import Optional, Dict, Union, Any, TYPE_CHECKING
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
-from NetSym.computing.connections.base_connection import BaseConnectionSide
 from NetSym.computing.connections.cable_connection import CableConnection
 from NetSym.computing.connections.cable_connection import CableConnectionSide
+from NetSym.computing.connections.connection import BaseConnectionSide
 from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
 from NetSym.consts import INTERFACES, PROTOCOLS, T_Color, T_Time
 from NetSym.exceptions import *

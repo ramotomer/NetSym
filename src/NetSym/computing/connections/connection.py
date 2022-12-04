@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class BaseSentPacket:
+class SentPacket:
     """
     a packet that is currently being sent through the connection.
     """
@@ -27,7 +27,7 @@ class BaseSentPacket:
     last_update_time: T_Time = field(default_factory=MainLoop.get_time)
 
 
-class BaseConnection(ABC):
+class Connection(ABC):
     """
     This class represents a cable or any connection between two `CableNetworkInterface` objects.
     It allows for packets to move in both sides, To be sent and received.
@@ -44,7 +44,7 @@ class BaseConnection(ABC):
     speed:        float
     packet_loss:  float
     latency:      float
-    sent_packets: List[BaseSentPacket]
+    sent_packets: List[SentPacket]
 
     @abstractmethod
     def get_sides(self) -> Sequence[BaseConnectionSide]:
@@ -73,7 +73,7 @@ class BaseConnection(ABC):
         self.latency = new_latency
 
     @abstractmethod
-    def _is_lucky_packet(self, sent_packet: BaseSentPacket) -> bool:
+    def _is_lucky_packet(self, sent_packet: SentPacket) -> bool:
         """
         Checks whether a certain event should happen to a packet
         The chances go up as the packet moves further and further down the connection
@@ -87,15 +87,15 @@ class BaseConnection(ABC):
         """
 
     @abstractmethod
-    def _update_packet(self, sent_packet: BaseSentPacket) -> None:
+    def _update_packet(self, sent_packet: SentPacket) -> None:
         """
-        Receives a SentPacket object and updates its progress on the connection.
+        Receives a CableSentPacket object and updates its progress on the connection.
         If the packet has reached the end of the connection, make it be received at the appropriate CableConnectionSide
-        :param sent_packet: a `SentPacket`
+        :param sent_packet: a `CableSentPacket`
         """
 
     @abstractmethod
-    def _receive_on_sides_if_reached_destination(self, sent_packet: BaseSentPacket) -> None:
+    def _receive_on_sides_if_reached_destination(self, sent_packet: SentPacket) -> None:
         """
         Adds the packet to its appropriate destination side's `received_packets` list.
         This is called to check when the packet finished its route through this connection and is ready to be received at the
@@ -167,12 +167,12 @@ class BaseConnectionSide:
     It also has a list of packets that reached this side but were not yet picked up by the appropriate connected
         `CableNetworkInterface` object.
     """
-    def __init__(self, main_connection: BaseConnection) -> None:
+    def __init__(self, main_connection: Connection) -> None:
         self._packets_to_send: List[Packet] = []
         self._packets_to_receive: List[Packet] = []
-        self.connection: BaseConnection = main_connection
+        self.connection: Connection = main_connection
 
-    def get_packet_from_connection(self, sent_packet: BaseSentPacket) -> None:
+    def get_packet_from_connection(self, sent_packet: SentPacket) -> None:
         """
         This will be called by the connection when a new packet arrives at this side of it
         """

@@ -4,7 +4,7 @@ import random
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List, Sequence
 
-from NetSym.computing.connections.base_connection import BaseSentPacket, BaseConnection, BaseConnectionSide
+from NetSym.computing.connections.connection import SentPacket, Connection, BaseConnectionSide
 from NetSym.consts import CONNECTIONS, T_Color, WINDOWS
 from NetSym.exceptions import NoSuchConnectionSideError, WrongUsageError
 from NetSym.gui.main_loop import MainLoop
@@ -18,11 +18,11 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class SentWirelessPacket(BaseSentPacket):
+class WirelessSentPacket(SentPacket):
     id: int = 0
 
 
-class WirelessConnection(BaseConnection):
+class WirelessConnection(Connection):
     """
     A `WirelessConnection` is the "frequency" on which the antennas transmit.
     It is a global object, since you do not need to see it.
@@ -30,7 +30,7 @@ class WirelessConnection(BaseConnection):
 
     The packets transmitted on each frequency have different colors.
     """
-    sent_packets: List[SentWirelessPacket]
+    sent_packets: List[WirelessSentPacket]
 
     def __init__(self,
                  frequency: float,
@@ -81,7 +81,7 @@ class WirelessConnection(BaseConnection):
         """
         wireless_packet = WirelessPacket(packet.data)
         self.sent_packets.append(
-            SentWirelessPacket(
+            WirelessSentPacket(
                 packet=wireless_packet,
                 sending_time=MainLoop.get_time(),
                 id=self.sent_packet_id,
@@ -91,12 +91,12 @@ class WirelessConnection(BaseConnection):
         self.sent_packet_id += 1
         return wireless_packet
 
-    def _receive_on_sides_if_reached_destination(self, sent_packet: SentWirelessPacket) -> None:
+    def _receive_on_sides_if_reached_destination(self, sent_packet: WirelessSentPacket) -> None:
         """
         Adds the packet to its appropriate destination side's `received_packets` list.
         This is called when the packet finished its route through this connection and is ready to be received at the
         connected `CableNetworkInterface`.
-        :param sent_packet: a `SentPacket` namedtuple.
+        :param sent_packet: a `CableSentPacket` namedtuple.
         :return: None
         """
         wireless_packet = sent_packet.packet
@@ -110,11 +110,11 @@ class WirelessConnection(BaseConnection):
 
                 side.get_packet_from_connection(sent_packet)
 
-    def _remove_packet_if_out_of_screen(self, sent_packet: SentWirelessPacket) -> None:
+    def _remove_packet_if_out_of_screen(self, sent_packet: WirelessSentPacket) -> None:
         """
         When a packet gets too far from its origin (the Antenna) it is not longer displayed nor used, so
         it should be deleted
-        :param sent_packet: a `SentPacket`
+        :param sent_packet: a `CableSentPacket`
         :return:
         """
         if self._get_distance(sent_packet) <= self.longest_line_on_the_screen:
@@ -138,25 +138,25 @@ class WirelessConnection(BaseConnection):
                 packet_graphics_to_register.extend(wireless_packet.init_graphics(self, side.wireless_interface))
         return packet_graphics_to_register
 
-    def _update_packet(self, sent_packet: SentWirelessPacket) -> None:
+    def _update_packet(self, sent_packet: WirelessSentPacket) -> None:
         """
-        Receives a SentPacket object and updates its progress on the connection.
+        Receives a CableSentPacket object and updates its progress on the connection.
         If the packet has reached the end of the connection, make it be received at the appropriate CableConnectionSide
-        :param sent_packet: a `SentPacket` namedtuple
+        :param sent_packet: a `CableSentPacket` namedtuple
         """
         distance_ = self._get_distance(sent_packet)
         sent_packet.packet.graphics.distance = distance_
 
         self._remove_packet_if_out_of_screen(sent_packet)
 
-    def _get_distance(self, sent_packet: BaseSentPacket) -> float:
+    def _get_distance(self, sent_packet: SentPacket) -> float:
         """
         Returns the distance of the packet from the source of origin
         Calculated by the time and speed of the wireless packet
         """
         return MainLoop.get_time_since(sent_packet.sending_time) * self.speed
 
-    def _is_lucky_packet(self, sent_packet: BaseSentPacket) -> bool:
+    def _is_lucky_packet(self, sent_packet: SentPacket) -> bool:
         """
         Checks whether a certain event should happen to a packet
         The chances go up as the packet moves further and further away from the center of origin.
@@ -179,17 +179,17 @@ class WirelessConnectionSide(BaseConnectionSide):
         self.wireless_interface = wireless_interface
         self._received_packet_ids = []
 
-    def get_packet_from_connection(self, sent_packet: BaseSentPacket) -> None:
+    def get_packet_from_connection(self, sent_packet: SentPacket) -> None:
         """
         This will be called by the frequency when a new packet arrives at this side of it
         """
-        if not isinstance(sent_packet, SentWirelessPacket):
-            raise WrongUsageError(f"Only call this function with a SentWirelessPacket object not {type(sent_packet)} like {sent_packet!r}!!!")
+        if not isinstance(sent_packet, WirelessSentPacket):
+            raise WrongUsageError(f"Only call this function with a WirelessSentPacket object not {type(sent_packet)} like {sent_packet!r}!!!")
 
         self._packets_to_receive.append(Packet(sent_packet.packet.data))
         self._received_packet_ids.append(sent_packet.id)
 
-    def was_already_received(self, sent_packet: SentWirelessPacket) -> bool:
+    def was_already_received(self, sent_packet: WirelessSentPacket) -> bool:
         """
         Return whether or not the packet was already received on this side of the `WirelessConnection` and translated into a regular packet :)
         Does it by looking at the ID of that packet :)
