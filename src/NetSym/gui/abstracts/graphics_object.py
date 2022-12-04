@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod, ABC
-from typing import Tuple, TYPE_CHECKING, Dict, List
+from typing import Tuple, TYPE_CHECKING, Dict, List, Optional
 
 from NetSym.gui.main_loop_function_to_call import FunctionToCall
 
@@ -128,7 +128,7 @@ class GraphicsObject(ABC):
         """
         self.is_requesting_to_register_children = True
 
-    def delete(self, user_interface: UserInterface) -> None:
+    def delete(self, user_interface: Optional[UserInterface]) -> None:
         """
         Deletes the graphics object and performs other operations that are necessary for deletion (cleanup)
         """

@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from dataclasses import dataclass
-from functools import reduce
-from operator import attrgetter, concat
+from operator import attrgetter
 from typing import NamedTuple, Optional, TYPE_CHECKING, List, Type, Tuple, Generator, Any, TypeVar
 
 from NetSym.computing.internals.processes.abstracts.process import Process, WaitingFor, ReturnedPacket
@@ -25,7 +24,7 @@ class WaitingProcess(NamedTuple):
     A process that is currently waiting for a certain packet.
     """
     process:     Process
-    waiting_for: Optional[WaitingFor]
+    waiting_for: WaitingFor
 
 
 class ReadyProcess(NamedTuple):
@@ -42,7 +41,7 @@ class SchedulerDetails:
     """
     For doc see the ProcessScheduler doc below
     """
-    startup_processes:         List[Tuple[Type[Process], Tuple[...]]]
+    startup_processes:         List[Tuple[Type[Process], Tuple]]
     currently_running_process: Optional[Process]
     ready_processes:           List[ReadyProcess]
     waiting_processes:         List[WaitingProcess]
@@ -110,7 +109,7 @@ class ProcessScheduler:
         return self.__details_by_mode[COMPUTER.PROCESSES.MODES.USERMODE].waiting_processes
 
     @property
-    def startup_usermode_processes(self) -> List[Tuple[Type[Process], Tuple[...]]]:
+    def startup_usermode_processes(self) -> List[Tuple[Type[Process], Tuple]]:
         return self.__details_by_mode[COMPUTER.PROCESSES.MODES.USERMODE].startup_processes
 
     def get_currently_running_process(self, mode) -> Optional[Process]:
@@ -147,10 +146,11 @@ class ProcessScheduler:
         :return: `list` of `Process` objects
         """
         if mode is None:
-            return reduce(concat, [self.get_all_processes(mode_) for mode_ in COMPUTER.PROCESSES.MODES.ALL_MODES])
+            return sum([self.get_all_processes(mode_) for mode_ in COMPUTER.PROCESSES.MODES.ALL_MODES], start=[])
 
+        currently_running_process = self.get_currently_running_process(mode)
         return [waiting_process.process for waiting_process in self.__details_by_mode[mode].waiting_processes] + \
-               ([self.get_currently_running_process(mode)] if self.is_running_a_process_in_this_mode(mode) else []) + \
+               ([currently_running_process] if currently_running_process is not None else []) + \
                self.__details_by_mode[mode].ready_processes_instances
 
     @contextmanager
@@ -172,10 +172,9 @@ class ProcessScheduler:
         This function receives a process and runs it until yielding a `WaitingForPacket` namedtuple.
         Returns the yielded `WaitingForPacket`.
         :param process: a `Process` object.
-        :return: a `WaitingForPacket` namedtuple or if the process is done, None.
         """
         if process.process is None:
-            process.process = iter(process.code())
+            process.process = process.code()
 
         with self.process_is_currently_running(process, mode):
             try:
@@ -187,23 +186,6 @@ class ProcessScheduler:
                     self.computer.print(f"{mode} process({process.pid}): {error.args[0]!r}")
                 return None
 
-    def _start_new_processes(self, mode: str) -> List[ReadyProcess]:
-        """
-        Goes over the waiting processes list and returns a list of new processes that are ready to run.
-        Also removes them from the waiting processes list.
-        New processes - that means that they were started by `start_process` but did not run at all yet.
-        :return: a list of ready `Process`-s.
-        """
-        waiting_processes = self.__details_by_mode[mode].waiting_processes
-
-        new_processes = []
-        for waiting_process in waiting_processes[:]:
-            process, waiting_for = waiting_process
-            if waiting_for is None:  # that means the process was not yet run.
-                new_processes.append(ReadyProcess(process, None))
-                waiting_processes.remove(waiting_process)
-        return new_processes
-
     def _get_ready_processes(self, mode: str) -> List[ReadyProcess]:
         """
         Returns a list of the waiting processes that finished waiting and are ready to run.
@@ -214,7 +196,7 @@ class ProcessScheduler:
         new_packets_raw = self.computer.new_packets_since(self.__details_by_mode[mode].process_last_check_time, is_raw=True)
         self.__details_by_mode[mode].process_last_check_time = MainLoop.get_time()
 
-        ready_processes = self._start_new_processes(mode)
+        ready_processes: List[ReadyProcess] = []
         self._decide_ready_processes_no_packet(ready_processes, mode)
 
         waiting_processes = self.__details_by_mode[mode].waiting_processes[:]
@@ -306,7 +288,7 @@ class ProcessScheduler:
         """
         return get_the_one_with_raise(self.get_all_processes(mode), lambda process: process.pid == pid, NoSuchProcessError)
 
-    def get_process_by_type(self, process_type: Type[T], mode: Optional[str] = None) -> T:
+    def get_process_by_type(self, process_type: Type[Process], mode: Optional[str] = None) -> Process:
         """
         Receives a type of a `Process` subclass and returns the process object of the `Process` that is currently
         running in the computer.
@@ -317,7 +299,7 @@ class ProcessScheduler:
         """
         return get_the_one_with_raise(self.get_all_processes(mode), lambda process: isinstance(process, process_type), NoSuchProcessError)
 
-    def get_usermode_process_by_type(self, process_type: Type[T]) -> T:
+    def get_usermode_process_by_type(self, process_type: Type[Process]) -> Process:
         return self.get_process_by_type(process_type, COMPUTER.PROCESSES.MODES.USERMODE)
 
     def get_usermode_process(self, pid: int) -> Process:
@@ -338,24 +320,27 @@ class ProcessScheduler:
         if mode is not None:
             modes = [mode]
 
-        found_the_process = False
         for mode in modes:
             waiting_processes = self.__details_by_mode[mode].waiting_processes
             ready_processes = self.__details_by_mode[mode].ready_processes
 
-            if process in ready_processes:
-                found_the_process = True
-                ready_processes.remove(get_the_one_with_raise(ready_processes, lambda rp: rp.process == process, NoSuchProcessError))
-            elif process is self.__details_by_mode[mode].currently_running_process:
-                found_the_process = True
+            ready_process = get_the_one(ready_processes, lambda rp: rp.process == process)
+
+            if ready_process is not None:
+                ready_processes.remove(ready_process)
+                return
+
+            if process is self.__details_by_mode[mode].currently_running_process:
+                # TODO: Im pretty sure that if this happens the simulation crashes... TEST and FIX
                 process.die()  # only occurs when a process calls `terminate_process` on itself
-            else:
-                process = get_the_one(waiting_processes, lambda wp: wp.process == process)
-                if process is not None:
-                    found_the_process = True
-                    waiting_processes.remove(process)
-        if not found_the_process:
-            raise NoSuchProcessError(f"Could not find process {process} in {modes}! Thus termination failed")
+                return
+
+            waiting_process = get_the_one(waiting_processes, lambda wp: wp.process == process)
+            if waiting_process is not None:
+                waiting_processes.remove(waiting_process)
+                return
+
+        raise NoSuchProcessError(f"Could not find process {process} in {modes}! Thus termination failed")
 
     def terminate_process_by_pid(self, pid: int, mode: str) -> None:
         """
@@ -371,13 +356,14 @@ class ProcessScheduler:
         :return:
         """
         for mode in COMPUTER.PROCESSES.MODES.ALL_MODES:
-            waiting_processes = self.__details_by_mode[mode].waiting_processes
+            mode_details = self.__details_by_mode[mode]
+            waiting_processes = mode_details.waiting_processes
 
-            for process in list(map(attrgetter("process"), waiting_processes)) + self.__details_by_mode[mode].ready_processes_instances:
+            for process in list(map(attrgetter("process"), waiting_processes)) + mode_details.ready_processes_instances:
                 self.terminate_process(process, mode)
 
-            if self.__details_by_mode[mode].currently_running_process is not None:
-                self.__details_by_mode[mode].currently_running_process.die()
+            if mode_details.currently_running_process is not None:
+                mode_details.currently_running_process.die()
 
     def on_shutdown(self) -> None:
         """
@@ -411,7 +397,12 @@ class ProcessScheduler:
         :return: `int` the process ID of the process that was started
         """
         pid = self.__get_next_pid(mode)
-        self.__details_by_mode[mode].waiting_processes.append(WaitingProcess(process_type(pid, self.computer, *args, **kwargs), None))
+        process = process_type(pid, self.computer, *args, **kwargs)
+        waiting_for = self._run_process(process, mode, None)
+        if waiting_for is None:
+            return pid  # Process returned immediately without yielding... This pid never really existed...
+
+        self.__details_by_mode[mode].waiting_processes.append(WaitingProcess(process, waiting_for))
         return pid
 
     def start_usermode_process(self, process_type: Type[Process], *args: Any, **kwargs: Any) -> int:

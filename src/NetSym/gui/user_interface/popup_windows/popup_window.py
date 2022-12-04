@@ -120,9 +120,6 @@ class PopupWindow(UserInterfaceGraphicsObject):
         Deletes the window and removes it from the UserInterface.popup_windows list
         :return: None
         """
-        if user_interface is None:
-            raise NotImplementedError
-
         super(PopupWindow, self).delete(user_interface)
         self.unregister_this_window_from_user_interface = True
 

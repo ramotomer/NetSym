@@ -4,7 +4,7 @@ import inspect
 from abc import abstractmethod, ABC
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Iterator, Union, Callable, TYPE_CHECKING, Optional, Tuple, Type, Generator
+from typing import Iterator, Callable, TYPE_CHECKING, Optional, Tuple, Type, Generator
 
 from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_Suicide
 from NetSym.consts import COMPUTER, T_Time
@@ -89,7 +89,7 @@ class WaitingFor(IterableDataclass):
     Indicates the process is waiting for a certain condition
     `condition` is a function that should be called without parameters and return a `bool`
     """
-    condition:      Union[Callable[[], bool], Callable[[Packet], bool]]
+    condition:      Callable[..., bool]
     timeout:        Optional[Timeout] = None
     value:          Optional[ReturnedPacket] = None
     get_raw_packet: bool = False
@@ -145,7 +145,7 @@ class Process(ABC):
         self.pid: int = pid
         self.computer: Computer = computer
         self.cwd = self.computer.filesystem.root
-        self.process = None
+        self.process: Optional[T_ProcessCode] = None
 
         self.signal_handlers = defaultdict(
             lambda: self.default_signal_handler
