@@ -61,6 +61,12 @@ class SomethingWentTerriblyWrongError(NetworkSimulationError):
     """
 
 
+class ThisValueShouldNeverBeNone(SomethingWentTerriblyWrongError, ValueError):
+    """
+    Raised when a value that should never be none - is none.
+    """
+
+
 class WrongUsageError(SomethingWentTerriblyWrongError):
     """
     Occurs when a function is used not in the way it was intended
@@ -289,6 +295,13 @@ class GraphicsObjectAlreadyRegistered(GraphicsError):
 class GraphicsObjectNotYetInitialized(GraphicsError):
     """
     Trying to get the value of the graphics object before the `init_graphics` method was called
+    """
+
+
+class ParentGraphicsObjectNotSet(GraphicsObjectNotYetInitialized):
+    """
+    An object has an attribute that can only be initialized by a parent `GraphicsObject`.
+    That attribute was accessed but no parent `GraphicsObject` was set :(
     """
 
 

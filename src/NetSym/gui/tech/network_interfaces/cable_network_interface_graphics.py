@@ -1,62 +1,45 @@
 from __future__ import annotations
 
-import os
-from typing import TYPE_CHECKING, Optional, Dict, Callable, Tuple
-
-import pyglet
+from typing import TYPE_CHECKING, Optional, Dict, Callable
 
 from NetSym.address.mac_address import MACAddress
-from NetSym.consts import INTERFACES, SELECTED_OBJECT, DIRECTORIES, IMAGES
+from NetSym.consts import INTERFACES
 from NetSym.exceptions import *
-from NetSym.gui.abstracts.image_graphics import ImageGraphics
-from NetSym.gui.abstracts.selectable import Selectable
 from NetSym.gui.shape_drawing import draw_rectangle
-from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
+from NetSym.gui.tech.network_interfaces.network_interface_graphics import NetworkInterfaceGraphics
 from NetSym.usefuls.funcs import distance, with_args, get_the_one_with_raise
 
 if TYPE_CHECKING:
-    from NetSym.computing.internals.network_interfaces.interface import Interface
+    from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
     from NetSym.gui.user_interface.user_interface import UserInterface
 
 
-class InterfaceGraphics(ViewableGraphicsObject, Selectable):
+class CableNetworkInterfaceGraphics(NetworkInterfaceGraphics):
     """
     This is the graphics of a network interface of a computer.
     It is the little square next to computers.
     It allows the user much more control over their computers and to inspect the network interfaces of their computers.
     """
-    width: float
-    height: float
+    interface: CableNetworkInterface
 
     def __init__(self,
-                 x: float,
-                 y: float,
-                 interface: Interface,
+                 x: Optional[float],
+                 y: Optional[float],
+                 interface: CableNetworkInterface,
                  computer_graphics: ComputerGraphics) -> None:
         """
         initiates the object.
         :param x:
         :param y: the location
-        :param interface: the physical `Interface` of the computer.
+        :param interface: the physical `CableNetworkInterface` of the computer.
         :param computer_graphics: the graphics object of the computer that this interface belongs to.
         """
-        super(InterfaceGraphics, self).__init__(x, y, centered=True, is_in_background=True, is_pressable=True)
-        self.color = interface.display_color
-        self.real_x, self.real_y = x, y
-        self.width, self.height = INTERFACES.WIDTH, INTERFACES.HEIGHT
-        self.computer_graphics = computer_graphics
-
-        self.interface: Interface = interface
-        interface.graphics = self
+        super(CableNetworkInterfaceGraphics, self).__init__(x, y, interface, computer_graphics)
 
     @property
-    def logic_object(self):
+    def logic_object(self) -> CableNetworkInterface:
         return self.interface
-
-    @property
-    def computer_location(self) -> Tuple[float, float]:
-        return self.computer_graphics.location
 
     def is_in(self, x: float, y: float) -> bool:
         """
@@ -73,21 +56,22 @@ class InterfaceGraphics(ViewableGraphicsObject, Selectable):
         :return:
         """
         if self.interface.is_connected():
-            start_computer, end_comp = self.interface.connection.get_graphics().computers
+            start_computer, end_comp = self.interface.connection.get_graphics().get_computers()
             other_computer = start_computer if self.computer_graphics is end_comp else end_comp
             self.x, self.y = other_computer.location
-        computer_x, computer_y = self.computer_location
-        dist = distance((computer_x, computer_y), (self.x, self.y)) / self.computer_graphics.interface_distance()
-        dist = dist if dist else 1  # cannot be 0
+            # If the interface is connected - it should point to the other end of the connection
 
-        self.real_x, self.real_y = ((self.x - computer_x) / dist) + computer_x, ((self.y - computer_y) / dist) + computer_y
+        computer_x, computer_y = self.computer_location
+        distance_ = distance((computer_x, computer_y), (self.x, self.y)) / self.computer_graphics.interface_distance()
+        distance_ = distance_ if distance_ else 1  # cannot be 0
+
+        self.real_x, self.real_y = ((self.x - computer_x) / distance_) + computer_x, ((self.y - computer_y) / distance_) + computer_y
         self.x, self.y = self.real_x, self.real_y
-        # ^ keeps the interface in a fixed distance away from the computer despite being dragged.
+        # ^ keeps the interface in a fixed distance away from the computer despite being moved.
 
     def draw(self) -> None:
         """
         Draw the interface.
-        :return:
         """
         self.color = INTERFACES.BLOCKED_COLOR if self.interface.is_blocked else INTERFACES.COLOR
         draw_rectangle(
@@ -131,35 +115,6 @@ class InterfaceGraphics(ViewableGraphicsObject, Selectable):
             "block (^b)": with_args(self.interface.toggle_block, "STP"),
         }
 
-    def start_viewing(self,
-                      user_interface: UserInterface,
-                      additional_buttons: Optional[Dict[str, Callable[[], None]]] = None) -> Tuple[pyglet.sprite.Sprite, str, int]:
-        """
-        Starts the side-window-view of the interface.
-        :param user_interface: a `UserInterface` object to register the buttons in.
-        :param additional_buttons: more buttons
-        """
-        buttons = self._create_button_dict(user_interface)
-        buttons.update(additional_buttons or {})
-        self.buttons_id = user_interface.add_buttons(buttons)
-        copied_sprite = ImageGraphics.get_image_sprite(os.path.join(DIRECTORIES.IMAGES, IMAGES.VIEW.INTERFACE))
-        return copied_sprite, self.interface.generate_view_text(), self.buttons_id
-
-    def mark_as_selected(self) -> None:
-        """
-        Marks a rectangle around a `GraphicsObject` that is selected.
-        Only call this function if the object is selected.
-        :return: None
-        """
-        x, y = self.x - (self.width / 2), self.y - (self.height / 2)
-        draw_rectangle(
-            x - SELECTED_OBJECT.PADDING,
-            y - SELECTED_OBJECT.PADDING,
-            self.width + (2 * SELECTED_OBJECT.PADDING),
-            self.height + (2 * SELECTED_OBJECT.PADDING),
-            outline_color=SELECTED_OBJECT.COLOR,
-        )
-
     def dict_save(self) -> Dict:
         """
         Save the interface as a dict that can be later reconstructed to a new interface
@@ -177,15 +132,8 @@ class InterfaceGraphics(ViewableGraphicsObject, Selectable):
             "mtu": self.interface.mtu,
         }
 
-    def delete(self, user_interface: UserInterface) -> None:
-        """
-        Delete the interface!
-        """
-        super(InterfaceGraphics, self).delete(user_interface)
-        user_interface.remove_interface(self.interface)
-
     def __str__(self) -> str:
-        return "InterfaceGraphics"
+        return "CableNetworkInterfaceGraphics"
 
     def __repr__(self) -> str:
-        return f"<< InterfaceGraphics of interface {self.interface.name!r} in computer {self.computer_graphics.computer.name!r} >>"
+        return f"<< CableNetworkInterfaceGraphics of interface {self.interface.name!r} in computer {self.computer_graphics.computer.name!r} >>"

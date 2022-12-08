@@ -23,16 +23,19 @@ class ProcessGraphicsList(GraphicsObject):
         """
         super(ProcessGraphicsList, self).__init__(*server_graphics.location, do_render=False)
         self.server_graphics = server_graphics
-        self.child_graphics_objects: List[ProcessGraphics] = []
+        self.__child_graphics_objects: List[ProcessGraphics] = []
         self.process_count = 0
 
     @property
     def set_of_all_ports(self) -> Set[T_Port]:
-        return {process_graphics.port for process_graphics in self.child_graphics_objects}
+        return {process_graphics.port for process_graphics in self.__child_graphics_objects}
+
+    def get_children(self) -> Iterable[GraphicsObject]:
+        return self.__child_graphics_objects
 
     def add(self, port: T_Port) -> None:
         """Add a new process to the list"""
-        self.child_graphics_objects.append(ProcessGraphics(port, self.server_graphics, self.process_count))
+        self.__child_graphics_objects.append(ProcessGraphics(port, self.server_graphics, self.process_count))
         self.process_count += 1
         self.register_children()
 
@@ -43,10 +46,10 @@ class ProcessGraphicsList(GraphicsObject):
         :return:
         """
         found = False
-        for process_graphics in self.child_graphics_objects[:]:
+        for process_graphics in self.__child_graphics_objects[:]:
             if process_graphics.port == port:
                 process_graphics.unregister()
-                self.child_graphics_objects.remove(process_graphics)
+                self.__child_graphics_objects.remove(process_graphics)
                 found = True
             elif found:
                 process_graphics.process_index -= 1
@@ -70,7 +73,7 @@ class ProcessGraphicsList(GraphicsObject):
         Clears the list
         :return:
         """
-        for process_graphics in self.child_graphics_objects[:]:
+        for process_graphics in self.__child_graphics_objects[:]:
             self.remove(process_graphics.port)
         self.process_count = 0
 
@@ -80,21 +83,21 @@ class ProcessGraphicsList(GraphicsObject):
         :param item: a port number
         :return:
         """
-        for process_graphics in self.child_graphics_objects:
+        for process_graphics in self.__child_graphics_objects:
             if process_graphics.port == item:
                 return True
         return False
 
     def __iter__(self) -> Iterable[T_Port]:
         """enables running over the list"""
-        return iter([pg.port for pg in self.child_graphics_objects])
+        return iter([pg.port for pg in self.__child_graphics_objects])
 
     def draw(self) -> None:
         """Is not drawn..."""
         pass
 
     def __repr__(self) -> str:
-        return f"<< ProcessGraphicsList {[pg.port for pg in self.child_graphics_objects]} >>"
+        return f"<< ProcessGraphicsList {[pg.port for pg in self.__child_graphics_objects]} >>"
 
     def dict_save(self) -> None:
         pass

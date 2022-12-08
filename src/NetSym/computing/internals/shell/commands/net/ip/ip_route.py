@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Union
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
@@ -42,7 +42,7 @@ class IpRouteCommand(Command):
         """
         try:
             net = IPAddress(args[args.index('add') + 1])
-            gateway = IPAddress(args[args.index('via') + 1]) if 'via' in args else ADDRESSES.IP.ON_LINK
+            gateway: Union[IPAddress, str] = IPAddress(args[args.index('via') + 1]) if 'via' in args else ADDRESSES.IP.ON_LINK
             interface_name = args[args.index('dev') + 1]
         except IndexError:
             raise WrongIPRouteUsageError()

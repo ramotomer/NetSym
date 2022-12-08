@@ -10,7 +10,6 @@ from NetSym.consts import CONNECTIONS, PACKET, SELECTED_OBJECT, MESSAGES, DIRECT
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
-from NetSym.gui.abstracts.selectable import Selectable
 from NetSym.gui.main_loop_function_to_call import FunctionToCall
 from NetSym.gui.shape_drawing import draw_line
 from NetSym.gui.shape_drawing import draw_rectangle
@@ -19,9 +18,9 @@ from NetSym.usefuls.funcs import distance, get_the_one_with_raise
 from NetSym.usefuls.funcs import with_args
 
 if TYPE_CHECKING:
-    from NetSym.computing.connection import Connection
+    from NetSym.computing.connections.cable_connection import CableConnection
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
-    from NetSym.gui.tech.interface_graphics import InterfaceGraphics
+    from NetSym.gui.tech.network_interfaces.cable_network_interface_graphics import CableNetworkInterfaceGraphics
     from NetSym.gui.user_interface.user_interface import UserInterface
     from NetSym.gui.main_loop import MainLoop
 
@@ -36,54 +35,54 @@ class Computers(NamedTuple):
 
 class Interfaces(NamedTuple):
     """
-    A data structure to save the two InterfaceGraphics of the two sides of the connection.
+    A data structure to save the two CableNetworkInterfaceGraphics of the two sides of the connection.
     """
-    start: Optional[InterfaceGraphics]
-    end:   Optional[InterfaceGraphics]
+    start: Optional[CableNetworkInterfaceGraphics]
+    end:   Optional[CableNetworkInterfaceGraphics]
 
 
-class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Selectable):
+class CableConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered):
     """
     This is a GraphicsObject subclass which displays a connection.
     It shows the graphics of the connection (a line) between the two endpoints it is connected to.
     """
     def __init__(self,
-                 connection: Connection,
+                 connection: CableConnection,
                  computer_graphics_start: Optional[ComputerGraphics],
                  computer_graphics_end: Optional[ComputerGraphics],
                  packet_loss: float = 0,
                  width: float = CONNECTIONS.DEFAULT_WIDTH,
                  ) -> None:
         """
-        Initiates the Connection Graphics object which is basically a line between
+        Initiates the CableConnection Graphics object which is basically a line between
         two dots (the two ends of the connection).
         It is given two `ComputerGraphics` objects which are the graphics of the computers that are connected on each
         side of this connection. They are used for their coordinates.
-        :param connection: the `Connection` object which is the connection that is being drawn
+        :param connection: the `CableConnection` object which is the connection that is being drawn
         :param computer_graphics_start: The computer graphics at the beginning of the connection.
         :param computer_graphics_end: The computer graphics at the end of the connection.
         :param packet_loss: the PL percent of the connection (defaults to 0)
         """
-        super(ConnectionGraphics, self).__init__(0, 0, is_in_background=True, is_pressable=True)
+        super(CableConnectionGraphics, self).__init__(0, 0, is_in_background=True, is_pressable=True)
         self.computers = Computers(computer_graphics_start, computer_graphics_end)
         self.regular_color = CONNECTIONS.COLOR if not packet_loss else CONNECTIONS.PL_COLOR
         self.color = self.regular_color
         self.width = width
         self.marked_as_blocked = False
 
-        self.connection = connection  # the `Connection` object.
+        self.connection = connection  # the `CableConnection` object.
 
         self.interfaces = Interfaces(None, None)
 
         if all(computer is not None for computer in self.computers):
             self.interfaces = Interfaces(
                 get_the_one_with_raise(
-                    self.start_computer.computer.interfaces,
+                    self.start_computer.computer.cable_interfaces,
                     lambda i: i.is_connected() and i.connection is connection,
                     NoSuchInterfaceError,
                 ).graphics,
                 get_the_one_with_raise(
-                    self.end_computer.computer.interfaces,
+                    self.end_computer.computer.cable_interfaces,
                     lambda i: i.is_connected() and i.connection is connection,
                     NoSuchInterfaceError,
                 ).graphics,
@@ -96,7 +95,7 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
     @property
     def length(self) -> float:  # the length of the connection.
         if (self.interfaces.start is None) or (self.interfaces.end is None):
-            raise GraphicsObjectNotYetInitialized(f"Connection Graphics interfaces.start or interfaces.end is None!: {self!r}, {self.interfaces}")
+            raise GraphicsObjectNotYetInitialized(f"CableConnection Graphics interfaces.start or interfaces.end is None!: {self!r}, {self.interfaces}")
 
         return distance(self.interfaces.start.location, self.interfaces.end.location)
 
@@ -115,6 +114,9 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
                                                f"The connection is probably disconnected on that end!")
 
         return self.computers.end
+
+    def get_computers(self) -> Tuple[ComputerGraphics, ComputerGraphics]:
+        return self.start_computer, self.end_computer
 
     def set_hovered_color(self):
         self.color = CONNECTIONS.SELECTED_COLOR
@@ -259,7 +261,7 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
         Generates the text that is under the buttons in the side-window when the connection is viewed.
         :return: None
         """
-        return f"\nConnection:\n\nfrom: {self.start_computer.computer.name}\nto: " \
+        return f"\nCableConnection:\n\nfrom: {self.start_computer.computer.name}\nto: " \
             f"{self.end_computer.computer.name}\nlength: {str(self.connection.length)[:6]} pixels\nspeed: " \
             f"{self.connection.speed} pixels/second\ndeliver time: {str(self.connection.deliver_time)[:4]} seconds" \
             f"\nPL percent: {self.connection.packet_loss}"
@@ -297,11 +299,11 @@ class ConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Sele
         :param user_interface:
         :return:
         """
-        super(ConnectionGraphics, self).delete(user_interface)
+        super(CableConnectionGraphics, self).delete(user_interface)
         user_interface.remove_connection(self.connection)
 
     def __str__(self) -> str:
-        return "ConnectionGraphics"
+        return "CableConnectionGraphics"
 
     def __repr__(self) -> str:
-        return f"<< ConnectionGraphics between ({self.start_computer.computer.name!r}, {self.end_computer.computer.name!r}) >>"
+        return f"<< CableConnectionGraphics between ({self.start_computer.computer.name!r}, {self.end_computer.computer.name!r}) >>"

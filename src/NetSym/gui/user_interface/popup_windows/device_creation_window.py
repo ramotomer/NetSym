@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 
 from NetSym.computing.computer import Computer
 from NetSym.computing.router import Router
@@ -11,6 +11,7 @@ from NetSym.gui.user_interface.popup_windows.popup_window_containing_text import
 from NetSym.usefuls.funcs import with_args, called_in_order
 
 if TYPE_CHECKING:
+    from NetSym.gui.user_interface.button import Button
     from NetSym.gui.user_interface.user_interface import UserInterface
 
 
@@ -34,15 +35,15 @@ class DeviceCreationWindow(PopupWindowContainingText):
                     WINDOWS.POPUP.DEVICE_CREATION.BUTTON_SIZE + WINDOWS.POPUP.DEVICE_CREATION.BUTTON_GAP) - WINDOWS.POPUP.DEVICE_CREATION.BUTTON_GAP
         height = WINDOWS.POPUP.TEXTBOX.HEIGHT
         x, y = WINDOWS.MAIN.WIDTH / 2 - width / 2, WINDOWS.MAIN.HEIGHT / 2 - height / 2
-        buttons = [
+        buttons: Sequence[Button] = [
             ImageButton(
                 x + i * (WINDOWS.POPUP.DEVICE_CREATION.BUTTON_SIZE + WINDOWS.POPUP.DEVICE_CREATION.BUTTON_GAP),
                 y,
+                self.DEVICE_TO_IMAGE[device][0],
                 called_in_order(
                     with_args(user_interface.create_device, device),
                     self.delete,
                 ),
-                self.DEVICE_TO_IMAGE[device][0],
                 f"{device.__name__} {self.DEVICE_TO_IMAGE[device][1]}",
                 width=WINDOWS.POPUP.DEVICE_CREATION.BUTTON_SIZE, height=WINDOWS.POPUP.DEVICE_CREATION.BUTTON_SIZE,
                 key=user_interface.key_from_string(self.DEVICE_TO_IMAGE[device][1]),

@@ -9,16 +9,17 @@ from functools import reduce
 from itertools import chain
 from math import sqrt
 from operator import concat, attrgetter
-from typing import TYPE_CHECKING, Optional, NamedTuple, List, Type, Callable, Dict, TypeVar, Tuple, Union, Any, Iterable
+from typing import TYPE_CHECKING, Optional, NamedTuple, List, Type, Callable, Dict, TypeVar, Tuple, Union, Any, Iterable, cast
 
 import pyglet
 from pyglet.window import key
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.computing.computer import Computer
-from NetSym.computing.internals.frequency import Frequency
-from NetSym.computing.internals.network_interfaces.interface import Interface
-from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
+from NetSym.computing.connections.wireless_connection import WirelessConnection
+from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
+from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
+from NetSym.computing.internals.network_interfaces.wireless_network_interface import WirelessNetworkInterface
 from NetSym.computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
 from NetSym.computing.internals.processes.usermode_processes.stp_process import STPProcess
 from NetSym.computing.router import Router
@@ -33,10 +34,10 @@ from NetSym.gui.abstracts.uniquely_dragged import UniquelyDragged
 from NetSym.gui.shape_drawing import draw_circle, draw_line, draw_tiny_corner_windows_icon
 from NetSym.gui.shape_drawing import draw_pause_rectangles, draw_rectangle
 from NetSym.gui.tech.computer_graphics import ComputerGraphics
-from NetSym.gui.tech.interface_graphics import InterfaceGraphics
-from NetSym.gui.tech.packet_graphics import PacketGraphics
-from NetSym.gui.tech.wireless_interface_graphics import WirelessInterfaceGraphics
-from NetSym.gui.tech.wireless_packet_graphics import WirelessPacketGraphics
+from NetSym.gui.tech.network_interfaces.cable_network_interface_graphics import CableNetworkInterfaceGraphics
+from NetSym.gui.tech.network_interfaces.network_interface_graphics import NetworkInterfaceGraphics
+from NetSym.gui.tech.packets.cable_packet_graphics import CablePacketGraphics
+from NetSym.gui.tech.packets.packet_graphics import PacketGraphics
 from NetSym.gui.user_interface.button import Button
 from NetSym.gui.user_interface.popup_windows.device_creation_window import DeviceCreationWindow
 from NetSym.gui.user_interface.popup_windows.popup_console import PopupConsole
@@ -49,15 +50,16 @@ from NetSym.gui.user_interface.resizing_dots_handler import ResizingDotsHandler
 from NetSym.gui.user_interface.selecting_square import SelectingSquare
 from NetSym.gui.user_interface.text_graphics import Text
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
-from NetSym.usefuls.funcs import get_the_one, distance, with_args, called_in_order, circular_coordinates, scale_tuple, get_the_one_with_raise
+from NetSym.usefuls.funcs import get_the_one, distance, with_args, called_in_order, circular_coordinates, scale_tuple, get_the_one_with_raise, \
+    raise_on_none
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
     from NetSym.packets.packet import Packet
-    from NetSym.computing.connection import Connection, SentPacket
+    from NetSym.computing.connections.cable_connection import CableConnection
     from NetSym.gui.main_loop import MainLoop
     from NetSym.gui.main_window import MainWindow
-
+    from NetSym.computing.connections.connection import Connection, SentPacket
 
 T = TypeVar("T")
 
@@ -78,7 +80,7 @@ class ConnectionData(NamedTuple):
     """
     A way to save the connection on the screen together with the computers they are connected to.
     """
-    connection: Connection
+    connection: CableConnection
     computer1:  Computer
     computer2:  Computer
 
@@ -116,7 +118,7 @@ class UserInterface:
         self.main_loop = main_loop
         self.main_window = main_window
 
-        self.key_to_action = {
+        self.key_to_action: Dict[Tuple[int, int], Callable[[], Any]] = {
             (key.N, KEYBOARD.MODIFIERS.CTRL): self.create_computer_with_ip,
             (key.N, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT): with_args(self.create_computer_with_ip, True),
             (key.C, KEYBOARD.MODIFIERS.CTRL): self.smart_connect,
@@ -165,7 +167,7 @@ class UserInterface:
             )
 
         for device, (_, key_string) in DeviceCreationWindow.DEVICE_TO_IMAGE.items():
-            self.key_to_action[self.key_from_string(key_string)] = with_args(self.create_device, device)
+            self.key_to_action[raise_on_none(self.key_from_string(key_string))] = with_args(self.create_device, device)
 
         self.action_at_press_by_mode = {
             MODES.NORMAL:           self.normal_mode_at_press,
@@ -180,7 +182,7 @@ class UserInterface:
 
         self.computers:       List[Computer] = []
         self.connection_data: List[ConnectionData] = []
-        self.frequencies:     List[Frequency] = []
+        self.wireless_connections:     List[WirelessConnection] = []
 
         self.mode = MODES.NORMAL
         self.source_of_line_drag: Optional[GraphicsObject] = None
@@ -192,7 +194,7 @@ class UserInterface:
         self.popup_windows: List[PopupWindow] = []
         self.__active_window: Optional[PopupWindow] = None
 
-        self.button_arguments = [
+        self.button_arguments: List[Tuple[Tuple[Callable[[], Any], str], Dict[str, Tuple[int, int]]]] = [
             ((self.open_device_creation_window, "create device (e)"), {"key": (key.E, KEYBOARD.MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.CONNECTING), "connect (c / ^c / Shift+c)"), {"key": (key.C, KEYBOARD.MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.PINGING), "ping (p / ^p / Shift+p)"), {"key": (key.P, KEYBOARD.MODIFIERS.NONE)}),
@@ -359,8 +361,8 @@ class UserInterface:
         stops viewing it.
         :return:
         """
-        if isinstance(self.selected_object, PacketGraphics) and \
-                self.packet_from_graphics_object(self.selected_object) is None:
+        selected_object = self.selected_object
+        if isinstance(selected_object, PacketGraphics) and self.packet_from_graphics_object(selected_object) is None:
             self.set_mode(MODES.NORMAL)
 
     def _draw_side_window(self) -> None:
@@ -385,7 +387,7 @@ class UserInterface:
 
         mouse_x, mouse_y = self.main_window.get_mouse_location()
 
-        dragging_objects = ([self.dragged_object] if self.dragged_object is not None else []) + self.marked_objects
+        dragging_objects = ([self.dragged_object] if self.dragged_object is not None else []) + cast("List[GraphicsObject]", self.marked_objects)
         for object_ in dragging_objects:
             if isinstance(object_, Button):
                 continue
@@ -429,18 +431,18 @@ class UserInterface:
                           scale_y=VIEW.IMAGE_SIZE / sprite.image.height)
             self.main_loop.insert_to_loop(sprite.draw)
 
-            if isinstance(graphics_object, (PacketGraphics, WirelessPacketGraphics)):
-                text = self.packet_from_graphics_object(graphics_object).multiline_repr()
+            if isinstance(graphics_object, PacketGraphics):
+                text = raise_on_none(self.packet_from_graphics_object(graphics_object)).multiline_repr()
 
         x, y = self.viewing_text_location
-        text = Text(
+        text_graphics = Text(
             text, x, y,
             max_width=(WINDOWS.SIDE.WIDTH - WINDOWS.SIDE.VIEWING_OBJECT.TEXT.PADDING[0]),
             align=TEXT.ALIGN.LEFT,
             padding=WINDOWS.SIDE.VIEWING_OBJECT.TEXT.PADDING
         )
-        self.main_loop.register_graphics_object(text)
-        self.object_view = ObjectView(sprite, text, graphics_object)
+        self.main_loop.register_graphics_object(text_graphics)
+        self.object_view = ObjectView(sprite, text_graphics, graphics_object)
 
         self.adjust_viewed_text_to_buttons(buttons_id + 1)
 
@@ -450,8 +452,8 @@ class UserInterface:
         The location of the viewed text is changed according to it.
         :return:
         """
-        if self.object_view is None:
-            raise WrongUsageError("Only call this in VIEW MODE")
+        if (self.object_view is None) or (self.scrolled_view is None):
+            raise WrongUsageError("Only call this in VIEW MODE!!!")
 
         try:
             self.object_view.text.y = self.viewing_text_location[1] - \
@@ -472,9 +474,9 @@ class UserInterface:
                 self.main_loop.remove_from_loop(self.object_view.sprite.draw)
 
             if isinstance(self.object_view.viewed_object, ComputerGraphics):
-                self.object_view.viewed_object.child_graphics_objects.console.hide()
+                self.object_view.viewed_object.get_console().hide()
 
-            self.object_view: Optional[ObjectView] = None
+            self.object_view = None
             self.scrolled_view = None
 
     def scroll_view(self, scroll_count: int) -> None:
@@ -483,22 +485,24 @@ class UserInterface:
         This is called when the mouse wheel is scrolled.
         :return: None
         """
-        if self.object_view is None:
+        if (self.object_view is None) or (self.scrolled_view is None):
             raise SomethingWentTerriblyWrongError(
                 "Not supposed to get here!!! In MODES.VIEW the `self.object_view` is never None"
             )
 
         sprite, text_graphics, viewed_object = self.object_view
-        if scroll_count < 0 or self.scrolled_view <= -scroll_count * VIEW.PIXELS_PER_SCROLL:
-            self.scrolled_view += scroll_count * VIEW.PIXELS_PER_SCROLL
+        if (scroll_count >= 0) and (self.scrolled_view > (-scroll_count * VIEW.PIXELS_PER_SCROLL)):
+            return
 
-            sprite.y = self.viewing_image_location[1] - self.scrolled_view
-            self.adjust_viewed_text_to_buttons(self.showing_buttons_id)
+        self.scrolled_view += scroll_count * VIEW.PIXELS_PER_SCROLL
 
-            for buttons_id in self.buttons:
-                for button in self.buttons[buttons_id]:
-                    if not button.is_hidden:
-                        button.y = button.initial_location[1] - self.scrolled_view
+        sprite.y = self.viewing_image_location[1] - self.scrolled_view
+        self.adjust_viewed_text_to_buttons(self.showing_buttons_id)
+
+        for buttons_id in self.buttons:
+            for button in self.buttons[buttons_id]:
+                if not button.is_hidden:
+                    button.y = button.initial_location[1] - self.scrolled_view
 
     def initiate_buttons(self) -> None:
         """
@@ -506,9 +510,9 @@ class UserInterface:
         """
         self.buttons[BUTTONS.MAIN_MENU.ID] = [
             Button(
-                *self.main_window.button_location_by_index(i - 1),
-                *args,
-                **kwargs,
+                *self.main_window.button_location_by_index(i - 1),  # type: ignore
+                *args,                                              # type: ignore
+                **kwargs,                                           # type: ignore
             ) for i, (args, kwargs) in enumerate(self.button_arguments)
         ]
 
@@ -520,22 +524,22 @@ class UserInterface:
 
     def tab_through_windows(self, reverse: bool = False) -> None:
         """
-
-        :param reverse:
-        :return:
+        The action of alt+tab - change the currently active window.
+        :param reverse: What direction to go over the windows (first to last or last to first)
         """
-        available_windows = sorted(list(filter(lambda o: isinstance(o, PopupWindow), self.main_loop.graphics_objects)),
-                                   key=lambda w: w.creation_time)
+        available_windows = sorted([go for go in self.main_loop.graphics_objects if isinstance(go, PopupWindow)], key=attrgetter("creation_time"))
+
         if not available_windows:
             return
+
         if reverse:
             available_windows = list(reversed(available_windows))
 
-        try:
-            index = available_windows.index(self.active_window)
-            self.active_window = available_windows[index - 1]
-        except ValueError:
+        if (self.active_window is None) or (self.active_window not in available_windows):
             self.active_window = available_windows[-1]
+            return
+
+        self.active_window = available_windows[available_windows.index(self.active_window) - 1]
 
     def tab_through_selected(self, reverse: bool = False) -> None:
         """
@@ -544,18 +548,17 @@ class UserInterface:
         Allows working without the mouse when there are not a lot of objects on the screen
         :return:
         """
-        available_graphics_objects = [object_ for object_ in self.main_loop.graphics_objects
-                                      if object_.is_pressable and isinstance(object_, ViewableGraphicsObject)]
+        available_graphics_objects = [go for go in self.main_loop.graphics_objects if go.is_pressable and isinstance(go, Selectable)]
         if not available_graphics_objects:
             return
+
         if reverse:
             available_graphics_objects = list(reversed(available_graphics_objects))
 
-        try:
-            index = available_graphics_objects.index(self.selected_object)
-            self.selected_object = available_graphics_objects[index - 1]
-        except ValueError:
+        if (self.selected_object is None) or (self.selected_object not in available_graphics_objects):
             self.selected_object = available_graphics_objects[-1]
+        else:
+            self.selected_object = available_graphics_objects[available_graphics_objects.index(self.selected_object) - 1]
 
         self.set_mode(MODES.VIEW)
 
@@ -566,6 +569,7 @@ class UserInterface:
         (especially VIEW_MODE)
         :return: None
         """
+        selected_object = self.selected_object
         if self.mode == MODES.CONNECTING and new_mode != MODES.CONNECTING:
             self.source_of_line_drag = None
 
@@ -573,8 +577,8 @@ class UserInterface:
             self.end_object_view()
             self.mode = new_mode
             self.hide_buttons(BUTTONS.MAIN_MENU.ID)
-            if isinstance(self.selected_object, ViewableGraphicsObject):
-                self.start_object_view(self.selected_object)
+            if isinstance(selected_object, ViewableGraphicsObject):
+                self.start_object_view(selected_object)
             else:
                 raise WrongUsageError(
                     "The new_mode should not be switched to view new_mode when the selected object cannot be viewed"
@@ -612,7 +616,7 @@ class UserInterface:
         Get the button the mouse is on.
         If the mouse is not hovering over any buttons - return None
         """
-        for button in reversed(reduce(concat, list(self.buttons.values()))):
+        for button in reversed(reduce(concat, list(self.buttons.values()))):  # type: ignore
             if not button.is_hidden and button.is_in(*self.main_window.get_mouse_location()):
                 return button
         return None
@@ -647,16 +651,16 @@ class UserInterface:
         if self.active_window is None:
             self._create_selecting_square()
 
-    def on_mouse_scroll(self, x: float, y: float, scroll_x: Union[int, float], scroll_y: Union[int, float]) -> None:
+    def on_mouse_scroll(self, x: float, y: float, scroll_x: int, scroll_y: int) -> None:
         """
         Defines what happens when the mouse is scrolled
         """
         if self.is_mouse_in_side_window() and self.mode == MODES.VIEW:
             self.scroll_view(scroll_y)
         else:
-            for obj in self.all_marked_objects:
-                if obj is not None and hasattr(obj, "resize"):
-                    obj.resize(10 * scroll_y, 10 * scroll_y, constrain_proportions=True)
+            for marked_object in self.all_marked_objects:
+                if isinstance(marked_object, Resizable):
+                    marked_object.resize(10 * scroll_y, 10 * scroll_y, constrain_proportions=True)
 
     def on_resize(self, *args: Any, **kwargs: Any) -> None:
         """
@@ -751,7 +755,7 @@ class UserInterface:
     def is_mouse_in_side_window(self) -> bool:
         """Return whether or not the mouse is currently in the side window."""
         mouse_x, _ = self.main_window.get_mouse_location()
-        return mouse_x > (self.main_window.width - self.WIDTH)
+        return bool(mouse_x > (self.main_window.width - self.WIDTH))
 
     def create_device(self, object_type: Type[Computer]) -> None:
         """
@@ -777,10 +781,9 @@ class UserInterface:
         :param action: a function that will be activated on the two computers once they are both selected.
             should receive two computers ane return nothing.
         :param more_pressable_types: a list of other types that can be pressed using this method.
-        :return: None
         """
-        pressable_types = [ComputerGraphics] + ([] if more_pressable_types is None else more_pressable_types)
-        if self.selected_object is not None and type(self.selected_object) in pressable_types:
+        more_pressable_types_list: List[Type[GraphicsObject]] = [] if more_pressable_types is None else more_pressable_types
+        if self.selected_object is not None and type(self.selected_object) in chain([ComputerGraphics], more_pressable_types_list):
             if self.source_of_line_drag is None:
                 self.source_of_line_drag = self.selected_object
             else:  # there is another computer to connect with that was already pressed.
@@ -808,14 +811,14 @@ class UserInterface:
         (so the object that the mouse is on right now) or `None` if the mouse is not resting upon any object.
         :return: a `GraphicsObject` or None.
         """
-        exclude_types = exclude_types if exclude_types is not None else [Button]
+        exclude_types_list: Iterable[Type] = exclude_types if exclude_types is not None else [Button]
         mouse_x, mouse_y = self.main_window.get_mouse_location()
         return get_the_one(
             reversed(self.main_loop.graphics_objects),
-            lambda go: go.is_in(mouse_x, mouse_y) and not isinstance(go, tuple(exclude_types))
+            lambda go: go.is_in(mouse_x, mouse_y) and not isinstance(go, tuple(exclude_types_list))
         )
 
-    def end_device_visual_connecting(self, action: Callable[[GraphicsObject, GraphicsObject], None]) -> None:
+    def end_device_visual_connecting(self, action: Callable[..., None]) -> None:
         """
         This is called when the the line was dragged between the two devices and now the action can be performed.
         :param action: a function that is called with the two devices.
@@ -833,8 +836,8 @@ class UserInterface:
         self.set_mode(MODES.NORMAL)
 
     def _connect_interfaces(self,
-                            computer1: Computer, interface1: Interface,
-                            computer2: Computer, interface2: Interface) -> Connection:
+                            computer1: Computer, interface1: CableNetworkInterface,
+                            computer2: Computer, interface2: CableNetworkInterface) -> CableConnection:
         """
         Take in the graphics-objects of two computers, and their interfaces.
         Create and register a connection between the two.
@@ -842,10 +845,10 @@ class UserInterface:
         """
         connection = interface1.connect(interface2)
         self.connection_data.append(ConnectionData(connection, computer1, computer2))
-        self.main_loop.register_graphics_object(connection.init_graphics(computer1.graphics, computer2.graphics), is_in_background=True)
+        self.main_loop.register_graphics_object(connection.init_graphics(computer1.get_graphics(), computer2.get_graphics()), is_in_background=True)
         return connection
 
-    def _get_computer_and_interface(self, interface_or_computer: Union[Interface, Computer]) -> Tuple[Computer, Interface]:
+    def _get_computer_and_interface(self, interface_or_computer: Union[CableNetworkInterface, Computer]) -> Tuple[Computer, CableNetworkInterface]:
         """
         Take in interface or computer:
             If interface:
@@ -855,7 +858,7 @@ class UserInterface:
                 Get a disconnected interface (create one if necessary)
         return (computer, interface)
         """
-        if isinstance(interface_or_computer, Interface):
+        if isinstance(interface_or_computer, CableNetworkInterface):
             interface = interface_or_computer
             return get_the_one_with_raise(self.computers, lambda c: interface in c.interfaces, NoSuchInterfaceError), interface
 
@@ -863,29 +866,28 @@ class UserInterface:
             computer = interface_or_computer
             return computer, computer.available_interface()
 
-        raise ThisCodeShouldNotBeReached(f"Only supply this function with an `Interface` or `Computer` not {type(interface_or_computer)}!!!")
+        raise ThisCodeShouldNotBeReached(f"Only supply this function with an `NetworkInterface` or `Computer` not {type(interface_or_computer)}!!!")
 
-    def connect_computers(self, computer1: Computer, computer2: Computer) -> Connection:
+    def connect_computers(self, computer1: Computer, computer2: Computer) -> CableConnection:
         """
         Create and register a connection between two `Computer`s
         """
         return self._connect_interfaces(
-            *self._get_computer_and_interface(computer1),
-            *self._get_computer_and_interface(computer2),
+            computer1, self._get_computer_and_interface(computer1)[1],
+            computer2, self._get_computer_and_interface(computer2)[1],
         )
 
     def connect_devices_by_graphics(self,
-                                    device1: Union[ComputerGraphics, InterfaceGraphics],
-                                    device2: Union[ComputerGraphics, InterfaceGraphics]) -> None:
+                                    device1: Union[ComputerGraphics, CableNetworkInterfaceGraphics],
+                                    device2: Union[ComputerGraphics, CableNetworkInterfaceGraphics]) -> None:
         """
         Connect two devices to each other, show the connection and everything....
         The devices can be computers or interfaces. Works either way
         :param device1:
-        :param device2: the two `Computer` object or `Interface` objects. Could also be their graphics objects.
+        :param device2: the two `Computer` object or `CableNetworkInterface` objects. Could also be their graphics objects.
         :return: None
         """
-        if any(not isinstance(device, (ComputerGraphics, InterfaceGraphics)) for device in [device1, device2]) or \
-                (isinstance(device1, WirelessInterfaceGraphics) or isinstance(device2, WirelessInterfaceGraphics)):
+        if any(not isinstance(device, (ComputerGraphics, CableNetworkInterfaceGraphics)) for device in [device1, device2]):
             self.register_window(PopupError("Unconnectable type!!!"))
             return
 
@@ -960,7 +962,7 @@ class UserInterface:
 
         self.computers.clear()
         self.connection_data.clear()
-        self.frequencies.clear()
+        self.wireless_connections.clear()
         self.popup_windows.clear()
         self.set_mode(MODES.NORMAL)
 
@@ -982,7 +984,7 @@ class UserInterface:
         """
         self.computers.remove(computer)
 
-    def remove_connection(self, connection: Connection) -> None:
+    def remove_connection(self, connection: CableConnection) -> None:
         """
         Take in a connection and disconnect it from the computers in both sides
         """
@@ -994,14 +996,13 @@ class UserInterface:
                 self.connection_data.remove(connection_data)
                 break
 
-    def remove_interface(self, interface: Interface) -> None:
+    def remove_interface(self, interface: NetworkInterface) -> None:
         """
         Remove an interface and disconnect everything it is connected to
         """
         computer = get_the_one_with_raise(self.computers, (lambda c: interface in c.interfaces), NoSuchInterfaceError)
-        if interface.is_connected():
-            connection = interface.connection
-            self.delete(connection.graphics)
+        if interface.is_connected() and isinstance(interface, CableNetworkInterface):  # this code can be improved...
+            self.delete(interface.connection.get_graphics())
         computer.remove_interface(interface.name)
 
     def delete(self, graphics_object: GraphicsObject) -> None:
@@ -1019,20 +1020,21 @@ class UserInterface:
         Delete all of the connections to a computer!
         Also delete all of the packets inside of them.
         :param computer: a `Computer` object.
-        :return: None
         """
         for connection_data in self.connection_data[:]:
-            connection, computer1, computer2 = connection_data
-            if computer is computer1 or computer is computer2:
-                computer.disconnect(connection)
-                (computer1 if computer is computer2 else computer2).disconnect(connection)  # disconnect other computer
+            connection, computer1, computer2 = connection_data.connection, connection_data.computer1, connection_data.computer2
+            if (computer is not computer1) and (computer is not computer2):
+                continue
 
-                self.main_loop.unregister_graphics_object(connection.graphics)
-                connection.stop_packets()
-                self.connection_data.remove(connection_data)
+            computer.disconnect(connection)
+            (computer1 if computer is computer2 else computer2).disconnect(connection)  # disconnect other computer
+
+            self.main_loop.unregister_graphics_object(connection.get_graphics())
+            connection.stop_packets()
+            self.connection_data.remove(connection_data)
 
         for interface in computer.interfaces:
-            if isinstance(interface, WirelessInterface):
+            if isinstance(interface, WirelessNetworkInterface):
                 interface.disconnect()
 
     def add_delete_interface(self,
@@ -1050,20 +1052,16 @@ class UserInterface:
 
         except DeviceNameAlreadyExists:
             interface = get_the_one_with_raise(computer.interfaces, lambda i: i.name == interface_name, NoSuchInterfaceError)
-            if interface.is_connected():
+            if isinstance(interface, CableNetworkInterface) and interface.is_connected():
                 self.delete(interface.connection.get_graphics())
             computer.remove_interface(interface_name)
 
-    def hide_buttons(self, buttons_id: Optional[int] = None) -> None:
+    def hide_buttons(self, buttons_id: int) -> None:
         """
         make all of the buttons with a certain button_id hidden, if no group is given, hide all
         :param buttons_id: the buttons id of the buttons you want to hide.
         :return: None
         """
-        if buttons_id is None:
-            for other_buttons_id in self.buttons:
-                self.hide_buttons(other_buttons_id)
-
         for button in self.buttons[buttons_id]:
             button.hide()
 
@@ -1084,7 +1082,7 @@ class UserInterface:
         :return:
         """
         all_connections: Iterable[Connection] = chain(
-            self.frequencies,
+            self.wireless_connections,
             [connection_data[0] for connection_data in self.connection_data],
             [computer.loopback.connection for computer in self.computers],
         )
@@ -1130,7 +1128,7 @@ class UserInterface:
         Does that using popup window in the `PopupTextBox` class.
         :return: None
         """
-        if not isinstance(self.selected_object, (InterfaceGraphics, ComputerGraphics)):
+        if not isinstance(self.selected_object, (NetworkInterfaceGraphics, ComputerGraphics)):
             return
 
         computer, interface = self._get_computer_and_interface(self.selected_object.logic_object)
@@ -1549,7 +1547,7 @@ class UserInterface:
         ]
         interfaces = [
             get_the_one_with_raise(
-                computer.interfaces,
+                computer.cable_interfaces,
                 lambda i: i.name == name,
                 NoSuchInterfaceError,
             ) for computer, name in zip(computers, (start_interface_name, end_interface_name))
@@ -1714,7 +1712,7 @@ class UserInterface:
         :return: None
         """
         self._update_selecting_square()
-        self._mark_object_inside_selecting_square(object_types=(ComputerGraphics, PacketGraphics))
+        self._mark_object_inside_selecting_square(object_types=(ComputerGraphics, CablePacketGraphics))
 
         if self.selected_object is not None:
             self.selected_object.mark_as_selected()
@@ -1866,28 +1864,28 @@ class UserInterface:
                 if any(ip.is_same_subnet(subnet) for ip in computer_graphics.computer.ips):
                     computer_graphics.add_hue(color)
 
-    def get_frequency(self, frequency: float) -> Frequency:
+    def get_wireless_connection(self, frequency: float) -> WirelessConnection:
         """
-        Receives a float indicating a frequency and returning a Frequency object to connect the wireless devices
+        Receives a float indicating a frequency and returning a WirelessConnection object to connect the wireless devices
         that are listening to that frequency.
         :param frequency: `float`
         :return:
         """
-        for freq in self.frequencies:
+        for freq in self.wireless_connections:
             if freq.frequency == frequency:
                 return freq
 
-        new_frequency = Frequency(frequency, longest_line_in_screen=sqrt((self.main_window.width ** 2) + (self.main_window.height ** 2)))
-        self.frequencies.append(new_frequency)
+        new_frequency = WirelessConnection(frequency, longest_line_on_the_screen=sqrt((self.main_window.width ** 2) + (self.main_window.height ** 2)))
+        self.wireless_connections.append(new_frequency)
         self.main_loop.insert_to_loop_pausable(new_frequency.move_packets, supply_function_with_main_loop_object=True)
         return new_frequency
 
-    def set_interface_frequency(self, interface: WirelessInterface, frequency: float) -> None:
+    def set_interface_frequency(self, interface: WirelessNetworkInterface, frequency: float) -> None:
         """
-        Take in a WirelessInterface and set its frequency object
+        Take in a WirelessNetworkInterface and set its `WirelessConnection` object
         If the object does not exist - create it :)
         """
-        interface.connect(self.get_frequency(frequency))
+        interface.connect(self.get_wireless_connection(frequency))
 
     def _handle_resizing_dots(self) -> None:
         """

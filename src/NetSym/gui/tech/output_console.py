@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Tuple, NamedTuple
+from typing import Tuple, NamedTuple, Iterable
 
 from NetSym.consts import CONSOLE, TEXT
+from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from NetSym.gui.shape_drawing import draw_rectangle
 from NetSym.gui.user_interface.text_graphics import Text
@@ -37,7 +38,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
 
         self._text = initial_text
         self.width, self.height = width, height
-        self.child_graphics_objects = ChildGraphicsObjects(
+        self.__child_graphics_objects = ChildGraphicsObjects(
             Text(
                 self._text, x, y, self,
                 padding=self.get_text_padding(),
@@ -49,6 +50,12 @@ class OutputConsole(UserInterfaceGraphicsObject):
                 font=font,
             )
         )
+
+    def get_children(self) -> Iterable[GraphicsObject]:
+        return self.__child_graphics_objects
+
+    def get_text(self) -> Text:
+        return self.__child_graphics_objects.text
 
     def get_text_padding(self) -> Tuple[float, float]:
         """
@@ -70,7 +77,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
         :return: None
         """
         self.is_hidden = False
-        self.child_graphics_objects.text.show()
+        self.__child_graphics_objects.text.show()
 
     def hide(self) -> None:
         """
@@ -78,7 +85,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
         :return: None
         """
         self.is_hidden = True
-        self.child_graphics_objects.text.hide()
+        self.__child_graphics_objects.text.hide()
 
     def toggle_showing(self) -> None:
         """
@@ -106,7 +113,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
 
     @property
     def line_height(self) -> float:
-        return (7 * self.child_graphics_objects.text.label.font_size) / 4
+        return (7 * self.__child_graphics_objects.text.label.font_size) / 4
 
     def is_full(self) -> bool:
         """
@@ -129,7 +136,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
             self._text = '\n'.join(self._text.split('\n')[self.approximate_line_count(text):])
             # remove the up most lines if we are out of space.
         self._text += text + '\n'
-        self.child_graphics_objects.text.set_text(self._text)
+        self.__child_graphics_objects.text.set_text(self._text)
 
     def __str__(self) -> str:
         return "OutputConsole"

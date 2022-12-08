@@ -3,14 +3,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List
 
 from NetSym.address.mac_address import MACAddress
+from NetSym.computing.connections.loopback_connection import LoopbackConnection
 from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
-from NetSym.computing.loopback_connection import LoopbackConnection
 from NetSym.exceptions import AddressError, NoSuchInterfaceError
 
 if TYPE_CHECKING:
     import argparse
-    from NetSym.computing.internals.network_interfaces.interface import Interface
     from NetSym.computing.internals.shell.shell import Shell
+    from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
     from NetSym.computing.computer import Computer
 
 
@@ -35,7 +35,7 @@ class IpAddressCommand(Command):
         }
 
     @staticmethod
-    def _get_interface_data(interface: Interface, index: int = 0) -> str:
+    def _get_interface_data(interface: NetworkInterface, index: int = 0) -> str:
         """
         Receives interface, returns string data
         :param interface:
@@ -66,8 +66,8 @@ class IpAddressCommand(Command):
         if 'dev' not in args:
             stdout = [self._get_interface_data(interface, i) for i, interface in enumerate(self.computer.all_interfaces)]
             return CommandOutput('\n'.join(stdout), '')
-        else:
-            return CommandOutput(self._get_interface_data(args[args.index('dev') + 1]), '')
+
+        return CommandOutput(self._get_interface_data(self.computer.interface_by_name(args[args.index('dev') + 1])), '')
 
     def _add_address(self, args: List[str]) -> CommandOutput:
         """

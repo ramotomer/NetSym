@@ -1,7 +1,7 @@
 import pytest
 
 from NetSym.address.ip_address import IPAddress
-from NetSym.computing.internals.routing_table import RoutingTable, RoutingTableItem, TypeSafeRoutingTableItem
+from NetSym.computing.internals.network_data_structures.routing_table import RoutingTable, RoutingTableItem, TypeSafeRoutingTableItem
 from NetSym.consts import ADDRESSES
 from NetSym.exceptions import *
 

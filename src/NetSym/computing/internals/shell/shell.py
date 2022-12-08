@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Tuple, List
+from typing import TYPE_CHECKING, Tuple, List, Type
 
 from NetSym.computing.internals.filesystem.directory import Directory
 from NetSym.computing.internals.shell.commands.command import CommandOutput
@@ -49,6 +49,7 @@ from NetSym.usefuls.funcs import called_in_order, all_indexes
 if TYPE_CHECKING:
     from NetSym.computing.computer import Computer
     from NetSym.gui.tech.shell_graphics import ShellGraphics
+    from NetSym.computing.internals.shell.commands.command import Command
 
 
 class Shell:
@@ -64,7 +65,7 @@ class Shell:
         self.computer = computer
         self.shell_graphics = shell_graphics
 
-        self.commands = [
+        self.commands: List[Type[Command]] = [
             Cat, Cd, Cp, Head, Ls, Mkdir, Mv, Pwd, Rm, Tail, Touch,
             Hostname, Uname, Uptime,
             Alias, Help, Man, Unalias, Watch,

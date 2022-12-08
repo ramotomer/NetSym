@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Iterable, Tuple
 
 from NetSym.consts import PACKET
 from NetSym.gui.shape_drawing import draw_circle
-from NetSym.gui.tech.connection_graphics import ConnectionGraphics
+from NetSym.gui.tech.cable_connection_graphics import CableConnectionGraphics
 
 if TYPE_CHECKING:
-    from NetSym.computing.connection import Connection
+    from NetSym.computing.connections.cable_connection import CableConnection
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
@@ -17,11 +17,11 @@ def circle_parameter(radius: float) -> float:
     return 2 * pi * radius
 
 
-class LoopbackConnectionGraphics(ConnectionGraphics):
+class LoopbackConnectionGraphics(CableConnectionGraphics):
     """
     This is the circular connection of the loopback interface to itself.
     """
-    def __init__(self, connection: Connection, computer_graphics: ComputerGraphics, radius: float) -> None:
+    def __init__(self, connection: CableConnection, computer_graphics: ComputerGraphics, radius: float) -> None:
         """Initiates the connection graphics with a given radius"""
         super(LoopbackConnectionGraphics, self).__init__(connection, None, None)
         self.radius = radius
@@ -29,7 +29,7 @@ class LoopbackConnectionGraphics(ConnectionGraphics):
         self.is_showing = False
         self.is_pressable = False
 
-        computer_graphics.child_graphics_objects.loopback = self
+        computer_graphics.set_loopback(self)
 
     @property
     def length(self) -> float:

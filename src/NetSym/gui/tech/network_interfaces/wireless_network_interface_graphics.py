@@ -6,26 +6,25 @@ from NetSym.address.mac_address import MACAddress
 from NetSym.consts import INTERFACES, COLORS
 from NetSym.exceptions import NoSuchInterfaceError
 from NetSym.gui.shape_drawing import draw_circle
-from NetSym.gui.tech.interface_graphics import InterfaceGraphics
+from NetSym.gui.tech.network_interfaces.network_interface_graphics import NetworkInterfaceGraphics
 from NetSym.usefuls.funcs import with_args, distance, get_the_one_with_raise
 
 if TYPE_CHECKING:
-    from NetSym.computing.internals.network_interfaces.interface import Interface
-    from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
+    from NetSym.computing.internals.network_interfaces.wireless_network_interface import WirelessNetworkInterface
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
-class WirelessInterfaceGraphics(InterfaceGraphics):
+class WirelessNetworkInterfaceGraphics(NetworkInterfaceGraphics):
     """
     The graphics object of a wireless interface.
     """
-    interface: WirelessInterface
+    interface: WirelessNetworkInterface
 
     def __init__(self,
                  x: float, y: float,
-                 interface: Interface,
+                 interface: WirelessNetworkInterface,
                  computer_graphics: ComputerGraphics) -> None:
-        super(WirelessInterfaceGraphics, self).__init__(x, y, interface, computer_graphics)
+        super(WirelessNetworkInterfaceGraphics, self).__init__(x, y, interface, computer_graphics)
         self.width = INTERFACES.WIDTH / 2
 
     @property
@@ -37,7 +36,7 @@ class WirelessInterfaceGraphics(InterfaceGraphics):
         Draw the interface.
         :return:
         """
-        self.color = self.interface.frequency_object.color if self.interface.is_connected() else COLORS.BLACK
+        self.color = self.interface.connection.color if self.interface.is_connected() else COLORS.BLACK
 
         draw_circle(
             self.real_x, self.real_y,
@@ -108,7 +107,7 @@ class WirelessInterfaceGraphics(InterfaceGraphics):
         :return:
         """
         return {
-            "class": "WirelessInterface",
+            "class": "WirelessNetworkInterface",
             "location": (self.real_x, self.real_y),
             "name": self.interface.name,
             "mac": str(self.interface.mac),

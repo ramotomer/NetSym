@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Tuple, Optional, NamedTuple
+from typing import TYPE_CHECKING, Tuple, Optional, cast
 
 import scapy
 from scapy.layers.dns import dnstypes
@@ -19,9 +19,7 @@ if TYPE_CHECKING:
     from NetSym.computing.computer import Computer
 
 
-class NetworkAddress(NamedTuple):
-    ip: Optional[IPAddress]
-    port: T_Port
+SERVER_ADDRESS_IP_INDEX = 0
 
 
 class DNSClientProcess(Process):
@@ -44,7 +42,7 @@ class DNSClientProcess(Process):
         :param server_ip: the IPAddress of the server
         """
         super(DNSClientProcess, self).__init__(pid, computer)
-        self._server_address = NetworkAddress(server_ip, server_port)
+        self._server_address = (server_ip, server_port)
         self._name_to_resolve = name_to_resolve
 
         self.socket: Optional[UDPSocket] = None
@@ -71,7 +69,7 @@ class DNSClientProcess(Process):
             self._dns_format_print(f"Name invalid! '{self._name_to_resolve}'")
             return False
 
-        if self._server_address.ip is None:
+        if self._server_address[SERVER_ADDRESS_IP_INDEX]:
             self._dns_format_print(f"No DNS server configured!")
             return False
 
@@ -157,13 +155,13 @@ class DNSClientProcess(Process):
         """
         The main code of the process
         """
-        self.socket = self.computer.get_udp_socket(self.pid)
-        self.socket.bind()
-        self.socket.connect(self._server_address)
-
         if not self._are_parameters_valid():
             self.die("ERROR: DNS Process parameters invalid!")
             return
+
+        self.socket = self.computer.get_udp_socket(self.pid)
+        self.socket.bind()
+        self.socket.connect(cast(Tuple[IPAddress, int], self._server_address))
 
         self._name_to_resolve = self.computer.add_default_domain_prefix_if_necessary(self._name_to_resolve)
         if self._name_to_resolve in self.computer.dns_cache:

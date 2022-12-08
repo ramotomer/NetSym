@@ -1,39 +1,37 @@
 from __future__ import annotations
 
 import random
-from typing import Optional, List, Dict, Union, Any, TYPE_CHECKING, Set, Type
+from abc import ABC, abstractmethod
+from typing import Optional, List, Dict, Union, Any, TYPE_CHECKING, Set
 
 import scapy
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
-from NetSym.computing.connection import Connection
-from NetSym.consts import T_Time, FILE_PATHS, INTERFACES, PROTOCOLS, T_Color
+from NetSym.computing.connections.connection import Connection
+from NetSym.consts import FILE_PATHS, INTERFACES, PROTOCOLS, T_Color
 from NetSym.exceptions import *
-from NetSym.gui.tech.interface_graphics import InterfaceGraphics
 from NetSym.packets.all import Ether
 from NetSym.packets.packet import Packet
+from NetSym.usefuls.funcs import raise_on_none
 
 if TYPE_CHECKING:
-    from NetSym.gui.abstracts.graphics_object import GraphicsObject
-    from NetSym.computing.connection import ConnectionSide
+    from NetSym.gui.tech.network_interfaces.network_interface_graphics import NetworkInterfaceGraphics
+    from NetSym.computing.connections.connection import ConnectionSide
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
 
 
-class Interface:
+class NetworkInterface(ABC):
     """
     This class represents a computer net interface.
     It can send and receive packets.
     It contains methods that provide abstraction for sending many types of packets.
 
-    An interface can be either connected or disconnected to a `ConnectionSide` object, which enables it to move its packets
+    An interface can be either connected or disconnected to a `CableConnectionSide` object, which enables it to move its packets
     down the connection_side further.
     """
-
     POSSIBLE_INTERFACE_NAMES: Optional[List[str]] = None
     EXISTING_INTERFACE_NAMES: Set[str] = set()
-
-    GRAPHICS_CLASS: Type[GraphicsObject] = InterfaceGraphics
 
     def __init__(self,
                  mac: Optional[Union[str, MACAddress]] = None,
@@ -44,29 +42,29 @@ class Interface:
                  type_: str = INTERFACES.TYPE.ETHERNET,
                  mtu: int = PROTOCOLS.ETHERNET.MTU) -> None:
         """
-        Initiates the Interface instance with addresses (mac and possibly ip), the operating system, and a name.
+        Initiates the CableNetworkInterface instance with addresses (mac and possibly ip), the operating system, and a name.
         :param mac: a string MAC address ('aa:bb:cc:11:22:76' for example)
         :param ip: a string ip address ('10.3.252.5/24' for example)
         """
         self.__connection: Optional[Connection] = None
-        self.__connection_side = None
+        self.__connection_side: Optional[ConnectionSide] = None
         self.connection_side = connection_side
 
-        self.name: str               = name if name is not None else Interface.random_name()
-        self.mac: MACAddress         = MACAddress(MACAddress.randomac()) if mac is None else MACAddress(mac)
+        self.name: str = name if name is not None else NetworkInterface.random_name()
+        self.mac: MACAddress = MACAddress(MACAddress.randomac()) if mac is None else MACAddress(mac)
         self.ip: Optional[IPAddress] = IPAddress(ip) if ip is not None else None
 
         self.is_promisc = True
         self.is_blocked: bool = False
-        self.accepting: Optional[str] = None  # This is the only type of packet that is accepted when the interface is blocked.
+        self.accepting: Optional[str] = None
 
         self.is_powered_on = True
         self.type: str = type_
         self.mtu: int = mtu
 
-        self.graphics: Optional[InterfaceGraphics] = None
+        self.graphics: Optional[NetworkInterfaceGraphics] = None
         self.display_color: T_Color = display_color
-        # TODO: This ^ belongs in the InterfaceGraphics class FOR SURE!!!
+        # TODO: This ^ belongs in the CableNetworkInterfaceGraphics class FOR SURE!!!
 
     @property
     def connection(self) -> Connection:
@@ -87,23 +85,12 @@ class Interface:
             self.__connection = value.connection
 
     @property
-    def connection_length(self) -> T_Time:
-        """
-        The length of the connection_side this `Interface` is connected to. (The time a packet takes to go through it in seconds)
-        :return: a number of seconds.
-        """
-        if not self.is_connected():
-            raise InterfaceNotConnectedError(repr(self))
-
-        return self.connection.deliver_time
-
-    @property
     def no_carrier(self) -> bool:
         return not self.is_connected()
 
     @classmethod
     def random_name(cls) -> str:
-        """Returns a random Interface name"""
+        """Returns a random CableNetworkInterface name and caches it to never be generated again :)"""
         if cls.POSSIBLE_INTERFACE_NAMES is None:
             cls.POSSIBLE_INTERFACE_NAMES = [line.strip() for line in open(FILE_PATHS.INTERFACE_NAMES_FILE_PATH).readlines()]
 
@@ -114,7 +101,7 @@ class Interface:
         return name
 
     @classmethod
-    def with_ip(cls, ip_address: Union[str, IPAddress]) -> Interface:
+    def with_ip(cls, ip_address: Union[str, IPAddress]) -> NetworkInterface:
         """Constructor for an interface with a given (string) IP address, a random name and a random MAC address"""
         return cls(MACAddress.randomac(), ip_address, cls.random_name())
 
@@ -128,19 +115,7 @@ class Interface:
 
         return self.ip
 
-    def init_graphics(self, parent_computer: ComputerGraphics, x: Optional[float] = None, y: Optional[float] = None) -> InterfaceGraphics:
-        """
-        Initiates the InterfaceGraphics object of this interface
-        """
-        if (x is None) or (y is None):
-            if (x is None and y is not None) or (x is not None and y is None):
-                raise WrongUsageError(f"If one of x or y is None, the other should also be None! x, y: {x, y}")
-            x, y = (parent_computer.x + parent_computer.interface_distance()), parent_computer.y
-
-        self.graphics = self.GRAPHICS_CLASS(x, y, self, parent_computer)
-        return self.graphics
-
-    def get_graphics(self) -> InterfaceGraphics:
+    def get_graphics(self) -> NetworkInterfaceGraphics:
         """
 
         """
@@ -151,24 +126,24 @@ class Interface:
 
     def is_directly_for_me(self, packet: Packet) -> bool:
         """
-        Receives a packet and determines whether it is destined directly for this Interface (broadcast is not)
+        Receives a packet and determines whether it is destined directly for this CableNetworkInterface (broadcast is not)
         On the second layer
         :param packet: a `Packet` object.
-        :return: whether the destination MAC address is of this Interface
+        :return: whether the destination MAC address is of this CableNetworkInterface
         """
         return bool((self.mac == packet["Ether"].dst_mac) or packet["Ether"].dst_mac.is_no_mac())
 
     def is_for_me(self, packet: Packet) -> bool:
         """
-        Receives a packet and determines whether it is destined for this Interface (or is broadcast)
+        Receives a packet and determines whether it is destined for this CableNetworkInterface (or is broadcast)
         On the second layer
         :param packet: a `Packet` object.
-        :return: whether the destination MAC address is of this Interface
+        :return: whether the destination MAC address is of this CableNetworkInterface
         """
         return self.is_directly_for_me(packet) or (packet["Ether"].dst_mac.is_broadcast())
 
     def has_ip(self) -> bool:
-        """Returns whether the Interface has an IP address"""
+        """Returns whether the CableNetworkInterface has an IP address"""
         return self.ip is not None
 
     def has_this_ip(self, ip_address: Union[str, IPAddress]) -> bool:
@@ -179,9 +154,15 @@ class Interface:
         """
         return self.has_ip() and self.get_ip() == IPAddress(ip_address)
 
+    @abstractmethod
     def is_connected(self) -> bool:
         """Returns whether the interface is connected or not"""
-        return (self.__connection_side is not None) and (self.__connection is not None)
+
+    @abstractmethod
+    def init_graphics(self, parent_computer: ComputerGraphics, x: Optional[float] = None, y: Optional[float] = None) -> NetworkInterfaceGraphics:
+        """
+        Initiate the GraphicsObject that represents the interface visually
+        """
 
     def set_mac(self, new_mac: MACAddress) -> None:
         """
@@ -216,22 +197,11 @@ class Interface:
 
         self.mtu = mtu
 
-    def connect(self, other: Interface) -> Connection:
-        """
-        Connects this interface to another interface, return the `Connection` object.
-        If grat arps are enabled, each interface sends a gratuitous arp.
-        """
-        if self.is_connected() or other.is_connected():
-            raise DeviceAlreadyConnectedError("The interface is connected already!!!")
-        connection = Connection()
-        self.connection_side, other.connection_side = connection.get_sides()
-        return connection
-    
     def disconnect(self) -> None:
         """
-        Disconnect an interface from its `Connection`.
+        Disconnect an interface from its `CableConnection`.
 
-        Note that the `Connection` object does not know about this disconnection,
+        Note that the `CableConnection` object does not know about this disconnection,
         so the other interface should be disconnected as well or this side of
         connection_side should be reconnected.
         :return: None
@@ -239,39 +209,6 @@ class Interface:
         if not self.is_connected():
             raise InterfaceNotConnectedError("Cannot disconnect an interface that is not connected!")
         self.connection_side = None
-
-    def block(self, accept: Optional[str] = None) -> None:
-        """
-        Blocks the connection_side and does not receive packets from it anymore.
-        It only accepts packets that contain the `accept` layer (for example "STP")
-        if blocked, does nothing (updates the 'accept')
-        """
-        self.is_blocked = True
-        self.accepting = accept
-        if self.connection_side is not None:
-            self.connection_side.mark_as_blocked()
-
-    def unblock(self) -> None:
-        """
-        Releases the blocking of the connection_side and allows it to receive packets again.
-        if not blocked, does nothing...
-        :return: None
-        """
-        self.is_blocked = False
-        self.accepting = None
-        if self.connection_side is not None:
-            self.connection_side.mark_as_unblocked()
-
-    def toggle_block(self, accept: Optional[str] = None) -> None:
-        """
-        Toggles between block() and unblock()
-        :param accept:
-        :return:
-        """
-        if self.is_blocked:
-            self.unblock()
-        else:
-            self.block(accept)
 
     def send(self, packet: Packet) -> bool:
         """
@@ -289,9 +226,16 @@ class Interface:
                   f" MTU is only {self.mtu}")
             return False
 
-        if self.is_connected() and (not self.is_blocked or (self.is_blocked and self.accepting in packet)):
-            self.connection_side.send(packet)
+        if self.is_connected() and \
+                (not self.is_blocked or
+                 (self.is_blocked and
+                  (self.accepting is not None) and
+                  (self.accepting in packet))):
+            raise_on_none(self.connection_side).send(packet)
             return True
+
+        print(f"{self!r} dropped a packet due to an unknown reason! packet is {packet.multiline_repr()}")
+        return False
 
     def receive(self) -> List[Packet]:
         """
@@ -305,13 +249,24 @@ class Interface:
         if not self.is_connected():
             raise InterfaceNotConnectedError("The interface is not connected so it cannot receive packets!!!")
 
-        packets = self.connection_side.receive()
+        packets = raise_on_none(self.connection_side).receive()
         if self.is_blocked:
             return list(filter((lambda packet: self.accepting in packet), packets))
         if self.is_promisc:
             return packets
         return list(filter(lambda packet: self.is_for_me(packet), packets))
 
+    def get_with_ethernet(self, dst_mac: MACAddress, data: scapy.packet.Packet) -> scapy.packet.Packet:
+        """
+        Takes in data (string, a `Protocol` object...) and wraps it with an `Ethernet` layer.
+        :param data: any data to put in the ethernet packet (ARP, IP, str, more Ethernet, whatever you want, only
+            the receiver computer should know whats coming and how to handle it...)
+        :param dst_mac: a `MACAddress` object of the destination of the packet.
+        :return: the layers to put inside the `Packet` object to send :)
+        """
+        return Ether(src_mac=str(self.mac), dst_mac=str(dst_mac)) / data
+
+    @abstractmethod
     def ethernet_wrap(self, dst_mac: MACAddress, data: scapy.packet.Packet) -> Packet:
         """
         Takes in ip_layer (string, a `Protocol` object...) and wraps it as an `Ethernet` packet ready to be sent.
@@ -320,7 +275,6 @@ class Interface:
         :param dst_mac: a `MACAddress` object of the destination of the packet.
         :return: the ready `Packet` object
         """
-        return Packet(Ether(src_mac=str(self.mac), dst_mac=str(dst_mac)) / data)
 
     def send_with_ethernet(self, dst_mac: MACAddress, protocol: scapy.packet.Packet) -> None:
         """
@@ -330,6 +284,35 @@ class Interface:
         :return: None
         """
         self.send(self.ethernet_wrap(dst_mac, protocol))
+
+    def block(self, accept: Optional[str] = None) -> None:
+        """
+        Blocks the connection_side and does not receive packets from it anymore.
+        It only accepts packets that contain the `accept` layer (for example "STP")
+        if blocked, does nothing (updates the 'accept')
+        """
+        self.is_blocked = True
+        self.accepting = accept
+
+    def unblock(self) -> None:
+        """
+        Releases the blocking of the connection_side and allows it to receive packets again.
+        if not blocked, does nothing...
+        :return: None
+        """
+        self.is_blocked = False
+        self.accepting = None
+
+    def toggle_block(self, accept: Optional[str] = None) -> None:
+        """
+        Toggles between block() and unblock()
+        :param accept:
+        :return:
+        """
+        if self.is_blocked:
+            self.unblock()
+        else:
+            self.block(accept)
 
     def __eq__(self, other: Any) -> bool:
         """Determines which interfaces are equal"""
@@ -353,32 +336,15 @@ Interface:
 {repr(self.ip) if self.has_ip() else ''}
 MTU: {self.mtu}
 {"Connected" if self.is_connected() else "Disconnected"}
-{f"Promisc{linesep}" if self.is_promisc else ""}{"Blocked" if 
+{f"Promisc{linesep}" if self.is_promisc else ""}{"Blocked" if
         self.is_blocked else ""}
 """
 
-    def __str__(self) -> str:
-        """A shorter string representation of the Interface"""
-        mac = f"\n{self.mac}" if not self.mac.is_no_mac() else ""
-        return f"{self.name}: {mac}" + ('\n' + repr(self.ip) if self.has_ip() else '')
-
-    def __repr__(self) -> str:
-        """The string representation of the Interface"""
-        return f"Interface(name={self.name}, mac={self.mac}, ip={self.ip})"
-
     @classmethod
-    def from_dict_load(cls, dict_: Dict) -> Interface:
+    @abstractmethod
+    def from_dict_load(cls, dict_: Dict) -> NetworkInterface:
         """
         Loads a new interface from a dict
         :param dict_:
         :return:
         """
-        loaded = cls(
-            mac=dict_["mac"],
-            ip=dict_["ip"],
-            name=dict_["name"],
-            type_=dict_["type_"],
-            mtu=dict_.get("mtu", PROTOCOLS.ETHERNET.MTU),
-        )
-
-        return loaded

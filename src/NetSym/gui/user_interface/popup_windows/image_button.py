@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import Optional, Callable
+from typing import Optional, Callable, Tuple
 
 from NetSym.consts import BUTTONS, IMAGES, DIRECTORIES, T_Color
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
@@ -14,12 +14,12 @@ class ImageButton(Button):
     """
     def __init__(self,
                  x: float, y: float,
+                 image_name: str,
                  action: Callable[[], None] = lambda: None,
-                 image_name: Optional[str] = None,
                  text: str = "",
                  start_hidden: bool = False,
                  width: float = IMAGES.SIZE, height: float = IMAGES.SIZE,
-                 key: Optional[str] = None,
+                 key: Optional[Tuple[int, int]] = None,
                  color: T_Color = BUTTONS.COLOR,
                  text_color: T_Color = BUTTONS.TEXT_COLOR,
                  is_outlined: bool = False) -> None:
@@ -47,8 +47,7 @@ class ImageButton(Button):
         scale_y = ((self.height - 2 * self.pad_y) / self.image_sprite.height) * scale_y
         self.image_sprite.update(scale_x=scale_x, scale_y=scale_y)
 
-        pad_x, pad_y = self.child_graphics_objects.text.padding
-        self.child_graphics_objects.text.padding = pad_x, self.height
+        self.get_text().padding = self.get_text().get_padding()[0], self.height
 
     def draw(self) -> None:
         """

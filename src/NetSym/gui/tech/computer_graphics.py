@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from os import linesep
-from typing import TYPE_CHECKING, Optional, Dict, Callable, Iterable, Tuple, List
+from typing import TYPE_CHECKING, Optional, Dict, Callable, Iterable, Tuple, List, Type, Any
 
 import pyglet
 
@@ -23,7 +23,9 @@ from NetSym.gui.user_interface.text_graphics import Text
 from NetSym.usefuls.funcs import with_args
 
 if TYPE_CHECKING:
-    from NetSym.gui.tech.interface_graphics import InterfaceGraphics
+    from NetSym.gui.abstracts.graphics_object import GraphicsObject
+    from NetSym.computing.internals.processes.abstracts.process import Process
+    from NetSym.gui.tech.network_interfaces.network_interface_graphics import NetworkInterfaceGraphics
     from NetSym.computing.computer import Computer
     from NetSym.gui.user_interface.user_interface import UserInterface
 
@@ -33,7 +35,7 @@ class ChildGraphicsObjects:
     text: Text
     console: OutputConsole
     process_list: ProcessGraphicsList
-    interface_list: List[InterfaceGraphics]
+    interface_list: List[NetworkInterfaceGraphics]
     loopback: Optional[LoopbackConnectionGraphics] = None
 
     def __iter__(self) -> Iterable:
@@ -82,7 +84,7 @@ class ComputerGraphics(ImageGraphics):
 
         interface_list = [interface.init_graphics(self) for interface in self.computer.interfaces]
 
-        self.child_graphics_objects = ChildGraphicsObjects(
+        self.__child_graphics_objects = ChildGraphicsObjects(
             Text(self.generate_text(), self.x, self.y, self),
             OutputConsole(*console_location),
             ProcessGraphicsList(self),
@@ -104,11 +106,23 @@ class ComputerGraphics(ImageGraphics):
     def should_be_transparent(self) -> bool:
         return not self.computer.is_powered_on
 
+    def get_children(self) -> Iterable[GraphicsObject]:
+        return self.__child_graphics_objects
+
+    def get_console(self) -> OutputConsole:
+        return self.__child_graphics_objects.console
+
+    def get_interface_list_graphics(self) -> List[NetworkInterfaceGraphics]:
+        return self.__child_graphics_objects.interface_list
+
     def get_image_path(self) -> str:
         """
         Return the path to the image that should be displayed when the computer is drawn
         """
         return IMAGES.COMPUTERS.SERVER if self._is_server() else self.original_image
+
+    def set_loopback(self, loopback: LoopbackConnectionGraphics) -> None:
+        self.__child_graphics_objects.loopback = loopback
 
     def draw(self) -> None:
         self.update_image()
@@ -124,7 +138,7 @@ class ComputerGraphics(ImageGraphics):
 
     def update_text(self) -> None:
         """Sometimes the ip_layer of the computer is changed and we want to text to change as well"""
-        self.child_graphics_objects.text.set_text(self.generate_text())
+        self.__child_graphics_objects.text.set_text(self.generate_text())
 
     def _is_server(self) -> bool:
         """
@@ -137,7 +151,7 @@ class ComputerGraphics(ImageGraphics):
         Refreshes the image according to the current computer state
         """
         self.change_image(self.get_image_path())
-        self.child_graphics_objects.process_list.set_list([port for port in self.computer.get_open_ports() if port in PORTS.SERVER_PORTS])
+        self.__child_graphics_objects.process_list.set_list([port for port in self.computer.get_open_ports() if port in PORTS.SERVER_PORTS])
 
     def _get_per_process_buttons(self, user_interface: UserInterface) -> Dict[str, Callable[[], None]]:
         """
@@ -145,7 +159,7 @@ class ComputerGraphics(ImageGraphics):
         This method returns the additional buttons that should be added based on what processes
             are currently running
         """
-        process_button_mapping = {
+        process_button_mapping: Dict[Type[Process], Dict[str, Callable[[], None]]] = {
             DNSServerProcess: {
                 "add DNS record (alt+d)": with_args(
                     user_interface.ask_user_for,
@@ -190,10 +204,10 @@ class ComputerGraphics(ImageGraphics):
         parameter user_interface: the `UserInterface` object we can use the methods of it.
         Returns a tuple <display sprite>, <display text>, <new button count>
         """
-        self.child_graphics_objects.console.location = user_interface.get_computer_output_console_location()
-        self.child_graphics_objects.console.show()
+        self.__child_graphics_objects.console.location = user_interface.get_computer_output_console_location()
+        self.__child_graphics_objects.console.show()
 
-        buttons: Dict[str,  Callable[[], None]] = {
+        buttons: Dict[str,  Callable[[], Any]] = {
             "set ip (i)": user_interface.ask_user_for_ip,
             "change name (shift+n)": with_args(
                 user_interface.ask_user_for,
@@ -269,7 +283,7 @@ class ComputerGraphics(ImageGraphics):
     def end_viewing(self, user_interface: UserInterface) -> None:
         """Ends the viewing of the object in the side window"""
         super(ComputerGraphics, self).end_viewing(user_interface)
-        self.child_graphics_objects.console.hide()
+        self.__child_graphics_objects.console.hide()
 
     def _open_shell(self, user_interface: UserInterface) -> None:
         """
@@ -311,7 +325,7 @@ class ComputerGraphics(ImageGraphics):
         updates the location of the text (the padding) according to the size of the computer
         :return:
         """
-        self.child_graphics_objects.text.padding = 0, (-self.height / 2) + TEXT.DEFAULT_Y_PADDING
+        self.__child_graphics_objects.text.padding = 0, (-self.height / 2) + TEXT.DEFAULT_Y_PADDING
 
     def resize(self, width_diff: float, height_diff: float, constrain_proportions: bool = False) -> None:
         super(ComputerGraphics, self).resize(width_diff, height_diff, constrain_proportions)
@@ -328,7 +342,7 @@ class ComputerGraphics(ImageGraphics):
             "name": self.computer.name,
             "scale_factor": self.scale_factor,
             "os": self.computer.os,
-            "interfaces": [interface.graphics.dict_save() for interface in self.computer.interfaces],
+            "interfaces": [interface.get_graphics().dict_save() for interface in self.computer.interfaces],
             "open_tcp_ports": self.computer.get_open_ports("TCP"),
             "open_udp_ports": self.computer.get_open_ports("UDP"),
             "routing_table": self.computer.routing_table.dict_save(),
@@ -336,7 +350,7 @@ class ComputerGraphics(ImageGraphics):
         }
 
         if self.class_name == "Router":
-            dict_["is_dhcp_server"] = self.computer.process_scheduler.is_usermode_process_running(DHCPServerProcess)
+            dict_["is_dhcp_server"] = self.computer.process_scheduler.is_usermode_process_running_by_type(DHCPServerProcess)
 
         return dict_
 

@@ -3,7 +3,7 @@ from _pytest.monkeypatch import MonkeyPatch
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
-from NetSym.computing.internals.arp_cache import ArpCache, ARPCacheItem
+from NetSym.computing.internals.network_data_structures.arp_cache import ArpCache, ARPCacheItem
 from NetSym.consts import COMPUTER
 from tests.usefuls import mock_mainloop_time
 

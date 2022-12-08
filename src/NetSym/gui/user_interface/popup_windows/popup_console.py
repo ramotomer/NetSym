@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple, Iterable, Optional
 
 from NetSym.consts import COLORS, CONSOLE, COMPUTER
+from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.tech.shell_graphics import ShellGraphics
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 
@@ -33,23 +34,24 @@ class PopupConsole(PopupWindow):
             height=CONSOLE.SHELL.HEIGHT,
         )
 
-        title_text, exit_button = self.child_graphics_objects
-
         self.computer = computer
         self.computer.output_method = COMPUTER.OUTPUT_METHOD.SHELL
         shell = self.computer.create_shell(self.x, self.y, self)
 
-        self.child_graphics_objects = ChildrenGraphicsObjects(
-            title_text,
-            exit_button,
+        self._PopupConsole__child_graphics_objects = ChildrenGraphicsObjects(
+            self.get_title_text(),
+            self.get_exit_button(),
             shell,
         )
 
     @property
     def shell(self) -> ShellGraphics:
-        return self.child_graphics_objects.shell
+        return self._PopupConsole__child_graphics_objects.shell
 
-    def delete(self, user_interface: UserInterface = None) -> None:
+    def get_children(self) -> Iterable[GraphicsObject]:
+        return self._PopupConsole__child_graphics_objects
+
+    def delete(self, user_interface: Optional[UserInterface] = None) -> None:
         super(PopupConsole, self).delete(user_interface)
         self.computer.active_shells.remove(self.shell)
         if not self.computer.active_shells:
@@ -58,7 +60,7 @@ class PopupConsole(PopupWindow):
     def resize(self, width: float, height: float) -> None:
         super(PopupConsole, self).resize(width, height)
         self.shell.width, self.shell.height = width, height
-        self.shell.child_graphics_objects.text.resize(self.shell.get_text_padding(), width)
+        self.shell.get_text().resize(self.shell.get_text_padding(), width)
 
     def __repr__(self) -> str:
         return f"<< PopupConsoleWindow of computer {self.computer.name!r} >>"

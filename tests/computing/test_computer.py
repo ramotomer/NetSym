@@ -1,5 +1,6 @@
 import os
 import random
+from typing import cast
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
@@ -7,15 +8,15 @@ from _pytest.monkeypatch import MonkeyPatch
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.computer import Computer
-from NetSym.computing.internals.network_interfaces.interface import Interface
-from NetSym.computing.internals.network_interfaces.wireless_interface import WirelessInterface
+from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
+from NetSym.computing.internals.network_interfaces.wireless_network_interface import WirelessNetworkInterface
 from NetSym.computing.internals.processes.abstracts.process import ReturnedPacket, PacketMetadata
 from NetSym.computing.internals.processes.usermode_processes.sniffing_process import SniffingProcess
 from NetSym.consts import OS, FILE_PATHS, DIRECTORIES, COMPUTER, INTERFACES, PACKET
 from NetSym.exceptions import NoSuchInterfaceError, PopupWindowWithThisError
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
-from NetSym.packets.packet import Packet
+from NetSym.packets.cable_packet import CablePacket
 from NetSym.usefuls.dotdict import DotDict
 from tests.usefuls import MACS, IPS, example_ethernet, example_arp, mock_mainloop_time
 
@@ -41,7 +42,7 @@ def get_example_computers():
                 "c1",
                 OS.WINDOWS,
                 None,
-                *[Interface(mac, ip, f"c1i{i}") for i, (mac, ip) in enumerate(zip(MACS, IPS))],
+                *[CableNetworkInterface(mac, ip, f"c1i{i}") for i, (mac, ip) in enumerate(zip(MACS, IPS))],
             ),
         ]
 
@@ -134,7 +135,7 @@ def test_with_ip(ip_address, name):
 
     assert isinstance(computer, Computer)
     assert len(computer.interfaces) == 1
-    assert isinstance(computer.interfaces[0], Interface)
+    assert isinstance(computer.interfaces[0], CableNetworkInterface)
     assert computer.interfaces[0].ip == IPAddress(ip_address)
 
     if name is None:
@@ -159,7 +160,7 @@ def test_wireless_with_ip(ip_address, name):
 
     assert isinstance(computer, Computer)
     assert len(computer.interfaces) == 1
-    assert isinstance(computer.interfaces[0], WirelessInterface)
+    assert isinstance(computer.interfaces[0], WirelessNetworkInterface)
     assert computer.interfaces[0].ip == IPAddress(ip_address)
 
     if name is None:
@@ -198,7 +199,7 @@ def test_init_graphics(x, y, console_location, example_computers):
 
             assert computer.graphics in graphics_list
             assert computer.graphics.x == x, computer.graphics.y == y
-            assert computer.graphics.child_graphics_objects.console.location == console_location
+            assert computer.graphics.get_console().location == console_location
 
 
 def test_print_CONSOLE(example_computers_with_graphics):
@@ -206,7 +207,7 @@ def test_print_CONSOLE(example_computers_with_graphics):
     for computer in example_computers_with_graphics:
         computer.output_method = COMPUTER.OUTPUT_METHOD.CONSOLE
         computer.print(string)
-        assert computer.graphics.child_graphics_objects.console._text.splitlines()[-1] == string
+        assert computer.graphics.get_console()._text.splitlines()[-1] == string
 
 
 def test_print_SHELL(example_computers_with_graphics):
@@ -405,7 +406,7 @@ def test_start_sniffing_ANY(example_computers_with_graphics):
 #     """
 #     interface_type_to_object = {
 #         INTERFACES.TYPE.ETHERNET: Interface,
-#         INTERFACES.TYPE.WIFI: WirelessInterface,
+#         INTERFACES.TYPE.WIFI: WirelessNetworkInterface,
 #     }
 #
 #     if any(interface.name == name for interface in self.all_interfaces):
@@ -588,10 +589,10 @@ def test_handle_arp(example_computers):
         mock_mainloop_time(m)
 
         for computer in example_computers:
-            computer.interfaces[0].connect(Interface())
-            packet = Packet(example_ethernet() / example_arp())
+            cast(CableNetworkInterface, computer.interfaces[0]).connect(CableNetworkInterface())
+            packet = CablePacket(example_ethernet() / example_arp())
             computer._handle_arp(ReturnedPacket(packet, PacketMetadata(computer.interfaces[0], 1.0, PACKET.DIRECTION.INCOMING)))
-            to_send = computer.interfaces[0].connection_side.packets_to_send
+            to_send = computer.interfaces[0].connection_side._packets_to_send
 
             assert len(to_send) == 1
             reply, = to_send
@@ -1427,7 +1428,7 @@ def test_handle_arp(example_computers):
 #     :param dict_:
 #     :return:
 #     """
-#     interface_classes = {INTERFACES.TYPE.ETHERNET: Interface, INTERFACES.TYPE.WIFI: WirelessInterface}
+#     interface_classes = {INTERFACES.TYPE.ETHERNET: Interface, INTERFACES.TYPE.WIFI: WirelessNetworkInterface}
 #     return [interface_classes[iface_dict["type_"]].from_dict_load(iface_dict) for iface_dict in dict_["interfaces"]]
 #
 # def test_from_dict_load(cls, dict_: Dict):

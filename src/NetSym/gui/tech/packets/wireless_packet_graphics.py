@@ -9,18 +9,17 @@ import scapy
 from NetSym.consts import PACKET, COLORS, SELECTED_OBJECT, DIRECTORIES, T_Color
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
-from NetSym.gui.abstracts.selectable import Selectable
 from NetSym.gui.shape_drawing import draw_circle, draw_rectangle
-from NetSym.gui.tech.packet_graphics import PacketGraphics
+from NetSym.gui.tech.packets.packet_graphics import PacketGraphics, image_from_packet
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
 from NetSym.usefuls.funcs import distance
 
 if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
-    from NetSym.computing.internals.frequency import Frequency
+    from NetSym.computing.connections.wireless_connection import WirelessConnection
 
 
-class WirelessPacketGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Selectable):
+class WirelessPacketGraphics(PacketGraphics, ViewableGraphicsObject, DifferentColorWhenHovered):
     """
     This class is a `GraphicsObject` subclass which is the graphical representation
     of packets that are sent between computers.
@@ -28,23 +27,19 @@ class WirelessPacketGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, 
     The packets know the connection's length, speed start and end, and so they can calculate where they should be at
     any given moment.
     """
-    end_viewing = PacketGraphics.end_viewing
-
     def __init__(self,
                  center_x: float,
                  center_y: float,
                  deepest_layer: scapy.packet.Packet,
-                 frequency_object: Frequency) -> None:
+                 connection: WirelessConnection) -> None:
         super(WirelessPacketGraphics, self).__init__(center_x, center_y)
 
-        self.frequency_object = frequency_object
+        self.connection = connection
         self.direction = PACKET.DIRECTION.WIRELESS
         self.distance = 0
         self.str = str(deepest_layer)
         self.deepest_layer = deepest_layer
         self.color: T_Color = COLORS.WHITE
-
-        self.image_from_packet = PacketGraphics.image_from_packet
 
     @property
     def center_x(self) -> float:
@@ -59,10 +54,10 @@ class WirelessPacketGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, 
         return self.location
 
     def set_normal_color(self):
-        self.color = COLORS.WHITE
+        self.color = self.connection.color
 
     def set_hovered_color(self):
-        self.color = self.frequency_object.color
+        self.color = COLORS.WHITE
 
     def draw(self) -> None:
         draw_circle(*self.location, self.distance, outline_color=self.color)
@@ -83,7 +78,7 @@ class WirelessPacketGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, 
         buttons = additional_buttons or {}
         self.buttons_id = user_interface.add_buttons(buttons)
 
-        sprite = ImageGraphics.get_image_sprite(os.path.join(DIRECTORIES.IMAGES, self.image_from_packet(self.deepest_layer)))
+        sprite = ImageGraphics.get_image_sprite(os.path.join(DIRECTORIES.IMAGES, image_from_packet(self.deepest_layer)))
         return sprite, '', self.buttons_id
 
     def mark_as_selected(self) -> None:
@@ -98,10 +93,3 @@ class WirelessPacketGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, 
 
     def __repr__(self) -> str:
         return self.str
-
-    def dict_save(self) -> Dict:
-        """
-        The packets cannot be saved into the file.
-        :return:
-        """
-        pass

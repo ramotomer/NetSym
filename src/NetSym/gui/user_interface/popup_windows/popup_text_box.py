@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import os
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, Iterable
 
 from pyglet.window import key
 
 from NetSym.consts import WINDOWS, KEYBOARD, FILE_PATHS
+from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.user_interface.button import Button
 from NetSym.gui.user_interface.key_writer import KeyWriter
 from NetSym.gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText
@@ -25,8 +26,6 @@ class PopupTextBox(PopupWindowContainingText):
     A popup window - a text box that asks for text and does an action with it.
     The `PopupTextBox` has a field of text that you fill up and a below it a button with a 'submit' on it.
     """
-
-    child_graphics_objects: ChildGraphicsObjects
 
     def __init__(self,
                  text: str,
@@ -53,24 +52,23 @@ class PopupTextBox(PopupWindowContainingText):
                                            color=WINDOWS.POPUP.TEXTBOX.OUTLINE_COLOR,
                                            title="input text")
 
-        title_text, information_text, exit_button = self.child_graphics_objects[:3]
         self.action = action
 
         written_text = Text(
             '',
-            information_text.x,
-            information_text.y - 35,
-            information_text,
+            self.get_information_text().x,
+            self.get_information_text().y - 35,
+            self.get_information_text(),
             padding=(0, -35),
             max_width=WINDOWS.POPUP.TEXTBOX.WIDTH
         )
 
-        self.child_graphics_objects = ChildGraphicsObjects(
-            title_text,
-            information_text,
+        self._PopupTextBox__child_graphics_objects = ChildGraphicsObjects(
+            self.get_title_text(),
+            self.get_information_text(),
             written_text,
             submit_button,
-            exit_button,
+            self.get_exit_button(),
         )
 
         self.is_done = False  # whether or not the window is done and completed the action of the submit button.
@@ -85,6 +83,9 @@ class PopupTextBox(PopupWindowContainingText):
         self.key_writer.add_key_mapping(key.UP, self.scroll_up_through_old_inputs)
         self.key_writer.add_key_mapping(key.DOWN, self.scroll_down_through_old_inputs)
 
+    def get_children(self) -> Iterable[GraphicsObject]:
+        return self._PopupTextBox__child_graphics_objects
+
     def scroll_up_through_old_inputs(self) -> None:
         """
         Scrolls up in the window through the old inputs you have already entered before.
@@ -92,7 +93,7 @@ class PopupTextBox(PopupWindowContainingText):
         :return:
         """
         self.old_inputs_index += 1 if self.old_inputs_index < len(self.old_inputs) - 1 else 0
-        self.child_graphics_objects.written_text.set_text(self.old_inputs[self.old_inputs_index])
+        self._PopupTextBox__child_graphics_objects.written_text.set_text(self.old_inputs[self.old_inputs_index])
 
     def scroll_down_through_old_inputs(self) -> None:
         """
@@ -101,7 +102,7 @@ class PopupTextBox(PopupWindowContainingText):
         :return:
         """
         self.old_inputs_index -= 1 if self.old_inputs_index > 0 else 0
-        self.child_graphics_objects.written_text.set_text(self.old_inputs[self.old_inputs_index])
+        self._PopupTextBox__child_graphics_objects.written_text.set_text(self.old_inputs[self.old_inputs_index])
 
     def write(self, string: str) -> None:
         """
@@ -109,21 +110,21 @@ class PopupTextBox(PopupWindowContainingText):
         :param string:
         :return:
         """
-        self.child_graphics_objects.written_text.set_text(self.child_graphics_objects.written_text.text + string)
+        self._PopupTextBox__child_graphics_objects.written_text.set_text(self._PopupTextBox__child_graphics_objects.written_text.text + string)
 
     def delete_one_char(self) -> None:
         """
         Deletes the last char from the input string in the window
         :return:
         """
-        self.child_graphics_objects.written_text.set_text(self.child_graphics_objects.written_text.text[:-1])
+        self._PopupTextBox__child_graphics_objects.written_text.set_text(self._PopupTextBox__child_graphics_objects.written_text.text[:-1])
 
     def submit(self) -> None:
         """
         Submits the text that was written and activates the `self.action` with it.
         :return: None
         """
-        input_ = self.child_graphics_objects.written_text.text
+        input_ = self._PopupTextBox__child_graphics_objects.written_text.text
         self.add_input_to_file(input_)
         self.action(input_)
         self.delete()

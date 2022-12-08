@@ -1,24 +1,22 @@
 from __future__ import annotations
 
-import random
 from typing import TYPE_CHECKING, Optional, Dict, Callable, Tuple
 
 import pyglet
 import scapy
 
-from NetSym.consts import CONNECTIONS, IMAGES, ANIMATIONS, PACKET
-from NetSym.gui.abstracts.animation_graphics import AnimationGraphics
+from NetSym.consts import CONNECTIONS, IMAGES
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
-from NetSym.packets.usefuls.type_to_opcode_function import TYPE_TO_OPCODE_FUNCTION
+from NetSym.gui.tech.packets.packet_graphics import PacketGraphics, image_from_packet
 from NetSym.packets.usefuls.usefuls import get_original_layer_name_by_instance
 from NetSym.usefuls.funcs import with_args
 
 if TYPE_CHECKING:
-    from NetSym.gui.tech.connection_graphics import ConnectionGraphics
+    from NetSym.gui.tech.cable_connection_graphics import CableConnectionGraphics
     from NetSym.gui.user_interface.user_interface import UserInterface
 
 
-class PacketGraphics(ImageGraphics):
+class CablePacketGraphics(PacketGraphics, ImageGraphics):
     """
     This class is a `GraphicsObject` subclass which is the graphical representation
     of packets that are sent between computers.
@@ -26,22 +24,23 @@ class PacketGraphics(ImageGraphics):
     The packets know the connection's length, speed start and end, and so they can calculate where they should be at
     any given moment.
     """
+
     def __init__(self,
                  deepest_layer: scapy.packet.Packet,
-                 connection_graphics: ConnectionGraphics,
+                 connection_graphics: CableConnectionGraphics,
                  direction: str,
                  speed: float = CONNECTIONS.PACKETS.DEFAULT_SPEED) -> None:
         """
         This method initiates a `PacketGraphics` instance.
         :param deepest_layer: The deepest packet layer in the packet.
-        :param connection_graphics: The `ConnectionGraphics` object which is the graphics of the `Connection` this packet
+        :param connection_graphics: The `CableConnectionGraphics` object which is the graphics of the `CableConnection` this packet
             is sent through. It is used for the start and end coordinates.
-            
+
         The self.progress variable is how much of the connection the packet has passed already. That information comes
-        from the `Connection` class that sent the packet. It updates it in the `Connection.move_packets` method.
+        from the `CableConnection` class that sent the packet. It updates it in the `CableConnection.move_packets` method.
         """
-        super(PacketGraphics, self).__init__(
-            self.image_from_packet(deepest_layer),
+        super(CablePacketGraphics, self).__init__(
+            image_from_packet(deepest_layer),
             connection_graphics.get_computer_coordinates(direction)[0],
             connection_graphics.get_computer_coordinates(direction)[1],
             centered=True,
@@ -51,7 +50,7 @@ class PacketGraphics(ImageGraphics):
 
         self.connection_graphics = connection_graphics
         self.direction = direction
-        self.progress = 0
+        self.progress = 0.
         self.str = get_original_layer_name_by_instance(deepest_layer)
         self.deepest_layer = deepest_layer
         self.speed = speed
@@ -73,39 +72,7 @@ class PacketGraphics(ImageGraphics):
         :return: None
         """
         self.location = self.connection_graphics.packet_location(self.direction, self.progress)
-        super(PacketGraphics, self).move()
-
-    def decrease_speed(self) -> None:
-        """
-        Decreases the speed of the packet by a half
-        """
-        self.speed *= random.uniform(0.9, 1) * CONNECTIONS.PACKETS.DECREASE_SPEED_BY
-
-    def get_decrease_speed_animation(self) -> AnimationGraphics:
-        """
-        Returns the animation object that should be shown when decreasing the speed of a packet
-        """
-        return AnimationGraphics(ANIMATIONS.LATENCY, self.x, self.y, scale=CONNECTIONS.LATENCY_ANIMATION_SIZE)
-
-    def get_drop_animation(self) -> AnimationGraphics:
-        """
-        Returns the animation object that should be shown when dropping a packet
-        """
-        return AnimationGraphics(ANIMATIONS.EXPLOSION, self.x, self.y)
-
-    @staticmethod
-    def image_from_packet(layer: scapy.packet.Packet) -> str:
-        """
-        Returns an image name from the `layer` name it receives.
-        The `layer` will usually be the most inner layer in a packet.
-        :param layer: The `Protocol` instance that you wish to get an image for.
-        :return: a string of the corresponding image's location.
-        """
-        name = get_original_layer_name_by_instance(layer)
-
-        if name in TYPE_TO_OPCODE_FUNCTION:
-            return PACKET.TYPE_TO_IMAGE[name][TYPE_TO_OPCODE_FUNCTION[name](layer)]
-        return PACKET.TYPE_TO_IMAGE[name]
+        super(CablePacketGraphics, self).move()
 
     def start_viewing(self,
                       user_interface: UserInterface,
@@ -117,29 +84,22 @@ class PacketGraphics(ImageGraphics):
         :return: a tuple <display sprite>, <display text>, <new button id>
         """
         buttons = {
-            "Drop (alt+d)":      with_args(user_interface.drop_packet,           self),
+            "Drop (alt+d)": with_args(user_interface.drop_packet, self),
             "Slow down (alt+s)": with_args(user_interface.decrease_packet_speed, self),
         }
         buttons.update(additional_buttons or {})
         self.buttons_id = user_interface.add_buttons(buttons)
         return self.copy_sprite(self.sprite), '', self.buttons_id
 
-    def dict_save(self) -> None:
-        """
-        The packets cannot be saved into the file.
-        :return:
-        """
-        pass
-
     def delete(self, user_interface: UserInterface) -> None:
         """
         Delete the packet and drop it from the connection it is currently going through
         """
-        super(PacketGraphics, self).delete(user_interface)
+        super(CablePacketGraphics, self).delete(user_interface)
         user_interface.drop_packet(self)
 
     def __str__(self) -> str:
         return self.str
 
     def __repr__(self) -> str:
-        return f"<< PacketGraphics - {self.str} on {self.connection_graphics!r} >>"
+        return f"<< CablePacketGraphics - {self.str} on {self.connection_graphics!r} >>"

@@ -13,7 +13,7 @@ from NetSym.usefuls.funcs import get_the_one_with_raise
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
     from NetSym.computing.internals.sockets.raw_socket import RawSocket
-    from NetSym.computing.internals.network_interfaces.interface import Interface
+    from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
     from NetSym.computing.computer import Computer
 
 
@@ -37,11 +37,11 @@ class DHCPClientProcess(Process):
         super(DHCPClientProcess, self).__init__(pid, computer)
         self.sockets: List[RawSocket] = []
 
-    def update_routing_table(self, session_interface: Interface, dhcp_pack: Packet) -> None:
+    def update_routing_table(self, session_interface: NetworkInterface, dhcp_pack: Packet) -> None:
         """
         Receive the interface that runs the session with the server and the DHCP pack packet that it sent,
         update the routing table accordingly.
-        :param session_interface: an `Interface` object.
+        :param session_interface: an `CableNetworkInterface` object.
         :param dhcp_pack: a `Packet` object that contains DHCP.
         :return: None
         """
@@ -51,7 +51,7 @@ class DHCPClientProcess(Process):
         self.computer.set_default_gateway(IPAddress(dhcp_pack["DHCP"].parsed_options.router), given_ip)
 
     @staticmethod
-    def build_dhcp_discover(interface: Interface) -> Packet:
+    def build_dhcp_discover(interface: NetworkInterface) -> Packet:
         return interface.ethernet_wrap(MACAddress.broadcast(),
                                        IP(src_ip=str(IPAddress.no_address()), dst_ip=str(IPAddress.broadcast()), ttl=PROTOCOLS.DHCP.DEFAULT_TTL) /
                                        UDP(src_port=PORTS.DHCP_CLIENT, dst_port=PORTS.DHCP_SERVER) /
@@ -60,14 +60,14 @@ class DHCPClientProcess(Process):
 
     @staticmethod
     def build_dhcp_request(server_mac: MACAddress,
-                           session_interface: Interface,
+                           session_interface: NetworkInterface,
                            server_ip: IPAddress,
                            requested_ip: IPAddress) -> Packet:
         """
         Sends a `DHCP_REQUEST` that confirms the address that the server had offered.
         This is sent by the DHCP client.
         :param server_mac: The `MACAddress` of the DHCP server.
-        :param session_interface: The `Interface` that is running the session with the server.
+        :param session_interface: The `CableNetworkInterface` that is running the session with the server.
         :param server_ip: The `IPAddress` of the server
         :param requested_ip: The `IPAddress` the server has offered - and the client now requests
         """

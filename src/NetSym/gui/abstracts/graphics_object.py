@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod, ABC
-from typing import Tuple, TYPE_CHECKING, Dict, List
+from typing import Tuple, TYPE_CHECKING, Dict, List, Optional, Iterable
 
 from NetSym.gui.main_loop_function_to_call import FunctionToCall
 
@@ -19,8 +19,6 @@ class GraphicsObject(ABC):
     Every call of the main loop function will call its `draw` and `move` methods.
     The `draw` should contain the drawing of the object while the `move` should contain its movement. Reasonable I would say.
 
-    If this object has an iterable attribute in the name `child_graphics_objects`, when this object is unregistered, all of the
-    GraphicsObjects in that iterable are unregistered as well.
     """
     def __init__(self,
                  x: float,
@@ -66,6 +64,14 @@ class GraphicsObject(ABC):
     def additional_functions_to_register(self) -> List[FunctionToCall]:
         """
         The functions that will be registered to run periodically when the object is registered
+        """
+        return []
+
+    def get_children(self) -> Iterable[GraphicsObject]:
+        """
+        Return the children of this graphics object.
+        The children are graphics objects that are related to this one - they will be registered, and deleted
+            whenever this parent will.
         """
         return []
 
@@ -128,7 +134,7 @@ class GraphicsObject(ABC):
         """
         self.is_requesting_to_register_children = True
 
-    def delete(self, user_interface: UserInterface) -> None:
+    def delete(self, user_interface: Optional[UserInterface]) -> None:
         """
         Deletes the graphics object and performs other operations that are necessary for deletion (cleanup)
         """

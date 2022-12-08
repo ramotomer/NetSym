@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Set, Tuple
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Optional, Set, Tuple, Sequence, cast, Iterable, List, Iterator
 
 from NetSym.consts import WINDOWS, T_Color, COLORS, SHAPES, debugp
+from NetSym.exceptions import *
 from NetSym.exceptions import WrongUsageError
+from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.shape_drawing import draw_rectangle
@@ -14,16 +17,25 @@ if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
 
 
+@dataclass
+class ChildGraphicsObjects:
+    title_text: Text
+    exit_button: Button
+    buttons: List[Button]
+
+    def __iter__(self) -> Iterator[GraphicsObject]:
+        return iter(cast("List[GraphicsObject]", [self.title_text, self.exit_button]) + cast("List[GraphicsObject]", self.buttons))
+
+
 class PopupWindow(UserInterfaceGraphicsObject):
     """
     A window that pops up sometime.
     It can contain buttons, text and maybe images?
     """
-
     def __init__(self,
                  x: float,
                  y: float,
-                 buttons: Optional[List[Button]] = None,
+                 buttons: Optional[Sequence[Button]] = None,
                  width: float = WINDOWS.POPUP.TEXTBOX.WIDTH,
                  height: float = WINDOWS.POPUP.TEXTBOX.HEIGHT,
                  color: T_Color = WINDOWS.POPUP.TEXTBOX.OUTLINE_COLOR,
@@ -35,7 +47,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         :param buttons: a list of buttons that will be displayed on this window. The `X` button is not included.
         """
         super(PopupWindow, self).__init__(x, y)
-        buttons = buttons or []
+        button_list = list(buttons) if buttons is not None else []
 
         self.width, self.height = width, height
         self.__is_active = False
@@ -53,7 +65,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
             max_width=self.width
         )
 
-        for button in buttons:
+        for button in button_list:
             button.set_parent_graphics(self, (button.x - self.x, button.y - self.y))
 
         self.exit_button = Button(
@@ -69,16 +81,18 @@ class PopupWindow(UserInterfaceGraphicsObject):
         )
         self.exit_button.set_parent_graphics(self, self.get_exit_button_padding())
 
-        self.child_graphics_objects = [
+        self.__child_graphics_objects = ChildGraphicsObjects(
             self.title_text,
             self.exit_button,
-        ] + buttons
+            button_list,
+        )
 
-        self.buttons = [self.exit_button] + buttons
+        self.buttons = [self.exit_button] + button_list
 
-        self._x_before_pinning, self._y_before_pinning = None, None
+        self._x_before_pinning: Optional[float] = None
+        self._y_before_pinning: Optional[float] = None
         self._size_before_pinning = self.width, self.height
-        self._pinned_directions = set()
+        self._pinned_directions: Set[str] = set()
 
         self.unregister_this_window_from_user_interface = False
 
@@ -97,6 +111,15 @@ class PopupWindow(UserInterfaceGraphicsObject):
     @property
     def is_pinned(self) -> bool:
         return bool(self._pinned_directions)
+
+    def get_children(self) -> Iterable[GraphicsObject]:
+        return self.__child_graphics_objects
+
+    def get_title_text(self) -> Text:
+        return self.__child_graphics_objects.title_text
+
+    def get_exit_button(self) -> Button:
+        return self.__child_graphics_objects.exit_button
 
     def get_exit_button_padding(self) -> Tuple[float, float]:
         return self.width - WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT, self.height
@@ -270,9 +293,12 @@ class PopupWindow(UserInterfaceGraphicsObject):
         """
         Set the size and location of the window to be just like before the window was pinned
         """
+        if (self._x_before_pinning is None) or (self._y_before_pinning is None):
+            raise SomethingWentTerriblyWrongError("!! Do not call this function if there is no 'before pinned'....")
+
         self.x, self.y = self._x_before_pinning, self._y_before_pinning
         self.resize(*self._size_before_pinning)
         self._pinned_directions = set()
 
     def __repr__(self) -> str:
-        return f"<< PopupWindow(title='{self.child_graphics_objects[0].text}') >>"
+        return f"""<< PopupWindow(title='{self.get_title_text().text}') >>"""

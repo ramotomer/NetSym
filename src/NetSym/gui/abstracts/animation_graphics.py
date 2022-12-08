@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import time
-from typing import Tuple, Any, Dict
+from typing import Tuple, Any, Dict, Optional, Callable, TYPE_CHECKING
 
 import pyglet
 
 from NetSym.consts import ANIMATIONS, DIRECTORIES
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
+
+if TYPE_CHECKING:
+    from NetSym.gui.user_interface.user_interface import UserInterface
 
 
 class AnimationGraphics(ImageGraphics):
@@ -95,6 +98,11 @@ class AnimationGraphics(ImageGraphics):
 
         if self.is_done:
             self.unregister()
+
+    def start_viewing(self,
+                      user_interface: UserInterface,
+                      additional_buttons: Optional[Dict[str, Callable[[], None]]] = None):
+        pass
 
     def dict_save(self) -> Dict[Any, Any]:
         raise NotImplementedError()

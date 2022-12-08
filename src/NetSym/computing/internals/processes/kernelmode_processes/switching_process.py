@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import NamedTuple, TYPE_CHECKING, List, Dict
 
 from NetSym.address.mac_address import MACAddress
-from NetSym.computing.internals.network_interfaces.interface import Interface
 from NetSym.computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode, WaitingFor
 from NetSym.consts import COMPUTER, T_Time
 from NetSym.exceptions import *
@@ -11,11 +10,12 @@ from NetSym.gui.main_loop import MainLoop
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
+    from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
     from NetSym.computing.switch import Switch
 
 
 class SwitchTableItem(NamedTuple):
-    leg:  Interface
+    leg:  CableNetworkInterface
     time: T_Time
 
 
@@ -72,12 +72,12 @@ class SwitchingProcess(Process):
                 packet.graphics = None
                 self.computer.send(packet.copy(), interface=leg)
 
-    def where_to_send(self, packet: Packet, source_leg: Interface) -> List[Interface]:
+    def where_to_send(self, packet: Packet, source_leg: CableNetworkInterface) -> List[CableNetworkInterface]:
         """
         Returns a list of legs that the packet needs to be sent to.
         Here it is decided whether to flood the packet or not.
         :param packet: a `Packet` object that was received.
-        :param source_leg: the `Interface` object from which it was received.
+        :param source_leg: the `CableNetworkInterface` object from which it was received.
         :return: a list of interface that the packet should be sent on.
         """
         dst_mac = packet["Ether"].dst_mac

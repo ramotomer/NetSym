@@ -4,7 +4,7 @@ import inspect
 from abc import abstractmethod, ABC
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Iterator, Union, Callable, TYPE_CHECKING, Optional, Tuple, Type, Generator
+from typing import Iterator, Callable, TYPE_CHECKING, Optional, Tuple, Type, Generator, DefaultDict
 
 from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_Suicide
 from NetSym.consts import COMPUTER, T_Time
@@ -14,7 +14,7 @@ from NetSym.packets.packet import Packet
 from NetSym.usefuls.iterable_dataclass import IterableDataclass
 
 if TYPE_CHECKING:
-    from NetSym.computing.internals.network_interfaces.interface import Interface
+    from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
     from NetSym.computing.computer import Computer
 
 
@@ -25,7 +25,7 @@ class ReturnedPacket:
     """
     def __init__(self, packet: Optional[Packet] = None, metadata: Optional[PacketMetadata] = None) -> None:
         self.packets = {}
-        self.packet_iterator = None
+        self.packet_iterator: Optional[Iterator[Packet]] = None
 
         if packet is not None and metadata is not None:
             self.packets[packet] = metadata
@@ -53,7 +53,7 @@ class ReturnedPacket:
         return self.packets[self.packet]
 
     @property
-    def packet_and_interface(self) -> Tuple[Packet, Interface]:
+    def packet_and_interface(self) -> Tuple[Packet, NetworkInterface]:
         """
         just like `self.packet` but returns a tuple of (packet, interface)
         """
@@ -89,7 +89,7 @@ class WaitingFor(IterableDataclass):
     Indicates the process is waiting for a certain condition
     `condition` is a function that should be called without parameters and return a `bool`
     """
-    condition:      Union[Callable[[], bool], Callable[[Packet], bool]]
+    condition:      Callable[..., bool]
     timeout:        Optional[Timeout] = None
     value:          Optional[ReturnedPacket] = None
     get_raw_packet: bool = False
@@ -145,9 +145,9 @@ class Process(ABC):
         self.pid: int = pid
         self.computer: Computer = computer
         self.cwd = self.computer.filesystem.root
-        self.process = None
+        self.process: Optional[T_ProcessCode] = None
 
-        self.signal_handlers = defaultdict(
+        self.signal_handlers: DefaultDict[int, Callable[[int], None]] = defaultdict(
             lambda: self.default_signal_handler
         )
         # ^ maps {signum: handler} when handler takes in a signum and returns None
@@ -156,7 +156,6 @@ class Process(ABC):
     def default_signal_handler(self, signum: int) -> None:
         """
         The default signal handler. This is called when a signal is sent.
-        :return: None
         """
         pass
 
@@ -229,7 +228,7 @@ class Timeout:
 
 @dataclass
 class PacketMetadata:
-    interface: Interface
+    interface: NetworkInterface
     time:      T_Time
     direction: str
 
