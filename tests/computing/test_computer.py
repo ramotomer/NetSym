@@ -199,7 +199,7 @@ def test_init_graphics(x, y, console_location, example_computers):
 
             assert computer.graphics in graphics_list
             assert computer.graphics.x == x, computer.graphics.y == y
-            assert computer.graphics.child_graphics_objects.console.location == console_location
+            assert computer.graphics.get_console().location == console_location
 
 
 def test_print_CONSOLE(example_computers_with_graphics):
@@ -207,7 +207,7 @@ def test_print_CONSOLE(example_computers_with_graphics):
     for computer in example_computers_with_graphics:
         computer.output_method = COMPUTER.OUTPUT_METHOD.CONSOLE
         computer.print(string)
-        assert computer.graphics.child_graphics_objects.console._text.splitlines()[-1] == string
+        assert computer.graphics.get_console()._text.splitlines()[-1] == string
 
 
 def test_print_SHELL(example_computers_with_graphics):

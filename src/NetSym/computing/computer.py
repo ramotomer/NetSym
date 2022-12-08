@@ -314,7 +314,7 @@ class Computer:
         :return: None
         """
         output_methods: Dict[str, Callable[..., None]] = {
-            COMPUTER.OUTPUT_METHOD.CONSOLE: self.get_graphics().child_graphics_objects.console.write,
+            COMPUTER.OUTPUT_METHOD.CONSOLE: self.get_graphics().get_console().write,
             COMPUTER.OUTPUT_METHOD.SHELL:   self._print_on_all_shells,
             COMPUTER.OUTPUT_METHOD.STDOUT:  print,
             COMPUTER.OUTPUT_METHOD.NONE:    lambda s: None
@@ -495,7 +495,7 @@ class Computer:
         self.interfaces.append(new_interface)
 
         graphics = new_interface.init_graphics(parent_computer=self.get_graphics())
-        self.get_graphics().child_graphics_objects.interface_list.append(new_interface.get_graphics())
+        self.get_graphics().get_interface_list_graphics().append(new_interface.get_graphics())
 
         return new_interface, graphics
 

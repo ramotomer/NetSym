@@ -474,7 +474,7 @@ class UserInterface:
                 self.main_loop.remove_from_loop(self.object_view.sprite.draw)
 
             if isinstance(self.object_view.viewed_object, ComputerGraphics):
-                self.object_view.viewed_object.child_graphics_objects.console.hide()
+                self.object_view.viewed_object.get_console().hide()
 
             self.object_view = None
             self.scrolled_view = None

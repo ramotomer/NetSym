@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union, NamedTuple
+from typing import TYPE_CHECKING, Union, NamedTuple, Iterable
 
 from pyglet.window import key
 
 from NetSym.computing.internals.shell.shell import Shell
 from NetSym.consts import CONSOLE, TEXT, KEYBOARD
+from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.tech.output_console import OutputConsole
 from NetSym.gui.user_interface.key_writer import KeyWriter
 from NetSym.gui.user_interface.text_graphics import Text
@@ -25,7 +26,6 @@ class ShellGraphics(OutputConsole):
     """
     Like an `OutputConsole` only you can write things into it!
     """
-    child_graphics_objects: ChildGraphicsObjects  # type: ignore
 
     def __init__(self,
                  x: float,
@@ -48,8 +48,8 @@ class ShellGraphics(OutputConsole):
         self.computer = computer
         self.carrying_window = carrying_window
 
-        self.child_graphics_objects = ChildGraphicsObjects(
-            self.child_graphics_objects.text,
+        self.__child_graphics_objects = ChildGraphicsObjects(
+            self.get_text(),
             Text(
                 CONSOLE.SHELL.PREFIX + CONSOLE.SHELL.CARET, self.x + (self.width / 2), self.y + 20,
                 parent_graphics=self,
@@ -84,8 +84,11 @@ class ShellGraphics(OutputConsole):
         
     @property
     def input_line_content(self) -> str:
-        text = self.child_graphics_objects.input_line.text[len(CONSOLE.SHELL.PREFIX):]
+        text = self.__child_graphics_objects.input_line.text[len(CONSOLE.SHELL.PREFIX):]
         return text[:self.caret_index] + text[self.caret_index + 1:]
+
+    def get_children(self) -> Iterable[GraphicsObject]:
+        return self.__child_graphics_objects
 
     def write_to_line(self, string: str) -> None:
         """
@@ -96,7 +99,7 @@ class ShellGraphics(OutputConsole):
         text = self.input_line_content
         text = text[:self.caret_index] + string + CONSOLE.SHELL.CARET + text[self.caret_index:]
         self.caret_index += len(string)
-        self.child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + text)
+        self.__child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + text)
 
     def _delete_last_char(self) -> None:
         """
@@ -107,7 +110,7 @@ class ShellGraphics(OutputConsole):
         text = self.input_line_content
         text = text[:self.caret_index - 1] + CONSOLE.SHELL.CARET + text[self.caret_index:]
         self.caret_index = max(self.caret_index - 1, 0)
-        self.child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + text)
+        self.__child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + text)
 
     def _delete_next_char(self) -> None:
         """
@@ -118,7 +121,7 @@ class ShellGraphics(OutputConsole):
             return
 
         text = text[:self.caret_index] + CONSOLE.SHELL.CARET + text[self.caret_index + 1:]
-        self.child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + text)
+        self.__child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + text)
 
     def delete_from_caret_until_the_end(self) -> None:
         """
@@ -128,7 +131,7 @@ class ShellGraphics(OutputConsole):
         text = self.input_line_content
         text = text[:self.caret_index] + CONSOLE.SHELL.CARET
         # self.caret_index = max(self.caret_index - 1, 0)
-        self.child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + text)
+        self.__child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + text)
 
     def delete_from_the_start_up_to_caret(self) -> None:
         """
@@ -138,7 +141,7 @@ class ShellGraphics(OutputConsole):
         text = self.input_line_content
         text = CONSOLE.SHELL.CARET + text[self.caret_index:]
         self.caret_index = 0
-        self.child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + text)
+        self.__child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + text)
 
     def submit_line(self) -> None:
         """
@@ -157,7 +160,7 @@ class ShellGraphics(OutputConsole):
         :return:
         """
         self.caret_index = 0
-        self.child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + CONSOLE.SHELL.CARET)
+        self.__child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + CONSOLE.SHELL.CARET)
 
     def clear_screen(self) -> None:
         """
@@ -165,7 +168,7 @@ class ShellGraphics(OutputConsole):
         :return:
         """
         self._text = ''
-        self.child_graphics_objects.text.set_text('')
+        self.__child_graphics_objects.text.set_text('')
 
     def exit(self) -> None:
         """
@@ -188,7 +191,7 @@ class ShellGraphics(OutputConsole):
         text = self.input_line_content
         self.caret_index = int(min(max(self.caret_index + amount, 0), len(text)))
         text = text[:self.caret_index] + CONSOLE.SHELL.CARET + text[self.caret_index:]
-        self.child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + text)
+        self.__child_graphics_objects.input_line.set_text(CONSOLE.SHELL.PREFIX + text)
 
     def __str__(self) -> str:
         """a general string representation of the object"""

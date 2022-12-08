@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Set, Tuple, Sequence, cast, Iterable
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Optional, Set, Tuple, Sequence, cast, Iterable, List, Iterator
 
 from NetSym.consts import WINDOWS, T_Color, COLORS, SHAPES, debugp
 from NetSym.exceptions import *
 from NetSym.exceptions import WrongUsageError
+from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from NetSym.gui.main_loop import MainLoop
 from NetSym.gui.shape_drawing import draw_rectangle
@@ -13,7 +15,16 @@ from NetSym.gui.user_interface.text_graphics import Text
 
 if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
-    from NetSym.gui.abstracts.graphics_object import GraphicsObject
+
+
+@dataclass
+class ChildGraphicsObjects:
+    title_text: Text
+    exit_button: Button
+    buttons: List[Button]
+
+    def __iter__(self) -> Iterator[GraphicsObject]:
+        return iter(cast("List[GraphicsObject]", [self.title_text, self.exit_button]) + cast("List[GraphicsObject]", self.buttons))
 
 
 class PopupWindow(UserInterfaceGraphicsObject):
@@ -21,8 +32,6 @@ class PopupWindow(UserInterfaceGraphicsObject):
     A window that pops up sometime.
     It can contain buttons, text and maybe images?
     """
-    child_graphics_objects: Iterable[GraphicsObject]
-
     def __init__(self,
                  x: float,
                  y: float,
@@ -72,11 +81,11 @@ class PopupWindow(UserInterfaceGraphicsObject):
         )
         self.exit_button.set_parent_graphics(self, self.get_exit_button_padding())
 
-        self.child_graphics_objects = [
+        self.__child_graphics_objects = ChildGraphicsObjects(
             self.title_text,
             self.exit_button,
-            *button_list,
-        ]
+            button_list,
+        )
 
         self.buttons = [self.exit_button] + button_list
 
@@ -102,6 +111,15 @@ class PopupWindow(UserInterfaceGraphicsObject):
     @property
     def is_pinned(self) -> bool:
         return bool(self._pinned_directions)
+
+    def get_children(self) -> Iterable[GraphicsObject]:
+        return self.__child_graphics_objects
+
+    def get_title_text(self) -> Text:
+        return self.__child_graphics_objects.title_text
+
+    def get_exit_button(self) -> Button:
+        return self.__child_graphics_objects.exit_button
 
     def get_exit_button_padding(self) -> Tuple[float, float]:
         return self.width - WINDOWS.POPUP.TEXTBOX.UPPER_PART_HEIGHT, self.height
@@ -283,4 +301,4 @@ class PopupWindow(UserInterfaceGraphicsObject):
         self._pinned_directions = set()
 
     def __repr__(self) -> str:
-        return f"""<< PopupWindow(title='{cast(Text, self.child_graphics_objects[0]).text}') >>"""
+        return f"""<< PopupWindow(title='{self.get_title_text().text}') >>"""

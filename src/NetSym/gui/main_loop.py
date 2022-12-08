@@ -100,7 +100,7 @@ class MainLoop:
                 for function_to_call in graphics_object_.additional_functions_to_register:
                     self.insert_to_loop(function_to_call)
 
-            for child in getattr(graphics_object_, "child_graphics_objects", []):
+            for child in graphics_object_.get_children():
                 self.register_graphics_object(child)
 
     def unregister_graphics_object(self, graphics_object: GraphicsObject) -> None:
@@ -109,11 +109,10 @@ class MainLoop:
         It removes its `draw` and `move` methods from the main loop.
         If the object is already unregistered, do nothing.
 
-        Any GraphicsObject that wants to have attributes that are also GraphicsObjects needs to have an iterable
-        which is called `child_graphics_objects` and that list is unregistered as well when the main object does.
+        Any GraphicsObject that wants to have attributes that are also GraphicsObjects needs to implement
+        the `get_children` method and then the returned list is unregistered as well when the main object does.
 
         :param graphics_object: The `GraphicsObject`
-        :return: None
         """
         try:
             self.graphics_objects.remove(graphics_object)
@@ -124,7 +123,7 @@ class MainLoop:
         self.remove_from_loop(graphics_object.draw)
         self.remove_from_loop(graphics_object.move)
 
-        for child in getattr(graphics_object, "child_graphics_objects", []):
+        for child in graphics_object.get_children():
             if isinstance(child, GraphicsObject):
                 self.unregister_graphics_object(child)
 
@@ -247,7 +246,7 @@ class MainLoop:
             self.remove_from_loop(graphics_object.draw)
             self.insert_to_loop(graphics_object.draw)
 
-            for child_graphics_object in getattr(graphics_object, "child_graphics_objects", []):
+            for child_graphics_object in graphics_object.get_children():
                 self.move_to_front(child_graphics_object)
                 # if this is not the order that they were meant to be in, this might cause bugs, fix in the future
                 # if necessary

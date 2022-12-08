@@ -47,7 +47,7 @@ class ImageButton(Button):
         scale_y = ((self.height - 2 * self.pad_y) / self.image_sprite.height) * scale_y
         self.image_sprite.update(scale_x=scale_x, scale_y=scale_y)
 
-        self.child_graphics_objects.text.padding = self.child_graphics_objects.text.get_padding()[0], self.height
+        self.get_text().padding = self.get_text().get_padding()[0], self.height
 
     def draw(self) -> None:
         """

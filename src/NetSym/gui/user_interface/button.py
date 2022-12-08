@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import NamedTuple, Callable, Optional, Tuple
+from typing import NamedTuple, Callable, Optional, Tuple, Iterable
 
 from NetSym.consts import BUTTONS, T_Color, COLORS, WINDOWS
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
+from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from NetSym.gui.shape_drawing import draw_button
 from NetSym.gui.user_interface.text_graphics import Text
@@ -50,7 +51,7 @@ class Button(UserInterfaceGraphicsObject, DifferentColorWhenHovered):
 
         self.width, self.height = width, height
         self.action = action
-        self.child_graphics_objects = ChildGraphicsObjects(
+        self.__child_graphics_objects = ChildGraphicsObjects(
             Text(text, x, y, self, (self.width / 2, self.height / 2 + BUTTONS.TEXT_PADDING),
                  is_button=True,
                  start_hidden=start_hidden,
@@ -73,6 +74,12 @@ class Button(UserInterfaceGraphicsObject, DifferentColorWhenHovered):
     def active_color(self) -> T_Color:
         return self.__custom_active_color if self.__custom_active_color is not None else self.light_color
 
+    def get_children(self) -> Iterable[GraphicsObject]:
+        return self.__child_graphics_objects
+
+    def get_text(self) -> Text:
+        return self.__child_graphics_objects.text
+
     def set_hovered_color(self) -> None:
         self.color = self.active_color
 
@@ -90,21 +97,21 @@ class Button(UserInterfaceGraphicsObject, DifferentColorWhenHovered):
         If the button is hidden now, shows it.
         """
         self.is_hidden = not self.is_hidden
-        self.child_graphics_objects.text.is_hidden = not self.child_graphics_objects.text.is_hidden
+        self.__child_graphics_objects.text.is_hidden = not self.__child_graphics_objects.text.is_hidden
 
     def hide(self) -> None:
         """
         Hides the button so it cannot be pressed or seen
         """
         self.is_hidden = True
-        self.child_graphics_objects.text.hide()
+        self.__child_graphics_objects.text.hide()
 
     def show(self) -> None:
         """
         Shows the button again if it was hidden, allows it to be pressed regularly.
         """
         self.is_hidden = False
-        self.child_graphics_objects.text.show()
+        self.__child_graphics_objects.text.show()
 
     def draw(self) -> None:
         """
@@ -126,7 +133,7 @@ class Button(UserInterfaceGraphicsObject, DifferentColorWhenHovered):
 
     def __str__(self) -> str:
         state = "[HIDDEN]" if self.is_hidden else "[SHOWING]"
-        return f"{state} '{self.child_graphics_objects.text.text}'"
+        return f"{state} '{self.__child_graphics_objects.text.text}'"
 
     def __repr__(self) -> str:
-        return f"Button('{self.child_graphics_objects.text}')"
+        return f"Button('{self.__child_graphics_objects.text}')"

@@ -29,7 +29,7 @@ class LoopbackConnectionGraphics(CableConnectionGraphics):
         self.is_showing = False
         self.is_pressable = False
 
-        computer_graphics.child_graphics_objects.loopback = self
+        computer_graphics.set_loopback(self)
 
     @property
     def length(self) -> float:
