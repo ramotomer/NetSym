@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, Sequence, Iterable, List, Iterator, cast
+from typing import TYPE_CHECKING, Optional, Sequence, Iterable, List, Iterator, cast, Union
 
 from NetSym.consts import WINDOWS, T_Color, SHAPES
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
@@ -69,5 +69,5 @@ class PopupWindowContainingText(PopupWindow):
     def get_exit_button(self) -> Button:
         return self._PopupWindowContainingText__child_graphics_objects.exit_button
 
-    def get_children(self) -> Iterable[GraphicsObject]:
+    def get_children(self) -> Iterable[Union[GraphicsObject, Iterable[GraphicsObject]]]:
         return self._PopupWindowContainingText__child_graphics_objects

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, NamedTuple, Iterable, Optional
+from typing import TYPE_CHECKING, NamedTuple, Iterable, Optional, Union
 
 from NetSym.consts import COLORS, CONSOLE, COMPUTER
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
@@ -48,7 +48,7 @@ class PopupConsole(PopupWindow):
     def shell(self) -> ShellGraphics:
         return self._PopupConsole__child_graphics_objects.shell
 
-    def get_children(self) -> Iterable[GraphicsObject]:
+    def get_children(self) -> Iterable[Union[GraphicsObject, Iterable[GraphicsObject]]]:
         return self._PopupConsole__child_graphics_objects
 
     def delete(self, user_interface: Optional[UserInterface] = None) -> None:

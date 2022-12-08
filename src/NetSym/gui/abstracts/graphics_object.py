@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod, ABC
-from typing import Tuple, TYPE_CHECKING, Dict, List, Optional, Iterable
+from typing import Tuple, TYPE_CHECKING, Dict, List, Optional, Iterable, Union
 
 from NetSym.gui.main_loop_function_to_call import FunctionToCall
 
@@ -67,7 +67,7 @@ class GraphicsObject(ABC):
         """
         return []
 
-    def get_children(self) -> Iterable[GraphicsObject]:
+    def get_children(self) -> Iterable[Union[GraphicsObject, Iterable[GraphicsObject]]]:
         """
         Return the children of this graphics object.
         The children are graphics objects that are related to this one - they will be registered, and deleted

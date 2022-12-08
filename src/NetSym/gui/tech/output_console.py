@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple, NamedTuple, Iterable
+from typing import Tuple, NamedTuple, Iterable, Union
 
 from NetSym.consts import CONSOLE, TEXT
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
@@ -51,7 +51,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
             )
         )
 
-    def get_children(self) -> Iterable[GraphicsObject]:
+    def get_children(self) -> Iterable[Union[GraphicsObject, Iterable[GraphicsObject]]]:
         return self.__child_graphics_objects
 
     def get_text(self) -> Text:

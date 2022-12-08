@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, TYPE_CHECKING, Set, Iterable, Callable, Dict, Optional
+from typing import List, TYPE_CHECKING, Set, Iterable, Callable, Dict, Optional, Union
 
 from NetSym.consts import PORTS, IMAGES, T_Port
 from NetSym.exceptions import UnknownPortError
@@ -30,7 +30,7 @@ class ProcessGraphicsList(GraphicsObject):
     def set_of_all_ports(self) -> Set[T_Port]:
         return {process_graphics.port for process_graphics in self.__child_graphics_objects}
 
-    def get_children(self) -> Iterable[GraphicsObject]:
+    def get_children(self) -> Iterable[Union[GraphicsObject, Iterable[GraphicsObject]]]:
         return self.__child_graphics_objects
 
     def add(self, port: T_Port) -> None:

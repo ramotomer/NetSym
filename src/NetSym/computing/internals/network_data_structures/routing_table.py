@@ -151,7 +151,7 @@ class RoutingTable:
             raise RoutingTableCouldNotRouteToIPAddress(f"IP: {requested_address!r}... ")  # Routing Table: \n{self!r}")
 
         result = self.dictionary[max(possible_addresses, key=attrgetter("subnet_mask"))]
-        if result.gateway_ip is ADDRESSES.IP.ON_LINK:
+        if isinstance(result.gateway_ip, str):  # is ON_LINK
             return TypeSafeRoutingTableItem(requested_address, result.interface_ip)
 
         return TypeSafeRoutingTableItem(result.gateway_ip, result.interface_ip)

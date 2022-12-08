@@ -87,7 +87,7 @@ class ShellGraphics(OutputConsole):
         text = self._ShellGraphics__child_graphics_objects.input_line.text[len(CONSOLE.SHELL.PREFIX):]
         return text[:self.caret_index] + text[self.caret_index + 1:]
 
-    def get_children(self) -> Iterable[GraphicsObject]:
+    def get_children(self) -> Iterable[Union[GraphicsObject, Iterable[GraphicsObject]]]:
         return self._ShellGraphics__child_graphics_objects
 
     def write_to_line(self, string: str) -> None:
