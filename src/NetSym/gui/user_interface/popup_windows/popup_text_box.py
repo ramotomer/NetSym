@@ -63,7 +63,7 @@ class PopupTextBox(PopupWindowContainingText):
             max_width=WINDOWS.POPUP.TEXTBOX.WIDTH
         )
 
-        self.__child_graphics_objects = ChildGraphicsObjects(
+        self._PopupTextBox__child_graphics_objects = ChildGraphicsObjects(
             self.get_title_text(),
             self.get_information_text(),
             written_text,
@@ -84,7 +84,7 @@ class PopupTextBox(PopupWindowContainingText):
         self.key_writer.add_key_mapping(key.DOWN, self.scroll_down_through_old_inputs)
 
     def get_children(self) -> Iterable[GraphicsObject]:
-        return self.__child_graphics_objects
+        return self._PopupTextBox__child_graphics_objects
 
     def scroll_up_through_old_inputs(self) -> None:
         """
@@ -93,7 +93,7 @@ class PopupTextBox(PopupWindowContainingText):
         :return:
         """
         self.old_inputs_index += 1 if self.old_inputs_index < len(self.old_inputs) - 1 else 0
-        self.__child_graphics_objects.written_text.set_text(self.old_inputs[self.old_inputs_index])
+        self._PopupTextBox__child_graphics_objects.written_text.set_text(self.old_inputs[self.old_inputs_index])
 
     def scroll_down_through_old_inputs(self) -> None:
         """
@@ -102,7 +102,7 @@ class PopupTextBox(PopupWindowContainingText):
         :return:
         """
         self.old_inputs_index -= 1 if self.old_inputs_index > 0 else 0
-        self.__child_graphics_objects.written_text.set_text(self.old_inputs[self.old_inputs_index])
+        self._PopupTextBox__child_graphics_objects.written_text.set_text(self.old_inputs[self.old_inputs_index])
 
     def write(self, string: str) -> None:
         """
@@ -110,21 +110,21 @@ class PopupTextBox(PopupWindowContainingText):
         :param string:
         :return:
         """
-        self.__child_graphics_objects.written_text.set_text(self.__child_graphics_objects.written_text.text + string)
+        self._PopupTextBox__child_graphics_objects.written_text.set_text(self._PopupTextBox__child_graphics_objects.written_text.text + string)
 
     def delete_one_char(self) -> None:
         """
         Deletes the last char from the input string in the window
         :return:
         """
-        self.__child_graphics_objects.written_text.set_text(self.__child_graphics_objects.written_text.text[:-1])
+        self._PopupTextBox__child_graphics_objects.written_text.set_text(self._PopupTextBox__child_graphics_objects.written_text.text[:-1])
 
     def submit(self) -> None:
         """
         Submits the text that was written and activates the `self.action` with it.
         :return: None
         """
-        input_ = self.__child_graphics_objects.written_text.text
+        input_ = self._PopupTextBox__child_graphics_objects.written_text.text
         self.add_input_to_file(input_)
         self.action(input_)
         self.delete()

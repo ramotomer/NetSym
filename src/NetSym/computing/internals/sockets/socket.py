@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from abc import abstractmethod, ABC
-from typing import Tuple, TYPE_CHECKING, Optional, Any, List
+from typing import TYPE_CHECKING, Optional, Any, List
 
-from NetSym.address.ip_address import IPAddress
 from NetSym.computing.internals.processes.abstracts.process import WaitingFor, T_ProcessCode, Timeout
-from NetSym.consts import COMPUTER, T_Port, T_Time
+from NetSym.consts import COMPUTER, T_Time
 from NetSym.exceptions import SocketNotBoundError, SocketIsClosedError
 
 if TYPE_CHECKING:
@@ -69,14 +68,6 @@ class Socket(ABC):
         """
         receive the information from the other side of the socket
         :param count: how many bytes to receive
-        :return:
-        """
-
-    @abstractmethod
-    def bind(self, address: Tuple[IPAddress, T_Port]) -> None:
-        """
-        Binds the socket to a certain address and port on the computer
-        :param address:
         :return:
         """
 

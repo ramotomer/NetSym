@@ -4,7 +4,7 @@ import inspect
 from abc import abstractmethod, ABC
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Iterator, Callable, TYPE_CHECKING, Optional, Tuple, Type, Generator
+from typing import Iterator, Callable, TYPE_CHECKING, Optional, Tuple, Type, Generator, DefaultDict
 
 from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError_Suicide
 from NetSym.consts import COMPUTER, T_Time
@@ -25,7 +25,7 @@ class ReturnedPacket:
     """
     def __init__(self, packet: Optional[Packet] = None, metadata: Optional[PacketMetadata] = None) -> None:
         self.packets = {}
-        self.packet_iterator = None
+        self.packet_iterator: Optional[Iterator[Packet]] = None
 
         if packet is not None and metadata is not None:
             self.packets[packet] = metadata
@@ -147,7 +147,7 @@ class Process(ABC):
         self.cwd = self.computer.filesystem.root
         self.process: Optional[T_ProcessCode] = None
 
-        self.signal_handlers = defaultdict(
+        self.signal_handlers: DefaultDict[int, Callable[[int], None]] = defaultdict(
             lambda: self.default_signal_handler
         )
         # ^ maps {signum: handler} when handler takes in a signum and returns None
@@ -156,7 +156,6 @@ class Process(ABC):
     def default_signal_handler(self, signum: int) -> None:
         """
         The default signal handler. This is called when a signal is sent.
-        :return: None
         """
         pass
 

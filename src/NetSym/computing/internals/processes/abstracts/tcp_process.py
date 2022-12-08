@@ -3,9 +3,8 @@ from __future__ import annotations
 import random
 from abc import abstractmethod
 from collections import deque
-from dataclasses import dataclass
-from functools import reduce
-from operator import attrgetter, concat
+from dataclasses import dataclass, astuple
+from operator import attrgetter
 from typing import Optional, List, TYPE_CHECKING, Iterable, Union, Tuple, Deque
 
 from NetSym.address.ip_address import IPAddress
@@ -13,11 +12,11 @@ from NetSym.address.mac_address import MACAddress
 from NetSym.computing.internals.processes.abstracts.process import Process, Timeout, ReturnedPacket, T_ProcessCode, WaitingFor
 from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError
 from NetSym.consts import OPCODES, T_Time, COMPUTER, PORTS, PROTOCOLS, TCPFlag
-from NetSym.exceptions import TCPDataLargerThanMaxSegmentSize
+from NetSym.exceptions import TCPDataLargerThanMaxSegmentSize, ThisValueShouldNeverBeNone
 from NetSym.gui.main_loop import MainLoop
 from NetSym.packets.all import TCP
 from NetSym.packets.packet import Packet
-from NetSym.usefuls.funcs import insort
+from NetSym.usefuls.funcs import insort, raise_on_none
 from NetSym.usefuls.funcs import split_by_size
 
 if TYPE_CHECKING:
@@ -35,12 +34,6 @@ class NotAckedPacket:
 class SackEdges:
     left:  int
     right: int
-
-    def __iter__(self) -> Iterable[int]:
-        return iter((
-            self.left,
-            self.right,
-        ))
 
 
 class ProcessInternalError_TCPConnectionWasReset(ProcessInternalError):
@@ -127,6 +120,9 @@ class TCPProcess(Process):
         Creates a full packet that contains TCP with all of the appropriate fields according to the state of
         this process
         """
+        if (self.dst_mac is None) or (self.dst_ip is None):
+            raise ThisValueShouldNeverBeNone(f"dst_mac: {self.dst_mac}, dst_ip: {self.dst_ip}")
+
         packet = self.computer.ip_wrap(self.dst_mac, self.dst_ip,
                                        TCP(
                                            src_port=self.src_port,
@@ -229,10 +225,10 @@ class TCPProcess(Process):
         sack_blocks = ReceivingWindow.get_sack_blocks_from_tuple(getattr(packet["TCP"].parsed_options, 'SACK', ()))
         if not isinstance(sack_blocks, list) or not sack_blocks:
             return
+
         for not_acked_packet in list(self.sending_window.window):
-            for left, right in sack_blocks:
-                if left <= not_acked_packet.packet["TCP"].sequence_number and \
-                        is_number_acking_packet(right, not_acked_packet.packet):
+            for block in sack_blocks:
+                if (block.left <= not_acked_packet.packet["TCP"].sequence_number) and is_number_acking_packet(block.right, not_acked_packet.packet):
                     self.sending_window.window.remove(not_acked_packet)
 
     def on_connection_reset(self) -> None:
@@ -256,7 +252,7 @@ class TCPProcess(Process):
         the initial handshake on the client side. sends syn, waits for syn ack, sends ack.
         :return:
         """
-        ip_for_the_mac, self.dst_mac = yield from self.computer.resolve_ip_address(self.dst_ip, self)
+        ip_for_the_mac, self.dst_mac = yield from self.computer.resolve_ip_address(raise_on_none(self.dst_ip), self)
 
         self.sending_window.add_waiting(self._create_packet(OPCODES.TCP.SYN))
 
@@ -280,7 +276,7 @@ class TCPProcess(Process):
         syn, = tcp_syn_list
         self._update_from_handshake_packet(syn)
 
-        ip_for_the_mac, self.dst_mac = yield from self.computer.resolve_ip_address(self.dst_ip, self)
+        ip_for_the_mac, self.dst_mac = yield from self.computer.resolve_ip_address(raise_on_none(self.dst_ip), self)
 
         self._send_ack_for(syn, OPCODES.TCP.SYN)  # sends SYN ACK
         while not self.sending_window.nothing_to_send():  # while the syn ack was not ACKed
@@ -469,7 +465,7 @@ class SendingWindow:
 
     @property
     def sent(self) -> Iterable[Packet]:
-        return self.computer.get_packet_sending_queue(self.pid, COMPUTER.PROCESSES.MODES.KERNELMODE).packets
+        return raise_on_none(self.computer.get_packet_sending_queue(self.pid, COMPUTER.PROCESSES.MODES.KERNELMODE)).packets
 
     def clear(self) -> None:
         """
@@ -636,7 +632,7 @@ class ReceivingWindow:
         :receives: self.sack_blocks = [SackEdges(a, b), SackEdges(c, d), ...]
         :return:                      (a, b, c, d, ...)
         """
-        return reduce(concat, map(tuple, self.sack_blocks), ())
+        return sum(map(astuple, self.sack_blocks), start=())
 
     @staticmethod
     def get_sack_blocks_from_tuple(tuple_: Tuple[int]) -> List[SackEdges]:

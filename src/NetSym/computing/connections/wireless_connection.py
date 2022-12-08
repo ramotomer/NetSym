@@ -199,6 +199,8 @@ class WirelessConnectionSide(ConnectionSide):
     This is the API that a computer sees to the `WirelessConnection`, using it the computer can send and receive packets.
     Each computer in the WirelessConnection receives a distinct `WirelessConnectionSide` object
     """
+    connection: WirelessConnection
+
     def __init__(self, main_connection: WirelessConnection, wireless_interface: WirelessNetworkInterface) -> None:
         super(WirelessConnectionSide, self).__init__(main_connection)
 

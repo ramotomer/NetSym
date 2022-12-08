@@ -6,13 +6,13 @@ import scapy
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.address.mac_address import MACAddress
-from NetSym.computing.connections.connection import ConnectionSide
 from NetSym.computing.connections.wireless_connection import WirelessConnection, WirelessConnectionSide
 from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
 from NetSym.consts import T_Color, INTERFACES
 from NetSym.exceptions import *
 from NetSym.gui.tech.network_interfaces.wireless_network_interface_graphics import WirelessNetworkInterfaceGraphics
 from NetSym.packets.wireless_packet import WirelessPacket
+from NetSym.usefuls.funcs import raise_on_none
 
 if TYPE_CHECKING:
     from NetSym.gui.tech.network_interfaces.network_interface_graphics import NetworkInterfaceGraphics
@@ -31,7 +31,7 @@ class WirelessNetworkInterface(NetworkInterface):
     __connection:      Optional[WirelessConnection]
     __connection_side: Optional[WirelessConnectionSide]
 
-    frequency:         float
+    frequency:         Optional[float]
     graphics:          Optional[WirelessNetworkInterfaceGraphics]
 
     def __init__(self,
@@ -61,21 +61,24 @@ class WirelessNetworkInterface(NetworkInterface):
         return self.__connection_side
 
     @connection_side.setter
-    def connection_side(self, value: Optional[ConnectionSide]) -> None:
-        if (value is not None) and (not isinstance(value, WirelessConnectionSide)):
-            raise WrongUsageError(f"Do not set the `connection_side` of a `WirelessNetworkInterface` with something that is not a `WirelessConnectionSide` "
-                                  f"You inserted {value!r} which is a {type(value)}...")
+    def connection_side(self, new_connection_side: Optional[WirelessConnectionSide]) -> None:
+        if (new_connection_side is not None) and (not isinstance(new_connection_side, WirelessConnectionSide)):
+            raise WrongUsageError(f"Do not set the `connection_side` of a `WirelessNetworkInterface` with something that is not a "
+                                  f"`WirelessConnectionSide` You inserted {new_connection_side!r} which is a {type(new_connection_side)}...")
 
         self.__connection = None
-        self.__connection_side = value
+        self.__connection_side = new_connection_side
 
-        if value is not None:
-            self.__connection = value.connection
+        if new_connection_side is not None:
+            self.__connection = new_connection_side.connection
 
     def init_graphics(self, parent_computer: ComputerGraphics, x: Optional[float] = None, y: Optional[float] = None) -> NetworkInterfaceGraphics:
         """
         Initiates the CableNetworkInterfaceGraphics object of this interface
         """
+        if (x is None) or (y is None):
+            raise ThisValueShouldNeverBeNone
+
         self.graphics = WirelessNetworkInterfaceGraphics(x, y, self, parent_computer)
         return self.graphics
 
@@ -101,7 +104,8 @@ class WirelessNetworkInterface(NetworkInterface):
         """
         if not self.is_connected():
             raise InterfaceNotConnectedError("Cannot disconnect an interface that is not connected!")
-        self.connection.remove_side(self.connection_side)
+
+        self.connection.remove_side(raise_on_none(self.connection_side))
         self.connection_side = None
         self.frequency = None
 

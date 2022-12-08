@@ -48,7 +48,7 @@ class RawSocket(Socket):
         Return the interface the socket is bound to.
         If the socket is not bound, or if it is bound to ANY - raise :)
         """
-        if (self.interface is None) or (self.interface is INTERFACES.NO_INTERFACE):
+        if (self.interface is None) or isinstance(self.interface, str):  # if it is a string it will be NO_INTERFACE
             raise SocketNotBoundError(f"No interface to get! Socket: {self!r}")
 
         return self.interface
@@ -63,7 +63,7 @@ class RawSocket(Socket):
         self.assert_is_not_closed()
         if self.interface is INTERFACES.ANY_INTERFACE:
             raise RawSocketError("Cannot send on a raw socket that is bound to all interfaces!")
-        self.computer.send(packet, self.interface, sending_socket=self)
+        self.computer.send(packet, self.get_interface(), sending_socket=self)
 
     def receive(self, count: Optional[int] = None) -> List[ReturnedPacket]:
         """
@@ -99,7 +99,7 @@ class RawSocket(Socket):
 
     def __repr__(self) -> str:
         return f"RAW    " \
-            f"{self.interface.name or 'unbound': <23}" \
+            f"{self.interface.name if isinstance(self.interface, NetworkInterface) else 'unbound': <23}" \
             f"{'raw': <23}" \
             f"{self.state: <16}" \
             f"{self.acquiring_process_pid}"

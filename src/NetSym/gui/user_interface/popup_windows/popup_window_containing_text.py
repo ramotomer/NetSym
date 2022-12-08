@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Sequence, Iterable, NamedTuple, List, Iterator
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Optional, Sequence, Iterable, List, Iterator, cast
 
 from NetSym.consts import WINDOWS, T_Color, SHAPES
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
@@ -11,14 +12,18 @@ if TYPE_CHECKING:
     from NetSym.gui.user_interface.button import Button
 
 
-class ChildGraphicsObjects(NamedTuple):
+@dataclass
+class ChildGraphicsObjects:
     title_text:       Text
     information_text: Text
     exit_button:      Button
     buttons:          List[Button]
 
     def __iter__(self) -> Iterator[GraphicsObject]:
-        return iter([self.title_text, self.information_text, self.exit_button] + self.buttons)
+        return iter(
+            cast("List[GraphicsObject]", [self.title_text, self.information_text, self.exit_button]) +
+            cast("List[GraphicsObject]", self.buttons)
+        )
 
 
 class PopupWindowContainingText(PopupWindow):
@@ -48,21 +53,21 @@ class PopupWindowContainingText(PopupWindow):
             max_width=self.width
         )
 
-        self.__child_graphics_objects = ChildGraphicsObjects(
+        self._PopupWindowContainingText__child_graphics_objects = ChildGraphicsObjects(
             self.title_text,
             self.information_text,
             self.exit_button,
-            (buttons if buttons is not None else [])
+            (list(buttons) if buttons is not None else [])
         )
 
     def get_title_text(self) -> Text:
-        return self.__child_graphics_objects.title_text
+        return self._PopupWindowContainingText__child_graphics_objects.title_text
 
     def get_information_text(self) -> Text:
-        return self.__child_graphics_objects.information_text
+        return self._PopupWindowContainingText__child_graphics_objects.information_text
 
     def get_exit_button(self) -> Button:
-        return self.__child_graphics_objects.exit_button
+        return self._PopupWindowContainingText__child_graphics_objects.exit_button
 
     def get_children(self) -> Iterable[GraphicsObject]:
-        return self.__child_graphics_objects
+        return self._PopupWindowContainingText__child_graphics_objects
