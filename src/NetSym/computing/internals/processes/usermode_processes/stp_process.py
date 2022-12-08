@@ -408,7 +408,8 @@ class STPProcess(Process):
             self._remove_disconnected_ports()
 
             for packet, packet_metadata in stp_packets.packets.items():
-                self._learn_from_packet(packet, receiving_port=packet_metadata.interface)
+                self._learn_from_packet(packet, receiving_port=packet_metadata.interface)  # type: ignore
+                # TODO: STP over wireless? will it work? change typing accordingly... thanks...
 
             self._set_interface_states()
             self._block_blocked_ports()

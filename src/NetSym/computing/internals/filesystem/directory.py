@@ -78,6 +78,16 @@ class Directory:
         except KeyError:
             raise NoSuchFileError(f"File or Directory '{item_name}' do not exist in {cwd.name}")
 
+    def directory_at_relative_path(self, path: str) -> Directory:
+        """
+        Exactly like `at_relative_path` only if the returned is not of type `Directory` - raise `WrongUsageError`
+        """
+        item = self.at_relative_path(path)
+        if not isinstance(item, Directory):
+            raise WrongUsageError(f"The returned type must be a directory! but is actually type {type(item)}!!")
+
+        return item
+
     def make_sub_dir(self, name: str, mount: str = FILESYSTEM.TYPE.EXT4) -> Directory:
         """
         Creates a new directory under this one.

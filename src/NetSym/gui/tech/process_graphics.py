@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, TYPE_CHECKING, Set, Iterable, Callable, Dict, Optional
+from typing import List, TYPE_CHECKING, Set, Iterable, Callable, Dict, Optional, Union
 
 from NetSym.consts import PORTS, IMAGES, T_Port
 from NetSym.exceptions import UnknownPortError
@@ -30,7 +30,7 @@ class ProcessGraphicsList(GraphicsObject):
     def set_of_all_ports(self) -> Set[T_Port]:
         return {process_graphics.port for process_graphics in self.__child_graphics_objects}
 
-    def get_children(self) -> Iterable[GraphicsObject]:
+    def get_children(self) -> Iterable[Union[GraphicsObject, Iterable[GraphicsObject]]]:
         return self.__child_graphics_objects
 
     def add(self, port: T_Port) -> None:
@@ -99,8 +99,8 @@ class ProcessGraphicsList(GraphicsObject):
     def __repr__(self) -> str:
         return f"<< ProcessGraphicsList {[pg.port for pg in self.__child_graphics_objects]} >>"
 
-    def dict_save(self) -> None:
-        pass
+    def dict_save(self) -> Dict:
+        raise NotImplementedError
 
 
 class ProcessGraphics(ImageGraphics):
@@ -147,5 +147,5 @@ class ProcessGraphics(ImageGraphics):
     def __repr__(self) -> str:
         return f"<< ProcessGraphics of port {self.port} on computer {self.server_graphics.computer.name!r} >>"
 
-    def dict_save(self) -> None:
-        pass
+    def dict_save(self) -> Dict:
+        raise NotImplementedError

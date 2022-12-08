@@ -293,13 +293,18 @@ class CableConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered)
             },
         }
 
-    def delete(self, user_interface: UserInterface) -> None:
+    def delete(self, user_interface: Optional[UserInterface]) -> None:
         """
         Delete the connection and disconnect it from both sides
         :param user_interface:
         :return:
         """
         super(CableConnectionGraphics, self).delete(user_interface)
+
+        if user_interface is None:
+            raise NotImplementedError
+            # TODO: the design for all `delete` functions is hideous. why
+
         user_interface.remove_connection(self.connection)
 
     def __str__(self) -> str:

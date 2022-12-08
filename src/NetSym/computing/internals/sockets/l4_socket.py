@@ -39,7 +39,12 @@ class L4Socket(Socket):
 
     @property
     def bound_address(self) -> Tuple[IPAddress, T_Port]:
-        return self.computer.sockets[self].local_ip_address, self.computer.sockets[self].local_port
+        ip = self.computer.sockets[self].local_ip_address
+        port = self.computer.sockets[self].local_port
+        if (ip is None) or (port is None):
+            raise ThisValueShouldNeverBeNone(f"IP: {ip}, port: {port}")
+
+        return ip, port
 
     def assert_is_connected(self) -> None:
         if not self.is_connected:
@@ -52,17 +57,6 @@ class L4Socket(Socket):
         :param address:
         :return:
         """
-
-    def receive(self, count: Optional[int] = None) -> bytes:
-        """
-        receive the information from the other side of the socket
-        :param count: how many bytes to receive
-        :return:
-        """
-        data = b''.join(self.received) if self.received else b''
-        self.received.clear()
-        # TODO use the `count` parameter
-        return data
 
     @staticmethod
     def generate_port() -> int:

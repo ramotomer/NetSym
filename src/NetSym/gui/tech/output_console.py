@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple, NamedTuple, Iterable
+from typing import Tuple, NamedTuple, Iterable, Union
 
 from NetSym.consts import CONSOLE, TEXT
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
@@ -51,7 +51,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
             )
         )
 
-    def get_children(self) -> Iterable[GraphicsObject]:
+    def get_children(self) -> Iterable[Union[GraphicsObject, Iterable[GraphicsObject]]]:
         return self.__child_graphics_objects
 
     def get_text(self) -> Text:
@@ -113,7 +113,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
 
     @property
     def line_height(self) -> float:
-        return (7 * self.__child_graphics_objects.text.label.font_size) / 4
+        return float((7 * self.__child_graphics_objects.text.label.font_size) / 4)
 
     def is_full(self) -> bool:
         """

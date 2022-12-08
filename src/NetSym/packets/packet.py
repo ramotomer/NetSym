@@ -98,7 +98,7 @@ class Packet(ABC):
         self.data = Ether(self.data.build())
         self.transform_to_indicative_attribute_names()
 
-    def summary(self, discarded_protocols: Tuple[str] = ("Ether", "IP", "Raw")) -> str:
+    def summary(self, discarded_protocols: Tuple[str, ...] = ("Ether", "IP", "Raw")) -> str:
         """
         Return a short string which is a summary line of the packet
         Uses the scapy `packet.summary` method - but removes some redundant text from it.

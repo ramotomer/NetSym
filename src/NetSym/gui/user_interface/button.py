@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import NamedTuple, Callable, Optional, Tuple, Iterable
+from typing import NamedTuple, Callable, Optional, Tuple, Iterable, Union
 
 from NetSym.consts import BUTTONS, T_Color, COLORS, WINDOWS
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
@@ -74,7 +74,7 @@ class Button(UserInterfaceGraphicsObject, DifferentColorWhenHovered):
     def active_color(self) -> T_Color:
         return self.__custom_active_color if self.__custom_active_color is not None else self.light_color
 
-    def get_children(self) -> Iterable[GraphicsObject]:
+    def get_children(self) -> Iterable[Union[GraphicsObject, Iterable[GraphicsObject]]]:
         return self.__child_graphics_objects
 
     def get_text(self) -> Text:

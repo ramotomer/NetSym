@@ -28,7 +28,7 @@ class ImageGraphics(ViewableGraphicsObject, Resizable):
     PARENT_DIRECTORY = DIRECTORIES.IMAGES
 
     def __init__(self,
-                 image_name: str,
+                 image_name: Optional[str],
                  x: float,
                  y: float,
                  centered: bool = False,
@@ -36,7 +36,7 @@ class ImageGraphics(ViewableGraphicsObject, Resizable):
                  scale_factor: float = IMAGES.SCALE_FACTORS.SPRITES,
                  is_pressable: bool = False) -> None:
         super(ImageGraphics, self).__init__(x, y, do_render=False, centered=centered, is_in_background=is_in_background, is_pressable=is_pressable)
-        self.image_name = add_path_basename_if_needed(self.PARENT_DIRECTORY, image_name or IMAGES.IMAGE_NOT_FOUND)
+        self.image_name = add_path_basename_if_needed(self.PARENT_DIRECTORY, image_name if image_name is not None else IMAGES.IMAGE_NOT_FOUND)
 
         self.scale_factor = scale_factor
         self._sprite: Optional[pyglet.sprite.Sprite] = None

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from os import linesep
-from typing import TYPE_CHECKING, Optional, Dict, Callable, Iterable, Tuple, List, Type, Any
+from typing import TYPE_CHECKING, Optional, Dict, Callable, Iterable, Tuple, List, Type, Any, Union, Iterator, cast
 
 import pyglet
 
@@ -38,14 +38,13 @@ class ChildGraphicsObjects:
     interface_list: List[NetworkInterfaceGraphics]
     loopback: Optional[LoopbackConnectionGraphics] = None
 
-    def __iter__(self) -> Iterable:
+    def __iter__(self) -> Iterator[Union[GraphicsObject, Iterable[GraphicsObject]]]:
         return iter((
-            self.text,
-            self.console,
-            self.process_list,
-            self.interface_list,
-            self.loopback,
-        ))
+            cast("Union[GraphicsObject, Iterable[GraphicsObject]]", self.text),
+            cast("Union[GraphicsObject, Iterable[GraphicsObject]]", self.console),
+            cast("Union[GraphicsObject, Iterable[GraphicsObject]]", self.process_list),
+            cast("Union[GraphicsObject, Iterable[GraphicsObject]]", self.interface_list)) +
+                    ((cast("Union[GraphicsObject, Iterable[GraphicsObject]]", self.loopback),) if self.loopback is not None else ()))
 
 
 class ComputerGraphics(ImageGraphics):
@@ -106,8 +105,8 @@ class ComputerGraphics(ImageGraphics):
     def should_be_transparent(self) -> bool:
         return not self.computer.is_powered_on
 
-    def get_children(self) -> Iterable[GraphicsObject]:
-        return self.__child_graphics_objects
+    def get_children(self) -> Iterable[Union[GraphicsObject, Iterable[GraphicsObject]]]:
+        return list(self.__child_graphics_objects)
 
     def get_console(self) -> OutputConsole:
         return self.__child_graphics_objects.console
@@ -354,11 +353,15 @@ class ComputerGraphics(ImageGraphics):
 
         return dict_
 
-    def delete(self, user_interface: UserInterface) -> None:
+    def delete(self, user_interface: Optional[UserInterface]) -> None:
         """
         Delete the computer graphics object
         """
         super(ComputerGraphics, self).delete(user_interface)
+
+        if user_interface is None:
+            raise NotImplementedError
+
         user_interface.remove_computer(self.computer)
         user_interface.delete_connections_to(self.computer)
 

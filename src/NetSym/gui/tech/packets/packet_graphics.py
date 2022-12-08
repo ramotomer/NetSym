@@ -26,9 +26,12 @@ def image_from_packet(layer: scapy.packet.Packet) -> str:
     """
     name = get_original_layer_name_by_instance(layer)
 
-    if name in TYPE_TO_OPCODE_FUNCTION:
-        return PACKET.TYPE_TO_IMAGE[name][TYPE_TO_OPCODE_FUNCTION[name](layer)]
-    return PACKET.TYPE_TO_IMAGE[name]
+    image_or_dict = PACKET.TYPE_TO_IMAGE[name]
+
+    if isinstance(image_or_dict, str):
+        return image_or_dict
+
+    return image_or_dict[TYPE_TO_OPCODE_FUNCTION[name](layer)]
 
 
 class PacketGraphics(Selectable):

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Tuple, Dict
 
 from NetSym.consts import SHAPES, SELECTION_SQUARE, COLORS
 from NetSym.exceptions import ObjectIsNotResizableError
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
+from NetSym.gui.abstracts.resizable import Resizable
 from NetSym.gui.abstracts.uniquely_dragged import UniquelyDragged
 from NetSym.gui.abstracts.user_interface_graphics_object import UserInterfaceGraphicsObject
 from NetSym.gui.main_loop import MainLoop
@@ -13,7 +14,7 @@ from NetSym.gui.shape_drawing import draw_circle
 from NetSym.usefuls.funcs import distance
 
 if TYPE_CHECKING:
-    from NetSym.gui.abstracts.image_graphics import ImageGraphics
+    pass
 
 
 class ResizingDot(UserInterfaceGraphicsObject, DifferentColorWhenHovered, UniquelyDragged):
@@ -23,7 +24,7 @@ class ResizingDot(UserInterfaceGraphicsObject, DifferentColorWhenHovered, Unique
     """
     def __init__(self,
                  x: float, y: float,
-                 resized_object: ImageGraphics,
+                 resized_object: Resizable,
                  direction: Tuple[int, int],
                  constrain_proportions: bool = False) -> None:
         """
@@ -101,8 +102,8 @@ class ResizingDot(UserInterfaceGraphicsObject, DifferentColorWhenHovered, Unique
         x, y = self.location = self.resized_object.get_corner_by_direction(self.direction)
         self._x_diff, self._y_diff = self.resized_object.x - x, self.resized_object.y - y
 
-    def dict_save(self) -> None:
-        pass
+    def dict_save(self) -> Dict:
+        raise NotImplementedError
 
     def __str__(self) -> str:
         return "ResizingDot"

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import Callable, NamedTuple, Iterable
+from typing import Callable, NamedTuple, Iterable, Union
 
 from pyglet.window import key
 
@@ -83,7 +83,7 @@ class PopupTextBox(PopupWindowContainingText):
         self.key_writer.add_key_mapping(key.UP, self.scroll_up_through_old_inputs)
         self.key_writer.add_key_mapping(key.DOWN, self.scroll_down_through_old_inputs)
 
-    def get_children(self) -> Iterable[GraphicsObject]:
+    def get_children(self) -> Iterable[Union[GraphicsObject, Iterable[GraphicsObject]]]:
         return self._PopupTextBox__child_graphics_objects
 
     def scroll_up_through_old_inputs(self) -> None:

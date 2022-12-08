@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, Set, Tuple, Sequence, cast, Iterable, List, Iterator
+from typing import TYPE_CHECKING, Optional, Set, Tuple, Sequence, cast, Iterable, List, Iterator, Union
 
 from NetSym.consts import WINDOWS, T_Color, COLORS, SHAPES, debugp
 from NetSym.exceptions import *
@@ -112,7 +112,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
     def is_pinned(self) -> bool:
         return bool(self._pinned_directions)
 
-    def get_children(self) -> Iterable[GraphicsObject]:
+    def get_children(self) -> Iterable[Union[GraphicsObject, Iterable[GraphicsObject]]]:
         return self.__child_graphics_objects
 
     def get_title_text(self) -> Text:

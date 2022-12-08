@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Tuple, List, Type
+from typing import TYPE_CHECKING, Tuple, List, Callable, Optional, Dict
 
 from NetSym.computing.internals.filesystem.directory import Directory
 from NetSym.computing.internals.shell.commands.command import CommandOutput
@@ -65,7 +65,7 @@ class Shell:
         self.computer = computer
         self.shell_graphics = shell_graphics
 
-        self.commands: List[Type[Command]] = [
+        self.command_classes: List[Callable[[Computer, Shell], Command]] = [
             Cat, Cd, Cp, Head, Ls, Mkdir, Mv, Pwd, Rm, Tail, Touch,
             Hostname, Uname, Uptime,
             Alias, Help, Man, Unalias, Watch,
@@ -73,7 +73,7 @@ class Shell:
             Brctl, Ip, Arp, Arping, Dns, Echoc, Echos, Netstat, Nslookup, Ping, Tcpdump, Traceroute,
             Kill, Ps,
         ]
-        self.commands = [command(computer, self) for command in self.commands]
+        self.commands: List[Command] = [command(computer, self) for command in self.command_classes]
 
         self.parser_commands = {
             'clear': self.shell_graphics.clear_screen,
@@ -100,10 +100,10 @@ class Shell:
 
         self.cwd: Directory = self.computer.filesystem.root
 
-        self.history = []
-        self.history_index = None
+        self.history: List[str] = []
+        self.history_index: Optional[int] = None
 
-        self.aliases = {}
+        self.aliases: Dict[str, str] = {}
 
     @property
     def cwd_path(self) -> str:

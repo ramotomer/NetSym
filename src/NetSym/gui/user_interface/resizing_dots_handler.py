@@ -3,6 +3,7 @@ from __future__ import annotations
 from itertools import product
 from typing import List, Optional, Tuple, TYPE_CHECKING
 
+from NetSym.exceptions import *
 from NetSym.gui.user_interface.resizing_dot import ResizingDot
 
 if TYPE_CHECKING:
@@ -36,6 +37,9 @@ class ResizingDotsHandler:
         """
         Create a new `ResizingDot` at the appropriate location
         """
+        if self.resized_object is None:
+            raise ThisValueShouldNeverBeNone(f"resized_object is None!")
+
         corner_x, corner_y = self.resized_object.get_corner_by_direction(direction)
         self.dots.append(ResizingDot(corner_x, corner_y, self.resized_object, direction, constrain_proportions))
 
@@ -51,8 +55,8 @@ class ResizingDotsHandler:
         if self.resized_object is None:
             return False
 
-        for direction in map(tuple, set(product((-1, 0, 1), repeat=2)) - {(0, 0)}):
-            self._create_dot(direction, constrain_proportions=(0 not in direction))
+        for x, y in set(product((-1, 0, 1), repeat=2)) - {(0, 0)}:
+            self._create_dot((x, y), constrain_proportions=((x != 0) and (y != 0)))
         return True
 
     def _remove_old_dots(self) -> None:

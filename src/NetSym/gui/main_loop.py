@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from typing import Type, Optional, TYPE_CHECKING, Callable, Any, List, TypeVar, Dict, Union, Iterable, Sequence
+from typing import Type, Optional, TYPE_CHECKING, Callable, Any, List, TypeVar, Dict, Union, Iterable
 
 from NetSym.consts import T_Time, MainLoopFunctionPriority
 from NetSym.exceptions import *
@@ -74,7 +74,7 @@ class MainLoop:
         """
         return graphics_object in self.graphics_objects
 
-    def register_graphics_object(self, graphics_object: Union[GraphicsObject, Sequence[GraphicsObject]], is_in_background: bool = False) -> None:
+    def register_graphics_object(self, graphics_object: Union[GraphicsObject, Iterable[GraphicsObject]], is_in_background: bool = False) -> None:
         """
         This method receives a `GraphicsObject` instance, loads it, and enters
         it into the update main loop with its `move` and `draw` methods.
@@ -84,7 +84,7 @@ class MainLoop:
         :param is_in_background: Whether the object will be drawn in the front
             or the back of the other objects.
         """
-        graphics_object_sequence = graphics_object if isinstance(graphics_object, Sequence) else [graphics_object]
+        graphics_object_sequence = graphics_object if isinstance(graphics_object, Iterable) else [graphics_object]
 
         for graphics_object_ in graphics_object_sequence:
             if not self.is_registered(graphics_object_):
@@ -247,7 +247,10 @@ class MainLoop:
             self.insert_to_loop(graphics_object.draw)
 
             for child_graphics_object in graphics_object.get_children():
-                self.move_to_front(child_graphics_object)
+                children_list = child_graphics_object if isinstance(child_graphics_object, Iterable) else [child_graphics_object]
+                for child in children_list:
+                    self.move_to_front(child)
+
                 # if this is not the order that they were meant to be in, this might cause bugs, fix in the future
                 # if necessary
 
