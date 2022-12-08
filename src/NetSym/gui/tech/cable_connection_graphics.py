@@ -293,7 +293,7 @@ class CableConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered)
             },
         }
 
-    def delete(self, user_interface: UserInterface) -> None:
+    def delete(self, user_interface: Optional[UserInterface]) -> None:
         """
         Delete the connection and disconnect it from both sides
         :param user_interface:

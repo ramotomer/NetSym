@@ -113,7 +113,7 @@ class OutputConsole(UserInterfaceGraphicsObject):
 
     @property
     def line_height(self) -> float:
-        return (7 * self.__child_graphics_objects.text.label.font_size) / 4
+        return float((7 * self.__child_graphics_objects.text.label.font_size) / 4)
 
     def is_full(self) -> bool:
         """

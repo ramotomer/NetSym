@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 from enum import Enum
 from math import sqrt
-from typing import Tuple, Any, SupportsInt
+from typing import Tuple, Any, SupportsInt, Dict, Union
 
 import pyglet
 
@@ -595,7 +595,7 @@ class PACKET:
         INCOMING = 'INCOMING'
         OUTGOING = 'OUTGOING'
 
-    TYPE_TO_IMAGE = {
+    TYPE_TO_IMAGE: Dict[str, Union[str, Dict[Any, str]]] = {
         "Ether": IMAGES.PACKETS.ETHERNET,
         "IP": {
             OPCODES.IP.FRAGMENT.NOT_FRAGMENT: IMAGES.PACKETS.IP.NOT_FRAGMENTED,

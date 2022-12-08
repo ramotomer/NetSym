@@ -105,6 +105,17 @@ class TCPSocket(L4Socket):
         listening_socket.listen()
         return listening_socket
 
+    def receive(self, count: Optional[int] = None) -> bytes:
+        """
+        receive the information from the other side of the socket
+        :param count: how many bytes to receive
+        :return:
+        """
+        data = b''.join(self.received) if self.received else b''
+        self.received.clear()
+        # TODO use the `count` parameter
+        return data
+
     def close(self) -> None:
         if self.is_closed:
             return

@@ -36,7 +36,7 @@ class WirelessPacketGraphics(PacketGraphics, ViewableGraphicsObject, DifferentCo
 
         self.connection = connection
         self.direction = PACKET.DIRECTION.WIRELESS
-        self.distance = 0
+        self.distance = 0.
         self.str = str(deepest_layer)
         self.deepest_layer = deepest_layer
         self.color: T_Color = COLORS.WHITE

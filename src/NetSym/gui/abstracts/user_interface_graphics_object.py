@@ -4,7 +4,6 @@ from typing import Optional, Tuple, Dict
 
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
-from NetSym.usefuls.funcs import sum_tuples
 
 
 class UserInterfaceGraphicsObject(GraphicsObject):
@@ -52,7 +51,9 @@ class UserInterfaceGraphicsObject(GraphicsObject):
         :return:
         """
         if (self.parent_graphics is not None) and (self.padding is not None):
-            self.location = sum_tuples(self.parent_graphics.location, self.padding)
+            x, y = self.parent_graphics.location
+            padding_x, padding_y = self.padding
+            self.location = x + padding_x, y + padding_y
 
     def dict_save(self) -> Dict:
         """

@@ -56,6 +56,10 @@ class SendPing(Process):
 
         self.length = self.length or PROTOCOLS.ICMP.DEFAULT_MESSAGE_LENGTH
         self.data =   self.data or get_icmp_data(self.length)
+
+        if self.dst_ip is None:
+            raise ThisValueShouldNeverBeNone(f"how did this happen??? dst_ip is None!")
+
         try:
             self.computer.send_ping_to(
                 dst_mac,

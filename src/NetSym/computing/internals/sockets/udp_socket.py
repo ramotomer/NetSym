@@ -8,6 +8,7 @@ from NetSym.address.ip_address import IPAddress
 from NetSym.computing.internals.sockets.l4_socket import L4Socket
 from NetSym.consts import COMPUTER, T_Port
 from NetSym.exceptions import *
+from NetSym.usefuls.funcs import raise_on_none
 
 if TYPE_CHECKING:
     from NetSym.computing.computer import Computer
@@ -58,7 +59,7 @@ class UDPSocket(L4Socket):
         self.assert_is_not_closed()
         self.assert_is_connected()
         dst_ip, dst_port = self.remote_address
-        self.sendto(data, (dst_ip, dst_port))
+        self.sendto(data, (raise_on_none(dst_ip), raise_on_none(dst_port)))
 
     def receivefrom(self) -> List[ReturnedUDPPacket]:
         self.assert_is_bound()

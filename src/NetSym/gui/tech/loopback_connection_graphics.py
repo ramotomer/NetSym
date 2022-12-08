@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from math import pi, sin, cos
-from typing import TYPE_CHECKING, Iterable, Tuple
+from typing import TYPE_CHECKING, Tuple
 
 from NetSym.consts import PACKET
 from NetSym.gui.shape_drawing import draw_circle
@@ -38,9 +38,9 @@ class LoopbackConnectionGraphics(CableConnectionGraphics):
     def is_in(self, x: float, y: float) -> bool:
         return False
 
-    def get_coordinates(self, direction: str = PACKET.DIRECTION.RIGHT) -> Iterable[Tuple[float, float]]:
+    def get_coordinates(self, direction: str = PACKET.DIRECTION.RIGHT) -> Tuple[float, float, float, float]:
         """Returns the start and end coordinates of the connection (both are self.computer_graphics.location)"""
-        return (*self.computer_graphics.location, *self.computer_graphics.location)
+        return self.computer_graphics.location + self.computer_graphics.location
 
     def packet_location(self, direction: str, progress: float) -> Tuple[float, float]:
         """

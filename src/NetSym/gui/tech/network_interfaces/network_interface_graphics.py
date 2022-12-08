@@ -4,6 +4,8 @@ import os
 from abc import abstractmethod
 from typing import Optional, Tuple, Dict, Callable, TYPE_CHECKING
 
+import pyglet
+
 from NetSym.consts import INTERFACES, IMAGES, DIRECTORIES, SELECTED_OBJECT
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
@@ -115,7 +117,7 @@ class NetworkInterfaceGraphics(ViewableGraphicsObject):
         :return:
         """
 
-    def delete(self, user_interface: UserInterface) -> None:
+    def delete(self, user_interface: Optional[UserInterface]) -> None:
         """
         Delete the interface!
         """

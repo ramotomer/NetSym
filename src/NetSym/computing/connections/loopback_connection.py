@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING, Optional, List, cast
 from NetSym.computing.connections.cable_connection import CableConnection
 from NetSym.consts import CONNECTIONS
 from NetSym.gui.tech.loopback_connection_graphics import LoopbackConnectionGraphics
+from NetSym.packets.cable_packet import CablePacket
 
 if TYPE_CHECKING:
-    from NetSym.packets.packet import Packet
     from NetSym.computing.connections.cable_connection import CableSentPacket
     from NetSym.computing.connections.cable_connection import CableConnectionSide
     from NetSym.gui.tech.computer_graphics import ComputerGraphics
@@ -40,7 +40,7 @@ class LoopbackConnection(CableConnection):
     def get_graphics(self) -> LoopbackConnectionGraphics:
         return cast("LoopbackConnectionGraphics", super(LoopbackConnection, self).get_graphics())
 
-    def _add_packet(self, packet: Packet, direction: str) -> None:
+    def _add_packet(self, packet: CablePacket, direction: str) -> None:
         """performs the super-method of `add_packet` but also makes sure the connection is visible."""
         super(LoopbackConnection, self)._add_packet(packet, direction)
         self.get_graphics().show()

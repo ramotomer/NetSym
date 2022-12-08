@@ -112,7 +112,7 @@ class WirelessConnection(Connection):
         for side in self.connection_sides:
             location = side.wireless_interface.get_graphics().location
 
-            if 0 != distance(location, wireless_packet.get_graphics().center_location) - wireless_packet.graphics.distance < 20:
+            if 0 != distance(location, wireless_packet.get_graphics().center_location) - wireless_packet.get_graphics().distance < 20:
                 if side.was_already_received(sent_packet):  # dont get packets twice!
                     continue
 
@@ -128,7 +128,7 @@ class WirelessConnection(Connection):
         if self._get_distance(sent_packet) <= self.longest_line_on_the_screen:
             return  # packet still visible in screen...
 
-        sent_packet.packet.graphics.unregister()
+        sent_packet.packet.get_graphics().unregister()
         self.sent_packets.remove(sent_packet)
 
     def _send_packets_from_side(self, side: WirelessConnectionSide) -> List[GraphicsObject]:
@@ -153,7 +153,7 @@ class WirelessConnection(Connection):
         :param sent_packet: a `CableSentPacket` namedtuple
         """
         distance_ = self._get_distance(sent_packet)
-        sent_packet.packet.graphics.distance = distance_
+        sent_packet.packet.get_graphics().distance = distance_
 
         self._remove_packet_if_out_of_screen(sent_packet)
 
@@ -205,7 +205,7 @@ class WirelessConnectionSide(ConnectionSide):
         super(WirelessConnectionSide, self).__init__(main_connection)
 
         self.wireless_interface = wireless_interface
-        self._received_packet_ids = []
+        self._received_packet_ids: List[int] = []
 
     def get_packet_from_connection(self, sent_packet: SentPacket) -> None:
         """

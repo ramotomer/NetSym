@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from operator import itemgetter
-from typing import TYPE_CHECKING, Union, Tuple
+from typing import TYPE_CHECKING, Union, Tuple, Dict
 
 from NetSym.consts import SELECTION_SQUARE
 from NetSym.exceptions import WrongUsageError
@@ -45,8 +45,8 @@ class SelectingSquare(GraphicsObject):
     def height(self) -> float:
         return abs(self.y - self.y2)
 
-    def dict_save(self) -> None:
-        pass
+    def dict_save(self) -> Dict:
+        raise NotImplementedError
 
     def draw(self) -> None:
         """

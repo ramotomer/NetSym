@@ -46,7 +46,7 @@ class RoutePacket(Process):
 
         return True
 
-    def _validate_ttl(self) -> bool:
+    def _validate_ttl(self) -> T_ProcessCode:
         """
         Decrease the TTL of the packet, if it is 0, sends an ICMP Time Exceeded
         :return: a bool telling whether the time (TTL) of the packet was exceeded (reached 0).

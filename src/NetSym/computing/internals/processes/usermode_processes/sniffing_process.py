@@ -63,5 +63,5 @@ class SniffingProcess(Process):
 
     def __repr__(self) -> str:
         return f"tcpdump " \
-            f"{f'-A' if self.socket.interface is None else f'-i {self.socket.interface.name}'} " \
+            f"{f'-i {self.socket.interface.name}' if isinstance(self.socket.interface, NetworkInterface) else f'-A'} " \
             f"{'-p' if self.socket.is_promisc else ''}"

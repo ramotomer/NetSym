@@ -83,7 +83,7 @@ class SwitchingProcess(Process):
         dst_mac = packet["Ether"].dst_mac
 
         if self.computer.is_hub or dst_mac.is_broadcast() or (dst_mac not in self.switching_table):
-            return [leg for leg in self.computer.interfaces if leg is not source_leg and leg.is_connected()]  # flood!!!
+            return [leg for leg in self.computer.cable_interfaces if leg is not source_leg and leg.is_connected()]  # flood!!!
         destination_leg = self.switching_table[dst_mac].leg
         return [destination_leg] if destination_leg is not source_leg else []
         # ^ making sure the packet does not return on the destination leg

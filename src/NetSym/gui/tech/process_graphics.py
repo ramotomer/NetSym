@@ -99,8 +99,8 @@ class ProcessGraphicsList(GraphicsObject):
     def __repr__(self) -> str:
         return f"<< ProcessGraphicsList {[pg.port for pg in self.__child_graphics_objects]} >>"
 
-    def dict_save(self) -> None:
-        pass
+    def dict_save(self) -> Dict:
+        raise NotImplementedError
 
 
 class ProcessGraphics(ImageGraphics):
@@ -147,5 +147,5 @@ class ProcessGraphics(ImageGraphics):
     def __repr__(self) -> str:
         return f"<< ProcessGraphics of port {self.port} on computer {self.server_graphics.computer.name!r} >>"
 
-    def dict_save(self) -> None:
-        pass
+    def dict_save(self) -> Dict:
+        raise NotImplementedError

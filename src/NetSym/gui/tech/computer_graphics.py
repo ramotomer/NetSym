@@ -107,7 +107,7 @@ class ComputerGraphics(ImageGraphics):
         return not self.computer.is_powered_on
 
     def get_children(self) -> Iterable[GraphicsObject]:
-        return self.__child_graphics_objects
+        return list(self.__child_graphics_objects)
 
     def get_console(self) -> OutputConsole:
         return self.__child_graphics_objects.console
@@ -354,7 +354,7 @@ class ComputerGraphics(ImageGraphics):
 
         return dict_
 
-    def delete(self, user_interface: UserInterface) -> None:
+    def delete(self, user_interface: Optional[UserInterface]) -> None:
         """
         Delete the computer graphics object
         """

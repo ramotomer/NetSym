@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod, ABC
-from typing import TYPE_CHECKING, Optional, Any, List
+from typing import TYPE_CHECKING, Optional, List
 
 from NetSym.computing.internals.processes.abstracts.process import WaitingFor, T_ProcessCode, Timeout
 from NetSym.consts import COMPUTER, T_Time
@@ -60,14 +60,6 @@ class Socket(ABC):
         """
         Sends down the socket some data
         :param data: string
-        :return:
-        """
-
-    @abstractmethod
-    def receive(self, count: Optional[int]) -> List[Any]:
-        """
-        receive the information from the other side of the socket
-        :param count: how many bytes to receive
         :return:
         """
 
