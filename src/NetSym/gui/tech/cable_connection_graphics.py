@@ -300,6 +300,11 @@ class CableConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered)
         :return:
         """
         super(CableConnectionGraphics, self).delete(user_interface)
+
+        if user_interface is None:
+            raise NotImplementedError
+            # TODO: the design for all `delete` functions is hideous. why
+
         user_interface.remove_connection(self.connection)
 
     def __str__(self) -> str:

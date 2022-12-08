@@ -91,11 +91,15 @@ class CablePacketGraphics(PacketGraphics, ImageGraphics):
         self.buttons_id = user_interface.add_buttons(buttons)
         return self.copy_sprite(self.sprite), '', self.buttons_id
 
-    def delete(self, user_interface: UserInterface) -> None:
+    def delete(self, user_interface: Optional[UserInterface]) -> None:
         """
         Delete the packet and drop it from the connection it is currently going through
         """
         super(CablePacketGraphics, self).delete(user_interface)
+
+        if user_interface is None:
+            raise NotImplementedError
+
         user_interface.drop_packet(self)
 
     def __str__(self) -> str:

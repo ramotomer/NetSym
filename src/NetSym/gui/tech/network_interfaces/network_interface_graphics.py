@@ -122,4 +122,8 @@ class NetworkInterfaceGraphics(ViewableGraphicsObject):
         Delete the interface!
         """
         super(NetworkInterfaceGraphics, self).delete(user_interface)
+
+        if user_interface is None:
+            raise NotImplementedError
+
         user_interface.remove_interface(self.interface)
