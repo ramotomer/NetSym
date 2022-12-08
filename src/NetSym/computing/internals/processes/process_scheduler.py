@@ -3,7 +3,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from dataclasses import dataclass
 from operator import attrgetter
-from typing import NamedTuple, Optional, TYPE_CHECKING, List, Type, Tuple, Generator, Any, TypeVar
+from typing import NamedTuple, Optional, TYPE_CHECKING, List, Type, Tuple, Generator, Any, TypeVar, cast
 
 from NetSym.computing.internals.processes.abstracts.process import Process, WaitingFor, ReturnedPacket
 from NetSym.computing.internals.processes.abstracts.process_internal_errors import ProcessInternalError
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 
 T = TypeVar("T")
+T_Process = TypeVar("T_Process", bound=Process)
 
 
 class WaitingProcess(NamedTuple):
@@ -288,7 +289,7 @@ class ProcessScheduler:
         """
         return get_the_one_with_raise(self.get_all_processes(mode), lambda process: process.pid == pid, NoSuchProcessError)
 
-    def get_process_by_type(self, process_type: Type[Process], mode: Optional[str] = None) -> Process:
+    def get_process_by_type(self, process_type: Type[T_Process], mode: Optional[str] = None) -> T_Process:
         """
         Receives a type of a `Process` subclass and returns the process object of the `Process` that is currently
         running in the computer.
@@ -297,9 +298,13 @@ class ProcessScheduler:
         :param mode: the mode of the process (one of COMPUTER.PROCESS.MODES.ALL_MODES or None - for all of them)
         :return: `WaitingProcess` namedtuple
         """
-        return get_the_one_with_raise(self.get_all_processes(mode), lambda process: isinstance(process, process_type), NoSuchProcessError)
+        return cast(T_Process, get_the_one_with_raise(
+            self.get_all_processes(mode),
+            lambda process: isinstance(process, process_type),
+            NoSuchProcessError
+        ))
 
-    def get_usermode_process_by_type(self, process_type: Type[Process]) -> Process:
+    def get_usermode_process_by_type(self, process_type: Type[T_Process]) -> T_Process:
         return self.get_process_by_type(process_type, COMPUTER.PROCESSES.MODES.USERMODE)
 
     def get_usermode_process(self, pid: int) -> Process:

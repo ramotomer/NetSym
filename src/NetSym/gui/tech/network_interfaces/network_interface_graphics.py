@@ -7,17 +7,16 @@ from typing import Optional, Tuple, Dict, Callable, TYPE_CHECKING
 from NetSym.consts import INTERFACES, IMAGES, DIRECTORIES, SELECTED_OBJECT
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
-from NetSym.gui.abstracts.selectable import Selectable
 from NetSym.gui.shape_drawing import draw_rectangle
-from NetSym.gui.tech.computer_graphics import ComputerGraphics
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
 
 if TYPE_CHECKING:
+    from NetSym.gui.tech.computer_graphics import ComputerGraphics
     from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
     from NetSym.gui.user_interface.user_interface import UserInterface
 
 
-class NetworkInterfaceGraphics(ViewableGraphicsObject, Selectable):
+class NetworkInterfaceGraphics(ViewableGraphicsObject):
     """
     Everything in common between the graphics of the regular CableInterface and the WirelessNetworkInterface
     """

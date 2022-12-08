@@ -9,7 +9,6 @@ import scapy
 from NetSym.consts import PACKET, COLORS, SELECTED_OBJECT, DIRECTORIES, T_Color
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
-from NetSym.gui.abstracts.selectable import Selectable
 from NetSym.gui.shape_drawing import draw_circle, draw_rectangle
 from NetSym.gui.tech.packets.packet_graphics import PacketGraphics, image_from_packet
 from NetSym.gui.user_interface.viewable_graphics_object import ViewableGraphicsObject
@@ -20,7 +19,7 @@ if TYPE_CHECKING:
     from NetSym.computing.connections.wireless_connection import WirelessConnection
 
 
-class WirelessPacketGraphics(PacketGraphics, ViewableGraphicsObject, DifferentColorWhenHovered, Selectable):
+class WirelessPacketGraphics(PacketGraphics, ViewableGraphicsObject, DifferentColorWhenHovered):
     """
     This class is a `GraphicsObject` subclass which is the graphical representation
     of packets that are sent between computers.

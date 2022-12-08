@@ -406,3 +406,14 @@ def change_dict_key_names(dict_: Dict[K, V], key_name_mapping: Dict[K, K2]) -> D
                            f"while {value} is a key in the old dict, and is not changed!")
 
     return {key_name_mapping.get(key, key): value for key, value in dict_.items()}
+
+
+def raise_on_none(value: Optional[T]) -> T:
+    """
+    Take in a value and return it.
+    If the value is None - raise!
+    """
+    if value is None:
+        raise ValueError(f"value should not be None!!!")
+
+    return value

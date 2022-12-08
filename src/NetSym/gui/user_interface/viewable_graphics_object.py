@@ -6,13 +6,13 @@ from typing import Optional, Dict, Callable, TYPE_CHECKING, Tuple, Any
 import pyglet
 
 from NetSym.exceptions import *
-from NetSym.gui.abstracts.graphics_object import GraphicsObject
+from NetSym.gui.abstracts.selectable import Selectable
 
 if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
 
 
-class ViewableGraphicsObject(GraphicsObject):
+class ViewableGraphicsObject(Selectable):
     """
     This is a graphics object that can viewed on the side-window of the simulation
     """

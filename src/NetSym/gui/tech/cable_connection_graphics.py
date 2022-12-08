@@ -10,7 +10,6 @@ from NetSym.consts import CONNECTIONS, PACKET, SELECTED_OBJECT, MESSAGES, DIRECT
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
-from NetSym.gui.abstracts.selectable import Selectable
 from NetSym.gui.main_loop_function_to_call import FunctionToCall
 from NetSym.gui.shape_drawing import draw_line
 from NetSym.gui.shape_drawing import draw_rectangle
@@ -42,7 +41,7 @@ class Interfaces(NamedTuple):
     end:   Optional[CableNetworkInterfaceGraphics]
 
 
-class CableConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered, Selectable):
+class CableConnectionGraphics(ViewableGraphicsObject, DifferentColorWhenHovered):
     """
     This is a GraphicsObject subclass which displays a connection.
     It shows the graphics of the connection (a line) between the two endpoints it is connected to.

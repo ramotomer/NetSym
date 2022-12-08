@@ -511,20 +511,20 @@ class Computer:
         self.interfaces.remove(interface)
         self.main_loop.unregister_graphics_object(interface.get_graphics())
 
-    def available_interface(self) -> NetworkInterface:
+    def available_interface(self) -> CableNetworkInterface:
         """
         Returns an interface of the computer that is disconnected and
         is available to connect to another computer.
         If the computer has no available interfaces, creates one and returns it.
         """
         try:
-            return get_the_one_with_raise(self.interfaces,
-                                          (lambda i: (not i.is_connected() and not isinstance(i, WirelessNetworkInterface))),
+            return get_the_one_with_raise(self.cable_interfaces,
+                                          (lambda i: (not i.is_connected())),
                                           NoSuchInterfaceError)
         except NoSuchInterfaceError:
-            interface, graphics = self.add_interface()
+            interface, graphics = self.add_interface()  # will supply us with a CableNetworkInterface
             self.main_loop.register_graphics_object(graphics)
-            return interface
+            return cast("CableNetworkInterface", interface)
 
     def disconnect(self, connection: CableConnection) -> None:
         """

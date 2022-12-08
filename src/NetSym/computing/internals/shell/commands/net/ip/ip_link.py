@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, List, Callable, Dict
 
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.connections.loopback_connection import LoopbackConnection
+from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
 from NetSym.computing.internals.shell.commands.command import Command, CommandOutput
 from NetSym.exceptions import DeviceAlreadyConnectedError, NoSuchInterfaceError
 
@@ -46,14 +47,14 @@ class IpLinkCommand(Command):
         if not interface.is_connected():
             return f"""{index}: NIC: {interface.name}(DISCONNECTED)\n"""
 
-        is_blocked = '\n    BLOCKED' if interface.connection.is_blocked else ''
+        length = f"\n    length: {interface.connection.length}" if isinstance(interface, CableNetworkInterface) else ''
+        is_blocked = '\n    BLOCKED' if isinstance(interface, CableNetworkInterface) and interface.connection.is_blocked else ''
         is_loopback = '\n    LOOPBACK' if isinstance(interface.connection, LoopbackConnection) else ''
 
         return f"""{index}: NIC: {interface.name}
 link:
     speed: {interface.connection.speed}
-    PL percent: {interface.connection.packet_loss}
-    length: {interface.connection.length}{is_blocked}{is_loopback}
+    PL percent: {interface.connection.packet_loss}{length}{is_blocked}{is_loopback}
 """
 
     def _list_links(self, args: List[str]) -> CommandOutput:

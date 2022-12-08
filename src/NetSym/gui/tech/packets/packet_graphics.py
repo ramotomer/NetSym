@@ -9,7 +9,7 @@ import scapy
 
 from NetSym.consts import CONNECTIONS, ANIMATIONS, PACKET
 from NetSym.gui.abstracts.animation_graphics import AnimationGraphics
-from NetSym.gui.abstracts.graphics_object import GraphicsObject
+from NetSym.gui.abstracts.selectable import Selectable
 from NetSym.packets.usefuls.type_to_opcode_function import TYPE_TO_OPCODE_FUNCTION
 from NetSym.packets.usefuls.usefuls import get_original_layer_name_by_instance
 
@@ -31,7 +31,7 @@ def image_from_packet(layer: scapy.packet.Packet) -> str:
     return PACKET.TYPE_TO_IMAGE[name]
 
 
-class PacketGraphics(GraphicsObject):
+class PacketGraphics(Selectable):
     """
     This class is a `GraphicsObject` subclass which is the graphical representation
     of packets that are sent between computers.
