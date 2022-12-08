@@ -61,6 +61,12 @@ class SomethingWentTerriblyWrongError(NetworkSimulationError):
     """
 
 
+class ThisValueShouldNeverBeNone(SomethingWentTerriblyWrongError, ValueError):
+    """
+    Raised when a value that should never be none - is none.
+    """
+
+
 class WrongUsageError(SomethingWentTerriblyWrongError):
     """
     Occurs when a function is used not in the way it was intended

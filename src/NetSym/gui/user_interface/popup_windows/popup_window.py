@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Set, Tuple, Sequence, cast
+from typing import TYPE_CHECKING, Optional, Set, Tuple, Sequence, cast, Iterable
 
 from NetSym.consts import WINDOWS, T_Color, COLORS, SHAPES, debugp
 from NetSym.exceptions import *
@@ -13,6 +13,7 @@ from NetSym.gui.user_interface.text_graphics import Text
 
 if TYPE_CHECKING:
     from NetSym.gui.user_interface.user_interface import UserInterface
+    from NetSym.gui.abstracts.graphics_object import GraphicsObject
 
 
 class PopupWindow(UserInterfaceGraphicsObject):
@@ -20,6 +21,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
     A window that pops up sometime.
     It can contain buttons, text and maybe images?
     """
+    child_graphics_objects: Iterable[GraphicsObject]
 
     def __init__(self,
                  x: float,

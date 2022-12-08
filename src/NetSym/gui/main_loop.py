@@ -42,7 +42,7 @@ class MainLoop:
         # ^ whether or not the program is paused now.
 
         self._time = time.time()  # the time that this will return when the `self.time()` method is called.
-        self.paused_time = 0
+        self.paused_time = 0.
         #  ^ the total time the program has been paused so far
         self.last_time_update = time.time()  # the last time that the `self.update_time` method was called.
 
@@ -247,11 +247,10 @@ class MainLoop:
             self.remove_from_loop(graphics_object.draw)
             self.insert_to_loop(graphics_object.draw)
 
-            if hasattr(graphics_object, "child_graphics_objects"):
-                for child_graphics_object in graphics_object.child_graphics_objects:
-                    self.move_to_front(child_graphics_object)
-                    # if this is not the order that they were meant to be in, this might cause bugs, fix in the future
-                    # if necessary
+            for child_graphics_object in getattr(graphics_object, "child_graphics_objects", []):
+                self.move_to_front(child_graphics_object)
+                # if this is not the order that they were meant to be in, this might cause bugs, fix in the future
+                # if necessary
 
         except ValueError:
             raise NoSuchGraphicsObjectError(f"The graphics object is not registered!!! object: {graphics_object!r}")
@@ -263,15 +262,11 @@ class MainLoop:
         """
         self.is_paused = not self.is_paused
 
-    def graphics_objects_of_types(self, *types: Type[T]) -> List[T]:
+    def graphics_objects_of_types(self, type_: Type[T]) -> List[T]:
         """
         Returns a list of graphics objects of the given types
-        :param types:
-        :return:
         """
-        if not types:
-            return self.graphics_objects
-        return list(filter(lambda go: any(isinstance(go, type_) for type_ in types), self.graphics_objects))
+        return [go for go in self.graphics_objects if isinstance(go, type_)]
 
     def update_time(self) -> None:
         """
@@ -294,7 +289,7 @@ class MainLoop:
         """
         return self._time
 
-    def time_since(self, other_time) -> T_Time:
+    def time_since(self, other_time: float) -> T_Time:
         """Returns the amount of time that passed since another time (adjusted to pauses of course)"""
         return self.time() - other_time
 

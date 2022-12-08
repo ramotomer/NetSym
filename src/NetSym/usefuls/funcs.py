@@ -414,6 +414,6 @@ def raise_on_none(value: Optional[T]) -> T:
     If the value is None - raise!
     """
     if value is None:
-        raise ValueError(f"value should not be None!!!")
+        raise ThisValueShouldNeverBeNone(f"{value} should not be None!!!")
 
     return value

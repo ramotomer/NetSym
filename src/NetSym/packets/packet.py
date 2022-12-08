@@ -107,12 +107,15 @@ class Packet(ABC):
         scapy_summary = scapy.layers.l2.Ether(self.data.build()).summary()
         return ' / '.join([layer for layer in scapy_summary.split(' / ') if layer not in discarded_protocols])
 
-    def __contains__(self, item: str) -> bool:
+    def __contains__(self, item: Optional[str]) -> bool:
         """
         Returns whether or not a certain layer is in the packet somewhere.
         :param item: A type-name of the layer you want.
         :return:
         """
+        if item is None:
+            return False
+
         try:
             self.get_layer_by_name(item)
         except NoSuchLayerError:

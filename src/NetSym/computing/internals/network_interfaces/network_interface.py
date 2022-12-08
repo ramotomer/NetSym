@@ -13,6 +13,7 @@ from NetSym.consts import FILE_PATHS, INTERFACES, PROTOCOLS, T_Color
 from NetSym.exceptions import *
 from NetSym.packets.all import Ether
 from NetSym.packets.packet import Packet
+from NetSym.usefuls.funcs import raise_on_none
 
 if TYPE_CHECKING:
     from NetSym.gui.tech.network_interfaces.network_interface_graphics import NetworkInterfaceGraphics
@@ -225,9 +226,16 @@ class NetworkInterface(ABC):
                   f" MTU is only {self.mtu}")
             return False
 
-        if self.is_connected() and (not self.is_blocked or (self.is_blocked and self.accepting in packet)):
-            self.connection_side.send(packet)
+        if self.is_connected() and \
+                (not self.is_blocked or
+                 (self.is_blocked and
+                  (self.accepting is not None) and
+                  (self.accepting in packet))):
+            raise_on_none(self.connection_side).send(packet)
             return True
+
+        print(f"{self!r} dropped a packet due to an unknown reason! packet is {packet.multiline_repr()}")
+        return False
 
     def receive(self) -> List[Packet]:
         """
@@ -241,7 +249,7 @@ class NetworkInterface(ABC):
         if not self.is_connected():
             raise InterfaceNotConnectedError("The interface is not connected so it cannot receive packets!!!")
 
-        packets = self.connection_side.receive()
+        packets = raise_on_none(self.connection_side).receive()
         if self.is_blocked:
             return list(filter((lambda packet: self.accepting in packet), packets))
         if self.is_promisc:
