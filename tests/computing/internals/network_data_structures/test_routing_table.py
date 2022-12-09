@@ -10,13 +10,13 @@ from NetSym.exceptions import *
 def example_table():
     return RoutingTable(
         {
-            IPAddress("0.0.0.0/0"):       RoutingTableItem(IPAddress("2.2.2.1"), IPAddress("2.2.2.200")),
-            IPAddress("1.0.0.0/8"):       RoutingTableItem(IPAddress("1.4.4.1"), IPAddress("1.4.4.200")),
-            IPAddress("2.2.2.0/24"):      RoutingTableItem(IPAddress("2.2.2.1"), IPAddress("2.2.2.200")),
-            IPAddress("1.2.3.0/24"):      RoutingTableItem(IPAddress("1.2.3.1"), IPAddress("1.2.3.200")),
-            IPAddress("192.168.3.0/24"):  RoutingTableItem(ADDRESSES.IP.ON_LINK, IPAddress("192.168.3.200")),
-            IPAddress("192.168.2.0/24"):  RoutingTableItem(ADDRESSES.IP.ON_LINK, IPAddress("192.168.2.200")),
-            IPAddress("192.168.0.0/16"):  RoutingTableItem("192.168.10.254",     IPAddress("192.168.10.200")),
+            IPAddress("0.0.0.0/0"):       RoutingTableItem(IPAddress("2.2.2.1"),        IPAddress("2.2.2.200")),
+            IPAddress("1.0.0.0/8"):       RoutingTableItem(IPAddress("1.4.4.1"),        IPAddress("1.4.4.200")),
+            IPAddress("2.2.2.0/24"):      RoutingTableItem(IPAddress("2.2.2.1"),        IPAddress("2.2.2.200")),
+            IPAddress("1.2.3.0/24"):      RoutingTableItem(IPAddress("1.2.3.1"),        IPAddress("1.2.3.200")),
+            IPAddress("192.168.3.0/24"):  RoutingTableItem(ADDRESSES.IP.ON_LINK,        IPAddress("192.168.3.200")),
+            IPAddress("192.168.2.0/24"):  RoutingTableItem(ADDRESSES.IP.ON_LINK,        IPAddress("192.168.2.200")),
+            IPAddress("192.168.0.0/16"):  RoutingTableItem(IPAddress("192.168.10.254"), IPAddress("192.168.10.200")),
         }
     )
 
@@ -25,12 +25,12 @@ def example_table():
 def example_table_without_default_gateway():
     return RoutingTable(
         {
-            IPAddress("1.0.0.0/8"):      RoutingTableItem(IPAddress("1.4.4.1"), IPAddress("1.4.4.200")),
-            IPAddress("2.2.2.0/24"):     RoutingTableItem(IPAddress("2.2.2.1"), IPAddress("2.2.2.200")),
-            IPAddress("1.2.3.0/24"):     RoutingTableItem(IPAddress("1.2.3.1"), IPAddress("1.2.3.200")),
-            IPAddress("192.168.3.0/24"): RoutingTableItem(ADDRESSES.IP.ON_LINK, IPAddress("192.168.3.200")),
-            IPAddress("192.168.2.0/24"): RoutingTableItem(ADDRESSES.IP.ON_LINK, IPAddress("192.168.2.200")),
-            IPAddress("192.168.0.0/16"): RoutingTableItem("192.168.10.254",     IPAddress("192.168.10.200")),
+            IPAddress("1.0.0.0/8"):      RoutingTableItem(IPAddress("1.4.4.1"),        IPAddress("1.4.4.200")),
+            IPAddress("2.2.2.0/24"):     RoutingTableItem(IPAddress("2.2.2.1"),        IPAddress("2.2.2.200")),
+            IPAddress("1.2.3.0/24"):     RoutingTableItem(IPAddress("1.2.3.1"),        IPAddress("1.2.3.200")),
+            IPAddress("192.168.3.0/24"): RoutingTableItem(ADDRESSES.IP.ON_LINK,        IPAddress("192.168.3.200")),
+            IPAddress("192.168.2.0/24"): RoutingTableItem(ADDRESSES.IP.ON_LINK,        IPAddress("192.168.2.200")),
+            IPAddress("192.168.0.0/16"): RoutingTableItem(IPAddress("192.168.10.254"), IPAddress("192.168.10.200")),
         }
     )
 
@@ -156,8 +156,12 @@ def test_getitem(example_table_without_default_gateway, item, result_gateway, re
         return
 
     result = example_table_without_default_gateway[item]
-    assert (result.ip_address  == result_gateway) if result_gateway is not ADDRESSES.IP.ON_LINK else (result.ip_address == item)
     assert result.interface_ip == result_interface
+
+    if result_gateway is not ADDRESSES.IP.ON_LINK:
+        assert result.gateway_ip == result_gateway
+    else:
+        assert result.gateway_ip == item
 
 
 @pytest.mark.parametrize(
