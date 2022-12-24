@@ -64,7 +64,7 @@ class NetworkInterface(ABC):
 
         self.graphics: Optional[NetworkInterfaceGraphics] = None
         self.display_color: T_Color = display_color
-        # TODO: This ^ belongs in the CableNetworkInterfaceGraphics class FOR SURE!!!
+        # TODO: IMPROVE: This ^ belongs in the CableNetworkInterfaceGraphics class FOR SURE!!!
 
     @property
     def connection(self) -> Connection:
@@ -234,7 +234,6 @@ class NetworkInterface(ABC):
             raise_on_none(self.connection_side).send(packet)
             return True
 
-        print(f"{self!r} dropped a packet due to an unknown reason! packet is {packet.multiline_repr()}")
         return False
 
     def receive(self) -> List[Packet]:

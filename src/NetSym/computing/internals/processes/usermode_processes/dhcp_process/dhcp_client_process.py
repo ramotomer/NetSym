@@ -96,7 +96,7 @@ class DHCPClientProcess(Process):
 
         ready_socket = yield from self.computer.select(self.sockets)
         dhcp_offer, session_interface = ready_socket.receive()[0].packet_and_interface
-        # TODO: validate offer
+        # TODO: IMPROVE: validate offer
         session_socket = get_the_one_with_raise(self.sockets, lambda s: bool(s.interface == session_interface), ThisCodeShouldNotBeReached)
 
         session_socket.send(self.build_dhcp_request(

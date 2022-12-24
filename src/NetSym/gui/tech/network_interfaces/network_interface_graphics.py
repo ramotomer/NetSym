@@ -45,7 +45,7 @@ class NetworkInterfaceGraphics(ViewableGraphicsObject):
 
         super(NetworkInterfaceGraphics, self).__init__(x, y, centered=True, is_in_background=True, is_pressable=True)
         self.color = interface.display_color
-        self.real_x, self.real_y = x, y  # TODO: why do you love shit code? WTF is real_x... change. thx.
+        self.real_x, self.real_y = x, y  # TODO: IMPROVE: why do you love shit code? WTF is real_x... change. thx.
         self.width, self.height = INTERFACES.WIDTH, INTERFACES.HEIGHT
         self.computer_graphics = computer_graphics
 

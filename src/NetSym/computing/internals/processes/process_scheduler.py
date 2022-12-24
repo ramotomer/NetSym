@@ -336,7 +336,7 @@ class ProcessScheduler:
                 return
 
             if process is self.__details_by_mode[mode].currently_running_process:
-                # TODO: Im pretty sure that if this happens the simulation crashes... TEST and FIX
+                # TODO: BUG: Im pretty sure that if this happens the simulation crashes... TEST and FIX
                 process.die()  # only occurs when a process calls `terminate_process` on itself
                 return
 
