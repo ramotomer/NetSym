@@ -13,7 +13,7 @@ from NetSym.computing.internals.network_interfaces.wireless_network_interface im
 from NetSym.computing.internals.processes.abstracts.process import ReturnedPacket, PacketMetadata
 from NetSym.computing.internals.processes.usermode_processes.sniffing_process import SniffingProcess
 from NetSym.consts import OS, FILE_PATHS, DIRECTORIES, COMPUTER, INTERFACES, PACKET
-from NetSym.exceptions import NoSuchInterfaceError, PopupWindowWithThisError
+from NetSym.exceptions import NoSuchInterfaceError, PopupWindowWithThisError, NoSuchProcessError
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 from NetSym.packets.cable_packet import CablePacket
@@ -30,7 +30,7 @@ def mock_for_computer_generation(patcher):
     patcher.setattr(FILE_PATHS,  'WINDOW_INPUT_LIST_FILE',    os.path.join("./src/NetSym/res/files", "window_inputs.txt"))
     patcher.setattr(DIRECTORIES, 'IMAGES',                    "./src/NetSym/res/sprites")
 
-    mock_mainloop_time(patcher)
+    return mock_mainloop_time(patcher)
 
 
 def get_example_computers():
@@ -299,7 +299,7 @@ def test_start_sniffing_REGULAR(example_computers_with_graphics, interface_name,
     for computer in example_computers_with_graphics:
         computer.start_sniffing(interface_name, is_promisc)
 
-        process = computer.process_scheduler.get_process_by_type(SniffingProcess)
+        process = computer.process_scheduler.get_process_by_type(SniffingProcess)  # tests that does not raise
 
         assert process.socket.interface.name == interface_name
         if is_promisc:
@@ -310,13 +310,24 @@ def test_start_sniffing_ANY(example_computers_with_graphics):
     for computer in example_computers_with_graphics:
         computer.start_sniffing(INTERFACES.ANY_INTERFACE, False)
 
-        process = computer.process_scheduler.get_process_by_type(SniffingProcess)
+        process = computer.process_scheduler.get_process_by_type(SniffingProcess)  # tests that does not raise
 
         assert process.socket.interface is INTERFACES.ANY_INTERFACE
 
 
-# def test_stop_all_sniffing(self):
-#     self.process_scheduler.kill_all_usermode_processes_by_type(SniffingProcess)
+def test_stop_all_sniffing(example_computers_with_graphics):
+    with MonkeyPatch.context() as m:
+        mainloop = mock_for_computer_generation(m)
+        for computer in example_computers_with_graphics:
+            for interface in computer.interfaces:
+                computer.start_sniffing(interface.name)
+            for i in range(10):
+                computer.logic()
+                mainloop.increase_time_by(1)
+            computer.stop_all_sniffing()
+
+            with pytest.raises(NoSuchProcessError):
+                computer.process_scheduler.get_usermode_process_by_type(SniffingProcess)
 
 
 # def test_toggle_sniff(self, interface_name: Optional[str] = INTERFACES.ANY_INTERFACE, is_promisc: bool = False):
