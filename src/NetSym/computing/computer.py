@@ -422,10 +422,6 @@ class Computer:
         """
         self.is_powered_on = not self.is_powered_on
 
-        for interface in self.all_interfaces:
-            interface.is_powered_on = self.is_powered_on
-            # TODO: FEATURE: add UP and DOWN for interfaces.
-
         if self.is_powered_on:
             self.on_startup()
         else:
@@ -449,6 +445,10 @@ class Computer:
         self.received.clear()
         self.received_raw.clear()
 
+        for interface in self.all_interfaces:
+            interface.is_powered_on = False
+            # TODO: FEATURE: add UP and DOWN for interfaces.
+
     def on_startup(self) -> None:
         """
         Things the computer should do when it is turned on
@@ -459,6 +459,9 @@ class Computer:
 
         self.icmp_sequence_number = 0
         self._latest_ip_id = random.randint(0, PROTOCOLS.IP.MAX_IP_ID)
+
+        for interface in self.all_interfaces:
+            interface.is_powered_on = True
 
     def garbage_cleanup(self) -> None:
         """
