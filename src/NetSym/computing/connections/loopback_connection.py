@@ -19,7 +19,7 @@ class LoopbackConnection(CableConnection):
     This class represents a connection of a loopback interface to itself. It enables its graphical is_showing.
     It only has a left_side, no right_side.
     """
-    # TODO: think... Should this inherit from CableConnection? Or directly from Connection?
+    # TODO: IMPROVE: think... Should this inherit from CableConnection? Or directly from Connection?
     def __init__(self, radius: float = CONNECTIONS.LOOPBACK.RADIUS) -> None:
         """
         Initiates the circular connection

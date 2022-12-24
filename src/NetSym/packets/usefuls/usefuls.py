@@ -5,13 +5,13 @@ from typing import Any, TYPE_CHECKING, List, Type, Union
 import scapy
 from scapy.packet import Raw
 
+from NetSym.address.ip_address import IPAddress
 from NetSym.exceptions import *
 from NetSym.packets.all import protocols
 from NetSym.usefuls.funcs import get_the_one_with_default
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
-    from NetSym.address.ip_address import IPAddress
 
 
 def scapy_layer_class_to_our_class(scapy_layer_class: Type[scapy.packet.Packet]) -> Type[scapy.packet.Packet]:

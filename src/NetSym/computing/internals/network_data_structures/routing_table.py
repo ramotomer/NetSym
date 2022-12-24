@@ -20,7 +20,7 @@ class RoutingTableItem(NamedTuple):
 
     @property
     def ip_address(self):
-        return self.gateway_ip  # TODO: remove this alias please it is not as understandable
+        return self.gateway_ip  # TODO: IMPROVE: remove this alias please it is not as understandable
 
 
 class TypeSafeRoutingTableItem(NamedTuple):
@@ -32,7 +32,7 @@ class TypeSafeRoutingTableItem(NamedTuple):
 
     @property
     def ip_address(self):
-        return self.gateway_ip  # TODO: remove this alias please it is not as understandable
+        return self.gateway_ip  # TODO: IMPROVE: remove this alias please it is not as understandable
 
 
 class RoutingTable:

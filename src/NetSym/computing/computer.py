@@ -89,7 +89,7 @@ class Computer:
             PORTS.SSH: None,
             PORTS.HTTP: None,
             PORTS.HTTPS: None,
-            # TODO: add more processes!
+            # TODO: FEATURE: add more processes!
         },
         "UDP": {
             PORTS.DHCP_SERVER: DHCPServerProcess,
@@ -212,7 +212,7 @@ class Computer:
         if not dns_servers:
             return None
 
-        return IPAddress(dns_servers[0])  # TODO: what if multiple DNS servers? why only the first?
+        return IPAddress(dns_servers[0])  # TODO: IMPROVE: what if multiple DNS servers? why only the first?
 
     @dns_server.setter
     def dns_server(self, value: Optional[IPAddress]) -> None:
@@ -356,7 +356,7 @@ class Computer:
             message = f"{self.name} was shutdown! Relevant shells were closed"
             # PopupError(message, user_interface)  # Impossible - you need the UserInterface object
             print(message)
-            # TODO: change all prints to use the logging module! be high-tech please
+            # TODO: IMPROVE: change all prints to use the logging module! be high-tech please
 
     def get_mac(self) -> MACAddress:
         """Returns one of the computer's `MACAddresses`"""
@@ -399,7 +399,7 @@ class Computer:
     def toggle_sniff(self, interface_name: Optional[str] = INTERFACES.ANY_INTERFACE, is_promisc: bool = False) -> None:
         """
         Toggles sniffing.
-        TODO: if the sniffing is already on - the toggle will turn off ALL sniffing on the computer :( - not only on the specific interface requested
+        TODO: IMPROVE: if the sniffing is already on - the toggle will turn off ALL sniffing on the computer :( - not only on the specific interface requested
         """
         if self.process_scheduler.is_usermode_process_running_by_type(SniffingProcess):
             self.stop_all_sniffing()
@@ -421,10 +421,6 @@ class Computer:
         Powers the computer on or off.
         """
         self.is_powered_on = not self.is_powered_on
-
-        for interface in self.all_interfaces:
-            interface.is_powered_on = self.is_powered_on
-            # TODO: add UP and DOWN for interfaces.
 
         if self.is_powered_on:
             self.on_startup()
@@ -449,6 +445,10 @@ class Computer:
         self.received.clear()
         self.received_raw.clear()
 
+        for interface in self.all_interfaces:
+            interface.is_powered_on = False
+            # TODO: FEATURE: add UP and DOWN for interfaces.
+
     def on_startup(self) -> None:
         """
         Things the computer should do when it is turned on
@@ -459,6 +459,9 @@ class Computer:
 
         self.icmp_sequence_number = 0
         self._latest_ip_id = random.randint(0, PROTOCOLS.IP.MAX_IP_ID)
+
+        for interface in self.all_interfaces:
+            interface.is_powered_on = True
 
     def garbage_cleanup(self) -> None:
         """
@@ -740,7 +743,7 @@ class Computer:
             self.send_to(packet["Ether"].src_mac, packet["IP"].src_ip, ICMP(
                 type=OPCODES.ICMP.TYPES.UNREACHABLE,
                 code=OPCODES.ICMP.CODES.PORT_UNREACHABLE))
-            # TODO: add the original packet to the ICMP port unreachable packet
+            # TODO: IMPROVE: add the original packet to the ICMP port unreachable packet
             return
 
         self._sniff_packet_on_relevant_udp_sockets(packet)

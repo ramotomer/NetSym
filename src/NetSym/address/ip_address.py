@@ -74,7 +74,7 @@ class IPAddress:
         Returns if the IP address is a broadcast address or not.
         :return:
         """
-        # TODO: Shit method! What about subnet masks that are not a multiple of 8!!!
+        # TODO: IMPROVE: Shit method! What about subnet masks that are not a multiple of 8!!!
         _, _, _, last_byte = self.string_ip.split(ADDRESSES.IP.SEPARATOR)
         return int(last_byte) == 255
 

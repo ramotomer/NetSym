@@ -173,10 +173,7 @@ def test_domain_hostname_split(hostname, result):
 #         )
 #         for i in range(len(dns_resource_records.layers()))
 #     ]
-#     # TODO: this method could be a little better - Make the `transform_to_indicative_attribute_names` of packets more generic, and it could cast
-#     #  the objects automatically
-# 
-# 
+#
 # def test_list_to_dns_resource_record(list_):
 #     """
 # 

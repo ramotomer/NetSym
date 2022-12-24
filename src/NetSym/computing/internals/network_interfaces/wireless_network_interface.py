@@ -138,7 +138,7 @@ class WirelessNetworkInterface(NetworkInterface):
             ip=dict_["ip"],
             name=dict_["name"],
         )
-        # TODO: make it so configured wireless_connections are also saved to files
+        # TODO: BUG: make it so configured wireless_connections are also saved to files
 
         return loaded
 

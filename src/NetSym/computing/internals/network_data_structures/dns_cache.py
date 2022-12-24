@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Optional
 
 from NetSym.address.ip_address import IPAddress
 from NetSym.consts import T_Time
@@ -19,24 +19,27 @@ class DNSCache:
     """
     A cache that m aps a name to an IP address
     """
-    def __init__(self) -> None:
+    def __init__(self, initial_dict: Optional[Dict[T_Hostname, DNSCacheItem]] = None) -> None:
         """
         Create an empty DNS cache
         """
-        self.__cache: Dict[T_Hostname, DNSCacheItem] = {}
+        self._cache: Dict[T_Hostname, DNSCacheItem] = initial_dict if initial_dict is not None else {}
         self.transaction_counter = 0
 
     def __getitem__(self, item: T_Hostname) -> DNSCacheItem:
         """
         Resolve a DNS name
         """
-        return self.__cache[item]
+        return self._cache[item]
 
     def __contains__(self, item: T_Hostname) -> bool:
         """
         Whether or not the DNS cache contains the supplied name
         """
-        return item in self.__cache
+        return item in self._cache
+
+    def __len__(self):
+        return len(self._cache)
 
     def add_item(self, name: T_Hostname, ip_address: IPAddress, ttl: int) -> None:
         """
@@ -45,21 +48,21 @@ class DNSCache:
         if ttl is None:
             raise WrongUsageError("Do not add a DNS item with TTL (Time to live) which is `None`!!!!")
 
-        self.__cache[name] = DNSCacheItem(ip_address, ttl, MainLoop.get_time())
+        self._cache[name] = DNSCacheItem(ip_address, ttl, MainLoop.get_time())
 
     def forget_old_items(self) -> None:
         """
         Remove all items in the cache that their TTL (time to live) has expired
         """
-        for item_name, dns_item in list(self.__cache.items()):
+        for item_name, dns_item in list(self._cache.items()):
             if MainLoop.get_time_since(dns_item.creation_time) > dns_item.ttl:
-                del self.__cache[item_name]
+                del self._cache[item_name]
 
     def wipe(self) -> None:
         """
         Clear the DNS cache of all entries
         """
-        self.__cache.clear()
+        self._cache.clear()
 
     def __repr__(self) -> str:
         """
@@ -67,7 +70,7 @@ class DNSCache:
         Can be seen using the `dns -a` command
         """
         returned = "DNS Cache:\n" + ("-" * 30)
-        for item_name, cache_item in self.__cache.items():
+        for item_name, cache_item in self._cache.items():
             returned += "\n"
             returned += f"""
 {'Record Name':.<20}: {item_name}

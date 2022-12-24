@@ -39,7 +39,7 @@ class Brctl(Command):
 where OBJECT := { showbr }
 For now only showbr is implemented - NetSym does not use unix bridges to implement switches  
 """
-    # TODO: implement switches using the linux bridges!!!
+    # TODO: FEATURE: implement switches using the linux bridges!!!
 
     def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """

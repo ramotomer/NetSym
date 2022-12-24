@@ -12,13 +12,13 @@ from NetSym.computing.internals.network_interfaces.cable_network_interface impor
 from NetSym.computing.internals.network_interfaces.wireless_network_interface import WirelessNetworkInterface
 from NetSym.computing.internals.processes.abstracts.process import ReturnedPacket, PacketMetadata
 from NetSym.computing.internals.processes.usermode_processes.sniffing_process import SniffingProcess
-from NetSym.consts import OS, FILE_PATHS, DIRECTORIES, COMPUTER, INTERFACES, PACKET
-from NetSym.exceptions import NoSuchInterfaceError, PopupWindowWithThisError
+from NetSym.consts import OS, FILE_PATHS, DIRECTORIES, COMPUTER, INTERFACES, PACKET, OPCODES
+from NetSym.exceptions import NoSuchInterfaceError, PopupWindowWithThisError, NoSuchProcessError, NoIPAddressError
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
 from NetSym.packets.cable_packet import CablePacket
 from NetSym.usefuls.dotdict import DotDict
-from tests.usefuls import MACS, IPS, example_ethernet, example_arp, mock_mainloop_time
+from tests.usefuls import MACS, IPS, example_ethernet, example_arp, mock_mainloop_time, example_ip
 
 
 def mock_for_computer_generation(patcher):
@@ -30,7 +30,7 @@ def mock_for_computer_generation(patcher):
     patcher.setattr(FILE_PATHS,  'WINDOW_INPUT_LIST_FILE',    os.path.join("./src/NetSym/res/files", "window_inputs.txt"))
     patcher.setattr(DIRECTORIES, 'IMAGES',                    "./src/NetSym/res/sprites")
 
-    mock_mainloop_time(patcher)
+    return mock_mainloop_time(patcher)
 
 
 def get_example_computers():
@@ -299,7 +299,7 @@ def test_start_sniffing_REGULAR(example_computers_with_graphics, interface_name,
     for computer in example_computers_with_graphics:
         computer.start_sniffing(interface_name, is_promisc)
 
-        process = computer.process_scheduler.get_process_by_type(SniffingProcess)
+        process = computer.process_scheduler.get_process_by_type(SniffingProcess)  # tests that does not raise
 
         assert process.socket.interface.name == interface_name
         if is_promisc:
@@ -310,13 +310,24 @@ def test_start_sniffing_ANY(example_computers_with_graphics):
     for computer in example_computers_with_graphics:
         computer.start_sniffing(INTERFACES.ANY_INTERFACE, False)
 
-        process = computer.process_scheduler.get_process_by_type(SniffingProcess)
+        process = computer.process_scheduler.get_process_by_type(SniffingProcess)  # tests that does not raise
 
         assert process.socket.interface is INTERFACES.ANY_INTERFACE
 
 
-# def test_stop_all_sniffing(self):
-#     self.process_scheduler.kill_all_usermode_processes_by_type(SniffingProcess)
+def test_stop_all_sniffing(example_computers_with_graphics):
+    with MonkeyPatch.context() as m:
+        mainloop = mock_for_computer_generation(m)
+        for computer in example_computers_with_graphics:
+            for interface in computer.interfaces:
+                computer.start_sniffing(interface.name)
+            for i in range(10):
+                computer.logic()
+                mainloop.increase_time_by(1)
+            computer.stop_all_sniffing()
+
+            with pytest.raises(NoSuchProcessError):
+                computer.process_scheduler.get_usermode_process_by_type(SniffingProcess)
 
 
 # def test_toggle_sniff(self, interface_name: Optional[str] = INTERFACES.ANY_INTERFACE, is_promisc: bool = False):
@@ -463,61 +474,68 @@ def test_start_sniffing_ANY(example_computers_with_graphics):
 #     """
 #     return [interface for interface in self.all_interfaces
 #             if interface.has_ip() and interface.ip.is_same_subnet(ip_address)]
-#
-# def test_interface_by_name(self, name: str):
-#     """
-#     Receives an interface name and returns the `Interface`
-#     """
-#     return get_the_one(
-#         self.all_interfaces,
-#         lambda c: c.name == name,
-#         NoSuchInterfaceError
-#     )
-#
+
+def test_interface_by_name(example_computers_with_graphics):
+    for computer in example_computers_with_graphics:
+        interface = computer.interface_by_name("c1i0")
+        assert interface in computer.interfaces
+        assert interface.name == "c1i0"
+
+        with pytest.raises(NoSuchInterfaceError):
+            computer.interface_by_name("NoSuchInterface - definately")
+
+
 # # --------------------------------------- v  IP and routing  v -----------------------------------------------------------
-#
-# def test_has_ip(self):
-#     """Returns whether or not this computer has an IP address at all (on any of its interfaces)"""
-#     return any(interface.has_ip() for interface in self.interfaces)
-#
-# def test_get_ip(self):
-#     """
-#     Returns one of the ip addresses of this computer. Currently - the first one, but this is not guaranteed and
-#     should not be relied upon.
-#     """
-#     if not self.has_ip():
-#         raise NoIPAddressError("This computer has no IP address!")
-#     return get_the_one(self.interfaces, lambda i: i.has_ip(), NoSuchInterfaceError).ip
-#
-# def test_has_this_ip(self, ip_address: Optional[Union[str, IPAddress]]):
-#     """Returns whether or not this computer has a given IP address. (so whether or not if it is its address)"""
-#     if ip_address is None:
-#         # raise NoIPAddressError("The address that is given is None!!!")
-#         return False
-#
-#     if isinstance(ip_address, str):
-#         ip_address = IPAddress(ip_address)
-#
-#     return any(interface.has_ip() and interface.ip.string_ip == ip_address.string_ip
-#                for interface in self.all_interfaces)
-#
-# def test_get_interface_with_ip(self, ip_address: Optional[IPAddress] = None):
-#     """
-#     Returns the interface that has this ip_address.
-#     If there is none that have that address, return None.
-#
-#     If no IP address is given, returns one interface that has any IP address.
-#     """
-#     if ip_address is None:
-#         return get_the_one(self.interfaces, lambda i: i.has_ip(), NoSuchInterfaceError)
-#     return get_the_one(self.all_interfaces, lambda i: i.has_this_ip(ip_address))
-#
-# def test_is_arp_for_me(self, packet: Packet):
-#     """Returns whether or not the packet is an ARP request for one of your IP addresses"""
-#     return "ARP" in packet and \
-#            packet["ARP"].opcode == OPCODES.ARP.REQUEST and \
-#            self.has_this_ip(packet["ARP"].dst_ip)
-#
+
+def test_has_ip(example_computers_with_graphics):
+    for computer in example_computers_with_graphics:
+        assert computer.has_ip() is True
+
+        for interface in computer.interfaces:
+            interface.ip = None
+
+        assert computer.has_ip() is False
+
+
+def test_get_ip(example_computers_with_graphics):
+    for computer in example_computers_with_graphics:
+        assert computer.get_ip() in computer.ips
+
+        for interface in computer.interfaces:
+            interface.ip = None
+
+        with pytest.raises(NoIPAddressError):
+            computer.get_ip()
+
+
+def test_has_this_ip(example_computers_with_graphics):
+    for computer in example_computers_with_graphics:
+        for ip in IPS:
+            assert computer.has_this_ip(ip)
+            assert computer.has_this_ip(str(ip))
+
+        assert not computer.has_this_ip(None)
+        assert not computer.has_this_ip("254.254.164.123")
+        assert not computer.has_this_ip(IPAddress("254.254.164.123"))
+
+
+def test_is_arp_for_me(example_computers_with_graphics):
+    for computer in example_computers_with_graphics:
+        packet = example_ethernet() / example_arp()
+        packet["ARP"].opcode = OPCODES.ARP.REQUEST
+        packet["ARP"].dst_ip = computer.interfaces[0].ip
+        assert computer.is_arp_for_me(packet)
+
+        packet["ARP"].opcode = OPCODES.ARP.REPLY
+        assert not computer.is_arp_for_me(packet)
+
+        packet["ARP"].opcode = OPCODES.ARP.REQUEST
+        packet["ARP"].dst_ip = "254.154.163.143"
+        assert not computer.is_arp_for_me(packet)
+
+        assert not computer.is_arp_for_me(example_ethernet() / example_ip())
+
+
 # def test_is_for_me(self, packet: Packet):
 #     """
 #     Takes in a packet and returns whether or not that packet is meant for this computer. (On the second layer)

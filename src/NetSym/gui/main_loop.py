@@ -118,7 +118,7 @@ class MainLoop:
             self.graphics_objects.remove(graphics_object)
         except ValueError:
             # object is not registered
-            print("A graphics object was unregistered - but never registered!!!")
+            print(F"A graphics object was unregistered - but never registered!!! {graphics_object}")
 
         self.remove_from_loop(graphics_object.draw)
         self.remove_from_loop(graphics_object.move)

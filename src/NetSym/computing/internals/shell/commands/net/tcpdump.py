@@ -26,7 +26,7 @@ class Tcpdump(Command):
         self.parser.add_argument('-A', '--Any', dest='any_interface', action='store_true', help='sniff on all NICs')
         self.parser.add_argument('-p', '--promisc', dest='is_promisc', action='store_true', help='enter promiscuous mode')
         self.parser.add_argument('-S', '--Stop', dest='stop', action='store_true', help='stop ALL sniffing processes')
-        # TODO: add BPF syntax (how?????)
+        # TODO: FEATURE: add BPF syntax (how?????)
 
     def action(self, parsed_args: argparse.Namespace) -> CommandOutput:
         """

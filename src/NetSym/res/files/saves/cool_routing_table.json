@@ -1,0 +1,154 @@
+{
+    "computers": [
+        {
+            "class": "Computer",
+            "location": [
+                448,
+                247
+            ],
+            "name": "comp41",
+            "scale_factor": 0.5,
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        466.4739656199946,
+                        277.14486016340527
+                    ],
+                    "name": "mention2",
+                    "mac": "5F:6C:F7:B2:0D:69",
+                    "ip": "192.168.1.2 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "2.2.2.1",
+                        "2.2.2.200"
+                    ],
+                    "1.0.0.0 /8": [
+                        "1.4.4.1",
+                        "1.4.4.200"
+                    ],
+                    "2.2.2.0 /24": [
+                        "2.2.2.1",
+                        "2.2.2.200"
+                    ],
+                    "1.2.3.0 /24": [
+                        "1.2.3.1",
+                        "1.2.3.200"
+                    ],
+                    "192.168.3.0 /24": [
+                        "On-Link",
+                        "192.168.3.200"
+                    ],
+                    "192.168.2.0 /24": [
+                        "On-Link",
+                        "192.168.2.200"
+                    ],
+                    "192.168.0.0 /16": [
+                        "192.168.10.254",
+                        "192.168.10.200"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "cat",
+                                    "creation_time": "datetime.datetime(2022, 12, 2, 17, 56, 40, 544903)",
+                                    "last_edit_time": "datetime.datetime(2022, 12, 2, 17, 56, 40, 544903)",
+                                    "content": "1 hello hello\n2 This is the file that is transferred in FTP\n3 very easy to see....\n4 1, 2, 3, ....\n5 200 is the end.\n6 The secret to ramotomer's secret egg-roll recipe:\n7 take eggs\n8 roll\n9 the end\n10 NOT\n\na\naa\naaa\naaaa\naaaaa\naaaaaa\naaaaaaa\naaaaaaaa\naaaaaaaaa\naaaaaaaaaa\naaaaaaaaaaa\naaaaaaaaaaaa\naaaaaaaaaaaaa\naaaaaaaaaaaaaa\naaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nword\nwordword\nwordwordword\nwordwordwordword\nwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordword\nwordwordwordword\nwordwordword\nwordword\nword\n\n\nword\n\nnow this is the end\nFIN"
+                                }
+                            ],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "connections": []
+}

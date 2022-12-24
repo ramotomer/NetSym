@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Optional
 
+from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
 from NetSym.computing.internals.processes.abstracts.process import Process, ReturnedPacket, T_ProcessCode
 from NetSym.consts import INTERFACES
 from NetSym.exceptions import SocketIsClosedError
 
 if TYPE_CHECKING:
     from NetSym.packets.packet import Packet
-    from NetSym.computing.internals.network_interfaces.network_interface import NetworkInterface
     from NetSym.computing.computer import Computer
 
 

@@ -1,0 +1,1907 @@
+{
+    "computers": [
+        {
+            "class": "Computer",
+            "location": [
+                549,
+                488
+            ],
+            "name": "HarryThePotter97",
+            "scale_factor": 0.5,
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        571.2245119269953,
+                        460.50325347233166
+                    ],
+                    "name": "within2",
+                    "mac": "C0:76:EB:29:21:37",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        571.0585294084971,
+                        460.36992073238895
+                    ],
+                    "name": "body4",
+                    "mac": "D2:80:A4:A8:32:AF",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        515.0049948174958,
+                        478.28714137642737
+                    ],
+                    "name": "have8",
+                    "mac": "62:50:EC:BA:6F:58",
+                    "ip": "1.1.1.6 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.1.1.1",
+                        "1.1.1.6"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.1.1.1",
+                        "1.1.1.6"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.1.1.0 /24": [
+                        "On-link",
+                        "1.1.1.6"
+                    ],
+                    "1.1.1.6 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "cat",
+                                    "creation_time": "datetime.datetime(2022, 11, 18, 21, 58, 12, 728703)",
+                                    "last_edit_time": "datetime.datetime(2022, 11, 18, 21, 58, 12, 728703)",
+                                    "content": "1 hello hello\n2 This is the file that is transferred in FTP\n3 very easy to see....\n4 1, 2, 3, ....\n5 200 is the end.\n6 The secret to ramotomer's secret egg-roll recipe:\n7 take eggs\n8 roll\n9 the end\n10 NOT\n\na\naa\naaa\naaaa\naaaaa\naaaaaa\naaaaaaa\naaaaaaaa\naaaaaaaaa\naaaaaaaaaa\naaaaaaaaaaa\naaaaaaaaaaaa\naaaaaaaaaaaaa\naaaaaaaaaaaaaa\naaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nword\nwordword\nwordwordword\nwordwordwordword\nwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordword\nwordwordwordword\nwordwordword\nwordword\nword\n\n\nword\n\nnow this is the end\nFIN"
+                                }
+                            ],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "resolv.conf",
+                                    "creation_time": "datetime.datetime(2022, 11, 18, 21, 58, 58, 120413)",
+                                    "last_edit_time": "datetime.datetime(2022, 11, 18, 21, 58, 58, 121414)",
+                                    "content": ""
+                                }
+                            ],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Computer",
+            "location": [
+                158,
+                480
+            ],
+            "name": "name92",
+            "scale_factor": 0.5,
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        189.05726654305204,
+                        463.1048470005797
+                    ],
+                    "name": "beyond6",
+                    "mac": "21:17:8F:CD:F7:57",
+                    "ip": "1.1.1.2 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.1.1.1",
+                        "1.1.1.2"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.1.1.1",
+                        "1.1.1.2"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.1.1.0 /24": [
+                        "On-link",
+                        "1.1.1.2"
+                    ],
+                    "1.1.1.2 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "cat",
+                                    "creation_time": "datetime.datetime(2022, 11, 18, 21, 58, 13, 48247)",
+                                    "last_edit_time": "datetime.datetime(2022, 11, 18, 21, 58, 13, 48247)",
+                                    "content": "1 hello hello\n2 This is the file that is transferred in FTP\n3 very easy to see....\n4 1, 2, 3, ....\n5 200 is the end.\n6 The secret to ramotomer's secret egg-roll recipe:\n7 take eggs\n8 roll\n9 the end\n10 NOT\n\na\naa\naaa\naaaa\naaaaa\naaaaaa\naaaaaaa\naaaaaaaa\naaaaaaaaa\naaaaaaaaaa\naaaaaaaaaaa\naaaaaaaaaaaa\naaaaaaaaaaaaa\naaaaaaaaaaaaaa\naaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nword\nwordword\nwordwordword\nwordwordwordword\nwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordword\nwordwordwordword\nwordwordword\nwordword\nword\n\n\nword\n\nnow this is the end\nFIN"
+                                }
+                            ],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "resolv.conf",
+                                    "creation_time": "datetime.datetime(2022, 11, 18, 21, 58, 54, 657468)",
+                                    "last_edit_time": "datetime.datetime(2022, 11, 18, 21, 58, 54, 658466)",
+                                    "content": ""
+                                }
+                            ],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Computer",
+            "location": [
+                110,
+                331
+            ],
+            "name": "yeaaaaaaaaaaaahBuddy91",
+            "scale_factor": 0.5,
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        142.0194728706746,
+                        345.99177631517136
+                    ],
+                    "name": "mind10",
+                    "mac": "BE:20:47:B6:9B:77",
+                    "ip": "1.1.1.4 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.1.1.1",
+                        "1.1.1.4"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.1.1.1",
+                        "1.1.1.4"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.1.1.0 /24": [
+                        "On-link",
+                        "1.1.1.4"
+                    ],
+                    "1.1.1.4 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "cat",
+                                    "creation_time": "datetime.datetime(2022, 11, 18, 21, 58, 13, 212873)",
+                                    "last_edit_time": "datetime.datetime(2022, 11, 18, 21, 58, 13, 212873)",
+                                    "content": "1 hello hello\n2 This is the file that is transferred in FTP\n3 very easy to see....\n4 1, 2, 3, ....\n5 200 is the end.\n6 The secret to ramotomer's secret egg-roll recipe:\n7 take eggs\n8 roll\n9 the end\n10 NOT\n\na\naa\naaa\naaaa\naaaaa\naaaaaa\naaaaaaa\naaaaaaaa\naaaaaaaaa\naaaaaaaaaa\naaaaaaaaaaa\naaaaaaaaaaaa\naaaaaaaaaaaaa\naaaaaaaaaaaaaa\naaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nword\nwordword\nwordwordword\nwordwordwordword\nwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordword\nwordwordwordword\nwordwordword\nwordword\nword\n\n\nword\n\nnow this is the end\nFIN"
+                                }
+                            ],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "resolv.conf",
+                                    "creation_time": "datetime.datetime(2022, 11, 18, 21, 58, 56, 124568)",
+                                    "last_edit_time": "datetime.datetime(2022, 11, 18, 21, 58, 56, 125566)",
+                                    "content": ""
+                                }
+                            ],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Switch",
+            "location": [
+                283,
+                412
+            ],
+            "name": "shimpanze35",
+            "scale_factor": 0.5,
+            "os": "Linux",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        251.94273345694796,
+                        428.8951529994203
+                    ],
+                    "name": "child0",
+                    "mac": "74:37:56:A7:7D:20",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        250.9805271293254,
+                        397.00822368482864
+                    ],
+                    "name": "necessary6",
+                    "mac": "02:71:FD:C8:6E:17",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        316.99500518250426,
+                        421.71285862357263
+                    ],
+                    "name": "rock9",
+                    "mac": "6A:81:FE:D1:A5:B3",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        275.270477262373,
+                        377.49993509790875
+                    ],
+                    "name": "property1",
+                    "mac": "01:D3:4B:BA:C9:4B",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        308.4671653792784,
+                        387.47606296810227
+                    ],
+                    "name": "onto6",
+                    "mac": "16:9B:C7:0F:A7:C2",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        296.1704717039659,
+                        444.81064880637126
+                    ],
+                    "name": "see5",
+                    "mac": "CF:DA:1B:A7:51:B5",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        null,
+                        null
+                    ],
+                    "255.255.255.255 /32": [
+                        null,
+                        null
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "cat",
+                                    "creation_time": "datetime.datetime(2022, 11, 18, 21, 58, 17, 907410)",
+                                    "last_edit_time": "datetime.datetime(2022, 11, 18, 21, 58, 17, 907410)",
+                                    "content": "1 hello hello\n2 This is the file that is transferred in FTP\n3 very easy to see....\n4 1, 2, 3, ....\n5 200 is the end.\n6 The secret to ramotomer's secret egg-roll recipe:\n7 take eggs\n8 roll\n9 the end\n10 NOT\n\na\naa\naaa\naaaa\naaaaa\naaaaaa\naaaaaaa\naaaaaaaa\naaaaaaaaa\naaaaaaaaaa\naaaaaaaaaaa\naaaaaaaaaaaa\naaaaaaaaaaaaa\naaaaaaaaaaaaaa\naaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nword\nwordword\nwordwordword\nwordwordwordword\nwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordword\nwordwordwordword\nwordwordword\nwordword\nword\n\n\nword\n\nnow this is the end\nFIN"
+                                }
+                            ],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Switch",
+            "location": [
+                688,
+                97
+            ],
+            "name": "goodness81",
+            "scale_factor": 0.5,
+            "os": "Linux",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        652.6613493425516,
+                        98.08617204476172
+                    ],
+                    "name": "environment6",
+                    "mac": "8C:E8:A1:09:1B:63",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        713.6722724171984,
+                        121.30914290832061
+                    ],
+                    "name": "decision10",
+                    "mac": "B6:76:98:E6:8B:5E",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        723.1960799655845,
+                        100.35200761576995
+                    ],
+                    "name": "environmental1",
+                    "mac": "29:33:E6:73:E1:AC",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        652.7814914052358,
+                        100.1075154642439
+                    ],
+                    "name": "sign10",
+                    "mac": "B2:2A:17:DB:6C:8D",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        null,
+                        null
+                    ],
+                    "255.255.255.255 /32": [
+                        null,
+                        null
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "cat",
+                                    "creation_time": "datetime.datetime(2022, 11, 18, 21, 58, 28, 484790)",
+                                    "last_edit_time": "datetime.datetime(2022, 11, 18, 21, 58, 28, 484790)",
+                                    "content": "1 hello hello\n2 This is the file that is transferred in FTP\n3 very easy to see....\n4 1, 2, 3, ....\n5 200 is the end.\n6 The secret to ramotomer's secret egg-roll recipe:\n7 take eggs\n8 roll\n9 the end\n10 NOT\n\na\naa\naaa\naaaa\naaaaa\naaaaaa\naaaaaaa\naaaaaaaa\naaaaaaaaa\naaaaaaaaaa\naaaaaaaaaaa\naaaaaaaaaaaa\naaaaaaaaaaaaa\naaaaaaaaaaaaaa\naaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nword\nwordword\nwordwordword\nwordwordwordword\nwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordword\nwordwordwordword\nwordwordword\nwordword\nword\n\n\nword\n\nnow this is the end\nFIN"
+                                }
+                            ],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Computer",
+            "location": [
+                801,
+                204
+            ],
+            "name": "promQueen69",
+            "scale_factor": 0.5,
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        775.3277275828016,
+                        179.6908570916794
+                    ],
+                    "name": "partner3",
+                    "mac": "26:40:A3:E5:7F:60",
+                    "ip": "1.1.1.5 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.1.1.1",
+                        "1.1.1.5"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.1.1.1",
+                        "1.1.1.5"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.1.1.0 /24": [
+                        "On-link",
+                        "1.1.1.5"
+                    ],
+                    "1.1.1.5 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "cat",
+                                    "creation_time": "datetime.datetime(2022, 11, 18, 21, 58, 29, 299983)",
+                                    "last_edit_time": "datetime.datetime(2022, 11, 18, 21, 58, 29, 299983)",
+                                    "content": "1 hello hello\n2 This is the file that is transferred in FTP\n3 very easy to see....\n4 1, 2, 3, ....\n5 200 is the end.\n6 The secret to ramotomer's secret egg-roll recipe:\n7 take eggs\n8 roll\n9 the end\n10 NOT\n\na\naa\naaa\naaaa\naaaaa\naaaaaa\naaaaaaa\naaaaaaaa\naaaaaaaaa\naaaaaaaaaa\naaaaaaaaaaa\naaaaaaaaaaaa\naaaaaaaaaaaaa\naaaaaaaaaaaaaa\naaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nword\nwordword\nwordwordword\nwordwordwordword\nwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordword\nwordwordwordword\nwordwordword\nwordword\nword\n\n\nword\n\nnow this is the end\nFIN"
+                                }
+                            ],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "resolv.conf",
+                                    "creation_time": "datetime.datetime(2022, 11, 18, 21, 58, 57, 733489)",
+                                    "last_edit_time": "datetime.datetime(2022, 11, 18, 21, 58, 57, 733489)",
+                                    "content": ""
+                                }
+                            ],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Computer",
+            "location": [
+                242,
+                229
+            ],
+            "name": "Lapwing76",
+            "scale_factor": 0.5,
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        249.729522737627,
+                        263.50006490209125
+                    ],
+                    "name": "old10",
+                    "mac": "3E:A8:2A:5A:28:B6",
+                    "ip": "1.1.1.3 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.1.1.1",
+                        "1.1.1.3"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.1.1.1",
+                        "1.1.1.3"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.1.1.0 /24": [
+                        "On-link",
+                        "1.1.1.3"
+                    ],
+                    "1.1.1.3 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "cat",
+                                    "creation_time": "datetime.datetime(2022, 11, 18, 21, 58, 29, 753129)",
+                                    "last_edit_time": "datetime.datetime(2022, 11, 18, 21, 58, 29, 753129)",
+                                    "content": "1 hello hello\n2 This is the file that is transferred in FTP\n3 very easy to see....\n4 1, 2, 3, ....\n5 200 is the end.\n6 The secret to ramotomer's secret egg-roll recipe:\n7 take eggs\n8 roll\n9 the end\n10 NOT\n\na\naa\naaa\naaaa\naaaaa\naaaaaa\naaaaaaa\naaaaaaaa\naaaaaaaaa\naaaaaaaaaa\naaaaaaaaaaa\naaaaaaaaaaaa\naaaaaaaaaaaaa\naaaaaaaaaaaaaa\naaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nword\nwordword\nwordwordword\nwordwordwordword\nwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordword\nwordwordwordword\nwordwordword\nwordword\nword\n\n\nword\n\nnow this is the end\nFIN"
+                                }
+                            ],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "resolv.conf",
+                                    "creation_time": "datetime.datetime(2022, 11, 18, 21, 58, 55, 917560)",
+                                    "last_edit_time": "datetime.datetime(2022, 11, 18, 21, 58, 55, 918557)",
+                                    "content": ""
+                                }
+                            ],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Computer",
+            "location": [
+                919,
+                119
+            ],
+            "name": "featpitbull39",
+            "scale_factor": 0.5,
+            "os": "Windows",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        883.8039200344155,
+                        115.64799238423005
+                    ],
+                    "name": "far4",
+                    "mac": "D3:50:73:3C:65:2C",
+                    "ip": "1.1.1.7 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        "1.1.1.1",
+                        "1.1.1.7"
+                    ],
+                    "255.255.255.255 /32": [
+                        "1.1.1.1",
+                        "1.1.1.7"
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.1.1.0 /24": [
+                        "On-link",
+                        "1.1.1.7"
+                    ],
+                    "1.1.1.7 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "cat",
+                                    "creation_time": "datetime.datetime(2022, 11, 18, 21, 58, 30, 199255)",
+                                    "last_edit_time": "datetime.datetime(2022, 11, 18, 21, 58, 30, 199255)",
+                                    "content": "1 hello hello\n2 This is the file that is transferred in FTP\n3 very easy to see....\n4 1, 2, 3, ....\n5 200 is the end.\n6 The secret to ramotomer's secret egg-roll recipe:\n7 take eggs\n8 roll\n9 the end\n10 NOT\n\na\naa\naaa\naaaa\naaaaa\naaaaaa\naaaaaaa\naaaaaaaa\naaaaaaaaa\naaaaaaaaaa\naaaaaaaaaaa\naaaaaaaaaaaa\naaaaaaaaaaaaa\naaaaaaaaaaaaaa\naaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nword\nwordword\nwordwordword\nwordwordwordword\nwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordword\nwordwordwordword\nwordwordword\nwordword\nword\n\n\nword\n\nnow this is the end\nFIN"
+                                }
+                            ],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "resolv.conf",
+                                    "creation_time": "datetime.datetime(2022, 11, 18, 21, 59, 1, 890306)",
+                                    "last_edit_time": "datetime.datetime(2022, 11, 18, 21, 59, 1, 890306)",
+                                    "content": ""
+                                }
+                            ],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Router",
+            "location": [
+                340,
+                554
+            ],
+            "name": "yeaaaaaaaaaaaahBuddy86",
+            "scale_factor": 0.5,
+            "os": "Solaris",
+            "interfaces": [
+                {
+                    "class": "Interface",
+                    "location": [
+                        326.8295282960341,
+                        521.1893511936287
+                    ],
+                    "name": "high7",
+                    "mac": "AC:1B:FF:0B:A1:57",
+                    "ip": "1.1.1.1 /24",
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        null,
+                        null
+                    ],
+                    "255.255.255.255 /32": [
+                        null,
+                        null
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ],
+                    "1.1.1.0 /24": [
+                        "On-link",
+                        "1.1.1.1"
+                    ],
+                    "1.1.1.1 /32": [
+                        "127.0.0.1",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "cat",
+                                    "creation_time": "datetime.datetime(2022, 11, 18, 21, 58, 45, 822128)",
+                                    "last_edit_time": "datetime.datetime(2022, 11, 18, 21, 58, 45, 822128)",
+                                    "content": "1 hello hello\n2 This is the file that is transferred in FTP\n3 very easy to see....\n4 1, 2, 3, ....\n5 200 is the end.\n6 The secret to ramotomer's secret egg-roll recipe:\n7 take eggs\n8 roll\n9 the end\n10 NOT\n\na\naa\naaa\naaaa\naaaaa\naaaaaa\naaaaaaa\naaaaaaaa\naaaaaaaaa\naaaaaaaaaa\naaaaaaaaaaa\naaaaaaaaaaaa\naaaaaaaaaaaaa\naaaaaaaaaaaaaa\naaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nword\nwordword\nwordwordword\nwordwordwordword\nwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordword\nwordwordwordword\nwordwordword\nwordword\nword\n\n\nword\n\nnow this is the end\nFIN"
+                                }
+                            ],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            },
+            "is_dhcp_server": false
+        },
+        {
+            "class": "Antenna",
+            "location": [
+                364,
+                334
+            ],
+            "name": "iHaveCorona62",
+            "scale_factor": 0.5,
+            "os": "Linux",
+            "interfaces": [
+                {
+                    "class": "WirelessInterface",
+                    "location": [
+                        364,
+                        369.3553390593274
+                    ],
+                    "name": "green9",
+                    "mac": "BD:73:F5:24:C8:0C",
+                    "ip": null,
+                    "color": [
+                        11,
+                        65,
+                        105
+                    ],
+                    "is_blocked": false,
+                    "type_": "Wifi",
+                    "frequency": 1.0
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        338.5328346207216,
+                        358.52393703189773
+                    ],
+                    "name": "especially9",
+                    "mac": "51:DB:74:A3:14:6C",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        null,
+                        null
+                    ],
+                    "255.255.255.255 /32": [
+                        null,
+                        null
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "cat",
+                                    "creation_time": "datetime.datetime(2022, 11, 18, 21, 59, 46, 683279)",
+                                    "last_edit_time": "datetime.datetime(2022, 11, 18, 21, 59, 46, 683279)",
+                                    "content": "1 hello hello\n2 This is the file that is transferred in FTP\n3 very easy to see....\n4 1, 2, 3, ....\n5 200 is the end.\n6 The secret to ramotomer's secret egg-roll recipe:\n7 take eggs\n8 roll\n9 the end\n10 NOT\n\na\naa\naaa\naaaa\naaaaa\naaaaaa\naaaaaaa\naaaaaaaa\naaaaaaaaa\naaaaaaaaaa\naaaaaaaaaaa\naaaaaaaaaaaa\naaaaaaaaaaaaa\naaaaaaaaaaaaaa\naaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nword\nwordword\nwordwordword\nwordwordwordword\nwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordword\nwordwordwordword\nwordwordword\nwordword\nword\n\n\nword\n\nnow this is the end\nFIN"
+                                }
+                            ],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "class": "Antenna",
+            "location": [
+                586,
+                106
+            ],
+            "name": "love57",
+            "scale_factor": 0.5,
+            "os": "Linux",
+            "interfaces": [
+                {
+                    "class": "WirelessInterface",
+                    "location": [
+                        586,
+                        141.35533905932738
+                    ],
+                    "name": "carry4",
+                    "mac": "53:23:B9:15:43:C0",
+                    "ip": null,
+                    "color": [
+                        11,
+                        65,
+                        105
+                    ],
+                    "is_blocked": false,
+                    "type_": "Wifi",
+                    "frequency": 1.0
+                },
+                {
+                    "class": "Interface",
+                    "location": [
+                        621.2185085947642,
+                        102.8924845357561
+                    ],
+                    "name": "fail9",
+                    "mac": "43:B8:53:BA:19:C5",
+                    "ip": null,
+                    "color": [
+                        10,
+                        10,
+                        10
+                    ],
+                    "is_blocked": false,
+                    "type_": "Ether",
+                    "mtu": 1500
+                }
+            ],
+            "open_tcp_ports": [],
+            "open_udp_ports": [],
+            "routing_table": {
+                "class": "RoutingTable",
+                "dict": {
+                    "0.0.0.0 /0": [
+                        null,
+                        null
+                    ],
+                    "255.255.255.255 /32": [
+                        null,
+                        null
+                    ],
+                    "127.0.0.0 /8": [
+                        "On-link",
+                        "127.0.0.1"
+                    ]
+                }
+            },
+            "filesystem": {
+                "class": "Filesystem",
+                "root_path": "/",
+                "root": {
+                    "class": "Directory",
+                    "name": "/",
+                    "mount": "ext4",
+                    "files": [],
+                    "directories": [
+                        {
+                            "class": "Directory",
+                            "name": "dev",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "usr",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": [
+                                {
+                                    "class": "Directory",
+                                    "name": "bin",
+                                    "mount": "ext4",
+                                    "files": [],
+                                    "directories": []
+                                }
+                            ]
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "var",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "boot",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "bin",
+                            "mount": "ext4",
+                            "files": [
+                                {
+                                    "class": "File",
+                                    "name": "cat",
+                                    "creation_time": "datetime.datetime(2022, 11, 18, 21, 59, 47, 346464)",
+                                    "last_edit_time": "datetime.datetime(2022, 11, 18, 21, 59, 47, 346464)",
+                                    "content": "1 hello hello\n2 This is the file that is transferred in FTP\n3 very easy to see....\n4 1, 2, 3, ....\n5 200 is the end.\n6 The secret to ramotomer's secret egg-roll recipe:\n7 take eggs\n8 roll\n9 the end\n10 NOT\n\na\naa\naaa\naaaa\naaaaa\naaaaaa\naaaaaaa\naaaaaaaa\naaaaaaaaa\naaaaaaaaaa\naaaaaaaaaaa\naaaaaaaaaaaa\naaaaaaaaaaaaa\naaaaaaaaaaaaaa\naaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nword\nwordword\nwordwordword\nwordwordwordword\nwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordwordword\nwordwordwordwordwordwordwordword\nwordwordwordwordwordwordword\nwordwordwordwordwordword\nwordwordwordwordword\nwordwordwordword\nwordwordword\nwordword\nword\n\n\nword\n\nnow this is the end\nFIN"
+                                }
+                            ],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "etc",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "tmp",
+                            "mount": "tmp",
+                            "files": [],
+                            "directories": []
+                        },
+                        {
+                            "class": "Directory",
+                            "name": "home",
+                            "mount": "ext4",
+                            "files": [],
+                            "directories": []
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "connections": [
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 150,
+            "start": {
+                "computer": "name92",
+                "interface": "beyond6"
+            },
+            "end": {
+                "computer": "shimpanze35",
+                "interface": "child0"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 150,
+            "start": {
+                "computer": "yeaaaaaaaaaaaahBuddy91",
+                "interface": "mind10"
+            },
+            "end": {
+                "computer": "shimpanze35",
+                "interface": "necessary6"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 150,
+            "start": {
+                "computer": "shimpanze35",
+                "interface": "rock9"
+            },
+            "end": {
+                "computer": "HarryThePotter97",
+                "interface": "have8"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 150,
+            "start": {
+                "computer": "promQueen69",
+                "interface": "partner3"
+            },
+            "end": {
+                "computer": "goodness81",
+                "interface": "decision10"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 150,
+            "start": {
+                "computer": "Lapwing76",
+                "interface": "old10"
+            },
+            "end": {
+                "computer": "shimpanze35",
+                "interface": "property1"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 150,
+            "start": {
+                "computer": "featpitbull39",
+                "interface": "far4"
+            },
+            "end": {
+                "computer": "goodness81",
+                "interface": "environmental1"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 150,
+            "start": {
+                "computer": "yeaaaaaaaaaaaahBuddy86",
+                "interface": "high7"
+            },
+            "end": {
+                "computer": "shimpanze35",
+                "interface": "see5"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 150,
+            "start": {
+                "computer": "love57",
+                "interface": "fail9"
+            },
+            "end": {
+                "computer": "goodness81",
+                "interface": "sign10"
+            }
+        },
+        {
+            "class": "Connection",
+            "packet_loss": 0,
+            "speed": 150,
+            "start": {
+                "computer": "iHaveCorona62",
+                "interface": "especially9"
+            },
+            "end": {
+                "computer": "shimpanze35",
+                "interface": "onto6"
+            }
+        }
+    ]
+}

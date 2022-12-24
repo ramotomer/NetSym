@@ -336,7 +336,7 @@ class ProcessScheduler:
                 return
 
             if process is self.__details_by_mode[mode].currently_running_process:
-                # TODO: Im pretty sure that if this happens the simulation crashes... TEST and FIX
+                # TODO: BUG: Im pretty sure that if this happens the simulation crashes... TEST and FIX
                 process.die()  # only occurs when a process calls `terminate_process` on itself
                 return
 
@@ -510,7 +510,7 @@ class ProcessScheduler:
         else:
             self.send_process_signal(pid, COMPUTER.PROCESSES.SIGNALS.SIGTERM, COMPUTER.PROCESSES.MODES.USERMODE)
 
-    def kill_all_usermode_processes_by_type(self, process_type: Type[Process], force: bool = False) -> None:
+    def kill_all_usermode_processes_by_type(self, process_type: Type[Process]) -> None:
         """
         Takes in a process type and kills all of the waiting processes of that type in this `Computer`.
         They are killed by a signal, unless specified specifically with the `force` param
@@ -518,9 +518,9 @@ class ProcessScheduler:
         :param force:
         :return: None
         """
-        for waiting_process in self.waiting_usermode_processes:
+        for waiting_process in self.waiting_usermode_processes[:]:
             if isinstance(waiting_process.process, process_type):
-                self.kill_usermode_process(waiting_process.process.pid, force)
+                self.kill_usermode_process(waiting_process.process.pid, force=True)
 
     def handle_processes(self) -> None:
         """
