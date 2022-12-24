@@ -216,6 +216,7 @@ class UserInterface:
         self.debug_counter = 0
 
         self.selecting_square: Optional[SelectingSquare] = None
+        self.resizing_dots_handler = ResizingDotsHandler()
 
         self.dragged_object: Optional[GraphicsObject] = None
         # ^ the object that is currently being dragged (by the courser)
@@ -226,7 +227,6 @@ class UserInterface:
         self.selected_object = None  # this sets the `selected_object` attribute
         # TODO: there are too many of these variables! selected_object, marked_objects, dragged_object, dragging_points - these are all the same...
 
-        self.resizing_dots_handler = ResizingDotsHandler()
 
         self.main_loop.insert_to_loop(self.select_selected_and_marked_objects)
         self.main_loop.insert_to_loop(self.show)
@@ -290,6 +290,11 @@ class UserInterface:
     def selected_object(self, graphics_object: Union[Selectable, None]) -> None:
         self.__selected_object = graphics_object
         self.active_window = None
+
+        if isinstance(graphics_object, Resizable):
+            self.resizing_dots_handler.select(graphics_object)
+        else:
+            self.resizing_dots_handler.deselect()
 
     def register_main_window_event_handlers(self) -> None:
         """
@@ -1708,18 +1713,13 @@ class UserInterface:
     def select_selected_and_marked_objects(self) -> None:
         """
         Draws a rectangle around the selected object.
-        The selected object is the object that was last pressed and is surrounded by a white square.
-        :return: None
+        The selected object is the object that was last pressed and is surrounded by a blue square.
         """
         self._update_selecting_square()
         self._mark_object_inside_selecting_square(object_types=(ComputerGraphics, CablePacketGraphics))
 
         if self.selected_object is not None:
             self.selected_object.mark_as_selected()
-            if isinstance(self.selected_object, Resizable):
-                self.resizing_dots_handler.select(self.selected_object)
-        else:
-            self.resizing_dots_handler.deselect()
 
         for marked_object in self.marked_objects:
             marked_object.mark_as_selected()
