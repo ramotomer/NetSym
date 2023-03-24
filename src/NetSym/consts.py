@@ -939,3 +939,9 @@ class COMPUTER:
             DNS_CLIENT_PATH = "/etc/resolv.conf"
             DNS_ZONE_FILES = "/var/named"
             DNS_TMP_QUERY_RESULTS_DIR_PATH = "/tmp/named/"
+
+    class TEXT:
+        SHOW_NAMES = False
+
+        SHOW_MACS = True
+        SHOW_MACS_ONLY_WHEN_ENDPOINT = True

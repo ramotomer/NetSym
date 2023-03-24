@@ -12,7 +12,7 @@ from NetSym.computing.internals.processes.usermode_processes.ddos_process import
 from NetSym.computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
 from NetSym.computing.internals.processes.usermode_processes.dns_process.dns_server_process import DNSServerProcess
 from NetSym.computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
-from NetSym.consts import IMAGES, MESSAGES, INTERFACES, TEXT, PORTS
+from NetSym.consts import IMAGES, MESSAGES, INTERFACES, TEXT, PORTS, COMPUTER
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
 from NetSym.gui.tech.loopback_connection_graphics import LoopbackConnectionGraphics
 from NetSym.gui.tech.output_console import OutputConsole
@@ -133,7 +133,14 @@ class ComputerGraphics(ImageGraphics):
         Generates the text under the computer.
         :return: a string with the information that should be displayed there.
         """
-        return '\n'.join([self.computer.name] + [str(interface.ip) for interface in self.computer.interfaces if interface.has_ip()])
+        strings = [str(interface.ip) for interface in self.computer.interfaces if interface.has_ip()]
+        if COMPUTER.TEXT.SHOW_NAMES:
+            strings.insert(0, self.computer.name)
+
+        if COMPUTER.TEXT.SHOW_MACS and ((len(self.computer.interfaces) == 1) or not COMPUTER.TEXT.SHOW_MACS_ONLY_WHEN_ENDPOINT):
+            strings.extend([str(interface.mac) for interface in self.computer.interfaces])
+
+        return '\n'.join(strings)
 
     def update_text(self) -> None:
         """Sometimes the ip_layer of the computer is changed and we want to text to change as well"""
