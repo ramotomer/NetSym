@@ -358,11 +358,15 @@ class Computer:
             print(message)
             # TODO: IMPROVE: change all prints to use the logging module! be high-tech please
 
+    def get_interface(self) -> NetworkInterface:
+        """Return one of the interfaces of the computer"""
+        if not self.interfaces:
+            raise NoSuchInterfaceError("The computer has no network interfaces!!!")
+        return self.interfaces[0]
+
     def get_mac(self) -> MACAddress:
         """Returns one of the computer's `MACAddresses`"""
-        if not self.macs:
-            raise NoSuchInterfaceError("The computer has no MAC address since it has no network interfaces!!!")
-        return self.macs[0]
+        return self.get_interface().mac
 
     def set_name(self, name: str) -> None:
         """

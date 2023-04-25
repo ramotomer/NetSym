@@ -198,6 +198,7 @@ class UserInterface:
         self.button_arguments: List[Tuple[Tuple[Callable[[], Any], str], Dict[str, Tuple[int, int]]]] = [
             ((self.open_device_creation_window, "create device (e)"), {"key": (key.E, KEYBOARD.MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.CONNECTING), "connect (c / ^c / Shift+c)"), {"key": (key.C, KEYBOARD.MODIFIERS.NONE)}),
+            ((with_args(self.toggle_mode, MODES.SEND_RAW_ETHERNET), "send raw ethernet (^e)"), {"key": (key.E, KEYBOARD.MODIFIERS.CTRL)}),
             ((with_args(self.toggle_mode, MODES.PINGING), "ping (p / ^p / Shift+p)"), {"key": (key.P, KEYBOARD.MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.FILE_DOWNLOADING),
               "Start file download (Ctrl+Shift+a)"),
@@ -712,9 +713,10 @@ class UserInterface:
 
         if self.mode in MODES.COMPUTER_CONNECTING_MODES:
             self.end_device_visual_connecting({
-                MODES.CONNECTING:       self.connect_devices_by_graphics,
-                MODES.PINGING:          self.send_direct_ping,
-                MODES.FILE_DOWNLOADING: self.start_file_download,
+                MODES.CONNECTING:        self.connect_devices_by_graphics,
+                MODES.PINGING:           self.send_direct_ping,
+                MODES.FILE_DOWNLOADING:  self.start_file_download,
+                MODES.SEND_RAW_ETHERNET: self.send_direct_raw_ethernet,
             }[self.mode])
 
         self.dragged_object = None
@@ -923,6 +925,15 @@ class UserInterface:
         computer1, computer2 = computer_graphics1.computer, computer_graphics2.computer
         if computer1.has_ip() and computer2.has_ip():
             computer1.start_ping_process(computer2.get_ip().string_ip)
+
+    @staticmethod
+    def send_direct_raw_ethernet(computer_graphics1: ComputerGraphics, computer_graphics2: ComputerGraphics) -> None:
+        """
+        Make the first computer send a raw ethernet frame to the other computer
+        """
+        computer1, computer2 = computer_graphics1.computer, computer_graphics2.computer
+        if computer1.interfaces and computer2.interfaces:
+            computer1.get_interface().send_with_ethernet(computer2.get_mac(), "Hello world!")
 
     @staticmethod
     def start_file_download(computer_graphics1: ComputerGraphics, computer_graphics2: ComputerGraphics) -> None:
