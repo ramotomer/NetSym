@@ -30,7 +30,7 @@ class SwitchingProcess(Process):
         Initiates the process with a computer that runs it.
         """
         super(SwitchingProcess, self).__init__(pid, switch)
-        self.switching_table: Dict[MACAddress, SwitchTableItem] = {}
+        self.mac_address_table: Dict[MACAddress, SwitchTableItem] = {}
         # ^ a dictionary mapping mac addresses to the corresponding leg (interface) they sit behind.
 
     def update_switch_table_from_packets(self, packets: ReturnedPacket) -> None:
@@ -43,7 +43,7 @@ class SwitchingProcess(Process):
                 src_mac = packet["Ether"].src_mac
             except KeyError:
                 raise UnknownPacketTypeError("The packet contains no Ethernet layer!!!")
-            self.switching_table[src_mac] = SwitchTableItem(leg=packet_metadata.interface, time=MainLoop.get_time())
+            self.mac_address_table[src_mac] = SwitchTableItem(leg=packet_metadata.interface, time=MainLoop.get_time())
 
     def delete_old_switch_table_items(self) -> None:
         """
@@ -51,9 +51,9 @@ class SwitchingProcess(Process):
         last `SWITCH_TABLE_ITEM_LIFETIME` seconds.
         :return: None
         """
-        for src_mac, switch_table_item in list(self.switching_table.items()):
+        for src_mac, switch_table_item in list(self.mac_address_table.items()):
             if MainLoop.get_time_since(switch_table_item.time) > COMPUTER.SWITCH_TABLE.ITEM_LIFETIME:
-                del self.switching_table[src_mac]
+                del self.mac_address_table[src_mac]
 
     def send_new_packets_to_destinations(self, packets: ReturnedPacket) -> None:
         """
@@ -82,9 +82,9 @@ class SwitchingProcess(Process):
         """
         dst_mac = packet["Ether"].dst_mac
 
-        if self.computer.is_hub or dst_mac.is_broadcast() or (dst_mac not in self.switching_table):
+        if self.computer.is_hub or dst_mac.is_broadcast() or (dst_mac not in self.mac_address_table):
             return [leg for leg in self.computer.cable_interfaces if leg is not source_leg and leg.is_connected()]  # flood!!!
-        destination_leg = self.switching_table[dst_mac].leg
+        destination_leg = self.mac_address_table[dst_mac].leg
         return [destination_leg] if destination_leg is not source_leg else []
         # ^ making sure the packet does not return on the destination leg
 

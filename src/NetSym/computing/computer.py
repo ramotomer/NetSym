@@ -418,6 +418,10 @@ class Computer:
         """
         return list(filter(lambda rp: rp.metadata.time > time_, (self.received_raw if is_raw else self.received)))
 
+    def get_mac_address_table_string(self) -> str:
+        # TODO: This being here is disgusting!!! It is because all computers have the same GraphcisObject and the buttons are dictated there...
+        raise NotImplementedError
+
     # --------------------------------------- v  Computer power  v ------------------------------------------------
 
     def power(self) -> None:

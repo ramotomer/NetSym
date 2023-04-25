@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Optional, Dict, Callable, Iterable, Tuple, Lis
 import pyglet
 
 from NetSym.address.ip_address import IPAddress
+from NetSym.computing.internals.processes.kernelmode_processes.switching_process import SwitchingProcess
 from NetSym.computing.internals.processes.usermode_processes.daytime_process.daytime_client_process import DAYTIMEClientProcess
 from NetSym.computing.internals.processes.usermode_processes.ddos_process import DDOSProcess
 from NetSym.computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
@@ -193,6 +194,13 @@ class ComputerGraphics(ImageGraphics):
                     MESSAGES.INSERT.DOMAIN_FOR_DHCP_SERVER,
                     self.computer.set_domain_for_dhcp_server,
                 ),
+            },
+            SwitchingProcess: {
+                "show MAC Address Table (alt+m)": with_args(
+                    user_interface.popup_message,
+                    ResultOf(self.computer.get_mac_address_table_string),
+                    title="MAC Address Table",
+                )
             },
         }
         all_buttons = {}
