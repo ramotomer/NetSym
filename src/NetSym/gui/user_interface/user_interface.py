@@ -27,7 +27,7 @@ from NetSym.computing.internals.processes.usermode_processes.stp_process import 
 from NetSym.computing.router import Router
 from NetSym.computing.switch import Switch, Hub, Antenna
 from NetSym.consts import VIEW, TEXT, BUTTONS, IMAGES, DIRECTORIES, T_Color, SELECTED_OBJECT, KEYBOARD, MODES, WINDOWS, COLORS, CONNECTIONS, \
-    INTERFACES, ADDRESSES, MESSAGES, CONSOLE, MainLoopFunctionPriority, debugp
+    INTERFACES, ADDRESSES, MESSAGES, CONSOLE, MainLoopFunctionPriority
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.resizable import Resizable
@@ -1611,7 +1611,8 @@ class UserInterface:
                 defaultextension="json",
                 initialdir=DIRECTORIES.SAVES,
             )
-        self.save_to_file(saving_file)
+        if saving_file:
+            self.save_to_file(saving_file)
 
     def save_to_file(self, filename: str) -> None:
         """
@@ -1637,11 +1638,13 @@ class UserInterface:
         Loads the state of the simulation from a file
         :return:
         """
-        debugp(f"loading {filename}")
+        if not filename:
+            return
+
         try:
             dict_from_file = json.loads(open(filename, "r").read())
         except FileNotFoundError:
-            raise PopupWindowWithThisError("There is not such file!!!")
+            raise PopupWindowWithThisError(f"There is not such file!!! {filename!r}")
 
         self.set_saving_file(filename)
         self._create_map_from_file_dict(dict_from_file)
