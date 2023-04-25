@@ -1216,6 +1216,7 @@ class UserInterface:
         print(f"\ncomputers, {len(self.computers)}, connections, {len(self.connection_data)}, "
               f"packets: {len(list(filter(lambda go: isinstance(go, PacketGraphics), self.main_loop.graphics_objects)))}")
 
+        # print("makred objects:", self.marked_objects)
         print()
         # if self.selected_object is not None and isinstance(self.selected_object, ComputerGraphics):
         #     computer = self.selected_object.computer
@@ -1841,6 +1842,8 @@ class UserInterface:
             return
 
         if isinstance(object_the_mouse_is_on, Selectable):
+            if ({key.RSHIFT, key.LSHIFT} & self.main_window.pressed_keys) and self.selected_object not in self.marked_objects:
+                self.marked_objects.append(self.selected_object)
             self.selected_object = object_the_mouse_is_on
         elif isinstance(object_the_mouse_is_on, PopupWindow):
             self.active_window = object_the_mouse_is_on
