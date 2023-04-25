@@ -35,4 +35,4 @@ nosetests.xml
 coverage.xml
 
 # project related
-/res/files/window_inputs.txt
+NetSym/src/NetSym/res/files/window_inputs.txt
