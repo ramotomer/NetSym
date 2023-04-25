@@ -41,6 +41,7 @@ class MainWindow(pyglet.window.Window):
         self.mouse_x, self.mouse_y = WINDOWS.MAIN.WIDTH / 2, WINDOWS.MAIN.HEIGHT / 2
         self.mouse_pressed = False
         self.pressed_keys: Set[T_PressedKey] = set()
+        self.should_exit = False
 
         try:
             self.set_icon(pyglet.image.load(add_path_basename_if_needed(DIRECTORIES.IMAGES, IMAGES.PACKETS.ICMP.REQUEST)))
@@ -173,6 +174,13 @@ class MainWindow(pyglet.window.Window):
         Called when the `MainWindow` is deactivated
         """
         self.set_is_ignoring_keyboard_escape_keys(False)
+
+    def on_close(self) -> None:
+        """
+        This is called when the window is closed
+        We want the popup message - so we do not want to close immediately
+        """
+        self.should_exit = True
 
     def update(self, time_interval: T_Time) -> None:
         """

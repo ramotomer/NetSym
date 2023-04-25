@@ -292,6 +292,7 @@ class UserInterface:
         self.__selected_object = graphics_object
         self.active_window = None
 
+
         if isinstance(graphics_object, Resizable):
             self.resizing_dots_handler.select(graphics_object)
         else:
@@ -314,6 +315,8 @@ class UserInterface:
         :return: None
         """
         self._draw_side_window()
+        if self.main_window.should_exit:
+            self.exit()
         if self.main_loop.is_paused:
             draw_pause_rectangles()
         if self.main_window.is_ignoring_keyboard_escape_keys:
@@ -1576,18 +1579,7 @@ class UserInterface:
                 defaultextension="json",
                 initialdir=DIRECTORIES.SAVES,
             )
-        self._save_to_file_with_override_safety(saving_file)
-
-    def _save_to_file_with_override_safety(self, file_path: str) -> None:
-        """
-        Saves all of the state of the simulation at the moment into a file, that we can
-        later load into an empty simulation, and get all of the computers, interface, and connections.
-        :return: None
-        """
-        if os.path.isfile(file_path):
-            self.register_window(YesNoPopupWindow("file exists! override?", yes_action=with_args(self.save_to_file, filename)))
-        else:
-            self.save_to_file(file_path)
+        self.save_to_file(saving_file)
 
     def save_to_file(self, filename: str) -> None:
         """
@@ -1782,6 +1774,7 @@ class UserInterface:
         Closes the simulation
         :return:
         """
+        self.main_window.should_exit = False
         self.register_window(YesNoPopupWindow("Are you sure you want to exit?", yes_action=pyglet.app.exit))
 
     def select_all(self) -> None:
