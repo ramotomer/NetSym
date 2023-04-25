@@ -9,6 +9,7 @@ from functools import reduce
 from itertools import chain
 from math import sqrt
 from operator import concat, attrgetter
+from tkinter import filedialog, Tk
 from typing import TYPE_CHECKING, Optional, NamedTuple, List, Type, Callable, Dict, TypeVar, Tuple, Union, Any, Iterable, cast
 
 import pyglet
@@ -25,7 +26,7 @@ from NetSym.computing.internals.processes.usermode_processes.stp_process import 
 from NetSym.computing.router import Router
 from NetSym.computing.switch import Switch, Hub, Antenna
 from NetSym.consts import VIEW, TEXT, BUTTONS, IMAGES, DIRECTORIES, T_Color, SELECTED_OBJECT, KEYBOARD, MODES, WINDOWS, COLORS, CONNECTIONS, \
-    INTERFACES, ADDRESSES, MESSAGES, CONSOLE, MainLoopFunctionPriority
+    INTERFACES, ADDRESSES, MESSAGES, CONSOLE, MainLoopFunctionPriority, debugp
 from NetSym.exceptions import *
 from NetSym.gui.abstracts.different_color_when_hovered import DifferentColorWhenHovered
 from NetSym.gui.abstracts.resizable import Resizable
@@ -272,7 +273,7 @@ class UserInterface:
         This function sets what is the path of that file.
         """
         self.__saving_file = new_file_name
-        self.main_window.set_caption(WINDOWS.MAIN.NAME + ": " + self.__saving_file)
+        self.main_window.set_caption(WINDOWS.MAIN.NAME + ": " + os.path.basename(self.__saving_file))
 
     def reset_saving_file(self) -> None:
         """
@@ -1568,21 +1569,25 @@ class UserInterface:
         """
         If the simulation state was once saved already - remember the file name and do not ask for it again
         """
-        if self.saving_file is None:
-            self.ask_user_for(str, "save file as:", self._save_to_file_with_override_safety)
-            return
-        self._save_to_file_with_override_safety(self.saving_file)
+        root = Tk()
+        root.withdraw()
+        saving_file = self.saving_file if self.saving_file is not None else filedialog.asksaveasfilename(
+                title="Save the Simulation!",
+                defaultextension="json",
+                initialdir=DIRECTORIES.SAVES,
+            )
+        self._save_to_file_with_override_safety(saving_file)
 
-    def _save_to_file_with_override_safety(self, filename: str) -> None:
+    def _save_to_file_with_override_safety(self, file_path: str) -> None:
         """
         Saves all of the state of the simulation at the moment into a file, that we can
         later load into an empty simulation, and get all of the computers, interface, and connections.
         :return: None
         """
-        if os.path.isfile(os.path.join(DIRECTORIES.SAVES, f"{filename}.json")):
+        if os.path.isfile(file_path):
             self.register_window(YesNoPopupWindow("file exists! override?", yes_action=with_args(self.save_to_file, filename)))
         else:
-            self.save_to_file(filename)
+            self.save_to_file(file_path)
 
     def save_to_file(self, filename: str) -> None:
         """
@@ -1600,7 +1605,7 @@ class UserInterface:
         }
 
         os.makedirs(DIRECTORIES.SAVES, exist_ok=True)
-        json.dump(dict_to_file, open(os.path.join(DIRECTORIES.SAVES, f"{filename}.json"), "w"), indent=4)
+        json.dump(dict_to_file, open(os.path.join(DIRECTORIES.SAVES, filename), "w"), indent=4)
         self.set_saving_file(filename)
 
     def load_from_file(self, filename) -> None:
@@ -1608,8 +1613,9 @@ class UserInterface:
         Loads the state of the simulation from a file
         :return:
         """
+        debugp(f"loading {filename}")
         try:
-            dict_from_file = json.load(open(os.path.join(DIRECTORIES.SAVES, f"{filename}.json"), "r"))
+            dict_from_file = json.loads(open(filename, "r").read())
         except FileNotFoundError:
             raise PopupWindowWithThisError("There is not such file!!!")
 
@@ -1645,29 +1651,17 @@ class UserInterface:
                 connection_dict["speed"],
             )
 
-    @staticmethod
-    def _list_saved_files() -> str:
-        """
-        Returns a string of all of the files that are saved already
-        :return:
-        """
-        if not os.path.isdir(DIRECTORIES.SAVES):
-            return ""
-
-        file_list = os.listdir(DIRECTORIES.SAVES)
-        return ", ".join(map(lambda f: f.split('.')[0], file_list))
-
     def _ask_user_for_load_file(self) -> None:
         """
         asks the user for a filename to open, while offering him the names that exist
         :return:
         """
-        saved_files = self._list_saved_files()
-        self.ask_user_for(
-            str,
-            f"insert file name to open:" + (f"[options: {saved_files}]" if saved_files else ""),
-            self.load_from_file
-        )
+        root = Tk()
+        root.withdraw()
+        self.load_from_file(filedialog.askopenfilename(
+            title="Choose Simulation file to load!",
+            initialdir=DIRECTORIES.SAVES,
+        ))
 
     def _update_selecting_square(self) -> None:
         """
