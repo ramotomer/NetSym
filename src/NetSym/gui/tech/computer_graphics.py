@@ -20,7 +20,7 @@ from NetSym.gui.tech.process_graphics import ProcessGraphicsList
 from NetSym.gui.user_interface.popup_windows.popup_console import PopupConsole
 from NetSym.gui.user_interface.popup_windows.popup_error import PopupError
 from NetSym.gui.user_interface.text_graphics import Text
-from NetSym.usefuls.funcs import with_args
+from NetSym.usefuls.funcs import with_args, ResultOf
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
@@ -222,6 +222,11 @@ class ComputerGraphics(ImageGraphics):
                 self.computer.set_name,
             ),
             "power on/off (o)": self.computer.power,
+            "show ARP cache (alt+a)": with_args(
+                user_interface.popup_message,
+                ResultOf(self.computer.arp_cache.as_string),
+                "ARP cache",
+            ),
             "add/delete interface (^i)": with_args(
                 user_interface.ask_user_for,
                 str,
@@ -258,7 +263,7 @@ class ComputerGraphics(ImageGraphics):
                 MESSAGES.INSERT.IP_FOR_PROCESS,
                 with_args(self.computer.process_scheduler.start_usermode_process, DAYTIMEClientProcess)
             ),
-            "download file (alt+a)": with_args(
+            "download file": with_args(
                 user_interface.ask_user_for,
                 str,
                 MESSAGES.INSERT.IP_FOR_PROCESS,

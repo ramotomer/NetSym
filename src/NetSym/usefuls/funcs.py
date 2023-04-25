@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from functools import reduce
 from math import sin, cos, pi, atan, sqrt
 from operator import mul
-from typing import Dict, Iterable, Callable, TypeVar, Optional, List, Generator, Tuple, Any, Union
+from typing import Dict, Iterable, Callable, TypeVar, Optional, List, Generator, Tuple, Any, Union, NamedTuple
 
 from NetSym.consts import SHAPES, COLORS, T_Color
 from NetSym.exceptions import *
@@ -17,6 +17,16 @@ T = TypeVar("T")
 K = TypeVar("K")
 K2 = TypeVar("K2")
 V = TypeVar("V")
+
+
+class ResultOf(NamedTuple):
+    """
+    This is used if you need that sometimes in the future this function will be called and its value will be returned.
+    Should be used with the `with_args` method.
+    Example:
+        button.action = with_args(print_is_hot, ResultOf(get_current_temperature))
+    """
+    function: Callable[..., Any]
 
 
 def get_the_one(iterable:  Iterable[T],
@@ -102,7 +112,10 @@ def with_args(function: Callable[..., T], *args: Any, **kwargs: Any) -> Callable
     :return: a function that takes no arguments.
     """
     def returned(*more_args: Any, **more_kwargs: Any) -> T:
-        return function(*args, *more_args, **kwargs, **more_kwargs)
+        calculated_args   =       [(arg.function() if isinstance(arg, ResultOf) else arg) for arg in args]
+        calculated_kwargs = {word: (arg.function() if isinstance(arg, ResultOf) else arg) for word, arg in kwargs.items()}
+
+        return function(*calculated_args, *more_args, **calculated_kwargs, **more_kwargs)
     return returned
 
 

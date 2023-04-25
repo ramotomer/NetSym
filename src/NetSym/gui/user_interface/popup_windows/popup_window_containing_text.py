@@ -50,7 +50,7 @@ class PopupWindowContainingText(PopupWindow):
             self.x, self.y,
             self,
             ((self.width / 2), self.height - 25),
-            max_width=self.width
+            max_width=self.width,
         )
 
         self._PopupWindowContainingText__child_graphics_objects = ChildGraphicsObjects(

@@ -47,6 +47,7 @@ from NetSym.gui.user_interface.popup_windows.popup_error import PopupError
 from NetSym.gui.user_interface.popup_windows.popup_help import PopupHelp
 from NetSym.gui.user_interface.popup_windows.popup_text_box import PopupTextBox
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
+from NetSym.gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText
 from NetSym.gui.user_interface.popup_windows.yes_no_popup_window import YesNoPopupWindow
 from NetSym.gui.user_interface.resizing_dots_handler import ResizingDotsHandler
 from NetSym.gui.user_interface.selecting_square import SelectingSquare
@@ -1816,6 +1817,13 @@ class UserInterface:
         self.marked_objects.clear()
         self.selected_object = None
         self.marked_objects += list(map(attrgetter("graphics"), self.computers))
+
+    def popup_message(self, text: str, title: str) -> None:
+        """
+        Popup a window that contains a message
+        """
+        x, y = WINDOWS.POPUP.TEXTBOX.COORDINATES
+        self.register_window(PopupWindowContainingText(x, y, text, title=title))
 
     def open_help(self) -> None:
         """
