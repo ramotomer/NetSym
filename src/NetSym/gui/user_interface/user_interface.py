@@ -1818,12 +1818,21 @@ class UserInterface:
         self.selected_object = None
         self.marked_objects += list(map(attrgetter("graphics"), self.computers))
 
-    def popup_message(self, text: str, title: str) -> None:
+    def popup_message(self, text: str, x: Optional[int] = None, y: Optional[int] = None, **kwargs: Any) -> None:
         """
         Popup a window that contains a message
         """
-        x, y = WINDOWS.POPUP.TEXTBOX.COORDINATES
-        self.register_window(PopupWindowContainingText(x, y, text, title=title))
+        if x is None and y is None:
+            x, y = WINDOWS.POPUP.TEXTBOX.COORDINATES
+        elif x is None or y is None:
+            raise ThisCodeShouldNotBeReached("x and y should be both None or neither!")
+
+        self.register_window(
+            PopupWindowContainingText(
+                x, y, text,
+                **kwargs,
+            )
+        )
 
     def open_help(self) -> None:
         """

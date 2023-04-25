@@ -437,6 +437,10 @@ class WINDOWS:
             }
 
         class TEXTBOX:
+            class LARGE:
+                WIDTH = 600
+                HEIGHT = 255
+                COORDINATES = (237.5, 215.0)
             WIDTH = 400
             HEIGHT = 170
             COORDINATES = (437.5, 215.0)

@@ -40,7 +40,8 @@ class PopupWindowContainingText(PopupWindow):
                  height: float = WINDOWS.POPUP.TEXTBOX.HEIGHT,
                  color: T_Color = WINDOWS.POPUP.TEXTBOX.OUTLINE_COLOR,
                  title: str = "window!",
-                 outline_width: float = SHAPES.RECT.DEFAULT_OUTLINE_WIDTH) -> None:
+                 outline_width: float = SHAPES.RECT.DEFAULT_OUTLINE_WIDTH,
+                 text_alignment: str = "center") -> None:
         """
         Initiate the window
         """
@@ -51,6 +52,7 @@ class PopupWindowContainingText(PopupWindow):
             self,
             ((self.width / 2), self.height - 25),
             max_width=self.width,
+            align=text_alignment,
         )
 
         self._PopupWindowContainingText__child_graphics_objects = ChildGraphicsObjects(

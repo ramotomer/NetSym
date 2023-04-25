@@ -12,7 +12,7 @@ from NetSym.computing.internals.processes.usermode_processes.ddos_process import
 from NetSym.computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
 from NetSym.computing.internals.processes.usermode_processes.dns_process.dns_server_process import DNSServerProcess
 from NetSym.computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
-from NetSym.consts import IMAGES, MESSAGES, INTERFACES, TEXT, PORTS, COMPUTER
+from NetSym.consts import IMAGES, MESSAGES, INTERFACES, TEXT, PORTS, COMPUTER, WINDOWS
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
 from NetSym.gui.tech.loopback_connection_graphics import LoopbackConnectionGraphics
 from NetSym.gui.tech.output_console import OutputConsole
@@ -225,7 +225,16 @@ class ComputerGraphics(ImageGraphics):
             "show ARP cache (alt+a)": with_args(
                 user_interface.popup_message,
                 ResultOf(self.computer.arp_cache.as_string),
-                "ARP cache",
+                title="ARP cache",
+            ),
+            "show Routing Table (alt+r)": with_args(
+                user_interface.popup_message,
+                ResultOf(self.computer.routing_table.__repr__),
+                x=WINDOWS.POPUP.TEXTBOX.LARGE.COORDINATES[0],
+                y=WINDOWS.POPUP.TEXTBOX.LARGE.COORDINATES[1],
+                width=WINDOWS.POPUP.TEXTBOX.LARGE.WIDTH,
+                height=WINDOWS.POPUP.TEXTBOX.LARGE.HEIGHT,
+                title="Routing Table",
             ),
             "add/delete interface (^i)": with_args(
                 user_interface.ask_user_for,
