@@ -11,13 +11,13 @@ import pyglet
 from NetSym.exceptions import TCPDoneReceiving
 
 
-def debugp(*strings: str) -> None:
+def debugp(*strings: str, **kwargs: Any) -> None:
     """
     A print i use for debugging so i know where to delete it afterwards.
     :param strings:
     :return:
     """
-    print(f"DEBUG:", *strings)
+    print(f"DEBUG:", *strings, **kwargs)
 
 
 SENDING_GRAT_ARPS = False
