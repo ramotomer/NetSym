@@ -16,6 +16,7 @@ import pyglet
 from pyglet.window import key
 
 from NetSym.address.ip_address import IPAddress
+from NetSym.address.mac_address import MACAddress
 from NetSym.computing.computer import Computer
 from NetSym.computing.connections.wireless_connection import WirelessConnection
 from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
@@ -126,6 +127,7 @@ class UserInterface:
             (key.C, KEYBOARD.MODIFIERS.SHIFT): self.connect_all_to_all,
             (key.P, KEYBOARD.MODIFIERS.CTRL): self.send_random_ping,
             (key.P, KEYBOARD.MODIFIERS.SHIFT): self.send_ping_to_self,
+            (key.E, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT): self.send_broadcast_raw_ethernet,
             (key.R, KEYBOARD.MODIFIERS.CTRL): with_args(self.create_device, Router),
             (key.M, KEYBOARD.MODIFIERS.NONE): self.print_debugging_info,
             (key.W, KEYBOARD.MODIFIERS.NONE): self.add_tcp_test,
@@ -1320,6 +1322,23 @@ class UserInterface:
 
         selected_computer_graphics: ComputerGraphics = self.selected_object
         self.send_direct_ping(selected_computer_graphics, selected_computer_graphics)
+
+    def send_broadcast_raw_ethernet(self) -> None:
+        """
+        The selected computer sends a ping to himself on the loopback.
+        :return: None
+        """
+        if self.selected_object is None:
+            return
+
+        if not isinstance(self.selected_object, ComputerGraphics):
+            return
+
+        selected_computer_graphics: ComputerGraphics = self.selected_object
+        selected_computer_graphics.computer.get_interface().send_with_ethernet(
+            MACAddress.broadcast(),
+            "Hello Everyone!!!",
+        )
 
     def _showcase_running_stp(self) -> None:
         """
