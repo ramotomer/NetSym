@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from os import linesep
-from typing import Optional, TYPE_CHECKING, Dict, cast
+from typing import Optional, TYPE_CHECKING, Dict
 
 from NetSym.address.mac_address import MACAddress
 from NetSym.computing.computer import Computer, COMPUTER
@@ -86,7 +86,7 @@ class Switch(Computer):
         """
         Returns the dictionary which represents the MAC address table of the switch.
         """
-        return cast(SwitchingProcess, self.process_scheduler.get_process_by_type(SwitchingProcess)).mac_address_table
+        return self.process_scheduler.get_process_by_type(SwitchingProcess).mac_address_table
 
     def get_mac_address_table_string(self) -> str:
         """

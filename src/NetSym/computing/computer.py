@@ -1397,7 +1397,7 @@ class Computer:
             return
 
         if port_number in self.get_open_ports(protocol):
-            self.process_scheduler.kill_all_usermode_processes_by_type(process, force=True)
+            self.process_scheduler.kill_all_usermode_processes_by_type(process)
             return
 
         self.process_scheduler.start_usermode_process(process)

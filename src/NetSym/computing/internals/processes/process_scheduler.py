@@ -515,7 +515,6 @@ class ProcessScheduler:
         Takes in a process type and kills all of the waiting processes of that type in this `Computer`.
         They are killed by a signal, unless specified specifically with the `force` param
         :param process_type: a `Process` subclass type (for example `SendPing` or `DHCPClientProcess`)
-        :param force:
         :return: None
         """
         for waiting_process in self.waiting_usermode_processes[:]:

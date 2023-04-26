@@ -1821,18 +1821,17 @@ class UserInterface:
         self.selected_object = None
         self.marked_objects += list(map(attrgetter("graphics"), self.computers))
 
-    def popup_message(self, text: str, x: Optional[int] = None, y: Optional[int] = None, **kwargs: Any) -> None:
+    def popup_message(self, text: str, x: Optional[float] = None, y: Optional[float] = None, **kwargs: Any) -> None:
         """
         Popup a window that contains a message
         """
-        if x is None and y is None:
-            x, y = WINDOWS.POPUP.TEXTBOX.COORDINATES
-        elif x is None or y is None:
-            raise ThisCodeShouldNotBeReached("x and y should be both None or neither!")
+        window_x, window_y = WINDOWS.POPUP.TEXTBOX.COORDINATES
+        window_x = x if x is not None else window_x
+        window_y = y if y is not None else window_y
 
         self.register_window(
             PopupWindowContainingText(
-                x, y, text,
+                window_x, window_y, text,
                 **kwargs,
             )
         )
@@ -1862,9 +1861,11 @@ class UserInterface:
             return
 
         if isinstance(object_the_mouse_is_on, Selectable):
-            if ({key.RSHIFT, key.LSHIFT} & self.main_window.pressed_keys) and self.selected_object not in self.marked_objects:
+            if ({key.RSHIFT, key.LSHIFT} & self.main_window.pressed_keys) and \
+                    (self.selected_object not in self.marked_objects) and (self.selected_object is not None):
                 self.marked_objects.append(self.selected_object)
             self.selected_object = object_the_mouse_is_on
+
         elif isinstance(object_the_mouse_is_on, PopupWindow):
             self.active_window = object_the_mouse_is_on
 

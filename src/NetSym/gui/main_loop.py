@@ -74,7 +74,7 @@ class MainLoop:
         """
         return graphics_object in self.graphics_objects
 
-    def register_graphics_object(self, graphics_object: Union[GraphicsObject, List[GraphicsObject]], is_in_background: bool = False) -> None:
+    def register_graphics_object(self, graphics_object: Union[GraphicsObject, Iterable[GraphicsObject]], is_in_background: bool = False) -> None:
         """
         This method receives a `GraphicsObject` instance, loads it, and enters
         it into the update main loop with its `move` and `draw` methods.
@@ -84,7 +84,7 @@ class MainLoop:
         :param is_in_background: Whether the object will be drawn in the front
             or the back of the other objects.
         """
-        graphics_object_sequence = graphics_object if isinstance(graphics_object, list) else [graphics_object]
+        graphics_object_sequence = [graphics_object] if isinstance(graphics_object, GraphicsObject) else graphics_object
 
         for graphics_object_ in graphics_object_sequence:
             if not self.is_registered(graphics_object_):
