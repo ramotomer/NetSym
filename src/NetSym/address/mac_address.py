@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import Union, List
+from typing import Union, List, Optional
 
 from NetSym.consts import ADDRESSES
 from NetSym.exceptions import *
@@ -52,13 +52,21 @@ class MACAddress:
         return cls(ADDRESSES.MAC.BROADCAST)
 
     @classmethod
-    def randomac(cls) -> str:
+    def _three_random_bytes(cls) -> str:
+        """
+        return "XX:YY:ZZ" when all three are hexadecimal numbers
+        """
+        return ADDRESSES.MAC.SEPARATOR.join([hex(random.randint(0, 255))[2:].zfill(2) for _ in range(3)])
+
+    @classmethod
+    def randomac(cls, initial_vendor: Optional[str] = None) -> str:
         """
         A constructor that returns a randomized mac address.
         Returns a different one each time.
         :return: A random string MAC address.
         """
-        randomized_string = ADDRESSES.MAC.SEPARATOR.join([hex(random.randint(0, 255))[2:].zfill(2) for _ in range(6)])
+        vendor = initial_vendor if initial_vendor is not None else cls._three_random_bytes()
+        randomized_string = ADDRESSES.MAC.SEPARATOR.join([vendor, cls._three_random_bytes()])
         if randomized_string in cls.generated_addresses:
             return cls.randomac()
         cls.generated_addresses.append(randomized_string)

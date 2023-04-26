@@ -358,11 +358,15 @@ class Computer:
             print(message)
             # TODO: IMPROVE: change all prints to use the logging module! be high-tech please
 
+    def get_interface(self) -> NetworkInterface:
+        """Return one of the interfaces of the computer"""
+        if not self.interfaces:
+            raise NoSuchInterfaceError("The computer has no network interfaces!!!")
+        return self.interfaces[0]
+
     def get_mac(self) -> MACAddress:
         """Returns one of the computer's `MACAddresses`"""
-        if not self.macs:
-            raise NoSuchInterfaceError("The computer has no MAC address since it has no network interfaces!!!")
-        return self.macs[0]
+        return self.get_interface().mac
 
     def set_name(self, name: str) -> None:
         """
@@ -413,6 +417,10 @@ class Computer:
         :param time_: a number of seconds.
         """
         return list(filter(lambda rp: rp.metadata.time > time_, (self.received_raw if is_raw else self.received)))
+
+    def get_mac_address_table_string(self) -> str:
+        # TODO: This being here is disgusting!!! It is because all computers have the same GraphcisObject and the buttons are dictated there...
+        raise NotImplementedError
 
     # --------------------------------------- v  Computer power  v ------------------------------------------------
 
@@ -1389,7 +1397,7 @@ class Computer:
             return
 
         if port_number in self.get_open_ports(protocol):
-            self.process_scheduler.kill_all_usermode_processes_by_type(process, force=True)
+            self.process_scheduler.kill_all_usermode_processes_by_type(process)
             return
 
         self.process_scheduler.start_usermode_process(process)

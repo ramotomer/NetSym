@@ -9,12 +9,14 @@ from functools import reduce
 from itertools import chain
 from math import sqrt
 from operator import concat, attrgetter
+from tkinter import filedialog, Tk
 from typing import TYPE_CHECKING, Optional, NamedTuple, List, Type, Callable, Dict, TypeVar, Tuple, Union, Any, Iterable, cast
 
 import pyglet
 from pyglet.window import key
 
 from NetSym.address.ip_address import IPAddress
+from NetSym.address.mac_address import MACAddress
 from NetSym.computing.computer import Computer
 from NetSym.computing.connections.wireless_connection import WirelessConnection
 from NetSym.computing.internals.network_interfaces.cable_network_interface import CableNetworkInterface
@@ -45,6 +47,7 @@ from NetSym.gui.user_interface.popup_windows.popup_error import PopupError
 from NetSym.gui.user_interface.popup_windows.popup_help import PopupHelp
 from NetSym.gui.user_interface.popup_windows.popup_text_box import PopupTextBox
 from NetSym.gui.user_interface.popup_windows.popup_window import PopupWindow
+from NetSym.gui.user_interface.popup_windows.popup_window_containing_text import PopupWindowContainingText
 from NetSym.gui.user_interface.popup_windows.yes_no_popup_window import YesNoPopupWindow
 from NetSym.gui.user_interface.resizing_dots_handler import ResizingDotsHandler
 from NetSym.gui.user_interface.selecting_square import SelectingSquare
@@ -125,6 +128,7 @@ class UserInterface:
             (key.C, KEYBOARD.MODIFIERS.SHIFT): self.connect_all_to_all,
             (key.P, KEYBOARD.MODIFIERS.CTRL): self.send_random_ping,
             (key.P, KEYBOARD.MODIFIERS.SHIFT): self.send_ping_to_self,
+            (key.E, KEYBOARD.MODIFIERS.CTRL | KEYBOARD.MODIFIERS.SHIFT): self.send_broadcast_raw_ethernet,
             (key.R, KEYBOARD.MODIFIERS.CTRL): with_args(self.create_device, Router),
             (key.M, KEYBOARD.MODIFIERS.NONE): self.print_debugging_info,
             (key.W, KEYBOARD.MODIFIERS.NONE): self.add_tcp_test,
@@ -197,6 +201,7 @@ class UserInterface:
         self.button_arguments: List[Tuple[Tuple[Callable[[], Any], str], Dict[str, Tuple[int, int]]]] = [
             ((self.open_device_creation_window, "create device (e)"), {"key": (key.E, KEYBOARD.MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.CONNECTING), "connect (c / ^c / Shift+c)"), {"key": (key.C, KEYBOARD.MODIFIERS.NONE)}),
+            ((with_args(self.toggle_mode, MODES.SEND_RAW_ETHERNET), "send raw ethernet (^e)"), {"key": (key.E, KEYBOARD.MODIFIERS.CTRL)}),
             ((with_args(self.toggle_mode, MODES.PINGING), "ping (p / ^p / Shift+p)"), {"key": (key.P, KEYBOARD.MODIFIERS.NONE)}),
             ((with_args(self.toggle_mode, MODES.FILE_DOWNLOADING),
               "Start file download (Ctrl+Shift+a)"),
@@ -272,7 +277,7 @@ class UserInterface:
         This function sets what is the path of that file.
         """
         self.__saving_file = new_file_name
-        self.main_window.set_caption(WINDOWS.MAIN.NAME + ": " + self.__saving_file)
+        self.main_window.set_caption(WINDOWS.MAIN.NAME + ": " + os.path.basename(self.__saving_file))
 
     def reset_saving_file(self) -> None:
         """
@@ -290,6 +295,7 @@ class UserInterface:
     def selected_object(self, graphics_object: Union[Selectable, None]) -> None:
         self.__selected_object = graphics_object
         self.active_window = None
+
 
         if isinstance(graphics_object, Resizable):
             self.resizing_dots_handler.select(graphics_object)
@@ -313,6 +319,8 @@ class UserInterface:
         :return: None
         """
         self._draw_side_window()
+        if self.main_window.should_exit:
+            self.exit()
         if self.main_loop.is_paused:
             draw_pause_rectangles()
         if self.main_window.is_ignoring_keyboard_escape_keys:
@@ -708,9 +716,10 @@ class UserInterface:
 
         if self.mode in MODES.COMPUTER_CONNECTING_MODES:
             self.end_device_visual_connecting({
-                MODES.CONNECTING:       self.connect_devices_by_graphics,
-                MODES.PINGING:          self.send_direct_ping,
-                MODES.FILE_DOWNLOADING: self.start_file_download,
+                MODES.CONNECTING:        self.connect_devices_by_graphics,
+                MODES.PINGING:           self.send_direct_ping,
+                MODES.FILE_DOWNLOADING:  self.start_file_download,
+                MODES.SEND_RAW_ETHERNET: self.send_direct_raw_ethernet,
             }[self.mode])
 
         self.dragged_object = None
@@ -919,6 +928,15 @@ class UserInterface:
         computer1, computer2 = computer_graphics1.computer, computer_graphics2.computer
         if computer1.has_ip() and computer2.has_ip():
             computer1.start_ping_process(computer2.get_ip().string_ip)
+
+    @staticmethod
+    def send_direct_raw_ethernet(computer_graphics1: ComputerGraphics, computer_graphics2: ComputerGraphics) -> None:
+        """
+        Make the first computer send a raw ethernet frame to the other computer
+        """
+        computer1, computer2 = computer_graphics1.computer, computer_graphics2.computer
+        if computer1.interfaces and computer2.interfaces:
+            computer1.get_interface().send_with_ethernet(computer2.get_mac(), "Hello world!")
 
     @staticmethod
     def start_file_download(computer_graphics1: ComputerGraphics, computer_graphics2: ComputerGraphics) -> None:
@@ -1199,6 +1217,7 @@ class UserInterface:
         print(f"\ncomputers, {len(self.computers)}, connections, {len(self.connection_data)}, "
               f"packets: {len(list(filter(lambda go: isinstance(go, PacketGraphics), self.main_loop.graphics_objects)))}")
 
+        # print("makred objects:", self.marked_objects)
         print()
         # if self.selected_object is not None and isinstance(self.selected_object, ComputerGraphics):
         #     computer = self.selected_object.computer
@@ -1305,6 +1324,23 @@ class UserInterface:
 
         selected_computer_graphics: ComputerGraphics = self.selected_object
         self.send_direct_ping(selected_computer_graphics, selected_computer_graphics)
+
+    def send_broadcast_raw_ethernet(self) -> None:
+        """
+        The selected computer sends a ping to himself on the loopback.
+        :return: None
+        """
+        if self.selected_object is None:
+            return
+
+        if not isinstance(self.selected_object, ComputerGraphics):
+            return
+
+        selected_computer_graphics: ComputerGraphics = self.selected_object
+        selected_computer_graphics.computer.get_interface().send_with_ethernet(
+            MACAddress.broadcast(),
+            "Hello Everyone!!!",
+        )
 
     def _showcase_running_stp(self) -> None:
         """
@@ -1568,21 +1604,15 @@ class UserInterface:
         """
         If the simulation state was once saved already - remember the file name and do not ask for it again
         """
-        if self.saving_file is None:
-            self.ask_user_for(str, "save file as:", self._save_to_file_with_override_safety)
-            return
-        self._save_to_file_with_override_safety(self.saving_file)
-
-    def _save_to_file_with_override_safety(self, filename: str) -> None:
-        """
-        Saves all of the state of the simulation at the moment into a file, that we can
-        later load into an empty simulation, and get all of the computers, interface, and connections.
-        :return: None
-        """
-        if os.path.isfile(os.path.join(DIRECTORIES.SAVES, f"{filename}.json")):
-            self.register_window(YesNoPopupWindow("file exists! override?", yes_action=with_args(self.save_to_file, filename)))
-        else:
-            self.save_to_file(filename)
+        root = Tk()
+        root.withdraw()
+        saving_file = self.saving_file if self.saving_file is not None else filedialog.asksaveasfilename(
+                title="Save the Simulation!",
+                defaultextension="json",
+                initialdir=DIRECTORIES.SAVES,
+            )
+        if saving_file:
+            self.save_to_file(saving_file)
 
     def save_to_file(self, filename: str) -> None:
         """
@@ -1600,7 +1630,7 @@ class UserInterface:
         }
 
         os.makedirs(DIRECTORIES.SAVES, exist_ok=True)
-        json.dump(dict_to_file, open(os.path.join(DIRECTORIES.SAVES, f"{filename}.json"), "w"), indent=4)
+        json.dump(dict_to_file, open(os.path.join(DIRECTORIES.SAVES, filename), "w"), indent=4)
         self.set_saving_file(filename)
 
     def load_from_file(self, filename) -> None:
@@ -1608,10 +1638,13 @@ class UserInterface:
         Loads the state of the simulation from a file
         :return:
         """
+        if not filename:
+            return
+
         try:
-            dict_from_file = json.load(open(os.path.join(DIRECTORIES.SAVES, f"{filename}.json"), "r"))
+            dict_from_file = json.loads(open(filename, "r").read())
         except FileNotFoundError:
-            raise PopupWindowWithThisError("There is not such file!!!")
+            raise PopupWindowWithThisError(f"There is not such file!!! {filename!r}")
 
         self.set_saving_file(filename)
         self._create_map_from_file_dict(dict_from_file)
@@ -1645,29 +1678,17 @@ class UserInterface:
                 connection_dict["speed"],
             )
 
-    @staticmethod
-    def _list_saved_files() -> str:
-        """
-        Returns a string of all of the files that are saved already
-        :return:
-        """
-        if not os.path.isdir(DIRECTORIES.SAVES):
-            return ""
-
-        file_list = os.listdir(DIRECTORIES.SAVES)
-        return ", ".join(map(lambda f: f.split('.')[0], file_list))
-
     def _ask_user_for_load_file(self) -> None:
         """
         asks the user for a filename to open, while offering him the names that exist
         :return:
         """
-        saved_files = self._list_saved_files()
-        self.ask_user_for(
-            str,
-            f"insert file name to open:" + (f"[options: {saved_files}]" if saved_files else ""),
-            self.load_from_file
-        )
+        root = Tk()
+        root.withdraw()
+        self.load_from_file(filedialog.askopenfilename(
+            title="Choose Simulation file to load!",
+            initialdir=DIRECTORIES.SAVES,
+        ))
 
     def _update_selecting_square(self) -> None:
         """
@@ -1788,6 +1809,7 @@ class UserInterface:
         Closes the simulation
         :return:
         """
+        self.main_window.should_exit = False
         self.register_window(YesNoPopupWindow("Are you sure you want to exit?", yes_action=pyglet.app.exit))
 
     def select_all(self) -> None:
@@ -1798,6 +1820,21 @@ class UserInterface:
         self.marked_objects.clear()
         self.selected_object = None
         self.marked_objects += list(map(attrgetter("graphics"), self.computers))
+
+    def popup_message(self, text: str, x: Optional[float] = None, y: Optional[float] = None, **kwargs: Any) -> None:
+        """
+        Popup a window that contains a message
+        """
+        window_x, window_y = WINDOWS.POPUP.TEXTBOX.COORDINATES
+        window_x = x if x is not None else window_x
+        window_y = y if y is not None else window_y
+
+        self.register_window(
+            PopupWindowContainingText(
+                window_x, window_y, text,
+                **kwargs,
+            )
+        )
 
     def open_help(self) -> None:
         """
@@ -1824,7 +1861,11 @@ class UserInterface:
             return
 
         if isinstance(object_the_mouse_is_on, Selectable):
+            if ({key.RSHIFT, key.LSHIFT} & self.main_window.pressed_keys) and \
+                    (self.selected_object not in self.marked_objects) and (self.selected_object is not None):
+                self.marked_objects.append(self.selected_object)
             self.selected_object = object_the_mouse_is_on
+
         elif isinstance(object_the_mouse_is_on, PopupWindow):
             self.active_window = object_the_mouse_is_on
 

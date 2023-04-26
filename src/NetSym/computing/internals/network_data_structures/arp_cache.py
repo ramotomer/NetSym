@@ -72,6 +72,16 @@ class ArpCache:
             # we use list comprehension here to not change the dict as we go over it :)
             del self.__cache[key]
 
+    def as_string(self, indentation_count: int = 0) -> str:
+        """
+        This is the string representation of the the ARP cache.
+        It has a parameter that indicates how many spaces should be at the start of the string - so we can make it fit any size of text box :)
+        """
+        string = f"{'IP address': >{indentation_count}}{'mac': >22}\n"
+        for ip, arp_cache_item in self.__cache.items():
+            string += f"{str(ip): >19}{str(arp_cache_item.mac): >22}\n"
+        return string
+
     def __contains__(self, item: Union[str, IPAddress]) -> bool:
         if not isinstance(item, (str, IPAddress)):
             raise InvalidAddressError(f"Key of an arp cache must be a string or IPAddress object!!! not {type(item)} like {repr(item)}")
@@ -91,7 +101,4 @@ class ArpCache:
         return len(self.__cache)
 
     def __repr__(self) -> str:
-        string = f"{'IP address': >19}{'mac': >22}\n"
-        for ip, arp_cache_item in self.__cache.items():
-            string += f"{str(ip): >19}{str(arp_cache_item.mac): >22}\n"
-        return string
+        return self.as_string(19)

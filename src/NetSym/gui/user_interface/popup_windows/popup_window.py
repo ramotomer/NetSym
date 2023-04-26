@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional, Set, Tuple, Sequence, cast, Iterable, List, Iterator, Union
 
-from NetSym.consts import WINDOWS, T_Color, COLORS, SHAPES, debugp
+from NetSym.consts import WINDOWS, T_Color, COLORS, SHAPES
 from NetSym.exceptions import *
 from NetSym.exceptions import WrongUsageError
 from NetSym.gui.abstracts.graphics_object import GraphicsObject
@@ -167,7 +167,7 @@ class PopupWindow(UserInterfaceGraphicsObject):
         """
         Dragging the window around
         """
-        debugp(f"calling :)")
+        pass
 
     def activate(self) -> None:
         """

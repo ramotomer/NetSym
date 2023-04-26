@@ -7,12 +7,13 @@ from typing import TYPE_CHECKING, Optional, Dict, Callable, Iterable, Tuple, Lis
 import pyglet
 
 from NetSym.address.ip_address import IPAddress
+from NetSym.computing.internals.processes.kernelmode_processes.switching_process import SwitchingProcess
 from NetSym.computing.internals.processes.usermode_processes.daytime_process.daytime_client_process import DAYTIMEClientProcess
 from NetSym.computing.internals.processes.usermode_processes.ddos_process import DDOSProcess
 from NetSym.computing.internals.processes.usermode_processes.dhcp_process.dhcp_server_process import DHCPServerProcess
 from NetSym.computing.internals.processes.usermode_processes.dns_process.dns_server_process import DNSServerProcess
 from NetSym.computing.internals.processes.usermode_processes.ftp_process.ftp_client_process import ClientFTPProcess
-from NetSym.consts import IMAGES, MESSAGES, INTERFACES, TEXT, PORTS
+from NetSym.consts import IMAGES, MESSAGES, INTERFACES, TEXT, PORTS, COMPUTER, WINDOWS
 from NetSym.gui.abstracts.image_graphics import ImageGraphics
 from NetSym.gui.tech.loopback_connection_graphics import LoopbackConnectionGraphics
 from NetSym.gui.tech.output_console import OutputConsole
@@ -20,7 +21,7 @@ from NetSym.gui.tech.process_graphics import ProcessGraphicsList
 from NetSym.gui.user_interface.popup_windows.popup_console import PopupConsole
 from NetSym.gui.user_interface.popup_windows.popup_error import PopupError
 from NetSym.gui.user_interface.text_graphics import Text
-from NetSym.usefuls.funcs import with_args
+from NetSym.usefuls.funcs import with_args, ResultOf
 
 if TYPE_CHECKING:
     from NetSym.gui.abstracts.graphics_object import GraphicsObject
@@ -133,7 +134,14 @@ class ComputerGraphics(ImageGraphics):
         Generates the text under the computer.
         :return: a string with the information that should be displayed there.
         """
-        return '\n'.join([self.computer.name] + [str(interface.ip) for interface in self.computer.interfaces if interface.has_ip()])
+        strings = [str(interface.ip) for interface in self.computer.interfaces if interface.has_ip()]
+        if COMPUTER.TEXT.SHOW_NAMES:
+            strings.insert(0, self.computer.name)
+
+        if COMPUTER.TEXT.SHOW_MACS and ((len(self.computer.interfaces) == 1) or not COMPUTER.TEXT.SHOW_MACS_ONLY_WHEN_ENDPOINT):
+            strings.extend([str(interface.mac) for interface in self.computer.interfaces])
+
+        return '\n'.join(strings)
 
     def update_text(self) -> None:
         """Sometimes the ip_layer of the computer is changed and we want to text to change as well"""
@@ -187,6 +195,13 @@ class ComputerGraphics(ImageGraphics):
                     self.computer.set_domain_for_dhcp_server,
                 ),
             },
+            SwitchingProcess: {
+                "show MAC Address Table (alt+m)": with_args(
+                    user_interface.popup_message,
+                    ResultOf(self.computer.get_mac_address_table_string),
+                    title="MAC Address Table",
+                )
+            },
         }
         all_buttons = {}
         for process_type, button_dict in process_button_mapping.items():
@@ -215,6 +230,20 @@ class ComputerGraphics(ImageGraphics):
                 self.computer.set_name,
             ),
             "power on/off (o)": self.computer.power,
+            "show ARP cache (alt+a)": with_args(
+                user_interface.popup_message,
+                ResultOf(self.computer.arp_cache.as_string),
+                title="ARP cache",
+            ),
+            "show Routing Table (alt+r)": with_args(
+                user_interface.popup_message,
+                ResultOf(self.computer.routing_table.__repr__),
+                x=WINDOWS.POPUP.TEXTBOX.LARGE.COORDINATES[0],
+                y=WINDOWS.POPUP.TEXTBOX.LARGE.COORDINATES[1],
+                width=WINDOWS.POPUP.TEXTBOX.LARGE.WIDTH,
+                height=WINDOWS.POPUP.TEXTBOX.LARGE.HEIGHT,
+                title="Routing Table",
+            ),
             "add/delete interface (^i)": with_args(
                 user_interface.ask_user_for,
                 str,
@@ -251,7 +280,7 @@ class ComputerGraphics(ImageGraphics):
                 MESSAGES.INSERT.IP_FOR_PROCESS,
                 with_args(self.computer.process_scheduler.start_usermode_process, DAYTIMEClientProcess)
             ),
-            "download file (alt+a)": with_args(
+            "download file": with_args(
                 user_interface.ask_user_for,
                 str,
                 MESSAGES.INSERT.IP_FOR_PROCESS,

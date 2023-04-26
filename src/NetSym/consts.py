@@ -11,13 +11,13 @@ import pyglet
 from NetSym.exceptions import TCPDoneReceiving
 
 
-def debugp(*strings: str) -> None:
+def debugp(*strings: str, **kwargs: Any) -> None:
     """
     A print i use for debugging so i know where to delete it afterwards.
     :param strings:
     :return:
     """
-    print(f"DEBUG:", *strings)
+    print(f"DEBUG:", *strings, **kwargs)
 
 
 SENDING_GRAT_ARPS = False
@@ -437,6 +437,10 @@ class WINDOWS:
             }
 
         class TEXTBOX:
+            class LARGE:
+                WIDTH = 600
+                HEIGHT = 255
+                COORDINATES = (237.5, 215.0)
             WIDTH = 400
             HEIGHT = 170
             COORDINATES = (437.5, 215.0)
@@ -724,25 +728,28 @@ class CONNECTIONS:
 
 
 class MODES:
-    NORMAL = 0            # The normal mode of the simulation
-    CONNECTING = 1        # The mode when we are connecting two computers (white on the edges)
-    VIEW = 2              # The mode when an object is pressed and we see it in the side window view
-    PINGING = 3           # The mode where we choose where a ping will be sent
-    FILE_DOWNLOADING = 4  # The mode where we choose which computer downloads a file from which
+    NORMAL = 0             # The normal mode of the simulation
+    CONNECTING = 1         # The mode when we are connecting two computers (white on the edges)
+    VIEW = 2               # The mode when an object is pressed and we see it in the side window view
+    PINGING = 3            # The mode where we choose where a ping will be sent
+    FILE_DOWNLOADING = 4   # The mode where we choose which computer downloads a file from which
+    SEND_RAW_ETHERNET = 5  # The mode where we choose which computers send raw ethernet frame between them
 
     COMPUTER_CONNECTING_MODES = [
         CONNECTING,
         PINGING,
         FILE_DOWNLOADING,
+        SEND_RAW_ETHERNET,
     ]
 
     TO_COLORS = {
-        NORMAL:           WINDOWS.SIDE.COLOR,
-        VIEW:             WINDOWS.SIDE.COLOR,
+        NORMAL:            WINDOWS.SIDE.COLOR,
+        VIEW:              WINDOWS.SIDE.COLOR,
 
-        CONNECTING:       COLORS.WHITE,
-        PINGING:          COLORS.PURPLE,
-        FILE_DOWNLOADING: COLORS.GREEN,
+        CONNECTING:        COLORS.WHITE,
+        PINGING:           COLORS.PURPLE,
+        FILE_DOWNLOADING:  COLORS.GREEN,
+        SEND_RAW_ETHERNET: COLORS.DARK_GRAY,
     }
 
     COMPUTER_CONNECTING_MODES_LINE_TO_MOUSE_WIDTH = 2.5
@@ -939,3 +946,9 @@ class COMPUTER:
             DNS_CLIENT_PATH = "/etc/resolv.conf"
             DNS_ZONE_FILES = "/var/named"
             DNS_TMP_QUERY_RESULTS_DIR_PATH = "/tmp/named/"
+
+    class TEXT:
+        SHOW_NAMES = False
+
+        SHOW_MACS = True
+        SHOW_MACS_ONLY_WHEN_ENDPOINT = True

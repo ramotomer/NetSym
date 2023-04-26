@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from os import linesep
 from typing import Optional, TYPE_CHECKING, Dict
 
 from NetSym.address.mac_address import MACAddress
@@ -7,7 +8,7 @@ from NetSym.computing.computer import Computer, COMPUTER
 from NetSym.computing.internals.filesystem.filesystem import Filesystem
 from NetSym.computing.internals.network_data_structures.routing_table import RoutingTable
 from NetSym.computing.internals.network_interfaces.wireless_network_interface import WirelessNetworkInterface
-from NetSym.computing.internals.processes.kernelmode_processes.switching_process import SwitchingProcess
+from NetSym.computing.internals.processes.kernelmode_processes.switching_process import SwitchingProcess, SwitchTableItem
 from NetSym.computing.internals.processes.usermode_processes.stp_process import STPProcess, BID
 from NetSym.consts import OS, PROTOCOLS, ADDRESSES
 from NetSym.packets.all import LLC, STP
@@ -24,7 +25,7 @@ class Switch(Computer):
     It has `legs` that are ports, or interfaces. In switch termination they are called legs.
 
     The switch has a table that helps it learn which MAC address sits behind which leg and so it knows where to send
-    the packet (frame) it receives, this table is called the `switching_table`.
+    the packet (frame) it receives, this table is called the `mac_address_table`.
     """
     def __init__(self,
                  name: Optional[str] = None,
@@ -80,6 +81,20 @@ class Switch(Computer):
                                             max_age=root_max_age,
                                             hello_time=sending_interval,
                                          ))
+
+    def _get_mac_address_table(self) -> Dict[MACAddress, SwitchTableItem]:
+        """
+        Returns the dictionary which represents the MAC address table of the switch.
+        """
+        return self.process_scheduler.get_process_by_type(SwitchingProcess).mac_address_table
+
+    def get_mac_address_table_string(self) -> str:
+        """
+        Returns the string representation of the dictionary which represents the MAC address table of the switch.
+        """
+        leg_name_to_id = {leg: id_ for id_, leg in enumerate(self.interfaces)}
+        return f"""{'MACAddress'} {'Port': >10}
+{linesep.join(f"{mac} {leg_name_to_id[item.leg]: >10}" for mac, item in self._get_mac_address_table().items())}"""
 
     @classmethod
     def from_dict_load(cls, dict_: Dict) -> Switch:

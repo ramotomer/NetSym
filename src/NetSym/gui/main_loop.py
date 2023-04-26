@@ -84,7 +84,7 @@ class MainLoop:
         :param is_in_background: Whether the object will be drawn in the front
             or the back of the other objects.
         """
-        graphics_object_sequence = graphics_object if isinstance(graphics_object, Iterable) else [graphics_object]
+        graphics_object_sequence = [graphics_object] if isinstance(graphics_object, GraphicsObject) else graphics_object
 
         for graphics_object_ in graphics_object_sequence:
             if not self.is_registered(graphics_object_):
