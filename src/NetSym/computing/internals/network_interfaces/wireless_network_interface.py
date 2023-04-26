@@ -76,9 +76,6 @@ class WirelessNetworkInterface(NetworkInterface):
         """
         Initiates the CableNetworkInterfaceGraphics object of this interface
         """
-        if (x is None) or (y is None):
-            raise ThisValueShouldNeverBeNone
-
         self.graphics = WirelessNetworkInterfaceGraphics(x, y, self, parent_computer)
         return self.graphics
 

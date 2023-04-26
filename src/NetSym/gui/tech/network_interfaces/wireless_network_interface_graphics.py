@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Callable
+from typing import TYPE_CHECKING, Dict, Callable, Optional
 
 from NetSym.address.mac_address import MACAddress
 from NetSym.consts import INTERFACES, COLORS
@@ -21,7 +21,7 @@ class WirelessNetworkInterfaceGraphics(NetworkInterfaceGraphics):
     interface: WirelessNetworkInterface
 
     def __init__(self,
-                 x: float, y: float,
+                 x: Optional[float], y: Optional[float],
                  interface: WirelessNetworkInterface,
                  computer_graphics: ComputerGraphics) -> None:
         super(WirelessNetworkInterfaceGraphics, self).__init__(x, y, interface, computer_graphics)
